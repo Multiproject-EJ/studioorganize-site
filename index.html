@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>StudioOrganize — Creative & Personal Planning, No Subscriptions</title>
+  <title>StudioOrganize — Tools to Create a Story (no subscriptions)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/styles.css" />
@@ -31,20 +31,21 @@
 </header>
 
 <main>
-  <!-- HERO -->
+  <!-- HERO: story-first -->
   <section class="hero">
     <div class="hero__content">
-      <h1>StudioOrganize Spreadsheet</h1>
-      <p class="lead">Plan stories, projects, and personal life with a creator-friendly spreadsheet system — <strong>buy once, use forever</strong>, no costly subscriptions.</p>
+      <span class="kicker">Story creation suite</span>
+      <h1>StudioOrganize</h1>
+      <p class="lead">Tools to create a story — from spark to schedule. <strong>Buy once, use forever</strong>. No costly subscriptions.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="/product/studioorganize.html">See the Spreadsheet →</a>
-        <a class="btn btn-ghost" href="/products/">Browse all tools</a>
+        <a class="btn btn-primary" href="/product/studioorganize.html">Start Story Workspace →</a>
+        <a class="btn btn-ghost" href="#modules">See modules</a>
       </div>
       <ul class="hero__bullets">
-        <li>Scene & beat breakdowns with auto IDs</li>
-        <li>Cast/props/locations database with smart linking</li>
-        <li>Call sheets, stripboard schedule, shot lists</li>
-        <li>PDF exports + one-click duplication for new projects</li>
+        <li>Idea & concept playground with drag-and-drop prompts</li>
+        <li>Character & world databases that link to scenes</li>
+        <li>Beats → scenes → stripboard → call sheets</li>
+        <li>PDF/CSV exports and project duplication in one click</li>
       </ul>
       <div class="trust-badges">
         <span>Works with Google Sheets</span>
@@ -55,13 +56,77 @@
     <div class="hero__media">
       <div class="mockup-card">
         <div class="mockup-bar"></div>
-        <img src="/assets/img/studioorganize_mock.png" alt="StudioOrganize Spreadsheet preview" />
+        <img src="/assets/img/studioorganize_mock.png" alt="StudioOrganize story modules preview" />
       </div>
     </div>
   </section>
 
-  <!-- secondary highlight -->
+  <!-- MODULES GRID -->
+  <section id="modules" class="section">
+    <h2>Build your story with modules</h2>
+    <p class="muted">Mix-and-match what you need. Every module saves to structured sheets so nothing gets lost.</p>
+    <div class="grid cards modules-grid">
+      <a class="card" href="/use-cases/generate-ideas.html">
+        <div class="module-icon">💡</div>
+        <h3>Idea / Concept</h3>
+        <p>Drag & drop prompts, score ideas, pick a winner.</p>
+      </a>
+      <a class="card" href="/use-cases/character-design.html">
+        <div class="module-icon">🧑‍🎨</div>
+        <h3>Character Design</h3>
+        <p>Bio, goals, flaws, arcs, relationships.</p>
+      </a>
+      <a class="card" href="/use-cases/screenplay.html">
+        <div class="module-icon">🎬</div>
+        <h3>Screenplay</h3>
+        <p>Beats → scenes → dialogue snippets.</p>
+      </a>
+      <a class="card" href="/use-cases/set-design.html">
+        <div class="module-icon">🏗️</div>
+        <h3>Set / Production</h3>
+        <p>Locations, props, continuity, shot needs.</p>
+      </a>
+      <a class="card" href="/use-cases/screenplay.html">
+        <div class="module-icon">🗂️</div>
+        <h3>Storyboarding</h3>
+        <p>Shot lists, thumbnails, printable boards.</p>
+      </a>
+      <a class="card" href="/use-cases/generate-ideas.html">
+        <div class="module-icon">🧭</div>
+        <h3>Frameworks</h3>
+        <p>Hero’s Journey, 3-Act, Save the Cat (prebuilt).</p>
+      </a>
+      <a class="card" href="/product/studioorganize.html">
+        <div class="module-icon">✏️</div>
+        <h3>Editing Notes</h3>
+        <p>Scene notes & revisions, export to PDF/TXT.</p>
+      </a>
+      <a class="card" href="/product/studioorganize.html">
+        <div class="module-icon">🧩</div>
+        <h3>Settings</h3>
+        <p>Presets, color tags, project duplication.</p>
+      </a>
+    </div>
+    <div class="cta-row" style="margin-top:14px">
+      <a class="btn btn-primary" href="/product/studioorganize.html">Get the Story Workspace</a>
+      <a class="btn btn-ghost" href="/use-cases/">Explore use cases</a>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
   <section class="section alt">
+    <h2>How it all connects</h2>
+    <ol class="checks">
+      <li>Generate ideas with drag-and-drop prompts & frameworks.</li>
+      <li>Promote winners into Characters, World, and Beats.</li>
+      <li>Turn beats into Scenes with IDs, cast, locations, and time of day.</li>
+      <li>Auto-build stripboard and call sheets from scene data.</li>
+      <li>Export PDFs (beat sheet, scene list, schedule, call sheets) and CSVs.</li>
+    </ol>
+  </section>
+
+  <!-- SECOND FLAGSHIP -->
+  <section class="section">
     <h2>Also from StudioOrganize</h2>
     <div class="grid cards">
       <a class="card card--lg" href="/product/1week-story.html">
@@ -72,10 +137,10 @@
     </div>
   </section>
 
-  <!-- WORK BETTER -->
-  <section class="section">
+  <!-- PERSONAL PRODUCTIVITY (moved to end) -->
+  <section class="section alt">
     <h2>Work Better — creator-friendly productivity</h2>
-    <p class="muted">Complement your story tool with simple, effective systems.</p>
+    <p class="muted">Lightweight tools that complement your creative work.</p>
     <div class="grid cards">
       <a class="card" href="/product/personal.html#habit">
         <h3>Habit & Focus Tracker</h3>
@@ -92,25 +157,6 @@
         <p>Import, categorize, monthly review panels.</p>
         <span class="arrow">View →</span>
       </a>
-    </div>
-  </section>
-
-  <!-- WHY -->
-  <section class="section alt">
-    <h2>Why StudioOrganize?</h2>
-    <div class="grid features">
-      <div>
-        <h4>Creator-first</h4>
-        <p>Built from real production needs: fast, visual, and spreadsheet-native so your data is yours.</p>
-      </div>
-      <div>
-        <h4>No subscriptions</h4>
-        <p>Pay once, use forever. Optional bundles if you want more.</p>
-      </div>
-      <div>
-        <h4>Instant delivery</h4>
-        <p>Stripe → email with file links via Zapier. Start today.</p>
-      </div>
     </div>
   </section>
 </main>
