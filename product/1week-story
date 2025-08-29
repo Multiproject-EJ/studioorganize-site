@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1-Week Story Creator — StudioOrganize</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/">StudioOrganize</a>
+  <nav class="menu">
+    <a href="/products/">Products</a>
+
+    <div class="dropdown">
+      <button class="dropbtn">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+
+    <a href="/faq.html">FAQ</a>
+  </nav>
+</header>
+
+<main>
+  <section class="product-hero">
+    <div>
+      <h1>1-Week Story Creator</h1>
+      <p class="lead">Go from blank page to a complete short story or script outline in just 7 days — guided by structured daily prompts inside Google Sheets.</p>
+      <div class="price-row">
+        <span class="price">€49</span>
+        <!-- Replace with your Stripe link -->
+        <a class="btn btn-primary" href="https://buy.stripe.com/test_STORY">Buy Now</a>
+        <a class="btn btn-ghost" href="#features">See how it works</a>
+      </div>
+      <p class="mini muted">One-time purchase. Instant email delivery.</p>
+    </div>
+    <div class="mockup-card mockup-card--xl">
+      <div class="mockup-bar"></div>
+      <img src="/assets/img/1weekstory_mock.png" alt="1-Week Story Creator preview"/>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <h2>How it works</h2>
+    <div class="grid features tight">
+      <div><h4>Day 1 — Idea Generation</h4><p>Drag-and-drop prompts and frameworks spark original concepts.</p></div>
+      <div><h4>Day 2 — Characters</h4><p>Build a roster: protagonist, antagonist, side characters.</p></div>
+      <div><h4>Day 3 — World & Setting</h4><p>Define locations, tone, rules, mood boards.</p></div>
+      <div><h4>Day 4 — Conflict & Arcs</h4><p>Map goals, flaws, and turning points.</p></div>
+      <div><h4>Day 5 — Beat Sheet</h4><p>Lay out a clear 3-act or Hero’s Journey structure.</p></div>
+      <div><h4>Day 6 — Scene List</h4><p>Create scenes from beats; link to characters/locations.</p></div>
+      <div><h4>Day 7 — Final Output</h4><p>Auto-compile your story outline; export PDF ready to pitch.</p></div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <h2>What you get</h2>
+    <table class="feat-table">
+      <tr><th>File</th><th>Description</th></tr>
+      <tr><td>Google Sheet (Daily Modules)</td><td>7 tabs, each guiding one step of the process</td></tr>
+      <tr><td>Prompts Library</td><td>Drag-and-drop keywords, frameworks, inspiration sets</td></tr>
+      <tr><td>Setup Guide</td><td>Quick start + daily checklist</td></tr>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>FAQ</h2>
+    <details><summary>How much time per day?</summary><p>Plan for 30–60 minutes daily. The system is built for creative momentum, not overwhelm.</p></details>
+    <details><summary>Can I use it multiple times?</summary><p>Yes — duplicate the file to run new 7-day projects again and again.</p></details>
+    <details><summary>Do I need writing experience?</summary><p>No — it guides beginners and speeds up pros. The goal is structure + creativity combined.</p></details>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div><strong>StudioOrganize</strong></div>
+    <div><a href="/faq.html">FAQ</a></div>
+    <div><a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br/><span class="muted">© <span id="y"></span> StudioOrganize</span></div>
+  </div>
+</footer>
+<script src="/assets/main.js"></script>
+</body>
+</html>
