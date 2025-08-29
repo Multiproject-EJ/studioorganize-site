@@ -9,7 +9,23 @@
 <body>
 <header class="nav">
   <a class="brand" href="/">StudioOrganize</a>
-  <nav><a href="/">Home</a><a href="/about.html">About</a><a href="/faq.html">FAQ</a></nav>
+  <nav class="menu">
+    <a href="/">Home</a>
+
+    <div class="dropdown">
+      <button class="dropbtn">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+
+    <a href="/about.html">About</a>
+    <a href="/faq.html">FAQ</a>
+  </nav>
 </header>
 
 <main class="section">
@@ -18,8 +34,14 @@
   <h2>🎬 Creative Tools</h2>
   <div class="grid cards">
     <a class="card card--lg" href="/product/studioorganize.html">
-      <h3>StudioOrganize Spreadsheet (Hero)</h3>
+      <h3>StudioOrganize Spreadsheet</h3>
       <p>Scene/character DB, stripboard, call sheets, exports.</p>
+      <span class="arrow">View →</span>
+    </a>
+
+    <a class="card card--lg" href="/product/1week-story.html">
+      <h3>1-Week Story Creator</h3>
+      <p>A guided 7-day system to generate, structure, and draft a story.</p>
       <span class="arrow">View →</span>
     </a>
   </div>
