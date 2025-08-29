@@ -11,15 +11,27 @@
 <body>
 <header class="nav">
   <a class="brand" href="/">StudioOrganize</a>
-  <nav>
+  <nav class="menu">
     <a href="/products/">Products</a>
+
+    <div class="dropdown">
+      <button class="dropbtn">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+
     <a href="/about.html">About</a>
     <a href="/faq.html">FAQ</a>
   </nav>
 </header>
 
 <main>
-  <!-- HERO: STAR PRODUCT -->
+  <!-- HERO -->
   <section class="hero">
     <div class="hero__content">
       <h1>StudioOrganize Spreadsheet</h1>
@@ -48,7 +60,19 @@
     </div>
   </section>
 
-  <!-- SECONDARY: WORK BETTER -->
+  <!-- secondary highlight -->
+  <section class="section alt">
+    <h2>Also from StudioOrganize</h2>
+    <div class="grid cards">
+      <a class="card card--lg" href="/product/1week-story.html">
+        <h3>1-Week Story Creator</h3>
+        <p>A guided 7-day system to generate, structure, and draft a story.</p>
+        <span class="arrow">View →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- WORK BETTER -->
   <section class="section">
     <h2>Work Better — creator-friendly productivity</h2>
     <p class="muted">Complement your story tool with simple, effective systems.</p>
