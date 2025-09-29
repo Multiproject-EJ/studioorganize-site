@@ -582,16 +582,19 @@
       const editor = document.getElementById('editor');
       const children = Array.from(editor.childNodes);
       const normalized = [];
+      let changed = false;
+
       for (let n of children){
-        if (n.nodeType === 3){ // text
-          const txt = n.textContent.trim();
+        if (n.nodeType === 3){ // text node
           const div = document.createElement('div');
           div.className = 'line action';
           div.dataset.t = 'action';
-          div.textContent = txt;
+          div.textContent = (n.textContent || '').trim();
           normalized.push(div);
+          changed = true;
         } else if (n.nodeType === 1){ // element
           if (n.classList.contains('line')) {
+            if (!n.dataset.t) n.dataset.t = 'action';
             normalized.push(n);
           } else if (n.tagName === 'BR') {
             const div = document.createElement('div');
@@ -599,15 +602,20 @@
             div.dataset.t = 'action';
             div.textContent = '';
             normalized.push(div);
+            changed = true;
           } else {
             const div = document.createElement('div');
             div.className = 'line action';
             div.dataset.t = 'action';
             div.textContent = n.textContent || '';
             normalized.push(div);
+            changed = true;
           }
         }
       }
+
+      if (!changed && normalized.length === children.length) return;
+
       editor.innerHTML = '';
       normalized.forEach(d=>editor.appendChild(d));
     }
