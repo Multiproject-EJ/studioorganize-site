@@ -69,6 +69,28 @@
       textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
       .row{display:flex; gap:8px}
       .counter{font-size:12px; color:var(--muted)}
+      .tab-header{display:flex; padding:8px; gap:6px; background:rgba(0,0,0,0.08); border-bottom:1px solid var(--ring)}
+      .tab-btn{flex:1; background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; font-size:12px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
+      .tab-btn.active{background:var(--acc); border-color:var(--acc); color:#0b0f14; font-weight:600}
+      .tab-panels{flex:1; display:flex; flex-direction:column; min-height:0}
+      .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
+      .tab-panel.active{display:flex}
+      .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
+      .tab-chip-group{display:flex; flex-wrap:wrap; gap:6px}
+      .tab-chip{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; font-size:12px; color:var(--ink); cursor:pointer}
+      .tab-chip:hover{border-color:var(--acc)}
+      .danger-btn{background:#7f1d1d; border:1px solid #b91c1c; color:#fff; border-radius:10px; padding:8px 10px; font-size:12px; cursor:pointer}
+      .danger-btn:disabled{opacity:0.5; cursor:not-allowed}
+      .catalog-list{display:flex; flex-direction:column; gap:6px}
+      .catalog-item{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--ring); border-radius:10px; padding:8px 10px}
+      .catalog-item span{font-size:13px}
+      .catalog-actions{display:flex; gap:6px}
+      .catalog-actions button{background:var(--chip); border:1px solid var(--ring); border-radius:8px; padding:4px 8px; font-size:11px; color:var(--ink); cursor:pointer}
+      .muted-text{color:var(--muted); font-size:12px}
+      .tab-divider{height:1px; background:var(--ring); margin:4px 0}
+      .sound-list{display:flex; flex-direction:column; gap:6px}
+      .sound-item{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--ring); border-radius:10px; padding:8px 10px}
+      .sound-item button{background:var(--chip); border:1px solid var(--ring); border-radius:8px; padding:4px 8px; font-size:11px; color:var(--ink); cursor:pointer}
 
       /* ==== Focus Mode ==== */
       body.focus-mode .layout{ grid-template-columns: 1fr; }
@@ -164,23 +186,95 @@
         </div>
 
         <div class="panel">
-          <h2>Notes &amp; Meta</h2>
-          <div class="notes">
-            <input id="projectTitle" placeholder="Project Title" />
-            <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
-            <div class="row">
-              <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
-              <input id="sceneColor" type="color" />
+          <div class="tab-header" id="rightTabBar">
+            <button class="tab-btn" data-tab-btn="write">Write</button>
+            <button class="tab-btn" data-tab-btn="characters">Characters</button>
+            <button class="tab-btn" data-tab-btn="set">Set</button>
+            <button class="tab-btn" data-tab-btn="sound">Sound</button>
+            <button class="tab-btn" data-tab-btn="stats">Stats</button>
+          </div>
+          <div class="tab-panels">
+            <div class="tab-panel" data-tab="write" id="tabWrite">
+              <div>
+                <h3>Scene Slug</h3>
+                <div class="tab-chip-group">
+                  <button class="tab-chip" data-slug-prefix="INT.">INT</button>
+                  <button class="tab-chip" data-slug-prefix="EXT.">EXT</button>
+                  <button class="tab-chip" data-slug-prefix="INT-EXT.">INT-EXT</button>
+                </div>
+                <div class="tab-chip-group">
+                  <button class="tab-chip" data-slug-suffix="DAY">DAY</button>
+                  <button class="tab-chip" data-slug-suffix="NIGHT">NIGHT</button>
+                </div>
+              </div>
+              <div class="tab-divider"></div>
+              <div>
+                <h3>Insert Line</h3>
+                <div class="tab-chip-group">
+                  <button class="tab-chip" data-line-type="slug">Slug</button>
+                  <button class="tab-chip" data-line-type="action">Action</button>
+                  <button class="tab-chip" data-line-type="character">Character</button>
+                  <button class="tab-chip" data-line-type="parenthetical">Parenthetical</button>
+                  <button class="tab-chip" data-line-type="dialogue">Dialogue</button>
+                  <button class="tab-chip" data-line-type="transition">Transition</button>
+                </div>
+              </div>
+              <div class="tab-divider"></div>
+              <div>
+                <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
+              </div>
             </div>
-            <div class="row">
-              <select id="smartFormat">
-                <option value="true">Smart format: ON</option>
-                <option value="false">Smart format: OFF</option>
-              </select>
-              <select id="themeSel">
-                <option value="dark">Theme: Dark</option>
-                <option value="light">Theme: Light</option>
-              </select>
+            <div class="tab-panel" data-tab="characters" id="tabCharacters">
+              <div>
+                <h3>Characters</h3>
+                <div class="catalog-list" id="characterList"></div>
+              </div>
+              <div class="row">
+                <input id="newCharacterName" placeholder="Add character" />
+                <button class="btn" id="addCharacterBtn">Add</button>
+              </div>
+              <p class="muted-text">Tap a name to insert it as a CHARACTER line.</p>
+            </div>
+            <div class="tab-panel" data-tab="set" id="tabSet">
+              <div>
+                <h3>Locations</h3>
+                <div class="catalog-list" id="setList"></div>
+              </div>
+              <div class="row">
+                <input id="newSetName" placeholder="Add location" />
+                <button class="btn" id="addSetBtn">Add</button>
+              </div>
+            </div>
+            <div class="tab-panel" data-tab="sound" id="tabSound">
+              <div>
+                <h3>Sound Cues</h3>
+                <div class="sound-list" id="soundList"></div>
+              </div>
+              <div class="row">
+                <input id="newSoundCue" placeholder="Add sound cue" />
+                <button class="btn" id="addSoundBtn">Add</button>
+              </div>
+            </div>
+            <div class="tab-panel" data-tab="stats" id="tabStats">
+              <h2>Notes &amp; Meta</h2>
+              <div class="notes">
+                <input id="projectTitle" placeholder="Project Title" />
+                <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
+                <div class="row">
+                  <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
+                  <input id="sceneColor" type="color" />
+                </div>
+                <div class="row">
+                  <select id="smartFormat">
+                    <option value="true">Smart format: ON</option>
+                    <option value="false">Smart format: OFF</option>
+                  </select>
+                  <select id="themeSel">
+                    <option value="dark">Theme: Dark</option>
+                    <option value="light">Theme: Light</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -259,6 +353,12 @@
     let backupTimer = null;
     let lastSerializedMetaHash = '';
 
+    const RIGHT_TAB_KEY = 'SW_RIGHT_TAB';
+    let activeRightTab = (()=>{
+      try { return localStorage.getItem(RIGHT_TAB_KEY) || 'stats'; }
+      catch(e){ return 'stats'; }
+    })();
+
     /* =========================
      * Hashing (FNV-1a) & helpers
      * =======================*/
@@ -273,11 +373,60 @@
     function stableSceneString(s){
       return JSON.stringify({
         id: s.id, slug: s.slug,
-        elements: s.elements, color: s.color, notes: s.notes
+        elements: s.elements, color: s.color, notes: s.notes,
+        sounds: s.sounds
       });
     }
     function metaSignature(p){
       return JSON.stringify({ title:p.title, notes:p.notes, settings:p.settings });
+    }
+
+    function ensureProjectShape(){
+      project.catalogs = project.catalogs || {};
+      project.catalogs.characters = (project.catalogs.characters || []).map(item => {
+        if (typeof item === 'string') return { id: crypto.randomUUID(), name: item };
+        if (!item || typeof item !== 'object') return { id: crypto.randomUUID(), name: '' };
+        if (!item.id) item.id = crypto.randomUUID();
+        item.name = typeof item.name === 'string' ? item.name : '';
+        return item;
+      });
+      project.catalogs.locations = (project.catalogs.locations || []).map(item => {
+        if (typeof item === 'string') return { id: crypto.randomUUID(), name: item };
+        if (!item || typeof item !== 'object') return { id: crypto.randomUUID(), name: '' };
+        if (!item.id) item.id = crypto.randomUUID();
+        item.name = typeof item.name === 'string' ? item.name : '';
+        return item;
+      });
+      project.scenes = (project.scenes || []).map(scene => {
+        if (!Array.isArray(scene.cards)) scene.cards = [];
+        if (!Array.isArray(scene.elements)) scene.elements = [];
+        scene.sounds = (scene.sounds || []).map(sound => {
+          if (typeof sound === 'string') return { id: crypto.randomUUID(), cue: sound };
+          if (!sound || typeof sound !== 'object') return { id: crypto.randomUUID(), cue: '' };
+          if (!sound.id) sound.id = crypto.randomUUID();
+          sound.cue = typeof sound.cue === 'string' ? sound.cue : '';
+          return sound;
+        });
+        return scene;
+      });
+    }
+
+    function setRightTab(tab){
+      const allowed = ['write','characters','set','sound','stats'];
+      activeRightTab = allowed.includes(tab) ? tab : 'stats';
+      try { localStorage.setItem(RIGHT_TAB_KEY, activeRightTab); } catch(e){}
+      applyActiveTabUI();
+    }
+
+    function applyActiveTabUI(){
+      const allowed = ['write','characters','set','sound','stats'];
+      if (!allowed.includes(activeRightTab)) activeRightTab = 'stats';
+      document.querySelectorAll('[data-tab-btn]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tabBtn === activeRightTab);
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.tab === activeRightTab);
+      });
     }
 
     /* =========================
@@ -303,7 +452,8 @@
           cards: ['Opening image'],
           elements: [{t:'action', txt:'A room. Quiet.'}],
           color: '#5FA8FF',
-          notes: ''
+          notes: '',
+          sounds: []
         }],
         notes: '',
         _hashes: { scene: {} },
@@ -319,6 +469,7 @@
      * Rendering & UI
      * =======================*/
     function render(){
+      ensureProjectShape();
       document.getElementById('title').textContent = project.title || 'Untitled Project';
       document.getElementById('projectTitle').value = project.title || '';
       document.getElementById('projectNotes').value = project.notes || '';
@@ -347,8 +498,21 @@
 
       // right-side bindings
       const scene = getActiveScene();
-      document.getElementById('sceneSlug').value = scene?.slug || '';
-      document.getElementById('sceneColor').value = scene?.color || '#5FA8FF';
+      if (!scene){
+        document.getElementById('editor').innerHTML = '';
+        updateCounters();
+        updateHud();
+        updatePomodoroUI();
+        applyTheme();
+        renderCatalogs();
+        renderSoundList();
+        updateDeleteSceneButton();
+        applyActiveTabUI();
+        return;
+      }
+      if (!Array.isArray(scene.sounds)) scene.sounds = [];
+      document.getElementById('sceneSlug').value = scene.slug || '';
+      document.getElementById('sceneColor').value = scene.color || '#5FA8FF';
 
       // editor render
       const editor = document.getElementById('editor');
@@ -361,6 +525,10 @@
       updateHud();
       updatePomodoroUI();
       applyTheme();
+      renderCatalogs();
+      renderSoundList();
+      updateDeleteSceneButton();
+      applyActiveTabUI();
     }
 
     /* Keep child nodes as .line blocks */
@@ -398,6 +566,209 @@
       normalized.forEach(d=>editor.appendChild(d));
     }
 
+    function syncActiveScene(autoDetect = true){
+      const scene = getActiveScene();
+      if (!scene) return;
+      project.settings = project.settings || {};
+      normalizeEditorLines();
+      if (autoDetect && project.settings.smartFormat) autoDetectTypes();
+      const nodes = Array.from(document.querySelectorAll('#editor .line'));
+      scene.elements = nodes.map(n=>({ t:n.dataset.t || 'action', txt:n.textContent }));
+      updateSceneHash(scene);
+      bumpVersion();
+      updateCounters();
+      scheduleSave();
+      scheduleBackup();
+    }
+
+    function renderCatalogs(){
+      const charContainer = document.getElementById('characterList');
+      if (charContainer){
+        charContainer.innerHTML = '';
+        if (!project.catalogs.characters.length){
+          const empty = document.createElement('p');
+          empty.className = 'muted-text';
+          empty.textContent = 'No characters yet.';
+          charContainer.appendChild(empty);
+        } else {
+          project.catalogs.characters.forEach(char => {
+            const row = document.createElement('div');
+            row.className = 'catalog-item';
+            const name = document.createElement('span');
+            name.textContent = char.name || '';
+            const actions = document.createElement('div');
+            actions.className = 'catalog-actions';
+            const insertBtn = document.createElement('button');
+            insertBtn.textContent = 'Insert';
+            insertBtn.addEventListener('click', ()=>{
+              insertLine('character', char.name || '');
+              setRightTab('write');
+            });
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.addEventListener('click', ()=>{
+              removeCharacter(char.id);
+            });
+            actions.appendChild(insertBtn);
+            actions.appendChild(delBtn);
+            row.appendChild(name);
+            row.appendChild(actions);
+            charContainer.appendChild(row);
+          });
+        }
+      }
+
+      const setContainer = document.getElementById('setList');
+      if (setContainer){
+        setContainer.innerHTML = '';
+        if (!project.catalogs.locations.length){
+          const empty = document.createElement('p');
+          empty.className = 'muted-text';
+          empty.textContent = 'No locations yet.';
+          setContainer.appendChild(empty);
+        } else {
+          project.catalogs.locations.forEach(loc => {
+            const row = document.createElement('div');
+            row.className = 'catalog-item';
+            const name = document.createElement('span');
+            name.textContent = loc.name || '';
+            const actions = document.createElement('div');
+            actions.className = 'catalog-actions';
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.addEventListener('click', ()=>{
+              removeLocation(loc.id);
+            });
+            actions.appendChild(delBtn);
+            row.appendChild(name);
+            row.appendChild(actions);
+            setContainer.appendChild(row);
+          });
+        }
+      }
+    }
+
+    function renderSoundList(){
+      const container = document.getElementById('soundList');
+      if (!container) return;
+      container.innerHTML = '';
+      const scene = getActiveScene();
+      if (!scene){
+        const empty = document.createElement('p');
+        empty.className = 'muted-text';
+        empty.textContent = 'No scene selected.';
+        container.appendChild(empty);
+        return;
+      }
+      if (!scene.sounds.length){
+        const empty = document.createElement('p');
+        empty.className = 'muted-text';
+        empty.textContent = 'No sound cues yet.';
+        container.appendChild(empty);
+        return;
+      }
+      scene.sounds.forEach(sound => {
+        const row = document.createElement('div');
+        row.className = 'sound-item';
+        const label = document.createElement('span');
+        label.textContent = sound.cue || '';
+        const btn = document.createElement('button');
+        btn.textContent = 'Delete';
+        btn.addEventListener('click', ()=> removeSoundCue(sound.id));
+        row.appendChild(label);
+        row.appendChild(btn);
+        container.appendChild(row);
+      });
+    }
+
+    function updateDeleteSceneButton(){
+      const btn = document.getElementById('deleteSceneBtn');
+      if (btn) btn.disabled = project.scenes.length <= 1;
+    }
+
+    /* =========================
+     * Catalog helpers
+     * =======================*/
+    function addCharacter(name){
+      const trimmed = (name || '').trim();
+      if (!trimmed) return;
+      project.catalogs = project.catalogs || {};
+      project.catalogs.characters = project.catalogs.characters || [];
+      project.catalogs.characters.push({ id: crypto.randomUUID(), name: trimmed });
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      render();
+    }
+
+    function removeCharacter(id){
+      project.catalogs = project.catalogs || {};
+      project.catalogs.characters = (project.catalogs.characters || []).filter(c=>c.id !== id);
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      render();
+    }
+
+    function addLocation(name){
+      const trimmed = (name || '').trim();
+      if (!trimmed) return;
+      project.catalogs = project.catalogs || {};
+      project.catalogs.locations = project.catalogs.locations || [];
+      project.catalogs.locations.push({ id: crypto.randomUUID(), name: trimmed });
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      render();
+    }
+
+    function removeLocation(id){
+      project.catalogs = project.catalogs || {};
+      project.catalogs.locations = (project.catalogs.locations || []).filter(l=>l.id !== id);
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      render();
+    }
+
+    function addSoundCue(text){
+      const scene = getActiveScene();
+      if (!scene) return;
+      const trimmed = (text || '').trim();
+      if (!trimmed) return;
+      scene.sounds = scene.sounds || [];
+      scene.sounds.push({ id: crypto.randomUUID(), cue: trimmed });
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      render();
+    }
+
+    function removeSoundCue(id){
+      const scene = getActiveScene();
+      if (!scene) return;
+      scene.sounds = (scene.sounds || []).filter(s=>s.id !== id);
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      render();
+    }
+
+    function setSceneSlugPart(kind, value){
+      const input = document.getElementById('sceneSlug');
+      const scene = getActiveScene();
+      if (!input || !scene) return;
+      const upperValue = (value || '').toUpperCase();
+      let slug = (input.value || scene.slug || '').toUpperCase();
+      if (kind === 'prefix'){
+        slug = slug.replace(/^(INT\.|EXT\.|INT-EXT\.|INT\/EXT\.)\s*/, '');
+        slug = slug.replace(/^\s+/, '');
+        slug = `${upperValue} ${slug}`.trim();
+      } else if (kind === 'suffix'){
+        slug = slug.replace(/\s*-\s*(DAY|NIGHT)$/i, '').trim();
+        slug = slug ? `${slug} - ${upperValue}` : upperValue;
+      }
+      slug = slug.replace(/\s+/g, ' ').trim();
+      input.value = slug;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     /* =========================
      * Scene helpers
      * =======================*/
@@ -409,7 +780,8 @@
         cards: [],
         elements: [{t:'action', txt:'...'}],
         color: '#8ab4f8',
-        notes: ''
+        notes: '',
+        sounds: []
       };
       project.scenes.push(s);
       project._hashes.scene[s.id] = hashString(stableSceneString(s));
@@ -423,6 +795,10 @@
       if (idx >= 0) {
         project.scenes.splice(idx,1);
         delete project._hashes.scene[id];
+        if (!project.scenes.length){
+          addScene();
+          return;
+        }
         if (activeSceneId === id) activeSceneId = project.scenes[0]?.id || null;
         bumpVersion(); render(); scheduleSave(); scheduleBackup();
       }
@@ -502,16 +878,40 @@
       editor.scrollTop += delta;
     }
 
+    function placeCaret(node){
+      if (!node) return;
+      const editor = document.getElementById('editor');
+      if (editor) editor.focus();
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      range.collapse(false);
+      const sel = window.getSelection();
+      if (!sel) return;
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    function insertLine(type, preset=''){
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      const node = document.createElement('div');
+      node.className = 'line ' + type;
+      node.dataset.t = type;
+      let text = preset || '';
+      if (type === 'character' && text) text = text.toUpperCase();
+      if (text) node.textContent = text;
+      else node.innerHTML = '<br>';
+      const active = getActiveLineNode();
+      if (active && active.parentElement === editor) active.after(node);
+      else editor.appendChild(node);
+      placeCaret(node);
+      syncActiveScene(false);
+      markActiveLine();
+      if (document.body.classList.contains('focus-mode')) centerActiveLine();
+    }
+
     document.getElementById('editor').addEventListener('input', ()=>{
-      normalizeEditorLines();
-      const scene = getActiveScene();
-      const nodes = Array.from(document.querySelectorAll('#editor .line'));
-      scene.elements = nodes.map(n=>({ t:n.dataset.t || 'action', txt:n.textContent }));
-      if (project.settings.smartFormat) autoDetectTypes();
-      updateSceneHash(scene);
-      bumpVersion();
-      updateCounters();
-      scheduleSave(); scheduleBackup();
+      syncActiveScene();
       markActiveLine();
       if (document.body.classList.contains('focus-mode')) centerActiveLine();
     });
@@ -519,13 +919,7 @@
     document.getElementById('editor').addEventListener('keydown', (e)=>{
       if (e.key === 'Enter') {
         setTimeout(()=>{
-          normalizeEditorLines();
-          if (project.settings.smartFormat) autoDetectTypes();
-          const scene = getActiveScene();
-          const nodes = Array.from(document.querySelectorAll('#editor .line'));
-          scene.elements = nodes.map(n=>({ t:n.dataset.t || 'action', txt:n.textContent }));
-          updateSceneHash(scene);
-          bumpVersion(); scheduleSave(); scheduleBackup();
+          syncActiveScene();
           markActiveLine();
           if (document.body.classList.contains('focus-mode')) centerActiveLine();
         }, 0);
@@ -543,7 +937,7 @@
       nodes.forEach(n=>{
         const text = (n.textContent||'').trim();
         let t = n.dataset.t;
-        if (/^(INT|EXT|INT\/EXT)\./i.test(text)) t = 'slug';
+        if (/^(INT|EXT|INT\/EXT|INT-EXT)\./i.test(text)) t = 'slug';
         else if (/^[A-Z0-9 .'-]{2,}$/.test(text) && text.length < 40) t = 'character';
         else if (/^\(.+\)$/.test(text)) t = 'parenthetical';
         else if (/^(CUT TO:|FADE OUT\.?|FADE IN\.?|SMASH CUT:|DISSOLVE TO:)/i.test(text)) t = 'transition';
@@ -556,6 +950,60 @@
     /* =========================
      * Notes + meta bindings
      * =======================*/
+    document.querySelectorAll('[data-tab-btn]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setRightTab(btn.dataset.tabBtn));
+    });
+    document.querySelectorAll('[data-slug-prefix]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setSceneSlugPart('prefix', btn.dataset.slugPrefix));
+    });
+    document.querySelectorAll('[data-slug-suffix]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setSceneSlugPart('suffix', btn.dataset.slugSuffix));
+    });
+    document.querySelectorAll('[data-line-type]').forEach(btn=>{
+      btn.addEventListener('click', ()=> insertLine(btn.dataset.lineType));
+    });
+    const deleteSceneBtn = document.getElementById('deleteSceneBtn');
+    if (deleteSceneBtn){
+      deleteSceneBtn.addEventListener('click', ()=>{
+        if (project.scenes.length <= 1) return;
+        const scene = getActiveScene();
+        const ok = confirm(`Delete scene "${scene?.slug || 'Untitled Scene'}"?`);
+        if (ok) deleteScene(activeSceneId);
+      });
+    }
+    const addCharacterBtn = document.getElementById('addCharacterBtn');
+    if (addCharacterBtn){
+      addCharacterBtn.addEventListener('click', ()=>{
+        const input = document.getElementById('newCharacterName');
+        const value = input.value;
+        addCharacter(value);
+        const fresh = document.getElementById('newCharacterName');
+        if (fresh){ fresh.value = ''; fresh.focus(); }
+      });
+    }
+    const addSetBtn = document.getElementById('addSetBtn');
+    if (addSetBtn){
+      addSetBtn.addEventListener('click', ()=>{
+        const input = document.getElementById('newSetName');
+        const value = input.value;
+        addLocation(value);
+        const fresh = document.getElementById('newSetName');
+        if (fresh){ fresh.value = ''; fresh.focus(); }
+      });
+    }
+    const addSoundBtn = document.getElementById('addSoundBtn');
+    if (addSoundBtn){
+      addSoundBtn.addEventListener('click', ()=>{
+        const input = document.getElementById('newSoundCue');
+        const value = input.value;
+        addSoundCue(value);
+        const fresh = document.getElementById('newSoundCue');
+        if (fresh){ fresh.value = ''; fresh.focus(); }
+      });
+    }
+
+    applyActiveTabUI();
+
     document.getElementById('projectTitle').addEventListener('input', e=>{
       project.title = e.target.value;
       document.getElementById('title').textContent = project.title || 'Untitled Project';
