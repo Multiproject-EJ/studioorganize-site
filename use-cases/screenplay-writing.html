@@ -33,6 +33,949 @@
   </header>
 
   <main class="section">
+    <style>
+      :root{
+        --bg:#0b0f14; --panel:#121821; --ink:#eaf2ff; --muted:#9fb3c8; --acc:#5FA8FF; --card:#0f1520; --ring:#1f2a3a;
+        /* theme-aware tokens */
+        --field:#0e1420; /* inputs, textareas, selects */
+        --chip:#1a2433;  /* buttons, pills */
+        --hud:#0f1520;   /* focus HUD surface */
+        --dial:#0b0f14;  /* inner dial for pomo */
+        --progressTrack:#222a3a; /* unfilled ring track */
+      }
+      html,body{height:100%; margin:0; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+      body{background:var(--bg); color:var(--ink)}
+      .app{display:grid; grid-template-rows:56px 1fr; height:100%}
+      .topbar{display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--ring)}
+      .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
+      .spacer{flex:1}
+      .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
+      .layout{display:grid; grid-template-columns:280px 1fr 320px; gap:10px; padding:10px; height:100%}
+      .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
+      .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
+      .scenes{overflow:auto; padding:8px}
+      .scene-card{background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer}
+      .scene-card.active{outline:2px solid var(--acc)}
+      .scene-card small{color:var(--muted)}
+      .editor{padding:0; display:flex; flex-direction:column; min-height:0}
+      .editor-area{flex:1; overflow:auto; padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none}
+      .line{margin:6px 0}
+      .line.slug{letter-spacing:.4px; font-weight:700}
+      .line.character{text-transform:uppercase; margin-top:14px; margin-bottom:2px}
+      .line.parenthetical{margin-left:30px; font-style:italic}
+      .line.dialogue{margin-left:30px; max-width:60ch}
+      .line.transition{text-align:right; letter-spacing:.2px}
+      .notes{padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto}
+      textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
+      .row{display:flex; gap:8px}
+      .counter{font-size:12px; color:var(--muted)}
+
+      /* ==== Focus Mode ==== */
+      body.focus-mode .layout{ grid-template-columns: 1fr; }
+      body.focus-mode .layout .panel:first-child,
+      body.focus-mode .layout .panel:last-child{ display:none !important; }
+      body.focus-mode .editor-area{
+        max-width: 68ch;
+        margin: 0 auto;
+        padding: 48px 24px;
+        font-size: 17px;
+        line-height: 1.7;
+      }
+      body.focus-mode .topbar .non-essential{ display:none !important; }
+
+      /* Line highlight */
+      .line.active{ background: rgba(255,255,255,0.05); border-radius: 8px; padding: 2px 6px; }
+      body.focus-mode .line.active{ background: rgba(95,168,255,0.12); }
+
+      /* Bottom HUD visible only in focus mode */
+      #focusHud{
+        position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+        background: var(--hud); border: 1px solid var(--ring); border-radius: 12px;
+        padding: 8px 12px; display: none; gap: 8px; align-items: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 9999;
+      }
+      body.focus-mode #focusHud{ display:flex; }
+      #focusHud .hud-text{ font-size:12px; color: var(--muted); white-space:nowrap }
+      #focusHud select, #focusHud button{background:var(--chip); color:var(--ink); border:1px solid var(--ring);
+        border-radius:10px; padding:6px 10px; font-size:12px; cursor:pointer
+      }
+
+      /* ==== Pomodoro (Focus HUD) ==== */
+      #focusHud .pomo-chip{display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:10px;
+        background:var(--chip); border:1px solid var(--ring);
+      }
+      .pomo-ring{
+        --pct: 0; /* 0..100 */
+        width:44px; height:44px; border-radius:50%;
+        background: conic-gradient(var(--acc) calc(var(--pct)*1%), var(--progressTrack) 0);
+        display:grid; place-items:center;
+      }
+      .pomo-dial{
+        width:34px; height:34px; border-radius:50%;
+        display:grid; place-items:center;
+        background:var(--dial); font-size:11px; letter-spacing:0.3px;
+        color:var(--ink); border:1px solid var(--ring);
+      }
+      .pomo-meta{ display:flex; flex-direction:column; line-height:1.15 }
+      .pomo-mode{ font-size:11px; color:var(--muted) }
+      .pomo-controls{ display:flex; gap:6px }
+      .pomo-btn{
+        background:var(--chip); color:var(--ink); border:1px solid var(--ring);
+        border-radius:10px; padding:4px 8px; font-size:12px; cursor:pointer;
+      }
+
+      /* Print to PDF: keep only the script */
+      @media print{
+        .topbar, .layout .panel:first-child, .layout .panel:last-child, #focusHud{ display:none !important; }
+        .layout{ grid-template-columns: 1fr; }
+        .editor-area{ max-width: 70ch; margin:0 auto; }
+        body{ background:#fff; color:#000; }
+        .panel{ border:none }
+      }
+    </style>
+    <div class="app">
+      <div class="topbar">
+        <h1 id="title">Untitled Project</h1>
+        <span class="counter" id="counter">0 pages • 0 words</span>
+        <div class="spacer"></div>
+
+        <!-- non-essential buttons collapse in focus mode -->
+        <button class="btn non-essential" onclick="exportFountain()">Export Fountain</button>
+        <button class="btn non-essential" onclick="printPDF()">Export PDF</button>
+        <button class="btn non-essential" onclick="backupNow()">Backup Now</button>
+        <button class="btn non-essential" onclick="openRestore()">Restore…</button>
+
+        <!-- Focus toggle -->
+        <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
+      </div>
+
+      <div class="layout">
+        <div class="panel">
+          <h2 style="display:flex;align-items:center;justify-content:space-between;margin-right:8px">
+            Scenes
+            <button class="btn" style="padding:4px 8px" onclick="addScene()">+ Scene</button>
+          </h2>
+          <div id="sceneList" class="scenes"></div>
+        </div>
+
+        <div class="panel editor">
+          <h2>Script</h2>
+          <div id="editor" class="editor-area" contenteditable="true"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Notes &amp; Meta</h2>
+          <div class="notes">
+            <input id="projectTitle" placeholder="Project Title" />
+            <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
+            <div class="row">
+              <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
+              <input id="sceneColor" type="color" />
+            </div>
+            <div class="row">
+              <select id="smartFormat">
+                <option value="true">Smart format: ON</option>
+                <option value="false">Smart format: OFF</option>
+              </select>
+              <select id="themeSel">
+                <option value="dark">Theme: Dark</option>
+                <option value="light">Theme: Light</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minimal HUD for focus mode -->
+    <div id="focusHud">
+      <span class="hud-text" id="hudCounter">0 pages • 0 words</span>
+      <select id="hudScenePicker" onchange="pickSceneFromHud(this.value)"></select>
+
+      <div class="pomo-chip">
+        <div class="pomo-ring"><div class="pomo-dial" id="pomoTime">25:00</div></div>
+        <div class="pomo-meta">
+          <div class="pomo-mode" id="pomoMode">Work</div>
+          <div class="pomo-controls">
+            <button class="pomo-btn" id="pomoToggle" onclick="togglePomodoro()">Start</button>
+            <button class="pomo-btn" onclick="resetPomodoro()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="addScene()">+ Scene</button>
+      <button onclick="toggleFocus()">Exit Focus</button>
+    </div>
+
+    <script>
+    /* =========================
+     * IndexedDB minimal wrapper
+     * =======================*/
+    const DB_NAME = 'sw_db_v1';
+    const STORE = 'projects';
+    let db;
+
+    function openDB(){
+      return new Promise((resolve, reject)=>{
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const idb = e.target.result;
+          if(!idb.objectStoreNames.contains(STORE)){
+            idb.createObjectStore(STORE, { keyPath: 'projectId' });
+          }
+        };
+        req.onsuccess = e => { db = e.target.result; resolve(); };
+        req.onerror = e => reject(e);
+      });
+    }
+    function saveLocal(project){
+      return new Promise((resolve,reject)=>{
+        const tx = db.transaction([STORE],'readwrite');
+        tx.objectStore(STORE).put(project);
+        tx.oncomplete = resolve;
+        tx.onerror = reject;
+      });
+    }
+    function loadLocal(projectId){
+      return new Promise((resolve,reject)=>{
+        const tx = db.transaction([STORE],'readonly');
+        const req = tx.objectStore(STORE).get(projectId);
+        req.onsuccess = ()=> resolve(req.result || null);
+        req.onerror = reject;
+      });
+    }
+
+    /* =========================
+     * State & Config
+     * =======================*/
+    let project = null;
+    let activeSceneId = null;
+    let saveTimer = null;
+
+    const BACKUP_IDLE_MS = 120000;   // 2 min idle → auto backup
+    const FULL_SNAPSHOT_EVERY = 10;  // every 10 deltas
+    const MAX_DELTA_BYTES = 128 * 1024;
+
+    let backupTimer = null;
+    let lastSerializedMetaHash = '';
+
+    /* =========================
+     * Hashing (FNV-1a) & helpers
+     * =======================*/
+    function hashString(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(16);
+    }
+    function stableSceneString(s){
+      return JSON.stringify({
+        id: s.id, slug: s.slug,
+        elements: s.elements, color: s.color, notes: s.notes
+      });
+    }
+    function metaSignature(p){
+      return JSON.stringify({ title:p.title, notes:p.notes, settings:p.settings });
+    }
+
+    /* =========================
+     * Project creation / load
+     * =======================*/
+    function getLastProjectId(){ try { return localStorage.getItem('SW_LAST_PROJECT_ID'); } catch(e){ return null; } }
+    function setLastProjectId(id){ try { localStorage.setItem('SW_LAST_PROJECT_ID', id); } catch(e){} }
+
+    function newProject(){
+      const pid = crypto.randomUUID();
+      project = {
+        projectId: pid,
+        title: 'Untitled Project',
+        format: 'screenplay/v1',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        version: 1,
+        settings: { theme:'dark', smartFormat:true, pageWidth:60, focus:false, pomodoro: undefined },
+        catalogs: { characters:[], locations:[] },
+        scenes: [{
+          id: crypto.randomUUID(),
+          slug: 'INT. HOUSE - DAY',
+          cards: ['Opening image'],
+          elements: [{t:'action', txt:'A room. Quiet.'}],
+          color: '#5FA8FF',
+          notes: ''
+        }],
+        notes: '',
+        _hashes: { scene: {} },
+        _lastBackedUpVersion: 0,
+        _deltaCountSinceFull: 0
+      };
+      project.scenes.forEach(s => { project._hashes.scene[s.id] = hashString(stableSceneString(s)); });
+      activeSceneId = project.scenes[0].id;
+      setLastProjectId(pid);
+    }
+
+    /* =========================
+     * Rendering & UI
+     * =======================*/
+    function render(){
+      document.getElementById('title').textContent = project.title || 'Untitled Project';
+      document.getElementById('projectTitle').value = project.title || '';
+      document.getElementById('projectNotes').value = project.notes || '';
+      const smartSel = document.getElementById('smartFormat');
+      if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
+      const themeSel = document.getElementById('themeSel');
+      if (themeSel) themeSel.value = project.settings.theme || 'dark';
+
+      // scenes list
+      const list = document.getElementById('sceneList');
+      list.innerHTML = '';
+      project.scenes.forEach((s, idx)=>{
+        const div = document.createElement('div');
+        div.className = 'scene-card' + (s.id===activeSceneId ? ' active':'');
+        div.onclick = ()=>{ activeSceneId = s.id; render(); };
+        div.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div>
+              <strong>${escapeHtml(s.slug || '(no slug)')}</strong><br/>
+              <small>Scene ${idx+1}</small>
+            </div>
+            <span title="Color" style="width:12px;height:12px;border-radius:50%;background:${s.color||'#5FA8FF'}"></span>
+          </div>`;
+        list.appendChild(div);
+      });
+
+      // right-side bindings
+      const scene = getActiveScene();
+      document.getElementById('sceneSlug').value = scene?.slug || '';
+      document.getElementById('sceneColor').value = scene?.color || '#5FA8FF';
+
+      // editor render
+      const editor = document.getElementById('editor');
+      editor.innerHTML = scene.elements.map(el=>{
+        return `<div class="line ${el.t}" data-t="${el.t}">${escapeHtml(el.txt)}</div>`;
+      }).join('');
+      normalizeEditorLines(); // ensure structure
+
+      updateCounters();
+      updateHud();
+      updatePomodoroUI();
+      applyTheme();
+    }
+
+    /* Keep child nodes as .line blocks */
+    function normalizeEditorLines(){
+      const editor = document.getElementById('editor');
+      const children = Array.from(editor.childNodes);
+      const normalized = [];
+      for (let n of children){
+        if (n.nodeType === 3){ // text
+          const txt = n.textContent.trim();
+          const div = document.createElement('div');
+          div.className = 'line action';
+          div.dataset.t = 'action';
+          div.textContent = txt;
+          normalized.push(div);
+        } else if (n.nodeType === 1){ // element
+          if (n.classList.contains('line')) {
+            normalized.push(n);
+          } else if (n.tagName === 'BR') {
+            const div = document.createElement('div');
+            div.className = 'line action';
+            div.dataset.t = 'action';
+            div.textContent = '';
+            normalized.push(div);
+          } else {
+            const div = document.createElement('div');
+            div.className = 'line action';
+            div.dataset.t = 'action';
+            div.textContent = n.textContent || '';
+            normalized.push(div);
+          }
+        }
+      }
+      editor.innerHTML = '';
+      normalized.forEach(d=>editor.appendChild(d));
+    }
+
+    /* =========================
+     * Scene helpers
+     * =======================*/
+    function getActiveScene(){ return project.scenes.find(s=>s.id===activeSceneId); }
+    function addScene(){
+      const s = {
+        id: crypto.randomUUID(),
+        slug: 'EXT. NEW PLACE - DAY',
+        cards: [],
+        elements: [{t:'action', txt:'...'}],
+        color: '#8ab4f8',
+        notes: ''
+      };
+      project.scenes.push(s);
+      project._hashes.scene[s.id] = hashString(stableSceneString(s));
+      activeSceneId = s.id;
+      bumpVersion();
+      render();
+      scheduleSave(); scheduleBackup();
+    }
+    function deleteScene(id){
+      const idx = project.scenes.findIndex(s=>s.id===id);
+      if (idx >= 0) {
+        project.scenes.splice(idx,1);
+        delete project._hashes.scene[id];
+        if (activeSceneId === id) activeSceneId = project.scenes[0]?.id || null;
+        bumpVersion(); render(); scheduleSave(); scheduleBackup();
+      }
+    }
+    function updateSceneHash(scene){
+      project._hashes = project._hashes || { scene: {} };
+      project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
+    }
+
+    /* =========================
+     * Counters & Utilities
+     * =======================*/
+    function updateCounters(){
+      const text = project.scenes.flatMap(s=>s.elements.map(e=>e.txt)).join(' ');
+      const words = (text.match(/\b\w+\b/g)||[]).length;
+      const lines = project.scenes.reduce((acc,s)=>acc + s.elements.length, 0);
+      const pages = Math.max(1, Math.round(lines / 55));
+      document.getElementById('counter').textContent = `${pages} pages • ${words} words`;
+    }
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m])); }
+
+    /* Theme */
+    function applyTheme(){
+      const theme = project.settings.theme || 'dark';
+      if (theme === 'light'){
+        document.documentElement.style.setProperty('--bg','#f7f9fc');
+        document.documentElement.style.setProperty('--panel','#ffffff');
+        document.documentElement.style.setProperty('--ink','#0b1220');
+        document.documentElement.style.setProperty('--muted','#44566c');
+        document.documentElement.style.setProperty('--card','#ffffff');
+        document.documentElement.style.setProperty('--ring','#e2e8f0');
+        document.documentElement.style.setProperty('--field','#f1f5f9');
+        document.documentElement.style.setProperty('--chip','#eef2f7');
+        document.documentElement.style.setProperty('--hud','#ffffff');
+        document.documentElement.style.setProperty('--dial','#ffffff');
+        document.documentElement.style.setProperty('--progressTrack','#e5eaf1');
+      } else {
+        document.documentElement.style.setProperty('--bg','#0b0f14');
+        document.documentElement.style.setProperty('--panel','#121821');
+        document.documentElement.style.setProperty('--ink','#eaf2ff');
+        document.documentElement.style.setProperty('--muted','#9fb3c8');
+        document.documentElement.style.setProperty('--card','#0f1520');
+        document.documentElement.style.setProperty('--ring','#1f2a3a');
+        document.documentElement.style.setProperty('--field','#0e1420');
+        document.documentElement.style.setProperty('--chip','#1a2433');
+        document.documentElement.style.setProperty('--hud','#0f1520');
+        document.documentElement.style.setProperty('--dial','#0b0f14');
+        document.documentElement.style.setProperty('--progressTrack','#222a3a');
+      }
+    }
+
+    /* =========================
+     * Editor interactions
+     * =======================*/
+    const editorEl = document.getElementById('editor');
+
+    function getActiveLineNode(){
+      const sel = window.getSelection();
+      if (!sel || !sel.anchorNode) return null;
+      let n = sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
+      return n?.closest?.('.line') || null;
+    }
+    function markActiveLine(){
+      document.querySelectorAll('#editor .line.active').forEach(el=>el.classList.remove('active'));
+      const line = getActiveLineNode();
+      if (line) line.classList.add('active');
+    }
+    function centerActiveLine(){
+      const editor = document.getElementById('editor');
+      const line = getActiveLineNode();
+      if (!editor || !line) return;
+      const rect = line.getBoundingClientRect();
+      const parentRect = editor.getBoundingClientRect();
+      const lineMid = rect.top + rect.height/2;
+      const parentMid = parentRect.top + parentRect.height/2;
+      const delta = lineMid - parentMid;
+      editor.scrollTop += delta;
+    }
+
+    document.getElementById('editor').addEventListener('input', ()=>{
+      normalizeEditorLines();
+      const scene = getActiveScene();
+      const nodes = Array.from(document.querySelectorAll('#editor .line'));
+      scene.elements = nodes.map(n=>({ t:n.dataset.t || 'action', txt:n.textContent }));
+      if (project.settings.smartFormat) autoDetectTypes();
+      updateSceneHash(scene);
+      bumpVersion();
+      updateCounters();
+      scheduleSave(); scheduleBackup();
+      markActiveLine();
+      if (document.body.classList.contains('focus-mode')) centerActiveLine();
+    });
+
+    document.getElementById('editor').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') {
+        setTimeout(()=>{
+          normalizeEditorLines();
+          if (project.settings.smartFormat) autoDetectTypes();
+          const scene = getActiveScene();
+          const nodes = Array.from(document.querySelectorAll('#editor .line'));
+          scene.elements = nodes.map(n=>({ t:n.dataset.t || 'action', txt:n.textContent }));
+          updateSceneHash(scene);
+          bumpVersion(); scheduleSave(); scheduleBackup();
+          markActiveLine();
+          if (document.body.classList.contains('focus-mode')) centerActiveLine();
+        }, 0);
+      }
+    });
+
+    document.getElementById('editor').addEventListener('click', ()=>{
+      markActiveLine();
+      if (document.body.classList.contains('focus-mode')) centerActiveLine();
+    });
+
+    /* Auto type-detection */
+    function autoDetectTypes(){
+      const nodes = Array.from(document.querySelectorAll('#editor .line'));
+      nodes.forEach(n=>{
+        const text = (n.textContent||'').trim();
+        let t = n.dataset.t;
+        if (/^(INT|EXT|INT\/EXT)\./i.test(text)) t = 'slug';
+        else if (/^[A-Z0-9 .'-]{2,}$/.test(text) && text.length < 40) t = 'character';
+        else if (/^\(.+\)$/.test(text)) t = 'parenthetical';
+        else if (/^(CUT TO:|FADE OUT\.?|FADE IN\.?|SMASH CUT:|DISSOLVE TO:)/i.test(text)) t = 'transition';
+        else if (!t || ['slug','character','parenthetical','transition'].includes(t)) t = 'action';
+        n.className = 'line ' + t;
+        n.dataset.t = t;
+      });
+    }
+
+    /* =========================
+     * Notes + meta bindings
+     * =======================*/
+    document.getElementById('projectTitle').addEventListener('input', e=>{
+      project.title = e.target.value;
+      document.getElementById('title').textContent = project.title || 'Untitled Project';
+      bumpVersion(); scheduleSave(); scheduleBackup();
+    });
+    document.getElementById('projectNotes').addEventListener('input', e=>{
+      project.notes = e.target.value; bumpVersion(); scheduleSave(); scheduleBackup();
+    });
+    document.getElementById('sceneSlug').addEventListener('input', e=>{
+      const s = getActiveScene(); if (!s) return;
+      s.slug = e.target.value; bumpVersion(); updateSceneHash(s); render(); scheduleSave(); scheduleBackup();
+    });
+    document.getElementById('sceneColor').addEventListener('input', e=>{
+      const s = getActiveScene(); if (!s) return;
+      s.color = e.target.value; bumpVersion(); updateSceneHash(s); render(); scheduleSave(); scheduleBackup();
+    });
+    document.getElementById('smartFormat').addEventListener('change', e=>{
+      project.settings.smartFormat = (e.target.value === 'true');
+      bumpVersion(); scheduleSave();
+    });
+    document.getElementById('themeSel').addEventListener('change', e=>{
+      project.settings.theme = e.target.value || 'dark';
+      bumpVersion(); scheduleSave(); applyTheme();
+    });
+
+    /* =========================
+     * Export / Print
+     * =======================*/
+    function exportFountain(){
+      let out = `Title: ${project.title||''}\n\n`;
+      project.scenes.forEach(s=>{
+        if (s.slug) out += s.slug.toUpperCase() + '\n';
+        s.elements.forEach(el=>{
+          if (el.t==='character') out += '\n' + el.txt.toUpperCase() + '\n';
+          else if (el.t==='parenthetical') out += '('+el.txt+')\n';
+          else if (el.t==='dialogue') out += el.txt + '\n';
+          else if (el.t==='transition') out += '\n> '+el.txt.toUpperCase()+'\n';
+          else out += '\n'+el.txt+'\n';
+        });
+        out += '\n';
+      });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([out], {type:'text/plain'}));
+      a.download = (project.title||'script') + '.fountain';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    }
+    function printPDF(){ window.print(); }
+
+    /* =========================
+     * Smart backup (delta/full)
+     * =======================*/
+    function buildDeltaOrFull(){
+      const metaSig = metaSignature(project);
+      const metaChanged = metaSig !== lastSerializedMetaHash;
+
+      const known = project._hashes?.scene || {};
+      const currentIds = new Set(project.scenes.map(s=>s.id));
+      const upserts = [];
+      const deletes = [];
+
+      for (const s of project.scenes) {
+        const hNow = hashString(stableSceneString(s));
+        const hWas = known[s.id];
+        if (!hWas || hWas !== hNow) upserts.push(s);
+      }
+      for (const oldId of Object.keys(known)) {
+        if (!currentIds.has(oldId)) deletes.push(oldId);
+      }
+
+      const delta = {
+        projectId: project.projectId,
+        version: project.version,
+        meta: metaChanged ? { title: project.title, settings: project.settings, notes: project.notes } : undefined,
+        upserts: upserts.length ? upserts : undefined,
+        deletes: deletes.length ? deletes : undefined
+      };
+      const deltaStr = JSON.stringify(delta);
+      const deltaBytes = new Blob([deltaStr]).size;
+
+      const needFull =
+        project._deltaCountSinceFull >= FULL_SNAPSHOT_EVERY ||
+        deltaBytes > MAX_DELTA_BYTES ||
+        (project._lastBackedUpVersion === 0);
+
+      if (needFull) {
+        const fullData = structuredClone(project);
+        delete fullData._hashes;
+        delete fullData._lastBackedUpVersion;
+        delete fullData._deltaCountSinceFull;
+        const fullStr = JSON.stringify(fullData);
+        const fullBytes = new Blob([fullStr]).size;
+        return { kind: 'full', bytes: fullBytes, data: fullData, metaSig };
+      } else {
+        return { kind: 'delta', bytes: deltaBytes, data: delta, metaSig };
+      }
+    }
+
+    function scheduleSave(){
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async ()=>{
+        await saveLocal(project);
+      }, 500);
+    }
+
+    function scheduleBackup(){
+      clearTimeout(backupTimer);
+      backupTimer = setTimeout(backupSmart, BACKUP_IDLE_MS);
+    }
+
+    function backupSmart(){
+      // In Apps Script context this will exist; in canvas preview it won't.
+      if (!(window.google && google.script && google.script.run)) return;
+      const pack = buildDeltaOrFull();
+
+      google.script.run
+        .withSuccessHandler(res=>{
+          if (pack.kind === 'full') project._deltaCountSinceFull = 0;
+          else project._deltaCountSinceFull = (project._deltaCountSinceFull || 0) + 1;
+
+          project._lastBackedUpVersion = project.version;
+          lastSerializedMetaHash = pack.metaSig || lastSerializedMetaHash;
+
+          if (pack.kind === 'full') {
+            project._hashes.scene = {};
+            project.scenes.forEach(s=>{
+              project._hashes.scene[s.id] = hashString(stableSceneString(s));
+            });
+          } else {
+            (pack.data.upserts || []).forEach(s=>{
+              project._hashes.scene[s.id] = hashString(stableSceneString(s));
+            });
+            (pack.data.deletes || []).forEach(id=> delete project._hashes.scene[id]);
+          }
+          saveLocal(project);
+        })
+        .withFailureHandler(err=>{
+          console.error('Backup failed:', err);
+        })
+        .SW_backupProjectDelta({
+          projectId: project.projectId,
+          version: project.version,
+          kind: pack.kind,
+          bytes: pack.bytes,
+          data: pack.data
+        });
+    }
+
+    function backupNow(){ clearTimeout(backupTimer); backupSmart(); }
+
+    /* =========================
+     * Restore (client-side)
+     * =======================*/
+    function openRestore(){
+      if (!(window.google && google.script && google.script.run)) { alert('Restore unavailable outside Apps Script.'); return; }
+      google.script.run
+        .withSuccessHandler(rows=>{
+          if (!rows || !rows.length){ alert('No backups found.'); return; }
+          const preview = rows.slice(0, 20).map((r,i)=> `${i}. ${r.kind.toUpperCase()} • v${r.version} • ${r.timestamp}`).join('\n');
+          const choice = prompt('Choose entry # (0..19):\n' + preview, '0');
+          const idx = Number(choice);
+          if (isNaN(idx) || idx < 0 || idx >= Math.min(20, rows.length)) return;
+          const subset = rows.slice(0, idx+1); // 0 is newest
+          let fullIdx = -1;
+          for (let i = subset.length-1; i >= 0; i--) {
+            if (subset[i].kind === 'full'){ fullIdx = i; break; }
+          }
+          if (fullIdx === -1){ alert('No full snapshot found in selection window. Try choosing an older entry.'); return; }
+          let state = JSON.parse(subset[fullIdx].payloadJSON);
+          for (let i = fullIdx-1; i >= 0; i--){
+            const entry = subset[i];
+            if (entry.kind === 'delta') applyDeltaClient(state, JSON.parse(entry.payloadJSON));
+          }
+          project = state;
+          project._hashes = { scene: {} };
+          project.scenes.forEach(s => project._hashes.scene[s.id] = hashString(stableSceneString(s)));
+          project._lastBackedUpVersion = project.version || 0;
+          project._deltaCountSinceFull = 0;
+          lastSerializedMetaHash = metaSignature(project);
+          saveLocal(project);
+          activeSceneId = project.scenes[0]?.id || null;
+          render();
+          alert('Restored to version ' + (project.version || '?'));
+        })
+        .withFailureHandler(err=> alert('Failed to load backups: ' + err))
+        .SW_loadBackups(project.projectId, 200);
+    }
+
+    function applyDeltaClient(state, delta){
+      if (delta.meta) {
+        if (Object.prototype.hasOwnProperty.call(delta.meta, 'title')) state.title = delta.meta.title;
+        if (Object.prototype.hasOwnProperty.call(delta.meta, 'notes')) state.notes = delta.meta.notes;
+        if (delta.meta.settings) state.settings = Object.assign({}, state.settings || {}, delta.meta.settings);
+      }
+      const byId = new Map((state.scenes||[]).map(s => [s.id, s]));
+      (delta.upserts || []).forEach(s => byId.set(s.id, s));
+      (delta.deletes || []).forEach(id => byId.delete(id));
+      state.scenes = Array.from(byId.values());
+      if (typeof delta.version === 'number') state.version = Math.max(state.version || 0, delta.version);
+    }
+
+    /* =========================
+     * Focus Mode
+     * =======================*/
+    function applyFocusModeUI(){
+      const focused = !!project?.settings?.focus;
+      document.body.classList.toggle('focus-mode', focused);
+      const btn = document.getElementById('focusBtn');
+      if (btn) btn.textContent = focused ? 'Exit Focus' : 'Focus';
+      updateHud();
+      markActiveLine();
+      if (focused) centerActiveLine();
+    }
+    function toggleFocus(){
+      project.settings = project.settings || {};
+      project.settings.focus = !project.settings.focus;
+      saveLocal(project);
+      applyFocusModeUI();
+    }
+    function updateHud(){
+      const hudC = document.getElementById('hudCounter');
+      const hudSel = document.getElementById('hudScenePicker');
+      if (hudC) hudC.textContent = document.getElementById('counter')?.textContent || '';
+      if (hudSel){
+        hudSel.innerHTML = '';
+        project.scenes.forEach((s, i)=>{
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${String(i+1).padStart(2,'0')} • ${s.slug || '(no slug)'}`;
+          if (s.id === activeSceneId) opt.selected = true;
+          hudSel.appendChild(opt);
+        });
+      }
+    }
+    function pickSceneFromHud(sceneId){
+      if (!sceneId) return;
+      activeSceneId = sceneId;
+      render();
+      const hudSel = document.getElementById('hudScenePicker');
+      if (hudSel) hudSel.value = sceneId;
+      markActiveLine();
+      if (document.body.classList.contains('focus-mode')) centerActiveLine();
+    }
+
+    /* =========================
+     * Pomodoro (Focus HUD)
+     * =======================*/
+    const POMO_DEFAULTS = { workMin: 25, breakMin: 5, autoStartBreak: true, autoStartWork: false };
+    let pomo = { running: false, mode: 'work', endAt: 0, remainingMs: 25*60*1000, _timerId: null };
+
+    function ensurePomodoroSettings(){
+      project.settings = project.settings || {};
+      project.settings.pomodoro = Object.assign({}, POMO_DEFAULTS, project.settings.pomodoro || {});
+      if (!pomo || typeof pomo.remainingMs !== 'number') {
+        pomo = {
+          running: false, mode: 'work', endAt: 0,
+          remainingMs: project.settings.pomodoro.workMin * 60 * 1000,
+          _timerId: null
+        };
+      }
+    }
+    function fmtMMSS(ms){
+      ms = Math.max(0, ms|0);
+      const s = Math.round(ms/1000);
+      const mm = String(Math.floor(s/60)).padStart(2,'0');
+      const ss = String(s%60).padStart(2,'0');
+      return `${mm}:${ss}`;
+    }
+    function updatePomodoroUI(){
+      const dial = document.getElementById('pomoTime');
+      const modeEl = document.getElementById('pomoMode');
+      const ring = dial?.parentElement;
+      const tog = document.getElementById('pomoToggle');
+      if (!dial || !modeEl || !ring || !tog) return;
+
+      dial.textContent = fmtMMSS(pomo.remainingMs);
+      modeEl.textContent = pomo.mode === 'work' ? 'Work' : 'Break';
+
+      const total = (pomo.mode === 'work'
+        ? project.settings.pomodoro.workMin
+        : project.settings.pomodoro.breakMin) * 60 * 1000;
+      const pct = 100 * (1 - (pomo.remainingMs / total));
+      ring.style.setProperty('--pct', Math.max(0, Math.min(100, pct)));
+
+      tog.textContent = pomo.running ? 'Pause' : 'Start';
+
+      project._pomoState = { running: pomo.running, mode: pomo.mode, remainingMs: pomo.remainingMs, endAt: pomo.endAt };
+      saveLocal(project);
+    }
+    function startPomodoroTick(){
+      stopPomodoroTick();
+      pomo.running = true;
+      if (pomo.endAt <= Date.now()) pomo.endAt = Date.now() + pomo.remainingMs;
+      pomo._timerId = setInterval(()=>{
+        const now = Date.now();
+        pomo.remainingMs = Math.max(0, pomo.endAt - now);
+        updatePomodoroUI();
+        if (pomo.remainingMs <= 0) {
+          stopPomodoroTick();
+          onPomodoroEnd();
+        }
+      }, 250);
+      updatePomodoroUI();
+    }
+    function stopPomodoroTick(){
+      pomo.running = false;
+      if (pomo._timerId) clearInterval(pomo._timerId);
+      pomo._timerId = null;
+      if (pomo.endAt > 0) pomo.remainingMs = Math.max(0, pomo.endAt - Date.now());
+      updatePomodoroUI();
+    }
+    function togglePomodoro(){ if (pomo.running) stopPomodoroTick(); else startPomodoroTick(); }
+    function resetPomodoro(){
+      const mins = (pomo.mode === 'work' ? project.settings.pomodoro.workMin : project.settings.pomodoro.breakMin);
+      pomo.remainingMs = mins * 60 * 1000; pomo.endAt = 0; updatePomodoroUI();
+    }
+    function switchPomodoroMode(nextMode){
+      pomo.mode = nextMode;
+      const mins = (pomo.mode === 'work' ? project.settings.pomodoro.workMin : project.settings.pomodoro.breakMin);
+      pomo.remainingMs = mins * 60 * 1000; pomo.endAt = 0; updatePomodoroUI();
+    }
+    function beep(){
+      try{
+        const ctx = new (window.AudioContext||window.webkitAudioContext)();
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+        o.start();
+        setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05); o.stop(ctx.currentTime + 0.08); }, 180);
+      }catch(e){}
+    }
+    function onPomodoroEnd(){
+      beep();
+      if (pomo.mode === 'work') {
+        switchPomodoroMode('break');
+        if (project.settings.pomodoro.autoStartBreak) startPomodoroTick();
+      } else {
+        switchPomodoroMode('work');
+        if (project.settings.pomodoro.autoStartWork) startPomodoroTick();
+      }
+    }
+
+    /* =========================
+     * Shortcuts
+     * =======================*/
+    document.addEventListener('keydown', (e)=>{
+      const cmd = e.metaKey || e.ctrlKey;
+      if (cmd && e.key.toLowerCase() === 'k') { e.preventDefault(); toggleFocus(); return; }
+      if (cmd && e.key === ';') { e.preventDefault(); togglePomodoro(); return; }
+      if (cmd && e.key === "'") { e.preventDefault(); resetPomodoro(); return; }
+    });
+
+    /* =========================
+     * Versioning helpers
+     * =======================*/
+    function bumpVersion(){ project.version = (project.version || 0) + 1; project.updatedAt = Date.now(); }
+
+    /* =========================
+     * Self-tests (basic) — won't change user data
+     * =======================*/
+    function runSelfTests(){
+      try {
+        // Theme switch test
+        const prevTheme = project.settings.theme;
+        project.settings.theme = 'light'; applyTheme();
+        const lightBg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+        console.assert(lightBg === '#f7f9fc', 'Light theme var not applied');
+        project.settings.theme = 'dark'; applyTheme();
+        const darkBg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+        console.assert(darkBg === '#0b0f14', 'Dark theme var not applied');
+        // Build delta/full doesn't throw
+        const pack = buildDeltaOrFull();
+        console.assert(pack && (pack.kind==='delta'||pack.kind==='full'), 'buildDeltaOrFull returned invalid kind');
+        // Focus HUD exists
+        console.assert(document.getElementById('focusHud'), 'focusHud missing');
+        console.log('Self-tests passed');
+      } catch (err) {
+        console.error('Self-tests failed', err);
+      }
+    }
+
+    /* =========================
+     * Bootstrap
+     * =======================*/
+    (async function init(){
+      await openDB();
+
+      // Load last project if exists
+      const lastId = getLastProjectId();
+      if (lastId) {
+        const loaded = await loadLocal(lastId);
+        if (loaded) {
+          project = loaded;
+          activeSceneId = project.scenes?.[0]?.id || null;
+        } else {
+          newProject();
+          await saveLocal(project);
+        }
+      } else {
+        newProject();
+        await saveLocal(project);
+      }
+
+      project.settings = project.settings || {};
+      if (typeof project.settings.focus === 'undefined') project.settings.focus = false;
+
+      ensurePomodoroSettings();
+      if (project._pomoState) {
+        pomo = Object.assign({}, pomo, project._pomoState);
+        if (!['work','break'].includes(pomo.mode)) pomo.mode = 'work';
+      }
+
+      lastSerializedMetaHash = metaSignature(project);
+      render();
+      applyFocusModeUI();
+      updatePomodoroUI();
+      setTimeout(runSelfTests, 0);
+    })();
+    </script>
   </main>
 
   <footer class="footer">
