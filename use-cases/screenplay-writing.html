@@ -127,6 +127,24 @@
       .line.active{ background: rgba(255,255,255,0.05); border-radius: 8px; padding: 2px 6px; }
       body.focus-mode .line.active{ background: rgba(95,168,255,0.12); }
 
+      /* Site chrome animations for focus mode */
+      .nav,
+      .footer{
+        transition: transform 0.35s ease, opacity 0.3s ease;
+        transform: translateY(0);
+        opacity: 1;
+      }
+      body.focus-mode .nav{
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+      }
+      body.focus-mode .footer{
+        transform: translateY(100%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
       /* Bottom HUD visible only in focus mode */
       #focusHud{
         position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
