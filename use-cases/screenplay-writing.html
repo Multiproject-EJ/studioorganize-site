@@ -29,28 +29,21 @@
       </div>
       <a href="/about.html">About</a>
       <a href="/faq.html">FAQ</a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
     </nav>
   </header>
 
   <main class="section">
     <style>
-      :root{
-        --bg:#0b0f14; --panel:#121821; --ink:#eaf2ff; --muted:#9fb3c8; --acc:#5FA8FF; --card:#0f1520; --ring:#1f2a3a;
-        /* theme-aware tokens */
-        --field:#0e1420; /* inputs, textareas, selects */
-        --chip:#1a2433;  /* buttons, pills */
-        --hud:#0f1520;   /* focus HUD surface */
-        --dial:#0b0f14;  /* inner dial for pomo */
-        --progressTrack:#222a3a; /* unfilled ring track */
-      }
-      html,body{height:100%; margin:0; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
-      body{background:var(--bg); color:var(--ink)}
-      .app{display:grid; grid-template-rows:56px 1fr; height:100%}
+      html,body{height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+      body{color:var(--ink);}
+      main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
+      .app{display:grid; grid-template-rows:56px 1fr; flex:1; min-height:0}
       .topbar{display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--ring)}
       .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
       .spacer{flex:1}
       .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
-      .layout{display:grid; grid-template-columns:280px 1fr 320px; gap:10px; padding:10px; height:100%}
+      .layout{display:grid; grid-template-columns:280px 1fr 320px; gap:10px; padding:10px; min-height:0}
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
       .scenes{overflow:auto; padding:8px}
@@ -69,9 +62,9 @@
       textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
       .row{display:flex; gap:8px}
       .counter{font-size:12px; color:var(--muted)}
-      .tab-header{display:flex; padding:8px; gap:6px; background:rgba(0,0,0,0.08); border-bottom:1px solid var(--ring)}
+      .tab-header{display:flex; padding:8px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
       .tab-btn{flex:1; background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; font-size:12px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
-      .tab-btn.active{background:var(--acc); border-color:var(--acc); color:#0b0f14; font-weight:600}
+      .tab-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
       .tab-panels{flex:1; display:flex; flex-direction:column; min-height:0}
       .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
       .tab-panel.active{display:flex}
@@ -382,6 +375,11 @@
     }
 
     function ensureProjectShape(){
+      project.settings = project.settings || {};
+      if (!project.settings.theme){
+        const globalTheme = (typeof window.getSiteTheme === 'function') ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark');
+        project.settings.theme = globalTheme || 'dark';
+      }
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = (project.catalogs.characters || []).map(item => {
         if (typeof item === 'string') return { id: crypto.randomUUID(), name: item };
@@ -444,7 +442,7 @@
         createdAt: Date.now(),
         updatedAt: Date.now(),
         version: 1,
-        settings: { theme:'dark', smartFormat:true, pageWidth:60, focus:false, pomodoro: undefined },
+        settings: { theme: (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark')), smartFormat:true, pageWidth:60, focus:false, pomodoro: undefined },
         catalogs: { characters:[], locations:[] },
         scenes: [{
           id: crypto.randomUUID(),
@@ -475,8 +473,9 @@
       document.getElementById('projectNotes').value = project.notes || '';
       const smartSel = document.getElementById('smartFormat');
       if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
+      project.settings.theme = project.settings.theme || (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark'));
       const themeSel = document.getElementById('themeSel');
-      if (themeSel) themeSel.value = project.settings.theme || 'dark';
+      if (themeSel) themeSel.value = project.settings.theme;
 
       // scenes list
       const list = document.getElementById('sceneList');
@@ -822,31 +821,14 @@
 
     /* Theme */
     function applyTheme(){
-      const theme = project.settings.theme || 'dark';
-      if (theme === 'light'){
-        document.documentElement.style.setProperty('--bg','#f7f9fc');
-        document.documentElement.style.setProperty('--panel','#ffffff');
-        document.documentElement.style.setProperty('--ink','#0b1220');
-        document.documentElement.style.setProperty('--muted','#44566c');
-        document.documentElement.style.setProperty('--card','#ffffff');
-        document.documentElement.style.setProperty('--ring','#e2e8f0');
-        document.documentElement.style.setProperty('--field','#f1f5f9');
-        document.documentElement.style.setProperty('--chip','#eef2f7');
-        document.documentElement.style.setProperty('--hud','#ffffff');
-        document.documentElement.style.setProperty('--dial','#ffffff');
-        document.documentElement.style.setProperty('--progressTrack','#e5eaf1');
+      const fallback = (typeof window.getSiteTheme === 'function') ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark');
+      const theme = project.settings.theme || fallback || 'dark';
+      project.settings.theme = theme;
+      if (typeof window.setSiteTheme === 'function'){
+        window.setSiteTheme(theme);
       } else {
-        document.documentElement.style.setProperty('--bg','#0b0f14');
-        document.documentElement.style.setProperty('--panel','#121821');
-        document.documentElement.style.setProperty('--ink','#eaf2ff');
-        document.documentElement.style.setProperty('--muted','#9fb3c8');
-        document.documentElement.style.setProperty('--card','#0f1520');
-        document.documentElement.style.setProperty('--ring','#1f2a3a');
-        document.documentElement.style.setProperty('--field','#0e1420');
-        document.documentElement.style.setProperty('--chip','#1a2433');
-        document.documentElement.style.setProperty('--hud','#0f1520');
-        document.documentElement.style.setProperty('--dial','#0b0f14');
-        document.documentElement.style.setProperty('--progressTrack','#222a3a');
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
       }
     }
 
@@ -1027,6 +1009,20 @@
     document.getElementById('themeSel').addEventListener('change', e=>{
       project.settings.theme = e.target.value || 'dark';
       bumpVersion(); scheduleSave(); applyTheme();
+    });
+
+    document.addEventListener('themechange', e=>{
+      const nextTheme = e.detail?.theme;
+      if (!nextTheme || !project) return;
+      if (project.settings.theme !== nextTheme){
+        project.settings.theme = nextTheme;
+        const sel = document.getElementById('themeSel');
+        if (sel) sel.value = nextTheme;
+        bumpVersion(); scheduleSave();
+      } else {
+        const sel = document.getElementById('themeSel');
+        if (sel && sel.value !== nextTheme) sel.value = nextTheme;
+      }
     });
 
     /* =========================
