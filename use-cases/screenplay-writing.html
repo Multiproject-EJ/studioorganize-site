@@ -69,6 +69,24 @@
       .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
       .tab-panel.active{display:flex}
       .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
+      .panel-footer{padding:12px; border-top:1px solid var(--ring); display:flex; flex-direction:column; gap:10px; background:var(--panel)}
+      .panel-footer h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
+      .timeline-list{display:flex; flex-direction:column; gap:10px}
+      .timeline-item{display:flex; gap:10px; align-items:flex-start; padding:10px; border:1px solid var(--ring); border-radius:12px; background:var(--chip); cursor:pointer; transition:background .2s, border-color .2s; font:inherit; color:inherit; text-align:left}
+      .timeline-item:hover{border-color:var(--acc)}
+      .timeline-item.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text)}
+      .timeline-item.active .timeline-bullet{background:var(--active-tab-text); color:var(--panel)}
+      .timeline-bullet{width:26px; height:26px; border-radius:999px; background:var(--ring); color:var(--muted); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600}
+      .timeline-item:focus{outline:none}
+      .timeline-item:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
+      .timeline-body{display:flex; flex-direction:column; gap:4px}
+      .timeline-meta{font-size:11px; color:var(--muted)}
+      .timeline-item.active .timeline-meta{color:var(--active-tab-text)}
+      .timeline-empty{font-size:12px; color:var(--muted)}
+      .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:10px}
+      .stat-card{border:1px solid var(--ring); border-radius:12px; padding:10px; background:var(--chip); display:flex; flex-direction:column; gap:4px; text-align:center}
+      .stat-value{font-size:18px; font-weight:700; color:var(--ink)}
+      .stat-label{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
       .tab-chip-group{display:flex; flex-wrap:wrap; gap:6px}
       .tab-chip{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; font-size:12px; color:var(--ink); cursor:pointer}
       .tab-chip:hover{border-color:var(--acc)}
@@ -184,6 +202,7 @@
             <button class="tab-btn" data-tab-btn="characters">Characters</button>
             <button class="tab-btn" data-tab-btn="set">Set</button>
             <button class="tab-btn" data-tab-btn="sound">Sound</button>
+            <button class="tab-btn" data-tab-btn="timeline">Timeline</button>
             <button class="tab-btn" data-tab-btn="stats">Stats</button>
           </div>
           <div class="tab-panels">
@@ -248,25 +267,50 @@
                 <button class="btn" id="addSoundBtn">Add</button>
               </div>
             </div>
+            <div class="tab-panel" data-tab="timeline" id="tabTimeline">
+              <h3>Timeline</h3>
+              <div class="timeline-list" id="timelineList"></div>
+            </div>
             <div class="tab-panel" data-tab="stats" id="tabStats">
-              <h2>Notes &amp; Meta</h2>
-              <div class="notes">
-                <input id="projectTitle" placeholder="Project Title" />
-                <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
-                <div class="row">
-                  <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
-                  <input id="sceneColor" type="color" />
+              <h3>Stats</h3>
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <span class="stat-value" id="statSceneCount">0</span>
+                  <span class="stat-label">Scenes</span>
                 </div>
-                <div class="row">
-                  <select id="smartFormat">
-                    <option value="true">Smart format: ON</option>
-                    <option value="false">Smart format: OFF</option>
-                  </select>
-                  <select id="themeSel">
-                    <option value="dark">Theme: Dark</option>
-                    <option value="light">Theme: Light</option>
-                  </select>
+                <div class="stat-card">
+                  <span class="stat-value" id="statPageCount">0</span>
+                  <span class="stat-label">Pages</span>
                 </div>
+                <div class="stat-card">
+                  <span class="stat-value" id="statWordCount">0</span>
+                  <span class="stat-label">Words</span>
+                </div>
+                <div class="stat-card">
+                  <span class="stat-value" id="statLineCount">0</span>
+                  <span class="stat-label">Lines</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <h2>Notes &amp; Meta</h2>
+            <div class="notes">
+              <input id="projectTitle" placeholder="Project Title" />
+              <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
+              <div class="row">
+                <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
+                <input id="sceneColor" type="color" />
+              </div>
+              <div class="row">
+                <select id="smartFormat">
+                  <option value="true">Smart format: ON</option>
+                  <option value="false">Smart format: OFF</option>
+                </select>
+                <select id="themeSel">
+                  <option value="dark">Theme: Dark</option>
+                  <option value="light">Theme: Light</option>
+                </select>
               </div>
             </div>
           </div>
@@ -348,8 +392,8 @@
 
     const RIGHT_TAB_KEY = 'SW_RIGHT_TAB';
     let activeRightTab = (()=>{
-      try { return localStorage.getItem(RIGHT_TAB_KEY) || 'stats'; }
-      catch(e){ return 'stats'; }
+      try { return localStorage.getItem(RIGHT_TAB_KEY) || 'write'; }
+      catch(e){ return 'write'; }
     })();
 
     /* =========================
@@ -410,15 +454,15 @@
     }
 
     function setRightTab(tab){
-      const allowed = ['write','characters','set','sound','stats'];
-      activeRightTab = allowed.includes(tab) ? tab : 'stats';
+      const allowed = ['write','characters','set','sound','timeline','stats'];
+      activeRightTab = allowed.includes(tab) ? tab : 'write';
       try { localStorage.setItem(RIGHT_TAB_KEY, activeRightTab); } catch(e){}
       applyActiveTabUI();
     }
 
     function applyActiveTabUI(){
-      const allowed = ['write','characters','set','sound','stats'];
-      if (!allowed.includes(activeRightTab)) activeRightTab = 'stats';
+      const allowed = ['write','characters','set','sound','timeline','stats'];
+      if (!allowed.includes(activeRightTab)) activeRightTab = 'write';
       document.querySelectorAll('[data-tab-btn]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tabBtn === activeRightTab);
       });
@@ -505,6 +549,7 @@
         applyTheme();
         renderCatalogs();
         renderSoundList();
+        renderTimeline();
         updateDeleteSceneButton();
         applyActiveTabUI();
         return;
@@ -526,6 +571,7 @@
       applyTheme();
       renderCatalogs();
       renderSoundList();
+      renderTimeline();
       updateDeleteSceneButton();
       applyActiveTabUI();
     }
@@ -680,6 +726,39 @@
       });
     }
 
+    function renderTimeline(){
+      const list = document.getElementById('timelineList');
+      if (!list) return;
+      list.innerHTML = '';
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      if (!scenes.length){
+        const empty = document.createElement('p');
+        empty.className = 'timeline-empty';
+        empty.textContent = 'No scenes yet.';
+        list.appendChild(empty);
+        return;
+      }
+      scenes.forEach((scene, idx)=>{
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'timeline-item' + (scene.id === activeSceneId ? ' active' : '');
+        const beats = Array.isArray(scene.cards) ? scene.cards.length : 0;
+        const metaText = beats ? `${beats} beat${beats === 1 ? '' : 's'}` : 'No beats tagged';
+        item.innerHTML = `
+          <div class="timeline-bullet">${idx + 1}</div>
+          <div class="timeline-body">
+            <strong>${escapeHtml(scene.slug || '(no slug)')}</strong>
+            <span class="timeline-meta">${escapeHtml(metaText)}</span>
+          </div>`;
+        item.addEventListener('click', ()=>{
+          activeSceneId = scene.id;
+          setRightTab('write');
+          render();
+        });
+        list.appendChild(item);
+      });
+    }
+
     function updateDeleteSceneButton(){
       const btn = document.getElementById('deleteSceneBtn');
       if (btn) btn.disabled = project.scenes.length <= 1;
@@ -811,11 +890,20 @@
      * Counters & Utilities
      * =======================*/
     function updateCounters(){
-      const text = project.scenes.flatMap(s=>s.elements.map(e=>e.txt)).join(' ');
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const text = scenes.flatMap(s=>s.elements.map(e=>e.txt)).join(' ');
       const words = (text.match(/\b\w+\b/g)||[]).length;
-      const lines = project.scenes.reduce((acc,s)=>acc + s.elements.length, 0);
+      const lines = scenes.reduce((acc,s)=>acc + s.elements.length, 0);
       const pages = Math.max(1, Math.round(lines / 55));
       document.getElementById('counter').textContent = `${pages} pages • ${words} words`;
+      const sceneCountEl = document.getElementById('statSceneCount');
+      if (sceneCountEl) sceneCountEl.textContent = scenes.length;
+      const pageEl = document.getElementById('statPageCount');
+      if (pageEl) pageEl.textContent = pages;
+      const wordEl = document.getElementById('statWordCount');
+      if (wordEl) wordEl.textContent = words;
+      const lineEl = document.getElementById('statLineCount');
+      if (lineEl) lineEl.textContent = lines;
     }
     function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m])); }
 
