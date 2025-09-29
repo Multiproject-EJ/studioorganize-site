@@ -90,6 +90,104 @@
       .timeline-meta{font-size:11px; color:var(--muted)}
       .timeline-item.active .timeline-meta{color:var(--active-tab-text)}
       .timeline-empty{font-size:12px; color:var(--muted)}
+      body.timeline-mode{overflow:hidden;}
+      #timelineOverlay{
+        position:fixed; left:0; right:0; bottom:0; top:var(--nav-height, 72px);
+        background:rgba(10,12,18,0.78);
+        backdrop-filter:blur(16px);
+        display:none; align-items:flex-start; justify-content:center;
+        padding:24px clamp(16px, 4vw, 48px) 32px; z-index:400;
+      }
+      body.timeline-mode #timelineOverlay{display:flex;}
+      .timeline-window{
+        position:relative; width:100%; max-width:1100px; min-height:0;
+        background:var(--panel); border:1px solid var(--ring);
+        border-radius:20px; box-shadow:0 28px 90px rgba(0,0,0,0.45);
+        display:flex; flex-direction:column; overflow:hidden;
+      }
+      .timeline-overlay-header{
+        display:flex; align-items:center; justify-content:space-between;
+        padding:18px 22px; border-bottom:1px solid var(--ring);
+        gap:12px; background:var(--chip);
+      }
+      .timeline-overlay-header h2{margin:0; font-size:18px; font-weight:600;}
+      .timeline-overlay-header .muted-text{margin:0;}
+      .timeline-close-btn{
+        background:var(--chip); border:1px solid var(--ring); border-radius:999px;
+        padding:6px 12px; cursor:pointer; color:var(--ink);
+      }
+      .timeline-overlay-body{padding:20px 22px; display:flex; flex-direction:column; gap:16px; overflow:auto;}
+      .timeline-prompt{font-size:14px; color:var(--muted);}
+      .timeline-board-wrapper{overflow-x:auto; padding-bottom:8px;}
+      .timeline-board{
+        display:flex; gap:14px; align-items:stretch; min-height:220px;
+        padding:4px 6px; flex-wrap:nowrap;
+      }
+      .timeline-card{
+        flex:0 0 240px; background:var(--card); border:1px solid var(--ring);
+        border-radius:16px; padding:16px; display:flex; flex-direction:column;
+        gap:10px; cursor:pointer; position:relative; transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      }
+      .timeline-card:hover{border-color:var(--acc); box-shadow:0 16px 40px rgba(0,0,0,0.28); transform:translateY(-2px);}
+      .timeline-card.active{border-color:var(--acc); box-shadow:0 16px 48px rgba(47,110,255,0.32);}
+      .timeline-card.dragging{opacity:0.6; box-shadow:none; transform:rotate(-2deg);} 
+      .timeline-card small{color:var(--muted); font-size:11px; letter-spacing:.3px; text-transform:uppercase;}
+      .timeline-card h4{margin:0; font-size:15px; line-height:1.35;}
+      .timeline-card-snippet{font-size:13px; line-height:1.5; color:var(--inkMuted, var(--muted));}
+      .timeline-card-actions{display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted);}
+      .timeline-dropzone{
+        flex:0 0 52px; border:1px dashed transparent; border-radius:14px;
+        display:flex; align-items:center; justify-content:center; position:relative;
+        transition:border-color .2s ease, background .2s ease;
+      }
+      .timeline-dropzone.over{border-color:var(--acc); background:rgba(95,168,255,0.12);}
+      .timeline-add-btn{
+        background:var(--chip); border:1px solid var(--ring); border-radius:12px;
+        padding:10px 12px; font-size:12px; cursor:pointer; color:var(--ink);
+        display:flex; align-items:center; gap:6px;
+      }
+      .timeline-add-btn:hover{border-color:var(--acc);}
+      .timeline-overlay-footer{
+        padding:20px 22px 24px; border-top:1px solid var(--ring);
+        background:var(--panel); display:flex; flex-direction:column; gap:12px;
+      }
+      .timeline-composer{display:flex; flex-direction:column; gap:10px;}
+      .timeline-composer label{font-size:12px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
+      .timeline-composer input,
+      .timeline-composer textarea{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:12px; padding:10px 12px; font-size:14px; width:100%;}
+      .timeline-composer textarea{min-height:96px; resize:vertical;}
+      .timeline-composer-actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+      .timeline-position-label{font-size:12px; color:var(--muted);}
+      .timeline-save-btn{
+        background:var(--acc); border:1px solid var(--acc); color:var(--active-tab-text);
+        border-radius:999px; padding:8px 18px; font-weight:600; letter-spacing:.3px; cursor:pointer;
+      }
+      .timeline-save-btn:disabled{opacity:0.5; cursor:not-allowed;}
+      #timelinePreview{
+        position:absolute; inset:16px; display:none; align-items:center; justify-content:center;
+        pointer-events:none;
+      }
+      #timelinePreview.open{display:flex;}
+      .timeline-preview-card{
+        pointer-events:auto; width:min(640px, calc(100% - 40px)); max-height:calc(100% - 40px);
+        background:var(--card); border:1px solid var(--ring); border-radius:18px;
+        box-shadow:0 28px 80px rgba(0,0,0,0.45); display:flex; flex-direction:column;
+        overflow:hidden; transform:scale(.94); opacity:0;
+        transform-origin:calc(var(--origin-x, .5) * 100%) calc(var(--origin-y, .5) * 100%);
+        transition:transform .24s ease, opacity .24s ease;
+      }
+      #timelinePreview.open .timeline-preview-card{transform:scale(1); opacity:1;}
+      .timeline-preview-header{padding:18px 22px; border-bottom:1px solid var(--ring); display:flex; flex-direction:column; gap:6px;}
+      .timeline-preview-header h3{margin:0; font-size:18px;}
+      .timeline-preview-meta{font-size:12px; color:var(--muted);}
+      .timeline-preview-body{padding:18px 22px 22px; overflow:auto; flex:1; display:flex; flex-direction:column; gap:8px;}
+      .timeline-preview-body .line{margin:0;}
+      .timeline-preview-actions{padding:16px 22px; border-top:1px solid var(--ring); display:flex; justify-content:flex-end; gap:12px; background:var(--chip);}
+      .timeline-secondary-btn{
+        background:var(--chip); border:1px solid var(--ring); border-radius:12px;
+        padding:8px 14px; font-size:13px; cursor:pointer; color:var(--ink);
+      }
+      .timeline-secondary-btn:hover{border-color:var(--acc);}
       .stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:10px}
       .stat-card{border:1px solid var(--ring); border-radius:12px; padding:10px; background:var(--chip); display:flex; flex-direction:column; gap:4px; text-align:center}
       .stat-value{font-size:18px; font-weight:700; color:var(--ink)}
@@ -202,7 +300,7 @@
         <!-- non-essential buttons collapse in focus mode -->
         <div class="topbar-group non-essential" role="group" aria-label="Quick panel toggles">
           <button class="btn" type="button" data-tab-btn="write">Write</button>
-          <button class="btn" type="button" data-tab-btn="timeline">Timeline</button>
+          <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
 
         <div class="btn-menu non-essential" id="exportMenu">
@@ -307,6 +405,7 @@
             </div>
             <div class="tab-panel" data-tab="timeline" id="tabTimeline">
               <h3>Timeline</h3>
+              <p class="muted-text" style="margin:0 0 8px">Open timeline mode for a card view of your scenes.</p>
               <div class="timeline-list" id="timelineList"></div>
             </div>
             <div class="tab-panel" data-tab="stats" id="tabStats">
@@ -376,6 +475,48 @@
       <button onclick="toggleFocus()">Exit Focus</button>
     </div>
 
+    <div id="timelineOverlay" aria-hidden="true">
+      <div class="timeline-window" role="dialog" aria-modal="true" aria-labelledby="timelineOverlayTitle">
+        <div class="timeline-overlay-header">
+          <div>
+            <h2 id="timelineOverlayTitle">Timeline</h2>
+            <p class="muted-text">Rearrange scenes, add new beats, and preview the flow of your story.</p>
+          </div>
+          <button class="timeline-close-btn" type="button" id="timelineOverlayClose">Close ✕</button>
+        </div>
+        <div class="timeline-overlay-body">
+          <div class="timeline-prompt">What happens next? Drag cards to reorder scenes or click + to drop a new moment anywhere.</div>
+          <div class="timeline-board-wrapper">
+            <div class="timeline-board" id="timelineBoard"></div>
+          </div>
+        </div>
+        <div class="timeline-overlay-footer">
+          <div class="timeline-composer">
+            <label for="timelineNewSceneTitle">New scene prompt</label>
+            <input id="timelineNewSceneTitle" placeholder="Scene heading (e.g. INT. OFFICE - DAY)" />
+            <textarea id="timelineNewSceneSummary" placeholder="What happens in this scene?"></textarea>
+          </div>
+          <div class="timeline-composer-actions">
+            <span class="timeline-position-label" id="timelinePositionLabel">Will insert at the end.</span>
+            <button class="timeline-save-btn" type="button" id="timelineAddSceneBtn">Add Scene</button>
+          </div>
+        </div>
+        <div id="timelinePreview">
+          <div class="timeline-preview-card" role="document">
+            <div class="timeline-preview-header">
+              <h3 id="timelinePreviewTitle">Scene Title</h3>
+              <div class="timeline-preview-meta" id="timelinePreviewMeta"></div>
+            </div>
+            <div class="timeline-preview-body" id="timelinePreviewBody"></div>
+            <div class="timeline-preview-actions">
+              <button class="timeline-secondary-btn" type="button" id="timelinePreviewClose">Close</button>
+              <button class="timeline-save-btn" type="button" id="timelinePreviewOpen">Open in Writer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
     function syncNavHeight(){
       const nav = document.querySelector('.nav');
@@ -430,6 +571,11 @@
     let project = null;
     let activeSceneId = null;
     let saveTimer = null;
+    let timelineMode = false;
+    let timelineInsertIndex = 0;
+    let timelineDragSceneId = null;
+    let timelinePendingPreviewId = null;
+    let timelineSuppressClick = false;
 
     const BACKUP_IDLE_MS = 120000;   // 2 min idle → auto backup
     const FULL_SNAPSHOT_EVERY = 10;  // every 10 deltas
@@ -630,13 +776,16 @@
         updateHud();
         updatePomodoroUI();
         applyTheme();
-        renderCatalogs();
-        renderSoundList();
-        renderTimeline();
-        updateDeleteSceneButton();
-        applyActiveTabUI();
-        return;
-      }
+      renderCatalogs();
+      renderSoundList();
+      renderTimeline();
+      updateDeleteSceneButton();
+      applyActiveTabUI();
+      if (timelineMode) renderTimelineBoard();
+      else updateTimelineInsertLabel();
+      updateTimelineButton();
+      return;
+    }
       if (!Array.isArray(scene.sounds)) scene.sounds = [];
       document.getElementById('sceneSlug').value = scene.slug || '';
       document.getElementById('sceneColor').value = scene.color || '#5FA8FF';
@@ -657,6 +806,9 @@
       renderTimeline();
       updateDeleteSceneButton();
       applyActiveTabUI();
+      if (timelineMode) renderTimelineBoard();
+      else updateTimelineInsertLabel();
+      updateTimelineButton();
     }
 
     /* Keep child nodes as .line blocks */
@@ -821,6 +973,17 @@
       const list = document.getElementById('timelineList');
       if (!list) return;
       list.innerHTML = '';
+      const openBtn = document.createElement('button');
+      openBtn.type = 'button';
+      openBtn.className = 'timeline-item';
+      openBtn.innerHTML = `
+        <div class="timeline-bullet">↗</div>
+        <div class="timeline-body">
+          <strong>Open Timeline Mode</strong>
+          <span class="timeline-meta">Card view with drag & drop reordering</span>
+        </div>`;
+      openBtn.addEventListener('click', ()=> openTimelineMode());
+      list.appendChild(openBtn);
       const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
       if (!scenes.length){
         const empty = document.createElement('p');
@@ -834,7 +997,12 @@
         item.type = 'button';
         item.className = 'timeline-item' + (scene.id === activeSceneId ? ' active' : '');
         const beats = Array.isArray(scene.cards) ? scene.cards.length : 0;
-        const metaText = beats ? `${beats} beat${beats === 1 ? '' : 's'}` : 'No beats tagged';
+        const snippet = getSceneSnippet(scene);
+        const metaParts = [];
+        metaParts.push(`Scene ${idx + 1}`);
+        metaParts.push(beats ? `${beats} beat${beats === 1 ? '' : 's'}` : 'No beats tagged');
+        if (snippet) metaParts.push(snippet);
+        const metaText = metaParts.join(' • ');
         item.innerHTML = `
           <div class="timeline-bullet">${idx + 1}</div>
           <div class="timeline-body">
@@ -842,12 +1010,285 @@
             <span class="timeline-meta">${escapeHtml(metaText)}</span>
           </div>`;
         item.addEventListener('click', ()=>{
-          activeSceneId = scene.id;
-          setRightTab('write');
-          render();
+          openTimelineMode(scene.id);
         });
         list.appendChild(item);
       });
+    }
+
+    function getSceneSnippet(scene){
+      if (!scene || !Array.isArray(scene.elements)) return '';
+      const text = scene.elements.map(el => (el?.txt || '')).join(' ');
+      const clean = text.replace(/\s+/g, ' ').trim();
+      if (!clean) return '';
+      return clean.length > 160 ? `${clean.slice(0, 157)}…` : clean;
+    }
+
+    function renderTimelineBoard(){
+      const board = document.getElementById('timelineBoard');
+      if (!board) return;
+      board.innerHTML = '';
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      if (!scenes.length){
+        const empty = document.createElement('p');
+        empty.className = 'timeline-empty';
+        empty.textContent = 'No scenes yet.';
+        board.appendChild(empty);
+        timelineInsertIndex = 0;
+        updateTimelineInsertLabel();
+        return;
+      }
+      timelineInsertIndex = Math.max(0, Math.min(timelineInsertIndex, scenes.length));
+      board.appendChild(createTimelineDropZone(0));
+      scenes.forEach((scene, idx)=>{
+        board.appendChild(createTimelineCard(scene, idx));
+        board.appendChild(createTimelineDropZone(idx + 1));
+      });
+      board.querySelectorAll('.timeline-dropzone').forEach(zone=>{
+        zone.classList.toggle('over', parseInt(zone.dataset.index || '0', 10) === timelineInsertIndex);
+      });
+      updateTimelineInsertLabel();
+      if (timelinePendingPreviewId){
+        const target = timelinePendingPreviewId;
+        timelinePendingPreviewId = null;
+        requestAnimationFrame(()=> openTimelinePreview(target));
+      }
+    }
+
+    function createTimelineCard(scene, idx){
+      const card = document.createElement('div');
+      card.className = 'timeline-card' + (scene.id === activeSceneId ? ' active' : '');
+      card.dataset.sceneId = scene.id;
+      card.draggable = true;
+      const beats = Array.isArray(scene.cards) ? scene.cards.length : 0;
+      const snippet = getSceneSnippet(scene) || 'Tap to add more detail.';
+      const beatsLabel = beats ? `${beats} beat${beats === 1 ? '' : 's'}` : 'No beats yet';
+      card.innerHTML = `
+        <small>${escapeHtml(`Scene ${idx + 1}`)}</small>
+        <h4>${escapeHtml(scene.slug || '(no slug)')}</h4>
+        <p class="timeline-card-snippet">${escapeHtml(snippet)}</p>
+        <div class="timeline-card-actions">
+          <span>${escapeHtml(beatsLabel)}</span>
+          <span style="width:12px;height:12px;border-radius:50%;background:${scene.color || '#5FA8FF'}"></span>
+        </div>`;
+      card.addEventListener('click', ()=>{
+        if (timelineSuppressClick) return;
+        openTimelinePreview(scene.id, card);
+      });
+      card.addEventListener('dragstart', (e)=>{
+        timelineDragSceneId = scene.id;
+        timelineSuppressClick = true;
+        card.classList.add('dragging');
+        if (e.dataTransfer){
+          e.dataTransfer.effectAllowed = 'move';
+          try { e.dataTransfer.setData('text/plain', scene.id); } catch(err){}
+        }
+      });
+      card.addEventListener('dragend', ()=>{
+        timelineDragSceneId = null;
+        card.classList.remove('dragging');
+        setTimeout(()=>{ timelineSuppressClick = false; }, 0);
+        document.querySelectorAll('.timeline-dropzone.over').forEach(z=>z.classList.remove('over'));
+      });
+      return card;
+    }
+
+    function createTimelineDropZone(index){
+      const zone = document.createElement('div');
+      zone.className = 'timeline-dropzone';
+      zone.dataset.index = index;
+      zone.addEventListener('dragover', (e)=>{
+        if (!timelineDragSceneId) return;
+        e.preventDefault();
+        zone.classList.add('over');
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      });
+      zone.addEventListener('dragleave', ()=> zone.classList.remove('over'));
+      zone.addEventListener('drop', (e)=>{
+        if (!timelineDragSceneId) return;
+        e.preventDefault();
+        zone.classList.remove('over');
+        const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+        const fromIdx = scenes.findIndex(s=>s.id === timelineDragSceneId);
+        let target = parseInt(zone.dataset.index || '0', 10);
+        if (Number.isNaN(target) || fromIdx < 0) return;
+        if (fromIdx < target) target = target - 1;
+        target = Math.max(0, Math.min(target, scenes.length - 1));
+        const preview = document.getElementById('timelinePreview');
+        const openSceneId = preview?.dataset?.sceneId || null;
+        if (openSceneId) timelinePendingPreviewId = openSceneId;
+        moveScene(fromIdx, target);
+      });
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'timeline-add-btn';
+      addBtn.innerHTML = '<span aria-hidden="true">＋</span> Add Scene';
+      addBtn.addEventListener('click', ()=>{
+        prepareTimelineComposer(index);
+      });
+      zone.appendChild(addBtn);
+      return zone;
+    }
+
+    function prepareTimelineComposer(index){
+      timelineInsertIndex = Math.max(0, Math.min(index, Array.isArray(project?.scenes) ? project.scenes.length : 0));
+      updateTimelineInsertLabel();
+      document.querySelectorAll('.timeline-dropzone').forEach(zone=>{
+        zone.classList.toggle('over', parseInt(zone.dataset.index || '0', 10) === timelineInsertIndex);
+      });
+      const input = document.getElementById('timelineNewSceneTitle');
+      if (input){
+        requestAnimationFrame(()=> input.focus());
+      }
+    }
+
+    function updateTimelineInsertLabel(){
+      const label = document.getElementById('timelinePositionLabel');
+      if (!label) return;
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const total = scenes.length;
+      const idx = Math.max(0, Math.min(timelineInsertIndex, total));
+      let text = 'Will insert at the end.';
+      if (!total){
+        text = 'This will become the first scene.';
+      } else if (idx === 0){
+        text = 'Will insert before Scene 1.';
+      } else if (idx >= total){
+        text = `Will insert after Scene ${total}.`;
+      } else {
+        text = `Will insert between Scene ${idx} and Scene ${idx + 1}.`;
+      }
+      label.textContent = text;
+    }
+
+    function handleTimelineAddScene(){
+      const title = document.getElementById('timelineNewSceneTitle');
+      const summary = document.getElementById('timelineNewSceneSummary');
+      if (!title || !summary) return;
+      const insertAt = Math.max(0, Math.min(timelineInsertIndex, Array.isArray(project?.scenes) ? project.scenes.length : 0));
+      const scene = buildDefaultScene(title.value, summary.value);
+      timelinePendingPreviewId = scene.id;
+      timelineInsertIndex = insertAt + 1;
+      title.value = '';
+      summary.value = '';
+      insertSceneAt(insertAt, scene);
+      updateTimelineInsertLabel();
+      requestAnimationFrame(()=>{
+        const inputAgain = document.getElementById('timelineNewSceneTitle');
+        if (inputAgain) inputAgain.focus();
+      });
+    }
+
+    function moveScene(fromIdx, toIdx){
+      if (fromIdx === toIdx) return;
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      if (fromIdx < 0 || fromIdx >= scenes.length) return;
+      toIdx = Math.max(0, Math.min(toIdx, scenes.length - 1));
+      const [scene] = scenes.splice(fromIdx, 1);
+      scenes.splice(toIdx, 0, scene);
+      timelineInsertIndex = toIdx + 1;
+      const preview = document.getElementById('timelinePreview');
+      const openSceneId = preview?.dataset?.sceneId || null;
+      if (openSceneId) timelinePendingPreviewId = openSceneId;
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      render();
+    }
+
+    function openTimelinePreview(sceneId, anchorEl){
+      if (!sceneId) return;
+      if (!timelineMode) openTimelineMode(sceneId);
+      const preview = document.getElementById('timelinePreview');
+      const titleEl = document.getElementById('timelinePreviewTitle');
+      const metaEl = document.getElementById('timelinePreviewMeta');
+      const bodyEl = document.getElementById('timelinePreviewBody');
+      if (!preview || !titleEl || !metaEl || !bodyEl) return;
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const scene = scenes.find(s=>s.id === sceneId);
+      if (!scene) return;
+      const idx = scenes.findIndex(s=>s.id === sceneId);
+      const beats = Array.isArray(scene.cards) ? scene.cards.length : 0;
+      const lineCount = Array.isArray(scene.elements) ? scene.elements.length : 0;
+      const metaParts = [];
+      if (idx >= 0) metaParts.push(`Scene ${idx + 1}`);
+      if (beats) metaParts.push(`${beats} beat${beats === 1 ? '' : 's'}`);
+      metaParts.push(`${lineCount} line${lineCount === 1 ? '' : 's'}`);
+      titleEl.textContent = scene.slug || '(no slug)';
+      metaEl.textContent = metaParts.join(' • ');
+      bodyEl.innerHTML = (Array.isArray(scene.elements) ? scene.elements : [])
+        .map(el => `<div class="line ${el.t}">${escapeHtml(el.txt || '')}</div>`)
+        .join('') || '<div class="line action">...</div>';
+      const openBtn = document.getElementById('timelinePreviewOpen');
+      if (openBtn) openBtn.dataset.sceneId = scene.id;
+      preview.dataset.sceneId = scene.id;
+      const windowEl = document.querySelector('.timeline-window');
+      const originEl = anchorEl || document.querySelector(`.timeline-card[data-scene-id="${scene.id}"]`);
+      if (windowEl && originEl){
+        const winRect = windowEl.getBoundingClientRect();
+        const originRect = originEl.getBoundingClientRect();
+        const originX = (originRect.left + originRect.width/2 - winRect.left) / winRect.width;
+        const originY = (originRect.top + originRect.height/2 - winRect.top) / winRect.height;
+        preview.style.setProperty('--origin-x', Math.min(Math.max(originX, 0), 1));
+        preview.style.setProperty('--origin-y', Math.min(Math.max(originY, 0), 1));
+      } else {
+        preview.style.removeProperty('--origin-x');
+        preview.style.removeProperty('--origin-y');
+      }
+      preview.classList.add('open');
+      preview.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeTimelinePreview(){
+      const preview = document.getElementById('timelinePreview');
+      if (!preview) return;
+      preview.classList.remove('open');
+      preview.setAttribute('aria-hidden', 'true');
+      preview.removeAttribute('data-scene-id');
+      const openBtn = document.getElementById('timelinePreviewOpen');
+      if (openBtn) delete openBtn.dataset.sceneId;
+    }
+
+    function updateTimelineButton(){
+      const btn = document.getElementById('timelineModeBtn');
+      if (!btn) return;
+      btn.textContent = timelineMode ? 'Exit Timeline' : 'Timeline';
+      btn.setAttribute('aria-pressed', timelineMode ? 'true' : 'false');
+    }
+
+    function openTimelineMode(sceneId = null){
+      timelineMode = true;
+      document.body.classList.add('timeline-mode');
+      const overlay = document.getElementById('timelineOverlay');
+      if (overlay) overlay.setAttribute('aria-hidden', 'false');
+      updateTimelineButton();
+      syncNavHeight();
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      if (sceneId){
+        const idx = scenes.findIndex(s=>s.id === sceneId);
+        timelineInsertIndex = idx >= 0 ? idx + 1 : scenes.length;
+        timelinePendingPreviewId = sceneId;
+      } else {
+        timelineInsertIndex = scenes.length;
+        timelinePendingPreviewId = null;
+      }
+      renderTimelineBoard();
+    }
+
+    function closeTimelineMode(){
+      timelineMode = false;
+      document.body.classList.remove('timeline-mode');
+      const overlay = document.getElementById('timelineOverlay');
+      if (overlay) overlay.setAttribute('aria-hidden', 'true');
+      closeTimelinePreview();
+      updateTimelineButton();
+      document.querySelectorAll('.timeline-dropzone.over').forEach(z=>z.classList.remove('over'));
+      timelineSuppressClick = false;
+    }
+
+    function toggleTimelineMode(){
+      if (timelineMode) closeTimelineMode();
+      else openTimelineMode();
     }
 
     function updateDeleteSceneButton(){
@@ -942,22 +1383,43 @@
      * Scene helpers
      * =======================*/
     function getActiveScene(){ return project.scenes.find(s=>s.id===activeSceneId); }
-    function addScene(){
-      const s = {
+    function buildDefaultScene(slug, summary){
+      const trimmedSlug = typeof slug === 'string' ? slug.trim() : '';
+      const trimmedSummary = typeof summary === 'string' ? summary.trim() : '';
+      const scene = {
         id: crypto.randomUUID(),
-        slug: 'EXT. NEW PLACE - DAY',
+        slug: trimmedSlug || 'EXT. NEW PLACE - DAY',
         cards: [],
-        elements: [{t:'action', txt:'...'}],
+        elements: [],
         color: '#8ab4f8',
         notes: '',
         sounds: []
       };
-      project.scenes.push(s);
-      project._hashes.scene[s.id] = hashString(stableSceneString(s));
-      activeSceneId = s.id;
+      if (trimmedSummary){
+        scene.elements = trimmedSummary
+          .split(/\n+/)
+          .map(line => ({ t:'action', txt: line.trim() }))
+          .filter(el => !!el.txt);
+      }
+      if (!scene.elements.length){
+        scene.elements = [{t:'action', txt:'...'}];
+      }
+      return scene;
+    }
+    function insertSceneAt(index, scene){
+      project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
+      project._hashes = project._hashes || { scene: {} };
+      const clamped = Math.max(0, Math.min(index, project.scenes.length));
+      project.scenes.splice(clamped, 0, scene);
+      project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
+      activeSceneId = scene.id;
       bumpVersion();
       render();
       scheduleSave(); scheduleBackup();
+    }
+    function addScene(){
+      const scene = buildDefaultScene();
+      insertSceneAt(project.scenes.length, scene);
     }
     function deleteScene(id){
       const idx = project.scenes.findIndex(s=>s.id===id);
@@ -1161,6 +1623,46 @@
         addSoundCue(value);
         const fresh = document.getElementById('newSoundCue');
         if (fresh){ fresh.value = ''; fresh.focus(); }
+      });
+    }
+    const timelineBtn = document.getElementById('timelineModeBtn');
+    if (timelineBtn){
+      updateTimelineButton();
+      timelineBtn.addEventListener('click', ()=> toggleTimelineMode());
+    }
+    const timelineOverlayEl = document.getElementById('timelineOverlay');
+    if (timelineOverlayEl){
+      timelineOverlayEl.addEventListener('click', (e)=>{
+        if (e.target === timelineOverlayEl) closeTimelineMode();
+      });
+    }
+    const timelineOverlayClose = document.getElementById('timelineOverlayClose');
+    if (timelineOverlayClose){
+      timelineOverlayClose.addEventListener('click', ()=> closeTimelineMode());
+    }
+    const timelineAddBtn = document.getElementById('timelineAddSceneBtn');
+    if (timelineAddBtn){
+      timelineAddBtn.addEventListener('click', ()=> handleTimelineAddScene());
+    }
+    const timelinePreviewCloseBtn = document.getElementById('timelinePreviewClose');
+    if (timelinePreviewCloseBtn){
+      timelinePreviewCloseBtn.addEventListener('click', ()=> closeTimelinePreview());
+    }
+    const timelinePreviewOpenBtn = document.getElementById('timelinePreviewOpen');
+    if (timelinePreviewOpenBtn){
+      timelinePreviewOpenBtn.addEventListener('click', ()=>{
+        const sceneId = timelinePreviewOpenBtn.dataset.sceneId;
+        if (!sceneId) return;
+        activeSceneId = sceneId;
+        setRightTab('write');
+        closeTimelineMode();
+        render();
+      });
+    }
+    const timelinePreviewLayer = document.getElementById('timelinePreview');
+    if (timelinePreviewLayer){
+      timelinePreviewLayer.addEventListener('click', (e)=>{
+        if (e.target === timelinePreviewLayer) closeTimelinePreview();
       });
     }
 
@@ -1528,6 +2030,12 @@
      * Shortcuts
      * =======================*/
     document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape' && timelineMode){
+        const previewOpen = document.getElementById('timelinePreview')?.classList.contains('open');
+        if (previewOpen) closeTimelinePreview();
+        else closeTimelineMode();
+        return;
+      }
       const cmd = e.metaKey || e.ctrlKey;
       if (cmd && e.key.toLowerCase() === 'k') { e.preventDefault(); toggleFocus(); return; }
       if (cmd && e.key === ';') { e.preventDefault(); togglePomodoro(); return; }
@@ -1595,6 +2103,7 @@
       }
 
       lastSerializedMetaHash = metaSignature(project);
+      timelineInsertIndex = Array.isArray(project?.scenes) ? project.scenes.length : 0;
       render();
       applyFocusModeUI();
       updatePomodoroUI();
