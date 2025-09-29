@@ -18,6 +18,10 @@ function themeToggles(){
   return Array.from(document.querySelectorAll('[data-theme-toggle]'));
 }
 
+function themeSelects(){
+  return Array.from(document.querySelectorAll('[data-theme-select]'));
+}
+
 function updateToggleLabels(theme){
   const next = theme === 'dark' ? 'Light' : 'Dark';
   themeToggles().forEach(btn => {
@@ -28,6 +32,17 @@ function updateToggleLabels(theme){
   });
 }
 
+function updateThemeSelects(theme){
+  themeSelects().forEach(sel => {
+    if (!(sel instanceof HTMLSelectElement)) return;
+    if (sel.value === theme) return;
+    const option = Array.from(sel.options).find(opt => opt.value === theme);
+    if (option){
+      sel.value = option.value;
+    }
+  });
+}
+
 function applySiteTheme(theme, persist = true){
   const normalized = theme === 'light' ? 'light' : 'dark';
   const prev = document.documentElement.dataset.theme;
@@ -35,6 +50,7 @@ function applySiteTheme(theme, persist = true){
   document.documentElement.style.colorScheme = normalized;
   if (persist) storeTheme(normalized);
   updateToggleLabels(normalized);
+  updateThemeSelects(normalized);
   if (prev !== normalized){
     document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: normalized } }));
   }
@@ -80,7 +96,9 @@ function initTheme(){
         applySiteTheme(next, true);
       });
     });
-    updateToggleLabels(document.documentElement.dataset.theme || initial);
+    const current = document.documentElement.dataset.theme || initial;
+    updateToggleLabels(current);
+    updateThemeSelects(current);
   };
 
   if (document.readyState === 'loading'){
