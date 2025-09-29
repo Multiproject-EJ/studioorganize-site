@@ -43,6 +43,13 @@
       .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
       .spacer{flex:1}
       .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
+      .btn[data-tab-btn].active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .topbar-group{display:flex; gap:6px; align-items:center}
+      .btn-menu{position:relative}
+      .btn-menu-list{display:none; position:absolute; right:0; top:calc(100% + 6px); min-width:180px; background:var(--panel); border:1px solid var(--ring); border-radius:12px; box-shadow:0 18px 40px rgba(0,0,0,0.4); padding:6px; z-index:30; flex-direction:column; gap:6px}
+      .btn-menu.open .btn-menu-list{display:flex}
+      .btn-menu-list button{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; text-align:left; color:var(--ink); cursor:pointer}
+      .btn-menu-list button:hover{border-color:var(--acc)}
       .layout{display:grid; grid-template-columns:280px 1fr 320px; gap:10px; padding:10px; min-height:0}
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
@@ -173,9 +180,19 @@
         <div class="spacer"></div>
 
         <!-- non-essential buttons collapse in focus mode -->
-        <button class="btn non-essential" onclick="exportFountain()">Export Fountain</button>
-        <button class="btn non-essential" onclick="setRightTab('timeline')">Timeline</button>
-        <button class="btn non-essential" onclick="printPDF()">Export PDF</button>
+        <div class="topbar-group non-essential" role="group" aria-label="Quick panel toggles">
+          <button class="btn" type="button" data-tab-btn="write">Write</button>
+          <button class="btn" type="button" data-tab-btn="timeline">Timeline</button>
+        </div>
+
+        <div class="btn-menu non-essential" id="exportMenu">
+          <button class="btn" type="button" id="exportMenuButton" aria-haspopup="true" aria-expanded="false">Export ▾</button>
+          <div class="btn-menu-list" id="exportMenuList" role="menu">
+            <button type="button" data-export-action="fountain" role="menuitem">Fountain (.fountain)</button>
+            <button type="button" data-export-action="pdf" role="menuitem">PDF</button>
+          </div>
+        </div>
+
         <button class="btn non-essential" onclick="backupNow()">Backup Now</button>
         <button class="btn non-essential" onclick="openRestore()">Restore…</button>
 
@@ -469,6 +486,41 @@
       });
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.toggle('active', panel.dataset.tab === activeRightTab);
+      });
+    }
+
+    function setupExportMenu(){
+      const menu = document.getElementById('exportMenu');
+      const toggle = document.getElementById('exportMenuButton');
+      if (!menu || !toggle) return;
+      const list = document.getElementById('exportMenuList');
+      if (!list) return;
+
+      const setOpen = (open)=>{
+        menu.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+
+      toggle.addEventListener('click', e=>{
+        e.stopPropagation();
+        setOpen(!menu.classList.contains('open'));
+      });
+
+      menu.querySelectorAll('[data-export-action]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const action = btn.dataset.exportAction;
+          setOpen(false);
+          if (action === 'fountain') exportFountain();
+          else if (action === 'pdf') printPDF();
+        });
+      });
+
+      document.addEventListener('click', e=>{
+        if (!menu.contains(e.target)) setOpen(false);
+      });
+
+      document.addEventListener('keydown', e=>{
+        if (e.key === 'Escape') setOpen(false);
       });
     }
 
@@ -1032,6 +1084,7 @@
     document.querySelectorAll('[data-tab-btn]').forEach(btn=>{
       btn.addEventListener('click', ()=> setRightTab(btn.dataset.tabBtn));
     });
+    setupExportMenu();
     document.querySelectorAll('[data-slug-prefix]').forEach(btn=>{
       btn.addEventListener('click', ()=> setSceneSlugPart('prefix', btn.dataset.slugPrefix));
     });
