@@ -174,7 +174,7 @@
 
         <!-- non-essential buttons collapse in focus mode -->
         <button class="btn non-essential" onclick="exportFountain()">Export Fountain</button>
-        <button class="btn non-essential" onclick="setRightTab('timeline')">Timeline</button>
+        <button class="btn non-essential" type="button" onclick="openTimeline()">Timeline</button>
         <button class="btn non-essential" onclick="printPDF()">Export PDF</button>
         <button class="btn non-essential" onclick="backupNow()">Backup Now</button>
         <button class="btn non-essential" onclick="openRestore()">Restore…</button>
@@ -452,6 +452,10 @@
         });
         return scene;
       });
+    }
+
+    function openTimeline(){
+      setRightTab('timeline');
     }
 
     function setRightTab(tab){
