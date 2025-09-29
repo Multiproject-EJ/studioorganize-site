@@ -36,9 +36,9 @@
   <main class="section">
     <style>
       html,body{height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
-      body{color:var(--ink);}
+      body{color:var(--ink); --nav-height:72px;}
       main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
-      .app{display:grid; grid-template-rows:56px 1fr; flex:1; min-height:0}
+      .app{display:grid; grid-template-rows:56px 1fr; flex:1; min-height:0; transition:transform .35s ease}
       .topbar{display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--ring)}
       .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
       .spacer{flex:1}
@@ -144,6 +144,8 @@
         opacity: 0;
         pointer-events: none;
       }
+
+      body.focus-mode .app{ transform: translateY(calc(-1 * var(--nav-height, 0px))); }
 
       /* Bottom HUD visible only in focus mode */
       #focusHud{
@@ -375,6 +377,16 @@
     </div>
 
     <script>
+    function syncNavHeight(){
+      const nav = document.querySelector('.nav');
+      if (!nav) return;
+      const rect = nav.getBoundingClientRect();
+      const height = Math.max(0, Math.round(rect.height));
+      document.documentElement.style.setProperty('--nav-height', `${height}px`);
+    }
+    syncNavHeight();
+    window.addEventListener('resize', syncNavHeight);
+
     /* =========================
      * IndexedDB minimal wrapper
      * =======================*/
@@ -1380,6 +1392,7 @@
       updateHud();
       markActiveLine();
       if (focused) centerActiveLine();
+      syncNavHeight();
     }
     function toggleFocus(){
       project.settings = project.settings || {};
