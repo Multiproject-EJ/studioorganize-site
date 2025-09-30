@@ -80,3 +80,22 @@ Refer to the schema file for exact column names and policies.
 
 This documentation should give you everything needed to wire the frontend forms to Supabase for user registration and login.
 
+## Frontend integration in this repo
+
+The modal-based signup and login experience lives in [`assets/auth.js`](assets/auth.js). The script mounts an accessible popup, handles focus management, and calls Supabase Auth for `signUp` and `signInWithPassword`. Buttons that open the modal use the `data-open-auth` attribute (set to either `signup` or `login`). The script also watches the auth state so the “Sign up / Log in” CTA automatically becomes an “Open workspace” button once the user is authenticated.
+
+On `account.html` the modal is triggered automatically for visitors who still reach the legacy route. If you add new buttons that should always open the modal (even when a user is already signed in) mark them with `data-auth-no-redirect="true"` so the JavaScript keeps their label instead of switching to “Open workspace.”
+
+## Best practices for memberships and Stripe subscriptions
+
+To prepare for paid memberships you’ll want to store a little more state than just the Supabase auth session. A few recommendations:
+
+1. **Track member profile + billing status** – add columns such as `billing_status`, `plan_id`, and `trial_ends_at` to your `profiles` table. Keep them in sync with Stripe events so the UI knows whether to show upgrade or renewal messaging.
+2. **Create a `subscriptions` table** – store the Stripe `subscription_id`, `customer_id`, price, and status keyed to the user’s UUID. Enable Row Level Security and ensure policies only allow each user to read their own rows.
+3. **Use Stripe webhooks** – expose a Supabase Edge Function (or your own backend endpoint) that receives `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted` events. Update the `subscriptions` table and profile billing status inside that handler.
+4. **Protect premium data** – keep any member-only tables behind RLS policies that check for an active subscription. For example, require `auth.uid() = user_id` and `billing_status = 'active'` in `profiles` before returning protected rows.
+5. **Audit email + password flows** – enforce email confirmation in Supabase Auth, require a minimum password length (already set to 8 characters in the modal), and enable password reset emails so support requests stay manageable.
+6. **Store Stripe metadata** – include the Supabase user ID in Stripe Checkout Session metadata. That makes it trivial to link webhook payloads back to the right row in your database.
+
+With those pieces in place the popup UI in this repo can stay lightweight while the backend keeps an authoritative record of who should have access to paid features.
+
