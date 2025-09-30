@@ -52,6 +52,12 @@ create policy "Profiles are viewable by owners"
     for select
     using (auth.uid() = id);
 
+drop policy if exists "Profiles can be created by owners" on public.profiles;
+create policy "Profiles can be created by owners"
+    on public.profiles
+    for insert
+    with check (auth.uid() = id);
+
 drop policy if exists "Profiles are editable by owners" on public.profiles;
 create policy "Profiles are editable by owners"
     on public.profiles
@@ -60,7 +66,8 @@ create policy "Profiles are editable by owners"
     with check (auth.uid() = id);
 
 -- Allow insert via service role (used by trigger) and self-service sign-up
--- No explicit insert policy is needed because inserts come from the trigger.
+-- The insert policy above ensures authenticated users can create their row
+-- while still scoping access to their own profile only.
 
 -- Helper view for admin dashboards (requires service role)
 create or replace view public.member_directory as
