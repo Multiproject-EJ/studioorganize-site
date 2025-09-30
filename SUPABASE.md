@@ -70,6 +70,44 @@ You can adapt this snippet to your build setup. The key steps are to:
 
 Refer to the schema file for exact column names and policies.
 
+### Scenes & connected data
+
+Run the latest [`supabase/schema.sql`](supabase/schema.sql) file to create the new scene tables. They store the full scene graph the product uses (beats, rich-text elements, sounds, and links to other databases) and automatically scope access to the signed-in owner via Row Level Security.
+
+Key tables that ship with the schema:
+
+- `public.scenes` – top-level scene records. Includes metadata such as slug/title, script order, location/time of day, color chip, plus JSON columns (`cards`, `elements`, `sounds`, `metadata`) that mirror the browser data structure. Each row is owned by a member (`owner_id` → `public.profiles.id`).
+- `public.scene_beats` – ordered beats/cards associated with a scene. Use this if you need structured rows instead of relying on the JSON array stored on the parent scene.
+- `public.scene_elements` – screenplay elements (action, dialogue, etc.) stored with their order and optional metadata.
+- `public.scene_sounds` – cues or music notes tied to a scene with sortable positions.
+- `public.scene_links` – flexible join table to associate a scene with other resources (characters, props, locations, tasks). Store the target UUID in `linked_id`, a human-readable label in `display_name`, and any extra data in `metadata`.
+
+All supporting tables enforce RLS by checking that the requesting user owns the parent `scene_id`. Insert/update/delete attempts will fail if a user tries to touch a scene they do not own.
+
+To create a new scene from the client:
+
+```js
+const { data, error } = await supabase
+  .from('scenes')
+  .insert({
+    owner_id: user.id,
+    slug: 'INT. STUDIO - DAY',
+    title: 'Office brainstorm',
+    synopsis: 'Team debates the next marketing push.',
+    scene_number: 7,
+    script_order: 7,
+    location: 'Studio bullpen',
+    time_of_day: 'DAY',
+    cards: [{ id: crypto.randomUUID(), title: 'Brainstorm start' }],
+    elements: [
+      { t: 'action', txt: 'The team gathers around the whiteboard.' }
+    ]
+  })
+  .select();
+```
+
+Follow-up inserts into `scene_beats`, `scene_elements`, `scene_sounds`, and `scene_links` should include the `scene_id` returned above so they inherit ownership permissions automatically.
+
 ## Testing the workflow
 
 1. Open the Supabase Dashboard and run the SQL in [`supabase/schema.sql`](supabase/schema.sql) using the SQL editor. This now
