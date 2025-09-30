@@ -72,7 +72,7 @@ Refer to the schema file for exact column names and policies.
 
 ### Scenes & connected data
 
-Run the latest [`supabase/schema.sql`](supabase/schema.sql) file to create the new scene tables. They store the full scene graph the product uses (beats, rich-text elements, sounds, and links to other databases) and automatically scope access to the signed-in owner via Row Level Security.
+Run the latest [`supabase/schema.sql`](supabase/schema.sql) file to create the new scene tables. The script is additive—it only provisions the scene-related tables, indexes, policies, and triggers, and safely skips objects (like `public.profiles`) that are already in your project. Because trigger creation is wrapped in guards, you can run it multiple times without conflicting with existing infrastructure.
 
 Key tables that ship with the schema:
 
@@ -107,6 +107,15 @@ const { data, error } = await supabase
 ```
 
 Follow-up inserts into `scene_beats`, `scene_elements`, `scene_sounds`, and `scene_links` should include the `scene_id` returned above so they inherit ownership permissions automatically.
+
+### Applying the scene schema to an existing project
+
+If your Supabase project is already live, you do **not** need to reprovision the full StudioOrganize schema. Instead, run [`supabase/schema.sql`](supabase/schema.sql) directly:
+
+1. Open the Supabase Dashboard → SQL Editor, paste in the file contents, and execute the script; or
+2. Use the CLI: `supabase db execute --file supabase/schema.sql --db-url <your_connection_string>`.
+
+Either approach adds the scene tables (and related policies/triggers) while leaving your existing auth, profile, and billing tables untouched.
 
 ## Testing the workflow
 

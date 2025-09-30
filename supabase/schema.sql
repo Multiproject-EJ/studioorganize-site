@@ -25,9 +25,20 @@ begin
 end;
 $$ language plpgsql;
 
-create trigger profiles_set_timestamp
-before update on public.profiles
-for each row execute function public.set_current_timestamp();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'profiles_set_timestamp'
+          and tgrelid = 'public.profiles'::regclass
+    ) then
+        create trigger profiles_set_timestamp
+            before update on public.profiles
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
 
 -- Automatically create a profile row when a user signs up
 create or replace function public.handle_new_user()
@@ -40,9 +51,20 @@ begin
 end;
 $$ language plpgsql security definer;
 
-create trigger on_auth_user_created
-after insert on auth.users
-for each row execute function public.handle_new_user();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'on_auth_user_created'
+          and tgrelid = 'auth.users'::regclass
+    ) then
+        create trigger on_auth_user_created
+            after insert on auth.users
+            for each row execute function public.handle_new_user();
+    end if;
+end;
+$$;
 
 -- Row Level Security policies
 alter table public.profiles enable row level security;
@@ -114,9 +136,20 @@ create table if not exists public.scenes (
 create index if not exists scenes_owner_idx on public.scenes (owner_id);
 create index if not exists scenes_project_idx on public.scenes (project_id);
 
-create trigger scenes_set_timestamp
-before update on public.scenes
-for each row execute function public.set_current_timestamp();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scenes_set_timestamp'
+          and tgrelid = 'public.scenes'::regclass
+    ) then
+        create trigger scenes_set_timestamp
+            before update on public.scenes
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
 
 alter table public.scenes enable row level security;
 
@@ -158,9 +191,20 @@ create table if not exists public.scene_beats (
 
 create index if not exists scene_beats_scene_idx on public.scene_beats (scene_id);
 
-create trigger scene_beats_set_timestamp
-before update on public.scene_beats
-for each row execute function public.set_current_timestamp();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scene_beats_set_timestamp'
+          and tgrelid = 'public.scene_beats'::regclass
+    ) then
+        create trigger scene_beats_set_timestamp
+            before update on public.scene_beats
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
 
 alter table public.scene_beats enable row level security;
 
@@ -237,9 +281,20 @@ create table if not exists public.scene_elements (
 
 create index if not exists scene_elements_scene_idx on public.scene_elements (scene_id);
 
-create trigger scene_elements_set_timestamp
-before update on public.scene_elements
-for each row execute function public.set_current_timestamp();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scene_elements_set_timestamp'
+          and tgrelid = 'public.scene_elements'::regclass
+    ) then
+        create trigger scene_elements_set_timestamp
+            before update on public.scene_elements
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
 
 alter table public.scene_elements enable row level security;
 
@@ -315,9 +370,20 @@ create table if not exists public.scene_sounds (
 
 create index if not exists scene_sounds_scene_idx on public.scene_sounds (scene_id);
 
-create trigger scene_sounds_set_timestamp
-before update on public.scene_sounds
-for each row execute function public.set_current_timestamp();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scene_sounds_set_timestamp'
+          and tgrelid = 'public.scene_sounds'::regclass
+    ) then
+        create trigger scene_sounds_set_timestamp
+            before update on public.scene_sounds
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
 
 alter table public.scene_sounds enable row level security;
 
@@ -395,9 +461,20 @@ create table if not exists public.scene_links (
 create index if not exists scene_links_scene_idx on public.scene_links (scene_id);
 create index if not exists scene_links_type_idx on public.scene_links (link_type);
 
-create trigger scene_links_set_timestamp
-before update on public.scene_links
-for each row execute function public.set_current_timestamp();
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scene_links_set_timestamp'
+          and tgrelid = 'public.scene_links'::regclass
+    ) then
+        create trigger scene_links_set_timestamp
+            before update on public.scene_links
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
 
 alter table public.scene_links enable row level security;
 
