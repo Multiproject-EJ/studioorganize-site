@@ -584,6 +584,38 @@
 
     let backupTimer = null;
     let lastSerializedMetaHash = '';
+    let supabaseSession = null;
+    let supabaseSessionBound = false;
+
+    function bindSupabaseSessionClient(client){
+      if (!client || supabaseSessionBound) return;
+      supabaseSessionBound = true;
+      client.auth.getSession().then(({ data, error }) => {
+        if (error) {
+          console.warn('Supabase session fetch failed:', error);
+          return;
+        }
+        supabaseSession = data?.session || null;
+      });
+      client.auth.onAuthStateChange((_event, session) => {
+        supabaseSession = session;
+      });
+    }
+
+    if (window.supabaseClient) bindSupabaseSessionClient(window.supabaseClient);
+    window.addEventListener('auth:ready', e => {
+      if (supabaseSessionBound && supabaseSession) return;
+      bindSupabaseSessionClient(e.detail?.supabase);
+    });
+
+    async function getSupabaseSession(client){
+      if (!client) return null;
+      if (supabaseSession && supabaseSession.user) return supabaseSession;
+      const { data, error } = await client.auth.getSession();
+      if (error) throw error;
+      supabaseSession = data?.session || null;
+      return supabaseSession;
+    }
 
     const RIGHT_TAB_KEY = 'SW_RIGHT_TAB';
     let activeRightTab = (()=>{
@@ -1781,6 +1813,110 @@
       }
     }
 
+    function parseSceneSlugParts(slug){
+      if (!slug) return { location: null, timeOfDay: null };
+      const trimmed = String(slug).trim();
+      if (!trimmed) return { location: null, timeOfDay: null };
+      const prefixMatch = trimmed.match(/^(INT\.|EXT\.|INT\/EXT\.|INT-EXT\.)\s*(.*)$/i);
+      const remainder = prefixMatch ? prefixMatch[2] || '' : trimmed;
+      const parts = remainder.split(/\s*-\s*/);
+      let location = parts.length ? parts[0].trim() : '';
+      const timeOfDay = parts.length > 1 ? parts.slice(1).join(' - ').trim() : '';
+      location = location || (prefixMatch ? remainder.trim() : trimmed);
+      return {
+        location: location || null,
+        timeOfDay: timeOfDay || null
+      };
+    }
+
+    function sceneToSupabaseRow(scene, index, ownerId){
+      const { location, timeOfDay } = parseSceneSlugParts(scene.slug || '');
+      const safeCards = Array.isArray(scene.cards) ? structuredClone(scene.cards) : [];
+      const safeElements = Array.isArray(scene.elements) ? structuredClone(scene.elements) : [];
+      const safeSounds = Array.isArray(scene.sounds) ? structuredClone(scene.sounds) : [];
+      const characters = Array.isArray(project?.catalogs?.characters)
+        ? project.catalogs.characters.map(char => ({ id: char.id || null, name: char.name || '' }))
+        : [];
+      const locations = Array.isArray(project?.catalogs?.locations)
+        ? project.catalogs.locations.map(loc => ({ id: loc.id || null, name: loc.name || '' }))
+        : [];
+      return {
+        id: scene.id,
+        owner_id: ownerId,
+        project_id: project.projectId,
+        slug: scene.slug || null,
+        title: scene.title || location || scene.slug || `Scene ${index + 1}`,
+        synopsis: scene.notes || null,
+        scene_number: index + 1,
+        script_order: index,
+        color: scene.color || null,
+        location,
+        time_of_day: timeOfDay,
+        cards: safeCards,
+        elements: safeElements,
+        sounds: safeSounds,
+        metadata: {
+          notes: scene.notes || '',
+          projectTitle: project.title || '',
+          projectNotes: project.notes || '',
+          projectVersion: project.version || 0,
+          projectUpdatedAt: project.updatedAt || Date.now(),
+          settings: {
+            theme: project.settings?.theme || null,
+            smartFormat: typeof project.settings?.smartFormat === 'boolean' ? project.settings.smartFormat : null
+          },
+          catalogs: { characters, locations }
+        }
+      };
+    }
+
+    async function backupToSupabase(supabase, { userInitiated = false } = {}){
+      if (!project || !Array.isArray(project.scenes)){
+        if (userInitiated) alert('No project loaded to back up yet.');
+        return false;
+      }
+      try {
+        const session = await getSupabaseSession(supabase);
+        if (!session || !session.user){
+          if (userInitiated) alert('Sign in to back up your project to the cloud.');
+          return false;
+        }
+        const ownerId = session.user.id;
+        ensureProjectShape();
+        const scenes = project.scenes.map((scene, index) => sceneToSupabaseRow(scene, index, ownerId));
+
+        const { error: deleteError } = await supabase
+          .from('scenes')
+          .delete()
+          .eq('owner_id', ownerId)
+          .eq('project_id', project.projectId);
+        if (deleteError) throw deleteError;
+
+        if (scenes.length){
+          const { error: upsertError } = await supabase
+            .from('scenes')
+            .upsert(scenes, { onConflict: 'id' });
+          if (upsertError) throw upsertError;
+        }
+
+        project._hashes.scene = {};
+        project.scenes.forEach(s => {
+          project._hashes.scene[s.id] = hashString(stableSceneString(s));
+        });
+        project._lastBackedUpVersion = project.version;
+        project._deltaCountSinceFull = 0;
+        lastSerializedMetaHash = metaSignature(project);
+        await saveLocal(project);
+
+        console.info('Backed up project to Supabase.');
+        return true;
+      } catch (err) {
+        if (userInitiated) alert('Backup failed. Please try again.');
+        console.error('Supabase backup failed:', err);
+        return false;
+      }
+    }
+
     function scheduleSave(){
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async ()=>{
@@ -1790,10 +1926,18 @@
 
     function scheduleBackup(){
       clearTimeout(backupTimer);
-      backupTimer = setTimeout(backupSmart, BACKUP_IDLE_MS);
+      backupTimer = setTimeout(()=> backupSmart(false), BACKUP_IDLE_MS);
     }
 
-    function backupSmart(){
+    async function backupSmart(userInitiated = false){
+      const supabase = window.supabaseClient;
+      if (supabase){
+        const saved = await backupToSupabase(supabase, { userInitiated });
+        if (saved) return;
+      } else if (userInitiated) {
+        alert('Backup is still initializing. Please try again in a moment.');
+      }
+
       // In Apps Script context this will exist; in canvas preview it won't.
       if (!(window.google && google.script && google.script.run)) return;
       const pack = buildDeltaOrFull();
@@ -1831,7 +1975,10 @@
         });
     }
 
-    function backupNow(){ clearTimeout(backupTimer); backupSmart(); }
+    function backupNow(){
+      clearTimeout(backupTimer);
+      backupSmart(true);
+    }
 
     /* =========================
      * Restore (client-side)
