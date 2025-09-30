@@ -4,6 +4,8 @@ const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
 const WORKSPACE_URL = 'https://app.studioorganize.com';
 
+const SUPPORT_EMAIL = 'support@studioorganize.com';
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function qs(selector, scope = document){
@@ -79,6 +81,32 @@ function setStatus(el, message, type = 'info'){
   if (!el) return;
   el.textContent = message || '';
   el.dataset.statusType = type;
+}
+
+function formatErrorMessage(error, context = 'generic'){
+  const message = error && typeof error.message === 'string' ? error.message : '';
+  const normalized = message.toLowerCase();
+
+  if (context === 'signup'){
+    const disabledSignup =
+      (typeof error?.status === 'number' && error.status === 403) ||
+      normalized.includes('sign-ins are disabled') ||
+      normalized.includes('signups not allowed');
+
+    if (disabledSignup){
+      return `We’re currently activating new accounts manually. Email ${SUPPORT_EMAIL} and we’ll help you get set up.`;
+    }
+  }
+
+  if (context === 'login' && normalized.includes('email not confirmed')){
+    return 'Please confirm your email first. Check your inbox for the confirmation link.';
+  }
+
+  if (message){
+    return message;
+  }
+
+  return 'Something went wrong. Please try again.';
 }
 
 function disableForm(form, disabled){
@@ -189,8 +217,7 @@ async function handleSignup(e){
     setStatus(statusSignup, 'Check your inbox to confirm your email. Once confirmed you can sign in and access the workspace.', 'success');
     signupForm.reset();
   } catch (error) {
-    const message = error && typeof error.message === 'string' ? error.message : 'Something went wrong. Please try again.';
-    setStatus(statusSignup, message, 'error');
+    setStatus(statusSignup, formatErrorMessage(error, 'signup'), 'error');
   } finally {
     disableForm(signupForm, false);
   }
@@ -216,8 +243,7 @@ async function handleLogin(e){
       window.location.href = WORKSPACE_URL;
     }, 900);
   } catch (error) {
-    const message = error && typeof error.message === 'string' ? error.message : 'Unable to log in. Please check your details and try again.';
-    setStatus(statusLogin, message, 'error');
+    setStatus(statusLogin, formatErrorMessage(error, 'login'), 'error');
   } finally {
     disableForm(loginForm, false);
   }
