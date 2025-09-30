@@ -34,7 +34,7 @@
     <a class="menu__link" href="/about.html">About</a>
     <a class="menu__link" href="/faq.html">FAQ</a>
     <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-    <a class="menu__cta" href="/account.html">Sign up / Log in</a>
+    <button class="menu__cta" type="button" data-open-auth="signup" aria-haspopup="dialog">Sign up / Log in</button>
   </nav>
 </header>
 
@@ -89,6 +89,7 @@
     <div><a href="mailto:support@studioorganize.com">support@studioorganize.com</a></div>
   </div>
 </footer>
-<script src="/assets/main.js"></script>
+<script type="module" src="/assets/auth.js"></script>
+<script src="/assets/main.js" defer></script>
 </body>
 </html>

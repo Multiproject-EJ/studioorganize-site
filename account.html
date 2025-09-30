@@ -31,34 +31,23 @@
     <a class="menu__link" href="/about.html">About</a>
     <a class="menu__link" href="/faq.html">FAQ</a>
     <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-    <a class="menu__cta" href="/account.html" aria-current="page">Sign up / Log in</a>
+    <button class="menu__cta" type="button" data-open-auth="signup" aria-haspopup="dialog">Sign up / Log in</button>
   </nav>
 </header>
 
 <main class="section">
-  <h1>Sign up / Log in</h1>
-  <p class="lead">Access the StudioOrganize workspace or request a new account.</p>
+  <h1>Access your StudioOrganize account</h1>
+  <p class="lead">Use the sign-in window to create an account or log in. It opens automatically on this page.</p>
 
-  <div class="grid cards" style="margin-top:24px">
-    <div class="card">
-      <h2>New here?</h2>
-      <p>StudioOrganize Online is rolling out gradually. Join the waitlist and we’ll send you a sign-up link as soon as your spot opens.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Sign%20Up">Join the waitlist</a>
-        <a class="btn btn-ghost" href="/product/studioorganize.html">See what’s included</a>
-      </div>
-      <p class="muted" style="margin-top:12px">Already purchased the Google Sheets version? You can duplicate the templates from your receipt email.</p>
+  <div class="card card--lg" style="margin-top:24px;max-width:640px">
+    <h2>Need the account window again?</h2>
+    <p>Use the buttons below to reopen the popup any time. Sign-ups happen instantly through our secure Supabase database.</p>
+    <div class="cta-row" style="margin-top:12px">
+      <button class="btn btn-primary" type="button" data-open-auth="signup" data-auth-no-redirect="true">Sign up and create account</button>
+      <button class="btn btn-ghost" type="button" data-open-auth="login" data-auth-no-redirect="true">Log in</button>
+      <a class="btn btn-ghost" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Account%20Help">Need help?</a>
     </div>
-
-    <div class="card">
-      <h2>Already a member?</h2>
-      <p>Use the login link below to open the hosted workspace. Bookmark it for quick access, and reach out if you need help.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="https://app.studioorganize.com" target="_blank" rel="noopener">Go to login</a>
-        <a class="btn btn-ghost" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Login%20Help">Need help?</a>
-      </div>
-      <p class="muted" style="margin-top:12px">Lost access or changed your email? Contact support and we’ll get you back in.</p>
-    </div>
+    <p class="muted" style="margin-top:12px">Tip: once you’re signed in, bookmark <a href="https://app.studioorganize.com" target="_blank" rel="noopener">app.studioorganize.com</a> for quick access.</p>
   </div>
 </main>
 
@@ -71,6 +60,21 @@
 </footer>
 
 <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+<script type="module" src="/assets/auth.js"></script>
 <script src="/assets/main.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const open = (mode = 'signup') => {
+      if (typeof window.openAuthModal === 'function'){
+        window.openAuthModal(mode);
+      }
+    };
+    if (typeof window.openAuthModal === 'function'){
+      open('signup');
+    } else {
+      window.addEventListener('auth:ready', () => open('signup'), { once: true });
+    }
+  });
+</script>
 </body>
 </html>
