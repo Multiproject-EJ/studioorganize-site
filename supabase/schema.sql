@@ -11,6 +11,7 @@ create table if not exists public.profiles (
     full_name text,
     studio_name text,
     phone text,
+    is_admin boolean default false not null,
     created_at timestamptz default timezone('utc', now()) not null,
     updated_at timestamptz default timezone('utc', now()) not null
 );
@@ -77,6 +78,7 @@ select
     p.full_name,
     p.studio_name,
     p.phone,
+    p.is_admin,
     p.created_at,
     p.updated_at
 from public.profiles p;

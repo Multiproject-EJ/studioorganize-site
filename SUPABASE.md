@@ -72,11 +72,24 @@ Refer to the schema file for exact column names and policies.
 
 ## Testing the workflow
 
-1. Open the Supabase Dashboard and run the SQL in [`supabase/schema.sql`](supabase/schema.sql) using the SQL editor.
+1. Open the Supabase Dashboard and run the SQL in [`supabase/schema.sql`](supabase/schema.sql) using the SQL editor. This now
+   includes an `is_admin` flag on profiles so you can promote specific team members.
 2. In the Authentication settings, enable email/password sign-ups and configure any required email templates (e.g., confirmation emails).
 3. Load the site locally, open the browser console, and instantiate the Supabase client as shown above.
 4. Call `supabase.auth.signUp({ email, password })` to create a new account. Confirm the email if required by your project settings.
 5. Use `supabase.auth.signInWithPassword` to verify that login works and that you can fetch/update your profile using `supabase.from('profiles')` queries.
+
+### Granting admin access to an account
+
+After your account exists in `auth.users`/`public.profiles`, run the following SQL in the Supabase SQL editor to promote it:
+
+```sql
+update public.profiles
+set is_admin = true
+where email = 'josefsen.elvind@gmail.com';
+```
+
+This keeps the admin designation alongside other profile metadata so it can be referenced from the `member_directory` view or other dashboards.
 
 This documentation should give you everything needed to wire the frontend forms to Supabase for user registration and login.
 
