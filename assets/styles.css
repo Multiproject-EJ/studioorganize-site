@@ -55,17 +55,19 @@ img{max-width:100%;display:block}
 /* nav */
 .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(10px);z-index:10}
 .brand{font-weight:800;letter-spacing:.2px}
-.nav a{margin-left:16px;color:var(--muted)}
-.nav a:hover{color:var(--text)}
-.menu{display:flex;gap:16px;align-items:center}
-.theme-toggle{border:1px solid var(--line);background:var(--chip);color:var(--muted);padding:8px 12px;border-radius:10px;cursor:pointer;font:inherit;transition:border-color .12s ease, color .12s ease, background .12s ease}
-.theme-toggle:hover{border-color:var(--acc);color:var(--text)}
+.menu{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.menu__link,.dropbtn,.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-weight:500;cursor:pointer;transition:color .12s ease,border-color .12s ease,background .12s ease,transform .12s ease;text-decoration:none}
+.menu__link:hover,.dropbtn:hover,.theme-toggle:hover{color:var(--text);border-color:var(--acc);background:var(--chip)}
+.menu__link.is-active{color:var(--text);border-color:var(--acc);background:var(--chip)}
+.menu__cta{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#0b0f14;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .12s ease}
+.menu__cta:hover{color:#0b0f14;transform:translateY(-1px)}
+.theme-toggle{background:var(--panel)}
 .theme-toggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 
 /* dropdown */
 .dropdown{position:relative}
-.dropbtn{border:1px solid var(--line);background:transparent;color:var(--muted);padding:8px 10px;border-radius:10px;cursor:pointer}
-.dropbtn:hover{color:var(--text);border-color:#2a2f39}
+.dropbtn{background:var(--panel)}
+.dropbtn:hover{color:var(--text)}
 .dropdown-content{display:none;position:absolute;right:0;min-width:230px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:6px}
 .dropdown-content a{display:block;padding:10px 12px;border-radius:8px;color:var(--text)}
 .dropdown-content a:hover{background:var(--chip)}
