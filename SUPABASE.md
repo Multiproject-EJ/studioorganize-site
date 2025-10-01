@@ -13,6 +13,15 @@ The site relies on Supabase Auth to allow members to create accounts and sign in
 
 Profiles are stored in the public schema and reference Supabase's `auth.users` table. Row Level Security (RLS) ensures that each signed-in member can only view and modify their own profile data.
 
+### Profiles table vs. member directory view
+
+- **`public.profiles` table** – this is the canonical record that belongs to each account. The trigger defined in [`supabase/schema.sql`](supabase/schema.sql) inserts a row every time Supabase Auth creates a new `auth.users` entry, so the same UUID is shared between the auth user and the profile. Any updates you make to names, studios, or phone numbers are persisted here, and Row Level Security limits read/write access to the owner of the row.
+- **`public.member_directory` view** – this view simply selects the columns from `public.profiles` and exposes them in a read-only shape that is convenient for dashboards or admin tooling. Because it is a view, it does not store any additional data; it always reflects the contents of the `profiles` table.
+
+When members sign up or sign in, Supabase Auth is interacting with the managed `auth.users` table, not the `member_directory` view. The view is only used for querying profile metadata after authentication succeeds.
+
+Supabase manages email/password credentials inside the `auth.users` table (passwords are stored securely as salted hashes), so you will not see a `password` column in `public.profiles` or any other table in the public schema. Authentication happens through the Auth API, and the profile row is linked via the shared UUID.
+
 Supabase SQL schema files live in [`supabase/schema.sql`](supabase/schema.sql). Run the SQL file inside the Supabase SQL editor (or the CLI) to set up the necessary tables, triggers, and policies.
 
 ## Environment variables
@@ -125,6 +134,17 @@ Either approach adds the scene tables (and related policies/triggers) while leav
 3. Load the site locally, open the browser console, and instantiate the Supabase client as shown above.
 4. Call `supabase.auth.signUp({ email, password })` to create a new account. Confirm the email if required by your project settings.
 5. Use `supabase.auth.signInWithPassword` to verify that login works and that you can fetch/update your profile using `supabase.from('profiles')` queries.
+
+### Troubleshooting “sign-ups are disabled” errors
+
+If the signup form reports that new accounts are disabled:
+
+1. Visit **Authentication → Providers** in the Supabase dashboard.
+2. Ensure the **Email** provider has “Enable Email Signup” toggled on.
+3. Scroll down to **Advanced settings** and confirm “Disable new user signups” is turned off.
+4. If you enforce an email domain allow list, add the address you are testing with to the allow list.
+
+After updating these settings, reload the public site and submit the form again. The frontend reads the Supabase Auth configuration on load and will now surface the warning immediately whenever signups are switched off.
 
 ### Granting admin access to an account
 
