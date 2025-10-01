@@ -4,8 +4,6 @@ const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
 const WORKSPACE_URL = 'https://app.studioorganize.com';
 
-const SUPPORT_EMAIL = 'support@studioorganize.com';
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const HCAPTCHA_API_SRC = 'https://js.hcaptcha.com/1/api.js?render=explicit';
@@ -77,6 +75,17 @@ function createModal(){
         <button class="btn btn-primary auth-form__submit" type="submit">Log in</button>
         <p class="auth-form__switch">New to StudioOrganize? <button type="button" data-switch-mode="signup">Create an account</button></p>
       </form>
+      <section class="auth-debug" data-auth-debug>
+        <div class="auth-debug__intro">
+          <span class="auth-debug__label">Diagnostics</span>
+          <p class="auth-debug__help">Generate a snapshot of the current auth state to help debug sign-in issues.</p>
+        </div>
+        <div class="auth-debug__actions">
+          <button class="btn btn-ghost auth-debug__button" type="button" data-auth-debug-run>Run diagnostics</button>
+          <button class="btn btn-ghost auth-debug__button" type="button" data-auth-debug-copy hidden>Copy output</button>
+        </div>
+        <pre class="auth-debug__output" data-auth-debug-output hidden></pre>
+      </section>
     </div>
   `;
   return wrapper;
@@ -93,6 +102,10 @@ const statusSignup = qs('[data-auth-status="signup"]', modal);
 const statusLogin = qs('[data-auth-status="login"]', modal);
 const captchaWrapper = qs('[data-auth-captcha]', modal);
 const captchaWidget = qs('[data-auth-captcha-widget]', modal);
+const debugSection = qs('[data-auth-debug]', modal);
+const debugRunButton = qs('[data-auth-debug-run]', modal);
+const debugCopyButton = qs('[data-auth-debug-copy]', modal);
+const debugOutput = qs('[data-auth-debug-output]', modal);
 let currentMode = 'signup';
 let previouslyFocused = null;
 let latestSession = null;
@@ -218,7 +231,7 @@ function formatErrorMessage(error, context = 'generic'){
       normalized.includes('signups not allowed');
 
     if (disabledSignup){
-      return `We’re currently activating new accounts manually. Email ${SUPPORT_EMAIL} and we’ll help you get set up.`;
+      return 'Email/password sign-ups are disabled in Supabase for this project. Re-enable them from Authentication settings to allow new members to register.';
     }
   }
 
@@ -419,6 +432,75 @@ async function handleLogin(e){
 
 signupForm.addEventListener('submit', handleSignup);
 loginForm.addEventListener('submit', handleLogin);
+
+function summarizeSession(session){
+  if (!session || typeof session !== 'object'){
+    return null;
+  }
+  const user = session.user || null;
+  return {
+    id: user?.id || null,
+    email: user?.email || null,
+    lastSignInAt: user?.last_sign_in_at || null
+  };
+}
+
+function collectDiagnostics(){
+  const payload = {
+    timestamp: new Date().toISOString(),
+    mode: currentMode,
+    signupStatus: {
+      message: statusSignup?.textContent?.trim() || '',
+      type: statusSignup?.dataset.statusType || 'info'
+    },
+    loginStatus: {
+      message: statusLogin?.textContent?.trim() || '',
+      type: statusLogin?.dataset.statusType || 'info'
+    },
+    authSettings: { ...authSettingsState },
+    captcha: {
+      widgetLoaded: captchaId !== null,
+      tokenPresent: Boolean(captchaToken)
+    },
+    session: summarizeSession(latestSession)
+  };
+  return payload;
+}
+
+function runDiagnostics(){
+  if (!debugOutput) return;
+  const diagnostics = collectDiagnostics();
+  debugOutput.textContent = JSON.stringify(diagnostics, null, 2);
+  debugOutput.hidden = false;
+  if (debugCopyButton){
+    debugCopyButton.hidden = false;
+    debugCopyButton.textContent = 'Copy output';
+  }
+  debugSection?.classList.add('auth-debug--active');
+}
+
+async function copyDiagnostics(){
+  if (!debugOutput) return;
+  try {
+    await navigator.clipboard.writeText(debugOutput.textContent);
+    if (debugCopyButton){
+      debugCopyButton.textContent = 'Copied!';
+    }
+  } catch (error) {
+    console.warn('Unable to copy diagnostics to clipboard', error);
+    if (debugCopyButton){
+      debugCopyButton.textContent = 'Copy failed';
+    }
+  }
+}
+
+if (debugRunButton){
+  debugRunButton.addEventListener('click', runDiagnostics);
+}
+
+if (debugCopyButton){
+  debugCopyButton.addEventListener('click', copyDiagnostics);
+}
 
 function bindOpeners(){
   qsa('[data-open-auth]').forEach(btn => {
