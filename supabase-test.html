@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Supabase Connection Tester — StudioOrganize</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--color-page, #f8f9fb);
+    }
+    .tester {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: grid;
+      gap: 2rem;
+    }
+    .tester__intro {
+      background: var(--color-surface, #fff);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 20px 45px rgba(12, 20, 51, 0.15);
+    }
+    .tester__intro h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(1.75rem, 2vw + 1rem, 2.5rem);
+    }
+    .tester__layout {
+      display: grid;
+      gap: 1.5rem;
+    }
+    @media (min-width: 860px) {
+      .tester__layout {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .card {
+      background: var(--color-surface, #fff);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 16px 32px rgba(12, 20, 51, 0.12);
+      display: grid;
+      gap: 1rem;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+    form {
+      display: grid;
+      gap: 0.75rem;
+    }
+    fieldset {
+      border: 1px dashed rgba(99, 113, 174, 0.4);
+      border-radius: 12px;
+      padding: 1rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+    fieldset:disabled {
+      opacity: 0.55;
+    }
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-weight: 600;
+    }
+    input,
+    textarea {
+      font: inherit;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(99, 113, 174, 0.4);
+      background: transparent;
+      color: inherit;
+    }
+    button {
+      font: inherit;
+      padding: 0.6rem 1rem;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #5fa8ff, #736dff);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button[disabled] {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: inherit;
+      border: 1px solid rgba(99, 113, 174, 0.6);
+    }
+    .log {
+      background: #0a1630;
+      color: #f4f7ff;
+      border-radius: 16px;
+      padding: 1.25rem;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      max-height: 400px;
+      overflow: auto;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+    .status-row strong {
+      font-size: 1rem;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(115, 109, 255, 0.12);
+      border-radius: 999px;
+      padding: 0.25rem 0.9rem;
+      font-weight: 600;
+    }
+    .status-pill[data-state="signed-out"] {
+      background: rgba(235, 87, 87, 0.15);
+      color: #ffb3b3;
+    }
+    .status-pill[data-state="signed-in"] {
+      background: rgba(39, 174, 96, 0.16);
+      color: #b4f5ce;
+    }
+    .note {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      opacity: 0.75;
+    }
+  </style>
+</head>
+<body>
+  <main class="tester">
+    <section class="tester__intro">
+      <h1>Supabase connection tester</h1>
+      <p>This page creates a plain Supabase client with the project's anon key so we can quickly verify read and write access. Use the forms below to sign up or sign in, fetch your linked profile row, and create a throwaway scene record.</p>
+      <div class="status-row">
+        <strong>Session:</strong>
+        <span class="status-pill" data-session-indicator data-state="signed-out">Signed out</span>
+        <span data-session-details>No active session</span>
+      </div>
+    </section>
+
+    <div class="tester__layout">
+      <section class="card">
+        <h2>Authentication</h2>
+        <p class="note">The sign-up form stores your name in Supabase auth metadata. After confirming the account, sign in to test database queries.</p>
+
+        <form id="signup-form">
+          <fieldset>
+            <legend>Sign up</legend>
+            <label>
+              Name
+              <input type="text" name="name" autocomplete="name" placeholder="Ada Lovelace" />
+            </label>
+            <label>
+              Email
+              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required />
+            </label>
+            <label>
+              Password
+              <input type="password" name="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required />
+            </label>
+            <button type="submit">Send sign-up request</button>
+          </fieldset>
+        </form>
+
+        <form id="login-form">
+          <fieldset>
+            <legend>Sign in</legend>
+            <label>
+              Email
+              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required />
+            </label>
+            <label>
+              Password
+              <input type="password" name="password" autocomplete="current-password" required />
+            </label>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button type="submit">Sign in</button>
+              <button type="button" class="btn-secondary" data-signout>Sign out</button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Profile data</h2>
+        <p class="note">These helpers call <code>public.profiles</code>. Row Level Security means you must be signed in before they return data.</p>
+
+        <fieldset data-requires-auth disabled>
+          <legend>Fetch current profile</legend>
+          <button type="button" class="btn-secondary" data-fetch-profile>Load profile row</button>
+        </fieldset>
+
+        <form id="profile-form">
+          <fieldset data-requires-auth disabled>
+            <legend>Update profile</legend>
+            <label>
+              Full name
+              <input type="text" name="full_name" placeholder="Grace Hopper" />
+            </label>
+            <label>
+              Studio name
+              <input type="text" name="studio_name" placeholder="StudioOrganize" />
+            </label>
+            <label>
+              Phone number
+              <input type="tel" name="phone" placeholder="123-456-7890" />
+            </label>
+            <button type="submit">Save profile details</button>
+          </fieldset>
+        </form>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Scene sandbox</h2>
+      <p class="note">Scenes are tied to your profile via <code>owner_id</code>. Use these to confirm insert and select permissions on the new tables.</p>
+
+      <form id="scene-form">
+        <fieldset data-requires-auth disabled>
+          <legend>Create a test scene</legend>
+          <label>
+            Scene title
+            <input type="text" name="title" placeholder="INT. SOUNDSTAGE — DAY" required />
+          </label>
+          <label>
+            Synopsis
+            <textarea name="synopsis" rows="3" placeholder="Short overview of what happens..."></textarea>
+          </label>
+          <button type="submit">Insert scene</button>
+        </fieldset>
+      </form>
+
+      <fieldset data-requires-auth disabled>
+        <legend>Load latest scenes</legend>
+        <button type="button" class="btn-secondary" data-load-scenes>Fetch scenes for current user</button>
+      </fieldset>
+    </section>
+
+    <section class="card">
+      <h2>Event log</h2>
+      <p class="note">Each action appends to the log below. Errors are highlighted so we can quickly spot permission issues.</p>
+      <div class="log" data-log>Ready.</div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const logEl = document.querySelector('[data-log]');
+    const sessionIndicator = document.querySelector('[data-session-indicator]');
+    const sessionDetails = document.querySelector('[data-session-details]');
+    const authRequiredBlocks = Array.from(document.querySelectorAll('[data-requires-auth]'));
+    const signoutButton = document.querySelector('[data-signout]');
+    const fetchProfileButton = document.querySelector('[data-fetch-profile]');
+    const loadScenesButton = document.querySelector('[data-load-scenes]');
+
+    const state = {
+      session: null
+    };
+
+    function log(message, payload, level = 'info') {
+      const time = new Date().toLocaleTimeString();
+      let entry = `[${time}] ${message}`;
+      if (payload !== undefined) {
+        try {
+          entry += `\n${JSON.stringify(payload, null, 2)}`;
+        } catch (error) {
+          entry += `\n${String(payload)}`;
+        }
+      }
+      const wrapper = document.createElement('div');
+      wrapper.textContent = entry;
+      if (level === 'error') {
+        wrapper.style.color = '#ff8b8b';
+      } else if (level === 'success') {
+        wrapper.style.color = '#73ffd3';
+      }
+      logEl.prepend(wrapper);
+    }
+
+    function setAuthDependentState(isAuthed) {
+      authRequiredBlocks.forEach((block) => {
+        if (isAuthed) {
+          block.removeAttribute('disabled');
+        } else {
+          block.setAttribute('disabled', '');
+        }
+      });
+    }
+
+    function updateSession(newSession) {
+      state.session = newSession;
+      if (newSession) {
+        sessionIndicator.dataset.state = 'signed-in';
+        sessionIndicator.textContent = 'Signed in';
+        const email = newSession.user?.email || 'Unknown user';
+        sessionDetails.textContent = `User: ${email}`;
+        setAuthDependentState(true);
+      } else {
+        sessionIndicator.dataset.state = 'signed-out';
+        sessionIndicator.textContent = 'Signed out';
+        sessionDetails.textContent = 'No active session';
+        setAuthDependentState(false);
+      }
+    }
+
+    async function refreshSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        log('Failed to fetch session', error, 'error');
+        return;
+      }
+      updateSession(data.session ?? null);
+    }
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      updateSession(session ?? null);
+      log(`Auth state changed: ${session ? 'signed in' : 'signed out'}`);
+    });
+
+    const signupForm = document.querySelector('#signup-form');
+    if (signupForm) {
+      signupForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const name = formData.get('name');
+        log('Submitting sign-up request...');
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: name ? { full_name: name } : {}
+          }
+        });
+        if (error) {
+          log('Sign-up failed', error, 'error');
+          return;
+        }
+        log('Sign-up request sent. Check for confirmation email.', data, 'success');
+        form.reset();
+      });
+    }
+
+    const loginForm = document.querySelector('#login-form');
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        const email = formData.get('email');
+        const password = formData.get('password');
+        log('Attempting to sign in...');
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          log('Sign-in failed', error, 'error');
+          return;
+        }
+        log('Signed in successfully.', data, 'success');
+        form.reset();
+      });
+    }
+
+    if (signoutButton) {
+      signoutButton.addEventListener('click', async () => {
+        log('Signing out...');
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          log('Sign-out failed', error, 'error');
+          return;
+        }
+        log('Signed out.');
+      });
+    }
+
+    async function requireSession(actionDescription) {
+      if (!state.session) {
+        log(`${actionDescription} requires a signed-in user.`, null, 'error');
+        return null;
+      }
+      return state.session;
+    }
+
+    if (fetchProfileButton) {
+      fetchProfileButton.addEventListener('click', async () => {
+        const session = await requireSession('Fetching the profile');
+        if (!session) return;
+        log('Loading profile row...');
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, email, full_name, studio_name, phone, created_at, updated_at')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (error) {
+          log('Profile fetch failed', error, 'error');
+          return;
+        }
+        log('Profile row loaded.', data, 'success');
+      });
+    }
+
+    const profileForm = document.querySelector('#profile-form');
+    if (profileForm) {
+      profileForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const session = await requireSession('Updating the profile');
+        if (!session) return;
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        const payload = {};
+        ['full_name', 'studio_name', 'phone'].forEach((field) => {
+          const value = formData.get(field);
+          payload[field] = value ? String(value) : null;
+        });
+        log('Saving profile details...', payload);
+        const { data, error } = await supabase
+          .from('profiles')
+          .update(payload)
+          .eq('id', session.user.id)
+          .select()
+          .maybeSingle();
+        if (error) {
+          log('Profile update failed', error, 'error');
+          return;
+        }
+        log('Profile updated.', data, 'success');
+        form.reset();
+      });
+    }
+
+    const sceneForm = document.querySelector('#scene-form');
+    if (sceneForm) {
+      sceneForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const session = await requireSession('Creating a scene');
+        if (!session) return;
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        const title = String(formData.get('title'));
+        const synopsis = formData.get('synopsis');
+        const slug = title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 64);
+        const payload = {
+          owner_id: session.user.id,
+          title,
+          synopsis: synopsis ? String(synopsis) : null,
+          slug: slug || null,
+          script_order: Math.floor(Math.random() * 100),
+          cards: [],
+          elements: [],
+          sounds: []
+        };
+        log('Inserting scene...', payload);
+        const { data, error } = await supabase
+          .from('scenes')
+          .insert(payload)
+          .select()
+          .maybeSingle();
+        if (error) {
+          log('Scene insert failed', error, 'error');
+          return;
+        }
+        log('Scene inserted successfully.', data, 'success');
+        form.reset();
+      });
+    }
+
+    if (loadScenesButton) {
+      loadScenesButton.addEventListener('click', async () => {
+        const session = await requireSession('Loading scenes');
+        if (!session) return;
+        log('Fetching scenes for current user...');
+        const { data, error } = await supabase
+          .from('scenes')
+          .select('id, title, synopsis, created_at, updated_at')
+          .eq('owner_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (error) {
+          log('Scene fetch failed', error, 'error');
+          return;
+        }
+        log('Fetched scenes.', data ?? [], 'success');
+      });
+    }
+
+    refreshSession().catch((error) => {
+      log('Unexpected error while initializing session', error, 'error');
+    });
+  </script>
+</body>
+</html>
