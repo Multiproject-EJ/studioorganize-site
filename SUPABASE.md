@@ -13,6 +13,15 @@ The site relies on Supabase Auth to allow members to create accounts and sign in
 
 Profiles are stored in the public schema and reference Supabase's `auth.users` table. Row Level Security (RLS) ensures that each signed-in member can only view and modify their own profile data.
 
+### Profiles table vs. member directory view
+
+- **`public.profiles` table** – this is the canonical record that belongs to each account. The trigger defined in [`supabase/schema.sql`](supabase/schema.sql) inserts a row every time Supabase Auth creates a new `auth.users` entry, so the same UUID is shared between the auth user and the profile. Any updates you make to names, studios, or phone numbers are persisted here, and Row Level Security limits read/write access to the owner of the row.
+- **`public.member_directory` view** – this view simply selects the columns from `public.profiles` and exposes them in a read-only shape that is convenient for dashboards or admin tooling. Because it is a view, it does not store any additional data; it always reflects the contents of the `profiles` table.
+
+When members sign up or sign in, Supabase Auth is interacting with the managed `auth.users` table, not the `member_directory` view. The view is only used for querying profile metadata after authentication succeeds.
+
+Supabase manages email/password credentials inside the `auth.users` table (passwords are stored securely as salted hashes), so you will not see a `password` column in `public.profiles` or any other table in the public schema. Authentication happens through the Auth API, and the profile row is linked via the shared UUID.
+
 Supabase SQL schema files live in [`supabase/schema.sql`](supabase/schema.sql). Run the SQL file inside the Supabase SQL editor (or the CLI) to set up the necessary tables, triggers, and policies.
 
 ## Environment variables
