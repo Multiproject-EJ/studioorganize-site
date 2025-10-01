@@ -35,6 +35,18 @@ SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 When deploying, configure these values in your hosting platform's environment variable settings.
 
+### Redirect URLs for Supabase Auth
+
+Supabase should always have a default redirect URL and at least one explicit redirect to hand users back to the marketing site
+after they confirm their email. Configure the **Site URL** and **Redirect URLs** in the Supabase dashboard as follows:
+
+- **Site URL**: `https://studioorganize.com`
+- **Redirect URLs**: `https://studioorganize.com/auth/callback` and `http://localhost:3000/` (for local development)
+
+The `/auth/callback` route is included in this repository (`auth/callback/index.html`). It thanks the visitor for confirming
+their account, surfaces any Supabase error messages, and forwards them to the workspace at
+`https://app.studioorganize.com`.
+
 ## Initializing the client in the browser
 
 Add the Supabase client to your HTML templates. For example:
