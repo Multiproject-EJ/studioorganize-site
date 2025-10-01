@@ -93,6 +93,14 @@ img{max-width:100%;display:block}
 .auth-form__captcha[hidden]{display:none!important}
 .auth-form__captcha-label{font-weight:600;font-size:14px}
 .auth-form__captcha-help{margin:0;font-size:13px;color:var(--muted)}
+.auth-debug{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--field);display:flex;flex-direction:column;gap:10px}
+.auth-debug__intro{display:flex;flex-direction:column;gap:4px}
+.auth-debug__label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.auth-debug__help{margin:0;font-size:13px;color:var(--muted)}
+.auth-debug__actions{display:flex;flex-wrap:wrap;gap:8px}
+.auth-debug__button{flex:1;justify-content:center}
+.auth-debug__output{margin:0;padding:12px;border-radius:12px;background:#05070c;color:var(--ink);max-height:200px;overflow:auto;font-family:'JetBrains Mono',Consolas,'SFMono-Regular',Menlo,monospace;font-size:12px;line-height:1.4;border:1px solid var(--line)}
+.auth-debug--active .auth-debug__output{border-color:var(--acc)}
 
 body.auth-modal-open{overflow:hidden}
 
