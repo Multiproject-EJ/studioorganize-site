@@ -77,6 +77,8 @@ img{max-width:100%;display:block}
 .auth-modal__header h2{margin:0;font-size:24px}
 .auth-modal__subtitle{margin:6px 0 0;color:var(--muted)}
 .auth-form{display:flex;flex-direction:column;gap:14px}
+.auth-form--signup-disabled{opacity:.7}
+.auth-form--signup-disabled .auth-form__submit{cursor:not-allowed}
 .auth-form[hidden]{display:none !important}
 .auth-form__field{display:flex;flex-direction:column;gap:6px}
 .auth-form__field label{font-weight:600;font-size:14px}

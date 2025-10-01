@@ -6,6 +6,8 @@ const WORKSPACE_URL = 'https://app.studioorganize.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const SIGNUP_DISABLED_MESSAGE = 'Email/password sign-ups are disabled in Supabase for this project. Re-enable them from Authentication settings to allow new members to register.';
+
 const HCAPTCHA_API_SRC = 'https://js.hcaptcha.com/1/api.js?render=explicit';
 
 const authSettingsState = {
@@ -102,6 +104,7 @@ const statusSignup = qs('[data-auth-status="signup"]', modal);
 const statusLogin = qs('[data-auth-status="login"]', modal);
 const captchaWrapper = qs('[data-auth-captcha]', modal);
 const captchaWidget = qs('[data-auth-captcha-widget]', modal);
+const signupSubmitButton = signupForm ? signupForm.querySelector('button[type="submit"], .auth-form__submit') : null;
 const debugSection = qs('[data-auth-debug]', modal);
 const debugRunButton = qs('[data-auth-debug-run]', modal);
 const debugCopyButton = qs('[data-auth-debug-copy]', modal);
@@ -213,13 +216,40 @@ async function ensureCaptcha(){
   }
 }
 
+function updateSignupAvailability(settings = authSettingsState){
+  if (!signupForm) return;
+  const resolvedSettings = settings || authSettingsState;
+  const signupDisabled = Boolean(resolvedSettings?.disableSignup);
+  signupForm.dataset.authSignupDisabled = signupDisabled ? 'true' : 'false';
+  signupForm.classList.toggle('auth-form--signup-disabled', signupDisabled);
+  if (signupDisabled){
+    signupForm.setAttribute('aria-disabled', 'true');
+  } else {
+    signupForm.removeAttribute('aria-disabled');
+  }
+
+  if (signupSubmitButton && signupForm.dataset.authSubmitting !== 'true'){
+    signupSubmitButton.disabled = signupDisabled;
+  }
+
+  if (currentMode === 'signup'){
+    if (signupDisabled){
+      setStatus(statusSignup, SIGNUP_DISABLED_MESSAGE, 'error');
+      signupForm.dataset.authSignupDisabledMessage = 'shown';
+    } else if (signupForm.dataset.authSignupDisabledMessage === 'shown' && (statusSignup?.textContent?.trim() || '') === SIGNUP_DISABLED_MESSAGE){
+      setStatus(statusSignup, '');
+      signupForm.dataset.authSignupDisabledMessage = '';
+    }
+  }
+}
+
 function formatErrorMessage(error, context = 'generic'){
   const message = error && typeof error.message === 'string' ? error.message : '';
   const normalized = message.toLowerCase();
 
   if (context === 'signup'){
     if (authSettingsState.disableSignup){
-      return 'New account creation is currently disabled in Supabase. Re-enable email/password sign-ups under Authentication → Providers to allow members to register.';
+      return SIGNUP_DISABLED_MESSAGE;
     }
     const captchaProblem = normalized.includes('captcha') || normalized.includes('challenge');
     if (captchaProblem){
@@ -231,7 +261,7 @@ function formatErrorMessage(error, context = 'generic'){
       normalized.includes('signups not allowed');
 
     if (disabledSignup){
-      return 'Email/password sign-ups are disabled in Supabase for this project. Re-enable them from Authentication settings to allow new members to register.';
+      return SIGNUP_DISABLED_MESSAGE;
     }
   }
 
@@ -272,6 +302,7 @@ function setMode(mode){
     titleEl.textContent = 'Welcome back';
     subtitleEl.textContent = 'Log in to continue building your projects.';
   }
+  updateSignupAvailability(authSettingsState);
   requestAnimationFrame(focusFirstField);
 }
 
@@ -299,10 +330,23 @@ function openAuthModal(mode = 'signup'){
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('auth-modal-open');
   focusFirstField();
-  ensureCaptcha();
-  if (captchaWrapper && captchaId !== null){
-    captchaWrapper.hidden = false;
-  }
+  loadAuthSettings()
+    .then(settings => {
+      updateSignupAvailability(settings);
+      return ensureCaptcha().finally(() => {
+        if (captchaWrapper){
+          captchaWrapper.hidden = !(authSettingsState.captchaRequired && captchaId !== null);
+        }
+      });
+    })
+    .catch(error => {
+      console.warn('Unable to refresh auth settings before opening modal', error);
+      ensureCaptcha().finally(() => {
+        if (captchaWrapper){
+          captchaWrapper.hidden = !(authSettingsState.captchaRequired && captchaId !== null);
+        }
+      });
+    });
 }
 
 function closeAuthModal(){
@@ -351,10 +395,13 @@ async function handleSignup(e){
   }
   setStatus(statusSignup, 'Creating your account…', 'info');
   disableForm(signupForm, true);
+  signupForm.dataset.authSubmitting = 'true';
   const settings = await loadAuthSettings();
   if (settings.disableSignup){
-    setStatus(statusSignup, 'Sign-ups are turned off in Supabase. Enable email/password registrations from the Authentication settings before trying again.', 'error');
+    setStatus(statusSignup, SIGNUP_DISABLED_MESSAGE, 'error');
     disableForm(signupForm, false);
+    delete signupForm.dataset.authSubmitting;
+    updateSignupAvailability(settings);
     return;
   }
   if (settings.captchaRequired){
@@ -367,6 +414,8 @@ async function handleSignup(e){
   if (settings.captchaRequired && !captchaToken){
     setStatus(statusSignup, 'Please complete the security check to continue.', 'error');
     disableForm(signupForm, false);
+    delete signupForm.dataset.authSubmitting;
+    updateSignupAvailability(authSettingsState);
     return;
   }
   try {
@@ -398,6 +447,8 @@ async function handleSignup(e){
     setStatus(statusSignup, formatErrorMessage(error, 'signup'), 'error');
   } finally {
     disableForm(signupForm, false);
+    delete signupForm.dataset.authSubmitting;
+    updateSignupAvailability(authSettingsState);
     if (authSettingsState.captchaRequired){
       resetCaptcha();
     }
@@ -458,6 +509,7 @@ function collectDiagnostics(){
       type: statusLogin?.dataset.statusType || 'info'
     },
     authSettings: { ...authSettingsState },
+    signupDisabled: signupForm?.dataset.authSignupDisabled === 'true',
     captcha: {
       widgetLoaded: captchaId !== null,
       tokenPresent: Boolean(captchaToken)
@@ -563,13 +615,19 @@ if (document.readyState === 'loading'){
   init();
 }
 
-loadAuthSettings().then(settings => {
-  if (settings.required){
-    ensureCaptcha();
-  }
-}).catch(error => {
-  console.warn('Captcha preflight failed', error);
-});
+loadAuthSettings()
+  .then(settings => {
+    updateSignupAvailability(settings);
+    if (settings.captchaRequired){
+      return ensureCaptcha().catch(error => {
+        console.warn('Captcha preflight failed', error);
+      });
+    }
+    return undefined;
+  })
+  .catch(error => {
+    console.warn('Failed to load Supabase auth settings', error);
+  });
 
 supabase.auth.getSession().then(({ data }) => {
   const session = data?.session || null;
