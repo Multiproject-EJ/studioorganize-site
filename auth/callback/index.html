@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Authentication callback — StudioOrganize</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+  <meta name="robots" content="noindex" />
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/">StudioOrganize</a>
+  <nav class="menu">
+    <a class="menu__link" href="/">Home</a>
+    <div class="dropdown">
+      <button class="dropbtn" type="button">Products</button>
+      <div class="dropdown-content">
+        <a href="/products/#online">Subscribe &amp; save it online</a>
+        <a href="/products/#sheets">Google Sheets — keep the database yourself</a>
+      </div>
+    </div>
+    <div class="dropdown">
+      <button class="dropbtn" type="button">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+    <a class="menu__link" href="/about.html">About</a>
+    <a class="menu__link" href="/faq.html">FAQ</a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
+    <button class="menu__cta" type="button" data-open-auth="signup" aria-haspopup="dialog">Sign up / Log in</button>
+  </nav>
+</header>
+
+<main class="section" style="max-width:720px">
+  <h1 data-callback-title>Processing your sign-in…</h1>
+  <p class="lead" data-callback-message>
+    Hang tight while we finish linking your StudioOrganize account. You’ll be redirected shortly.
+  </p>
+
+  <div class="card card--lg" style="margin-top:24px">
+    <h2>Next steps</h2>
+    <p data-callback-next>You can close this tab and head back to the StudioOrganize workspace.</p>
+    <div class="cta-row" style="margin-top:12px">
+      <a class="btn btn-primary" data-open-workspace href="https://app.studioorganize.com" rel="noopener">Open StudioOrganize workspace →</a>
+      <button class="btn btn-ghost" type="button" data-open-auth="login" data-auth-no-redirect="true">Log in again</button>
+      <a class="btn btn-ghost" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Account%20Help">Contact support</a>
+    </div>
+    <p class="muted" data-callback-details style="margin-top:12px"></p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div><strong>StudioOrganize</strong></div>
+    <div><a href="/products/">Products</a></div>
+    <div><a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br/><span class="muted">© <span id="y"></span> StudioOrganize</span></div>
+  </div>
+</footer>
+
+<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+<script type="module" src="/assets/auth.js"></script>
+<script src="/assets/main.js" defer></script>
+<script>
+  (function(){
+    const workspaceUrl = 'https://app.studioorganize.com';
+    const titleEl = document.querySelector('[data-callback-title]');
+    const messageEl = document.querySelector('[data-callback-message]');
+    const nextEl = document.querySelector('[data-callback-next]');
+    const detailsEl = document.querySelector('[data-callback-details]');
+    const workspaceLinks = document.querySelectorAll('[data-open-workspace]');
+
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash ? window.location.hash.substring(1) : '';
+    const hashParams = new URLSearchParams(hash);
+    hashParams.forEach((value, key) => {
+      if (!params.has(key)){
+        params.set(key, value);
+      }
+    });
+
+    const type = params.get('type');
+    const error = params.get('error') || params.get('error_description');
+
+    workspaceLinks.forEach(link => {
+      link.setAttribute('href', workspaceUrl);
+    });
+
+    if (error){
+      titleEl.textContent = 'We couldn\'t finish signing you in';
+      messageEl.textContent = 'Supabase reported an issue while processing your request.';
+      nextEl.textContent = 'Please try logging in again. If the problem continues, contact support and include the details below.';
+      detailsEl.textContent = error;
+      detailsEl.style.color = '#f87171';
+      return;
+    }
+
+    detailsEl.textContent = '';
+
+    switch (type){
+      case 'signup':
+        titleEl.textContent = 'Email confirmed — welcome aboard!';
+        messageEl.textContent = 'Your StudioOrganize account is active. You can head over to the workspace to start building scenes.';
+        nextEl.textContent = 'Open the workspace to continue. This tab is safe to close once it finishes loading.';
+        break;
+      case 'magiclink':
+      case 'recovery':
+        titleEl.textContent = 'You\'re ready to jump back in';
+        messageEl.textContent = 'Your login link worked. We\'ll take you back to the StudioOrganize workspace.';
+        nextEl.textContent = 'If the app doesn\'t open automatically, use the button above to continue.';
+        break;
+      case 'invite':
+        titleEl.textContent = 'Invitation accepted';
+        messageEl.textContent = 'Your account is connected to StudioOrganize. Head to the workspace to get started.';
+        nextEl.textContent = 'Need anything else? Reach us at support@studioorganize.com.';
+        break;
+      default:
+        titleEl.textContent = 'All set!';
+        messageEl.textContent = 'Authentication finished successfully. We\'ll forward you to the StudioOrganize workspace.';
+        nextEl.textContent = 'If nothing happens within a few seconds, use the workspace button above to continue.';
+    }
+
+    if (hash){
+      try {
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      } catch (err){
+        // ignore
+      }
+    }
+
+    setTimeout(() => {
+      window.location.href = workspaceUrl;
+    }, 4000);
+  })();
+</script>
+</body>
+</html>
