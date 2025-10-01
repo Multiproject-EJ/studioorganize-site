@@ -8,6 +8,18 @@ const SUPPORT_EMAIL = 'support@studioorganize.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const HCAPTCHA_API_SRC = 'https://js.hcaptcha.com/1/api.js?render=explicit';
+
+const captchaState = {
+  attempted: false,
+  required: false,
+  siteKey: null
+};
+
+let captchaScriptPromise = null;
+let captchaId = null;
+let captchaToken = null;
+
 function qs(selector, scope = document){
   return scope.querySelector(selector);
 }
@@ -42,6 +54,11 @@ function createModal(){
           <label for="auth-signup-password">Password</label>
           <input id="auth-signup-password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required />
         </div>
+        <div class="auth-form__captcha" data-auth-captcha hidden>
+          <label class="auth-form__captcha-label">Security check</label>
+          <div class="auth-form__captcha-widget" data-auth-captcha-widget></div>
+          <p class="auth-form__captcha-help">This step prevents automated sign-ups.</p>
+        </div>
         <p class="auth-form__status" data-auth-status="signup" role="status" aria-live="polite"></p>
         <button class="btn btn-primary auth-form__submit" type="submit">Sign up and create account</button>
         <p class="auth-form__switch">Already a creator? <button type="button" data-switch-mode="login">Log in</button></p>
@@ -73,6 +90,8 @@ const titleEl = qs('#auth-modal-title', modal);
 const subtitleEl = qs('.auth-modal__subtitle', modal);
 const statusSignup = qs('[data-auth-status="signup"]', modal);
 const statusLogin = qs('[data-auth-status="login"]', modal);
+const captchaWrapper = qs('[data-auth-captcha]', modal);
+const captchaWidget = qs('[data-auth-captcha-widget]', modal);
 let currentMode = 'signup';
 let previouslyFocused = null;
 let latestSession = null;
@@ -83,11 +102,109 @@ function setStatus(el, message, type = 'info'){
   el.dataset.statusType = type;
 }
 
+function loadCaptchaScript(){
+  if (typeof window.hcaptcha !== 'undefined'){
+    return Promise.resolve(window.hcaptcha);
+  }
+  if (!captchaScriptPromise){
+    captchaScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = HCAPTCHA_API_SRC;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        if (typeof window.hcaptcha !== 'undefined'){
+          resolve(window.hcaptcha);
+        } else {
+          reject(new Error('hCaptcha failed to initialize.'));
+        }
+      };
+      script.onerror = () => reject(new Error('Unable to load hCaptcha.'));
+      document.head.appendChild(script);
+    });
+  }
+  return captchaScriptPromise;
+}
+
+async function loadAuthSettings(){
+  if (captchaState.attempted){
+    return captchaState;
+  }
+  captchaState.attempted = true;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    });
+    if (!response.ok){
+      throw new Error(`Unable to load auth settings (${response.status})`);
+    }
+    const data = await response.json();
+    const legacyConfig = data?.hcaptcha || data?.captcha?.hcaptcha || data?.captcha || {};
+    const enabled = Boolean(
+      legacyConfig?.enabled ??
+      data?.captcha?.enabled ??
+      false
+    );
+    const siteKey = legacyConfig?.site_key || legacyConfig?.siteKey || data?.captcha?.hcaptcha?.site_key || data?.captcha?.hcaptcha?.siteKey || null;
+    if (enabled && siteKey){
+      captchaState.required = true;
+      captchaState.siteKey = siteKey;
+    }
+  } catch (error) {
+    console.warn('Failed to load Supabase auth settings', error);
+  }
+  return captchaState;
+}
+
+function resetCaptcha(){
+  if (typeof window.hcaptcha !== 'undefined' && captchaId !== null){
+    try {
+      window.hcaptcha.reset(captchaId);
+    } catch (error) {
+      console.warn('Unable to reset hCaptcha widget', error);
+    }
+  }
+  captchaToken = null;
+}
+
+async function ensureCaptcha(){
+  if (!captchaWrapper || !captchaWidget) return;
+  const settings = await loadAuthSettings();
+  if (!settings.required || !settings.siteKey) return;
+  if (captchaId !== null) return;
+  try {
+    const hcaptcha = await loadCaptchaScript();
+    captchaId = hcaptcha.render(captchaWidget, {
+      sitekey: settings.siteKey,
+      callback: token => {
+        captchaToken = token;
+      },
+      'expired-callback': () => {
+        captchaToken = null;
+      },
+      'error-callback': () => {
+        captchaToken = null;
+        setStatus(statusSignup, 'Captcha verification failed. Please try again.', 'error');
+      }
+    });
+    captchaWrapper.hidden = !modal.classList.contains('is-open');
+  } catch (error) {
+    console.warn('Unable to initialize captcha', error);
+  }
+}
+
 function formatErrorMessage(error, context = 'generic'){
   const message = error && typeof error.message === 'string' ? error.message : '';
   const normalized = message.toLowerCase();
 
   if (context === 'signup'){
+    const captchaProblem = normalized.includes('captcha') || normalized.includes('challenge');
+    if (captchaProblem){
+      return 'Please complete the security check to continue.';
+    }
     const disabledSignup =
       (typeof error?.status === 'number' && error.status === 403) ||
       normalized.includes('sign-ins are disabled') ||
@@ -162,12 +279,22 @@ function openAuthModal(mode = 'signup'){
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('auth-modal-open');
   focusFirstField();
+  ensureCaptcha();
+  if (captchaWrapper && captchaId !== null){
+    captchaWrapper.hidden = false;
+  }
 }
 
 function closeAuthModal(){
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('auth-modal-open');
+  if (captchaWrapper){
+    captchaWrapper.hidden = true;
+  }
+  if (captchaState.required){
+    resetCaptcha();
+  }
   if (previouslyFocused && typeof previouslyFocused.focus === 'function'){
     previouslyFocused.focus();
   }
@@ -204,22 +331,51 @@ async function handleSignup(e){
   }
   setStatus(statusSignup, 'Creating your account…', 'info');
   disableForm(signupForm, true);
+  await loadAuthSettings();
+  if (captchaState.required){
+    await ensureCaptcha();
+  }
   const formData = new FormData(signupForm);
   const name = (formData.get('name') || '').toString().trim();
   const email = (formData.get('email') || '').toString().trim();
   const password = (formData.get('password') || '').toString();
+  if (captchaState.required && !captchaToken){
+    setStatus(statusSignup, 'Please complete the security check to continue.', 'error');
+    disableForm(signupForm, false);
+    return;
+  }
   try {
-    const options = name ? { data: { full_name: name } } : undefined;
-    const { error } = await supabase.auth.signUp({ email, password, options });
+    const profileData = name ? { full_name: name } : null;
+    const options = {};
+    if (profileData){
+      options.data = profileData;
+    }
+    if (captchaState.required && captchaToken){
+      options.captchaToken = captchaToken;
+    }
+    const payload = options && Object.keys(options).length
+      ? { email, password, options }
+      : { email, password };
+    const { error } = await supabase.auth.signUp(payload);
     if (error){
       throw error;
     }
     setStatus(statusSignup, 'Check your inbox to confirm your email. Once confirmed you can sign in and access the workspace.', 'success');
     signupForm.reset();
   } catch (error) {
+    const errorMessage = (error && typeof error.message === 'string') ? error.message.toLowerCase() : '';
+    if (!captchaState.required && errorMessage.includes('captcha')){
+      captchaState.required = true;
+      captchaState.attempted = false;
+      await loadAuthSettings();
+      await ensureCaptcha();
+    }
     setStatus(statusSignup, formatErrorMessage(error, 'signup'), 'error');
   } finally {
     disableForm(signupForm, false);
+    if (captchaState.required){
+      resetCaptcha();
+    }
   }
 }
 
@@ -312,6 +468,14 @@ if (document.readyState === 'loading'){
 } else {
   init();
 }
+
+loadAuthSettings().then(settings => {
+  if (settings.required){
+    ensureCaptcha();
+  }
+}).catch(error => {
+  console.warn('Captcha preflight failed', error);
+});
 
 supabase.auth.getSession().then(({ data }) => {
   const session = data?.session || null;

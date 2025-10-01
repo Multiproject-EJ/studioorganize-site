@@ -146,6 +146,12 @@ The modal-based signup and login experience lives in [`assets/auth.js`](assets/a
 
 On `account.html` the modal is triggered automatically for visitors who still reach the legacy route. If you add new buttons that should always open the modal (even when a user is already signed in) mark them with `data-auth-no-redirect="true"` so the JavaScript keeps their label instead of switching to “Open workspace.”
 
+### Captcha support
+
+If you enable hCaptcha for sign-ups inside Supabase Auth settings, no extra configuration is needed on the frontend. The modal calls the `/auth/v1/settings` endpoint to detect whether hCaptcha is enabled and automatically renders the widget with the configured site key. When the visitor completes the challenge the resulting `captchaToken` is sent along with the `signUp` request.
+
+Should you disable captcha in the future the widget disappears automatically, and sign-ups continue to work without any further code changes.
+
 ## Best practices for memberships and Stripe subscriptions
 
 To prepare for paid memberships you’ll want to store a little more state than just the Supabase auth session. A few recommendations:
