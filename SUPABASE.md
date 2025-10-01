@@ -135,6 +135,17 @@ Either approach adds the scene tables (and related policies/triggers) while leav
 4. Call `supabase.auth.signUp({ email, password })` to create a new account. Confirm the email if required by your project settings.
 5. Use `supabase.auth.signInWithPassword` to verify that login works and that you can fetch/update your profile using `supabase.from('profiles')` queries.
 
+### Troubleshooting “sign-ups are disabled” errors
+
+If the signup form reports that new accounts are disabled:
+
+1. Visit **Authentication → Providers** in the Supabase dashboard.
+2. Ensure the **Email** provider has “Enable Email Signup” toggled on.
+3. Scroll down to **Advanced settings** and confirm “Disable new user signups” is turned off.
+4. If you enforce an email domain allow list, add the address you are testing with to the allow list.
+
+After updating these settings, reload the public site and submit the form again. The frontend reads the Supabase Auth configuration on load and will now surface the warning immediately whenever signups are switched off.
+
 ### Granting admin access to an account
 
 After your account exists in `auth.users`/`public.profiles`, run the following SQL in the Supabase SQL editor to promote it:

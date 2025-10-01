@@ -10,10 +10,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const HCAPTCHA_API_SRC = 'https://js.hcaptcha.com/1/api.js?render=explicit';
 
-const captchaState = {
+const authSettingsState = {
   attempted: false,
-  required: false,
-  siteKey: null
+  captchaRequired: false,
+  siteKey: null,
+  disableSignup: false
 };
 
 let captchaScriptPromise = null;
@@ -127,36 +128,39 @@ function loadCaptchaScript(){
 }
 
 async function loadAuthSettings(){
-  if (captchaState.attempted){
-    return captchaState;
+  if (authSettingsState.attempted){
+    return authSettingsState;
   }
-  captchaState.attempted = true;
+  authSettingsState.attempted = true;
   try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-      }
-    });
-    if (!response.ok){
-      throw new Error(`Unable to load auth settings (${response.status})`);
+    const { data, error } = await supabase.auth.getSettings();
+    if (error){
+      throw error;
     }
-    const data = await response.json();
-    const legacyConfig = data?.hcaptcha || data?.captcha?.hcaptcha || data?.captcha || {};
-    const enabled = Boolean(
-      legacyConfig?.enabled ??
-      data?.captcha?.enabled ??
+    authSettingsState.captchaRequired = false;
+    authSettingsState.siteKey = null;
+    authSettingsState.disableSignup = false;
+    const captchaConfig = data?.captcha || {};
+    const legacyCaptchaConfig = data?.hcaptcha || captchaConfig?.hcaptcha || {};
+    const captchaEnabled = Boolean(
+      legacyCaptchaConfig?.enabled ??
+      captchaConfig?.enabled ??
       false
     );
-    const siteKey = legacyConfig?.site_key || legacyConfig?.siteKey || data?.captcha?.hcaptcha?.site_key || data?.captcha?.hcaptcha?.siteKey || null;
-    if (enabled && siteKey){
-      captchaState.required = true;
-      captchaState.siteKey = siteKey;
+    const siteKey = legacyCaptchaConfig?.site_key || legacyCaptchaConfig?.siteKey || captchaConfig?.hcaptcha?.site_key || captchaConfig?.hcaptcha?.siteKey || null;
+    if (captchaEnabled && siteKey){
+      authSettingsState.captchaRequired = true;
+      authSettingsState.siteKey = siteKey;
     }
+
+    const disableSignupFlag = data?.disable_signup === true;
+    const emailSignupEnabled = data?.email?.enable_signup !== false;
+    authSettingsState.disableSignup = Boolean(disableSignupFlag || !emailSignupEnabled);
   } catch (error) {
     console.warn('Failed to load Supabase auth settings', error);
+    authSettingsState.attempted = false;
   }
-  return captchaState;
+  return authSettingsState;
 }
 
 function resetCaptcha(){
@@ -173,7 +177,7 @@ function resetCaptcha(){
 async function ensureCaptcha(){
   if (!captchaWrapper || !captchaWidget) return;
   const settings = await loadAuthSettings();
-  if (!settings.required || !settings.siteKey) return;
+  if (!settings.captchaRequired || !settings.siteKey) return;
   if (captchaId !== null) return;
   try {
     const hcaptcha = await loadCaptchaScript();
@@ -201,6 +205,9 @@ function formatErrorMessage(error, context = 'generic'){
   const normalized = message.toLowerCase();
 
   if (context === 'signup'){
+    if (authSettingsState.disableSignup){
+      return 'New account creation is currently disabled in Supabase. Re-enable email/password sign-ups under Authentication → Providers to allow members to register.';
+    }
     const captchaProblem = normalized.includes('captcha') || normalized.includes('challenge');
     if (captchaProblem){
       return 'Please complete the security check to continue.';
@@ -292,7 +299,7 @@ function closeAuthModal(){
   if (captchaWrapper){
     captchaWrapper.hidden = true;
   }
-  if (captchaState.required){
+  if (authSettingsState.captchaRequired){
     resetCaptcha();
   }
   if (previouslyFocused && typeof previouslyFocused.focus === 'function'){
@@ -331,15 +338,20 @@ async function handleSignup(e){
   }
   setStatus(statusSignup, 'Creating your account…', 'info');
   disableForm(signupForm, true);
-  await loadAuthSettings();
-  if (captchaState.required){
+  const settings = await loadAuthSettings();
+  if (settings.disableSignup){
+    setStatus(statusSignup, 'Sign-ups are turned off in Supabase. Enable email/password registrations from the Authentication settings before trying again.', 'error');
+    disableForm(signupForm, false);
+    return;
+  }
+  if (settings.captchaRequired){
     await ensureCaptcha();
   }
   const formData = new FormData(signupForm);
   const name = (formData.get('name') || '').toString().trim();
   const email = (formData.get('email') || '').toString().trim();
   const password = (formData.get('password') || '').toString();
-  if (captchaState.required && !captchaToken){
+  if (settings.captchaRequired && !captchaToken){
     setStatus(statusSignup, 'Please complete the security check to continue.', 'error');
     disableForm(signupForm, false);
     return;
@@ -350,7 +362,7 @@ async function handleSignup(e){
     if (profileData){
       options.data = profileData;
     }
-    if (captchaState.required && captchaToken){
+    if (settings.captchaRequired && captchaToken){
       options.captchaToken = captchaToken;
     }
     const payload = options && Object.keys(options).length
@@ -364,16 +376,16 @@ async function handleSignup(e){
     signupForm.reset();
   } catch (error) {
     const errorMessage = (error && typeof error.message === 'string') ? error.message.toLowerCase() : '';
-    if (!captchaState.required && errorMessage.includes('captcha')){
-      captchaState.required = true;
-      captchaState.attempted = false;
+    if (!authSettingsState.captchaRequired && errorMessage.includes('captcha')){
+      authSettingsState.captchaRequired = true;
+      authSettingsState.attempted = false;
       await loadAuthSettings();
       await ensureCaptcha();
     }
     setStatus(statusSignup, formatErrorMessage(error, 'signup'), 'error');
   } finally {
     disableForm(signupForm, false);
-    if (captchaState.required){
+    if (authSettingsState.captchaRequired){
       resetCaptcha();
     }
   }
