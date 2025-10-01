@@ -87,6 +87,10 @@ img{max-width:100%;display:block}
 .auth-form__switch{font-size:14px;color:var(--muted);margin:0}
 .auth-form__switch button{background:none;border:none;color:var(--brand);font:inherit;font-weight:600;cursor:pointer;padding:0}
 .auth-form__switch button:hover{text-decoration:underline}
+.auth-form__captcha{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--field);display:flex;flex-direction:column;gap:8px}
+.auth-form__captcha[hidden]{display:none!important}
+.auth-form__captcha-label{font-weight:600;font-size:14px}
+.auth-form__captcha-help{margin:0;font-size:13px;color:var(--muted)}
 
 body.auth-modal-open{overflow:hidden}
 
