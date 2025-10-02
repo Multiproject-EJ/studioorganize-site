@@ -1,5 +1,38 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const HASH_PARAM_KEYS = [
+  'access_token',
+  'refresh_token',
+  'expires_in',
+  'expires_at',
+  'token_type',
+  'type',
+  'provider_token',
+  'provider_refresh_token',
+  'error',
+  'error_description'
+];
+
+const hasWindow = typeof window !== 'undefined';
+const isAuthCallbackRoute = hasWindow && window.location.pathname.startsWith('/auth/callback');
+
+if (hasWindow && !isAuthCallbackRoute){
+  const rawHash = window.location.hash ? window.location.hash.substring(1) : '';
+  if (rawHash){
+    const hashParams = new URLSearchParams(rawHash);
+    const containsAuthParams = HASH_PARAM_KEYS.some(key => hashParams.has(key));
+    if (containsAuthParams){
+      const searchParams = new URLSearchParams(window.location.search);
+      hashParams.forEach((value, key) => {
+        searchParams.set(key, value);
+      });
+      const queryString = searchParams.toString();
+      const nextUrl = queryString ? `/auth/callback/?${queryString}` : '/auth/callback/';
+      window.location.replace(nextUrl);
+    }
+  }
+}
+
 const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
 const WORKSPACE_URL = 'https://app.studioorganize.com';
