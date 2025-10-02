@@ -32,13 +32,26 @@
     <a class="menu__link" href="/about.html">About</a>
     <a class="menu__link" href="/faq.html">FAQ</a>
     <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-    <button class="menu__cta" type="button" data-open-auth="signup" aria-haspopup="dialog">Sign up / Log in</button>
+    <button class="menu__cta" type="button" data-open-auth="signup" aria-haspopup="dialog" data-auth-cta>Sign up / Log in</button>
+    <div class="account-menu" data-account-menu hidden>
+      <button class="account-menu__toggle" type="button" data-account-toggle aria-expanded="false">
+        <span class="account-menu__label" data-account-label>Account</span>
+        <svg class="account-menu__icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+          <path d="M2.47 4.97a.75.75 0 0 1 1.06 0L6 7.44l2.47-2.47a.75.75 0 1 1 1.06 1.06L6.53 9.03a.75.75 0 0 1-1.06 0L2.47 6.03a.75.75 0 0 1 0-1.06Z" fill="currentColor" />
+        </svg>
+      </button>
+      <div class="account-menu__dropdown" data-account-dropdown>
+        <a class="account-menu__item" href="/creative-hub.html">Creative Hub</a>
+        <a class="account-menu__item" href="/account.html">My subscription</a>
+        <button class="account-menu__item account-menu__logout" type="button" data-account-logout>Log out</button>
+      </div>
+    </div>
   </nav>
 </header>
 
 <main class="section">
   <h1>Access your StudioOrganize account</h1>
-  <p class="lead">Use the sign-in window to create an account or log in. It opens automatically on this page.</p>
+  <p class="lead">Use the sign-in window to create an account or log in. It opens automatically on this page and sends you to the Creative Hub as soon as you’re signed in.</p>
 
   <div class="card card--lg" style="margin-top:24px;max-width:640px">
     <h2>Need the account window again?</h2>
@@ -49,7 +62,7 @@
       <a class="btn btn-ghost" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Account%20Help">Need help?</a>
     </div>
     <p class="muted" style="margin-top:12px">Seeing a message that sign-ups are disabled? Drop us a line at <a href="mailto:support@studioorganize.com?subject=StudioOrganize%20Account%20Help">support@studioorganize.com</a> and we’ll activate your account manually.</p>
-    <p class="muted" style="margin-top:12px">Tip: once you’re signed in, bookmark <a href="https://app.studioorganize.com" target="_blank" rel="noopener">app.studioorganize.com</a> for quick access.</p>
+    <p class="muted" style="margin-top:12px">Tip: once you’re signed in, bookmark the <a href="/creative-hub.html">Creative Hub</a> along with <a href="https://app.studioorganize.com" target="_blank" rel="noopener">app.studioorganize.com</a> so you can jump straight into projects.</p>
   </div>
 </main>
 
