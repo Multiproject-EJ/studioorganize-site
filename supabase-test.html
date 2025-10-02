@@ -144,6 +144,35 @@
   </style>
 </head>
 <body>
+  <header class="nav">
+    <a class="brand" href="/">StudioOrganize</a>
+    <nav class="menu">
+      <div class="dropdown">
+        <button class="dropbtn" type="button">Products</button>
+        <div class="dropdown-content">
+          <a href="/products/#online">Subscribe &amp; save it online</a>
+          <a href="/products/#sheets">Google Sheets — keep the database yourself</a>
+        </div>
+      </div>
+
+      <div class="dropdown">
+        <button class="dropbtn" type="button">Use Cases</button>
+        <div class="dropdown-content">
+          <a href="/use-cases/">All Use Cases</a>
+          <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+          <a href="/use-cases/screenplay.html">Screenplay Script</a>
+          <a href="/use-cases/character-design.html">Character Design</a>
+          <a href="/use-cases/set-design.html">Set / Production Design</a>
+        </div>
+      </div>
+
+      <a class="menu__link" href="/about.html">About</a>
+      <a class="menu__link" href="/faq.html">FAQ</a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html">Sign up / Log in</a>
+    </nav>
+  </header>
+
   <main class="tester">
     <section class="tester__intro">
       <h1>Supabase connection tester</h1>
@@ -259,6 +288,8 @@
       <div class="log" data-log>Ready.</div>
     </section>
   </main>
+
+  <script src="/assets/main.js" defer></script>
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
