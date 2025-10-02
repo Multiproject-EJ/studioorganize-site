@@ -33,7 +33,15 @@
     <a class="menu__link" href="/about.html">About</a>
     <a class="menu__link" href="mailto:hello@studioorganize.com">Contact</a>
     <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-    <a class="menu__cta" href="https://studioorganize.com/supabase-test.html">Sign up / Log in</a>
+    <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
+    <div class="dropdown" data-account-menu hidden>
+      <button class="menu__cta" type="button" data-account-button>Account</button>
+      <div class="dropdown-content">
+        <a href="/account.html">My Creator Page</a>
+        <a href="/product/personal.html">My Subscription</a>
+        <a href="#" data-account-logout>Log out</a>
+      </div>
+    </div>
   </nav>
 </div></header>
 <main class="container">
@@ -47,5 +55,5 @@
 </main>
 <footer class="footer"><div class="container">© <span id="y"></span> StudioOrganize</div></footer>
 <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
-<script src="assets/main.js" defer></script>
+<script type="module" src="assets/main.js"></script>
 </body></html>

@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 // footer year
 const y = document.getElementById('y');
 if (y) y.textContent = new Date().getFullYear();
@@ -118,3 +120,85 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
     if (el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
   });
 });
+
+const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
+
+let supabaseClient = null;
+try {
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabaseClient = supabaseClient;
+} catch (error) {
+  console.error('Failed to initialize Supabase client', error);
+}
+
+const authLink = document.querySelector('[data-auth-link]');
+const accountMenu = document.querySelector('[data-account-menu]');
+const accountButton = document.querySelector('[data-account-button]');
+const accountLogoutLink = document.querySelector('[data-account-logout]');
+const navHasAuthControls = Boolean(authLink || accountMenu || accountLogoutLink);
+
+function toggleElementVisibility(element, shouldShow){
+  if (!element) return;
+  if (shouldShow){
+    element.hidden = false;
+    element.removeAttribute('aria-hidden');
+    element.style.display = '';
+  } else {
+    element.hidden = true;
+    element.setAttribute('aria-hidden', 'true');
+    element.style.display = 'none';
+  }
+}
+
+function updateAccountUI(session){
+  if (!navHasAuthControls) return;
+  const isSignedIn = Boolean(session);
+  toggleElementVisibility(authLink, !isSignedIn);
+  toggleElementVisibility(accountMenu, isSignedIn);
+  if (accountButton){
+    accountButton.textContent = 'Account';
+    const email = session?.user?.email;
+    if (email){
+      accountButton.setAttribute('data-account-email', email);
+    } else {
+      accountButton.removeAttribute('data-account-email');
+    }
+  }
+}
+
+async function refreshAccountSession(){
+  if (!supabaseClient || !navHasAuthControls) return;
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error){
+      console.error('Failed to fetch Supabase session', error);
+      return;
+    }
+    updateAccountUI(data.session ?? null);
+  } catch (error){
+    console.error('Unexpected error while checking Supabase session', error);
+  }
+}
+
+if (accountLogoutLink && !accountLogoutLink.dataset.logoutBound && supabaseClient){
+  accountLogoutLink.dataset.logoutBound = 'true';
+  accountLogoutLink.addEventListener('click', async event => {
+    event.preventDefault();
+    try {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error){
+        console.error('Supabase sign-out failed', error);
+      }
+    } catch (error){
+      console.error('Unexpected error during Supabase sign-out', error);
+    }
+  });
+}
+
+if (supabaseClient && navHasAuthControls){
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    updateAccountUI(session ?? null);
+  });
+  refreshAccountSession();
+}
