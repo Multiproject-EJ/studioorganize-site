@@ -318,6 +318,19 @@
     const accountButton = document.querySelector('[data-account-button]');
     const accountLogoutLink = document.querySelector('[data-account-logout]');
 
+    function toggleElementVisibility(element, shouldShow) {
+      if (!element) return;
+      if (shouldShow) {
+        element.hidden = false;
+        element.removeAttribute('aria-hidden');
+        element.style.display = '';
+      } else {
+        element.hidden = true;
+        element.setAttribute('aria-hidden', 'true');
+        element.style.display = 'none';
+      }
+    }
+
     const state = {
       session: null
     };
@@ -360,12 +373,8 @@
         const email = newSession.user?.email || 'Unknown user';
         sessionDetails.textContent = `User: ${email}`;
         setAuthDependentState(true);
-        if (authLink) {
-          authLink.hidden = true;
-        }
-        if (accountMenu) {
-          accountMenu.hidden = false;
-        }
+        toggleElementVisibility(authLink, false);
+        toggleElementVisibility(accountMenu, true);
         if (accountButton) {
           accountButton.textContent = 'Account';
         }
@@ -374,12 +383,8 @@
         sessionIndicator.textContent = 'Signed out';
         sessionDetails.textContent = 'No active session';
         setAuthDependentState(false);
-        if (authLink) {
-          authLink.hidden = false;
-        }
-        if (accountMenu) {
-          accountMenu.hidden = true;
-        }
+        toggleElementVisibility(authLink, true);
+        toggleElementVisibility(accountMenu, false);
         if (accountButton) {
           accountButton.textContent = 'Account';
         }
