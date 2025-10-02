@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
 const WORKSPACE_URL = 'https://app.studioorganize.com';
+const CREATIVE_HUB_URL = '/creative-hub.html';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -455,12 +456,12 @@ async function handleSignup(e){
   }
 }
 
-function redirectToWorkspace(delay = 0){
+function redirectToCreativeHub(delay = 0){
   const navigate = () => {
     try {
-      window.location.href = WORKSPACE_URL;
+      window.location.href = CREATIVE_HUB_URL;
     } catch (error) {
-      console.warn('Unable to redirect to workspace', error);
+      console.warn('Unable to redirect to Creative Hub', error);
     }
   };
   if (delay > 0){
@@ -491,9 +492,9 @@ async function handleLogin(e){
       setStatus(statusLogin, 'Check your inbox to confirm your email before signing in.', 'error');
       return;
     }
-    setStatus(statusLogin, 'Success! Redirecting to your workspace…', 'success');
+    setStatus(statusLogin, 'Success! Redirecting to the Creative Hub…', 'success');
     closeAuthModal();
-    redirectToWorkspace(900);
+    redirectToCreativeHub(900);
   } catch (error) {
     setStatus(statusLogin, formatErrorMessage(error, 'login'), 'error');
   } finally {
@@ -594,6 +595,10 @@ function bindOpeners(){
         window.location.href = WORKSPACE_URL;
         return;
       }
+      if (action === 'creative-hub'){
+        window.location.href = CREATIVE_HUB_URL;
+        return;
+      }
       openAuthModal(action);
     };
     btn.addEventListener('click', handler);
@@ -616,18 +621,137 @@ function updateCtas(session){
     const defaultAction = btn.dataset.authDefaultAction || 'signup';
     const skipRedirect = btn.dataset.authNoRedirect === 'true';
     if (authed && !skipRedirect){
-      btn.textContent = 'Open workspace';
-      btn.dataset.openAuth = 'workspace';
+      btn.textContent = 'Open Creative Hub';
+      btn.dataset.openAuth = 'creative-hub';
     } else {
       btn.textContent = original;
       btn.dataset.openAuth = defaultAction;
+    }
+  });
+  updateAccountUi(session);
+}
+
+let accountOutsideClickBound = false;
+
+function closeAccountMenu(menu){
+  if (!(menu instanceof HTMLElement)) return;
+  menu.classList.remove('is-open');
+  const toggle = qs('[data-account-toggle]', menu);
+  if (toggle){
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function openAccountMenu(menu){
+  if (!(menu instanceof HTMLElement)) return;
+  menu.classList.add('is-open');
+  const toggle = qs('[data-account-toggle]', menu);
+  if (toggle){
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function bindAccountMenus(){
+  qsa('[data-account-menu]').forEach(menu => {
+    if (!(menu instanceof HTMLElement)) return;
+    if (menu.dataset.accountBound === 'true') return;
+    menu.dataset.accountBound = 'true';
+    const toggle = qs('[data-account-toggle]', menu);
+    if (toggle){
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        if (menu.hidden){
+          return;
+        }
+        const shouldOpen = !menu.classList.contains('is-open');
+        if (shouldOpen){
+          openAccountMenu(menu);
+        } else {
+          closeAccountMenu(menu);
+        }
+      });
+      menu.addEventListener('mouseenter', () => {
+        if (!menu.hidden){
+          openAccountMenu(menu);
+        }
+      });
+      menu.addEventListener('mouseleave', () => closeAccountMenu(menu));
+      menu.addEventListener('focusin', () => {
+        if (!menu.hidden){
+          openAccountMenu(menu);
+        }
+      });
+      menu.addEventListener('focusout', event => {
+        if (!menu.contains(event.relatedTarget)){
+          closeAccountMenu(menu);
+        }
+      });
+    }
+  });
+
+  qsa('[data-account-logout]').forEach(btn => {
+    if (!(btn instanceof HTMLElement)) return;
+    if (btn.dataset.accountLogoutBound === 'true') return;
+    btn.dataset.accountLogoutBound = 'true';
+    btn.addEventListener('click', async event => {
+      event.preventDefault();
+      btn.disabled = true;
+      try {
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      } catch (error) {
+        console.warn('Failed to sign out', error);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+
+  if (!accountOutsideClickBound){
+    accountOutsideClickBound = true;
+    document.addEventListener('click', event => {
+      qsa('[data-account-menu]').forEach(menu => {
+        if (!(menu instanceof HTMLElement) || menu.hidden) return;
+        if (!menu.contains(event.target)){
+          closeAccountMenu(menu);
+        }
+      });
+    });
+  }
+}
+
+function updateAccountUi(session){
+  const authed = Boolean(session);
+  qsa('[data-auth-cta]').forEach(btn => {
+    if (!(btn instanceof HTMLElement)) return;
+    btn.hidden = authed;
+  });
+  qsa('[data-account-menu]').forEach(menu => {
+    if (!(menu instanceof HTMLElement)) return;
+    menu.hidden = !authed;
+    if (!authed){
+      closeAccountMenu(menu);
+    }
+    const label = qs('[data-account-label]', menu);
+    if (label){
+      if (authed){
+        const fullName = (session?.user?.user_metadata?.full_name || '').toString().trim();
+        const email = (session?.user?.email || '').toString();
+        label.textContent = fullName || email || 'Account';
+      } else {
+        label.textContent = 'Account';
+      }
     }
   });
 }
 
 function init(){
   bindOpeners();
-  const observer = new MutationObserver(bindOpeners);
+  bindAccountMenus();
+  const observer = new MutationObserver(() => {
+    bindOpeners();
+    bindAccountMenus();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 }
 

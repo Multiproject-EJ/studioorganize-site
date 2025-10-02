@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Products — StudioOrganize</title>
+  <title>Creative Hub — StudioOrganize</title>
   <link rel="stylesheet" href="/assets/styles.css" />
   <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
 </head>
@@ -12,7 +12,6 @@
   <a class="brand" href="/">StudioOrganize</a>
   <nav class="menu">
     <a class="menu__link" href="/">Home</a>
-
     <div class="dropdown">
       <button class="dropbtn" type="button">Products</button>
       <div class="dropdown-content">
@@ -52,57 +51,68 @@
   </nav>
 </header>
 
-<main class="section">
-  <h1>Products</h1>
-
-  <section class="section alt" style="margin-top:0">
-    <h2>Choose how you want to work</h2>
-    <div class="grid cards">
-      <div class="card card--lg" id="online">
-        <h3>Subscribe &amp; save it online</h3>
-        <p>Use the hosted StudioOrganize workspace with automatic backups, real-time collaboration, and zero setup.</p>
-        <p class="muted">Perfect if you want everything managed for you. Join the waitlist and we’ll email you when subscriptions open.</p>
-        <a class="arrow" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Online%20Waitlist">Join the waitlist →</a>
-      </div>
-      <div class="card card--lg" id="sheets">
-        <h3>Google Sheets — keep the database yourself</h3>
-        <p>Download the full toolkit as Google Sheets and Apps Script files so you own the data and control every copy.</p>
-        <p class="muted">Best if you love tinkering, want lifetime access, and prefer storing projects inside your own Drive.</p>
-        <a class="arrow" href="/product/studioorganize.html">Browse the spreadsheet suite →</a>
-      </div>
+<main>
+  <section class="section">
+    <h1>Welcome to the Creative Hub</h1>
+    <p class="lead">Everything you need after signing in lives here — launch the StudioOrganize workspace, review resources, and pick up where you left off.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://app.studioorganize.com" target="_blank" rel="noopener">Launch workspace →</a>
+      <a class="btn btn-ghost" href="/account.html">Manage your subscription</a>
+      <a class="btn btn-ghost" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Support">Contact support</a>
     </div>
   </section>
 
-  <h2>🎬 Creative Tools</h2>
-  <div class="grid cards">
-    <a class="card card--lg" href="/product/studioorganize.html">
-      <h3>StudioOrganize Spreadsheet</h3>
-      <p>Scene/character DB, stripboard, call sheets, exports.</p>
-      <span class="arrow">View →</span>
-    </a>
+  <section class="section alt">
+    <h2>Quick links</h2>
+    <div class="grid cards">
+      <a class="card" href="/use-cases/">
+        <h3>Creative prompts &amp; workflows</h3>
+        <p>Browse frameworks, idea generators, and scene builders tailored to different stages of your project.</p>
+        <span class="arrow">Explore →</span>
+      </a>
+      <a class="card" href="/products/#online">
+        <h3>Plan &amp; billing</h3>
+        <p>Review what’s included with StudioOrganize Online and upgrade when you’re ready for more collaborators.</p>
+        <span class="arrow">Review →</span>
+      </a>
+      <a class="card" href="/faq.html">
+        <h3>Help center</h3>
+        <p>Find answers to common questions about account access, data management, and creative workflows.</p>
+        <span class="arrow">Read FAQs →</span>
+      </a>
+    </div>
+  </section>
 
-    <a class="card card--lg" href="/product/1week-story.html">
-      <h3>1-Week Story Creator</h3>
-      <p>A guided 7-day system to generate, structure, and draft a story.</p>
-      <span class="arrow">View →</span>
-    </a>
-  </div>
-
-  <h2 class="mt">⚡ Work Better Tools</h2>
-  <div class="grid cards">
-    <a class="card" href="/product/personal.html#habit"><h3>Habit & Focus</h3><p>Creator-friendly habit system.</p><span class="arrow">View →</span></a>
-    <a class="card" href="/product/personal.html#weekplan"><h3>Weekplan</h3><p>Block your week with clarity.</p><span class="arrow">View →</span></a>
-    <a class="card" href="/product/personal.html#budget"><h3>Budget & Finance</h3><p>Import, categorize, review.</p><span class="arrow">View →</span></a>
-  </div>
+  <section class="section">
+    <h2>Workspace tips</h2>
+    <ul class="checks">
+      <li>Bookmark <a href="https://app.studioorganize.com" target="_blank" rel="noopener">app.studioorganize.com</a> for quick launches.</li>
+      <li>Invite collaborators from the workspace sidebar to share characters, scenes, and schedules.</li>
+      <li>Use drag-and-drop prompts to develop ideas, then promote them into structured story beats.</li>
+      <li>Export PDFs or CSVs anytime to share plans with your crew or keep offline backups.</li>
+    </ul>
+  </section>
 </main>
 
 <footer class="footer">
   <div class="footer__grid">
-    <div><strong>StudioOrganize</strong></div>
-    <div><a href="/">Home</a></div>
-    <div><a href="mailto:support@studioorganize.com">support@studioorganize.com</a></div>
+    <div>
+      <strong>StudioOrganize</strong>
+      <p class="muted">Tools for storytellers &amp; focused work.</p>
+    </div>
+    <div>
+      <a href="/products/">Products</a><br/>
+      <a href="/about.html">About</a><br/>
+      <a href="/faq.html">FAQ</a>
+    </div>
+    <div>
+      <a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br/>
+      <span class="muted">© <span id="y"></span> StudioOrganize</span>
+    </div>
   </div>
 </footer>
+
+<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 <script type="module" src="/assets/auth.js"></script>
 <script src="/assets/main.js" defer></script>
 </body>

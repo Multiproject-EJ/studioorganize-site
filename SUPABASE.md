@@ -174,9 +174,9 @@ This documentation should give you everything needed to wire the frontend forms 
 
 ## Frontend integration in this repo
 
-The modal-based signup and login experience lives in [`assets/auth.js`](assets/auth.js). The script mounts an accessible popup, handles focus management, and calls Supabase Auth for `signUp` and `signInWithPassword`. Buttons that open the modal use the `data-open-auth` attribute (set to either `signup` or `login`). The script also watches the auth state so the “Sign up / Log in” CTA automatically becomes an “Open workspace” button once the user is authenticated.
+The modal-based signup and login experience lives in [`assets/auth.js`](assets/auth.js). The script mounts an accessible popup, handles focus management, and calls Supabase Auth for `signUp` and `signInWithPassword`. Buttons that open the modal use the `data-open-auth` attribute (set to either `signup` or `login`). The script also watches the auth state so the primary “Sign up / Log in” CTA is hidden in favor of the account dropdown, and other CTAs switch to an “Open Creative Hub” action once the user is authenticated.
 
-On `account.html` the modal is triggered automatically for visitors who still reach the legacy route. If you add new buttons that should always open the modal (even when a user is already signed in) mark them with `data-auth-no-redirect="true"` so the JavaScript keeps their label instead of switching to “Open workspace.”
+On `account.html` the modal is triggered automatically for visitors who still reach the legacy route. If you add new buttons that should always open the modal (even when a user is already signed in) mark them with `data-auth-no-redirect="true"` so the JavaScript keeps their label instead of switching to “Open Creative Hub.”
 
 ### Captcha support
 
