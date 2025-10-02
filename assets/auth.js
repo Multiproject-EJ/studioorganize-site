@@ -455,6 +455,21 @@ async function handleSignup(e){
   }
 }
 
+function redirectToWorkspace(delay = 0){
+  const navigate = () => {
+    try {
+      window.location.href = WORKSPACE_URL;
+    } catch (error) {
+      console.warn('Unable to redirect to workspace', error);
+    }
+  };
+  if (delay > 0){
+    setTimeout(navigate, delay);
+  } else {
+    navigate();
+  }
+}
+
 async function handleLogin(e){
   e.preventDefault();
   if (!loginForm.reportValidity()){
@@ -465,19 +480,25 @@ async function handleLogin(e){
   const password = (formData.get('password') || '').toString();
   setStatus(statusLogin, 'Signing you in…', 'info');
   disableForm(loginForm, true);
+  loginForm.dataset.authSubmitting = 'true';
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error){
       throw error;
     }
+    const session = data?.session || null;
+    if (!session){
+      setStatus(statusLogin, 'Check your inbox to confirm your email before signing in.', 'error');
+      return;
+    }
     setStatus(statusLogin, 'Success! Redirecting to your workspace…', 'success');
-    setTimeout(() => {
-      window.location.href = WORKSPACE_URL;
-    }, 900);
+    closeAuthModal();
+    redirectToWorkspace(900);
   } catch (error) {
     setStatus(statusLogin, formatErrorMessage(error, 'login'), 'error');
   } finally {
     disableForm(loginForm, false);
+    delete loginForm.dataset.authSubmitting;
   }
 }
 
@@ -510,6 +531,7 @@ function collectDiagnostics(){
     },
     authSettings: { ...authSettingsState },
     signupDisabled: signupForm?.dataset.authSignupDisabled === 'true',
+    loginSubmitting: loginForm?.dataset.authSubmitting === 'true',
     captcha: {
       widgetLoaded: captchaId !== null,
       tokenPresent: Boolean(captchaToken)
