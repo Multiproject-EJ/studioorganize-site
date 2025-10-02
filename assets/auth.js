@@ -394,6 +394,10 @@ async function handleSignup(e){
     return;
   }
   setStatus(statusSignup, 'Creating your account…', 'info');
+  const formData = new FormData(signupForm);
+  const name = (formData.get('name') || '').toString().trim();
+  const email = (formData.get('email') || '').toString().trim();
+  const password = (formData.get('password') || '').toString();
   disableForm(signupForm, true);
   signupForm.dataset.authSubmitting = 'true';
   const settings = await loadAuthSettings();
@@ -407,10 +411,6 @@ async function handleSignup(e){
   if (settings.captchaRequired){
     await ensureCaptcha();
   }
-  const formData = new FormData(signupForm);
-  const name = (formData.get('name') || '').toString().trim();
-  const email = (formData.get('email') || '').toString().trim();
-  const password = (formData.get('password') || '').toString();
   if (settings.captchaRequired && !captchaToken){
     setStatus(statusSignup, 'Please complete the security check to continue.', 'error');
     disableForm(signupForm, false);
@@ -460,11 +460,11 @@ async function handleLogin(e){
   if (!loginForm.reportValidity()){
     return;
   }
-  setStatus(statusLogin, 'Signing you in…', 'info');
-  disableForm(loginForm, true);
   const formData = new FormData(loginForm);
   const email = (formData.get('email') || '').toString().trim();
   const password = (formData.get('password') || '').toString();
+  setStatus(statusLogin, 'Signing you in…', 'info');
+  disableForm(loginForm, true);
   try {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error){
