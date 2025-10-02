@@ -95,6 +95,7 @@ img{max-width:100%;display:block}
 .section.alt{background:var(--alt);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .muted{color:var(--muted)}
 .mt{margin-top:24px}
+.page-header{display:flex;flex-direction:column;gap:8px;margin-bottom:28px}
 .grid{display:grid;gap:16px}
 .grid.cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .cards .card{background:var(--panel);border:1px solid var(--line);padding:18px;border-radius:16px;transition:transform .12s ease, border-color .12s}
@@ -129,6 +130,20 @@ img{max-width:100%;display:block}
 .checks li::before{content:"✓ ";opacity:.8;margin-right:4px}
 .grid.two{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
 @media (max-width:940px){.grid.two{grid-template-columns:1fr}}
+
+/* account app grid */
+.app-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.app-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;text-decoration:none;color:var(--text);transition:transform .12s ease,border-color .12s ease}
+.app-card img{width:100%;height:160px;object-fit:cover}
+.app-card--fit img{object-fit:contain;padding:12px;background:var(--panel)}
+.app-card__label{font-weight:600;font-size:18px;padding:16px}
+.app-card:hover{transform:translateY(-2px);border-color:#2b3140}
+.app-card:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.app-card--placeholder{cursor:default;opacity:.75}
+.app-card--placeholder:hover{transform:none;border-color:var(--line)}
+.app-card--placeholder img{filter:saturate(.7)}
+@media (max-width:900px){.app-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.app-grid{grid-template-columns:1fr}}
 
 /* footer */
 .footer{border-top:1px solid var(--line);padding:24px 18px;margin-top:24px}
