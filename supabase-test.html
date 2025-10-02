@@ -169,7 +169,15 @@
       <a class="menu__link" href="/about.html">About</a>
       <a class="menu__link" href="/faq.html">FAQ</a>
       <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html">Sign up / Log in</a>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
+      <div class="dropdown" data-account-menu hidden>
+        <button class="menu__cta" type="button" data-account-button>Account</button>
+        <div class="dropdown-content">
+          <a href="/account.html">My Creator Page</a>
+          <a href="/product/personal.html">My Subscription</a>
+          <a href="#" data-account-logout>Log out</a>
+        </div>
+      </div>
     </nav>
   </header>
 
@@ -305,6 +313,10 @@
     const signoutButton = document.querySelector('[data-signout]');
     const fetchProfileButton = document.querySelector('[data-fetch-profile]');
     const loadScenesButton = document.querySelector('[data-load-scenes]');
+    const authLink = document.querySelector('[data-auth-link]');
+    const accountMenu = document.querySelector('[data-account-menu]');
+    const accountButton = document.querySelector('[data-account-button]');
+    const accountLogoutLink = document.querySelector('[data-account-logout]');
 
     const state = {
       session: null
@@ -348,12 +360,40 @@
         const email = newSession.user?.email || 'Unknown user';
         sessionDetails.textContent = `User: ${email}`;
         setAuthDependentState(true);
+        if (authLink) {
+          authLink.hidden = true;
+        }
+        if (accountMenu) {
+          accountMenu.hidden = false;
+        }
+        if (accountButton) {
+          accountButton.textContent = 'Account';
+        }
       } else {
         sessionIndicator.dataset.state = 'signed-out';
         sessionIndicator.textContent = 'Signed out';
         sessionDetails.textContent = 'No active session';
         setAuthDependentState(false);
+        if (authLink) {
+          authLink.hidden = false;
+        }
+        if (accountMenu) {
+          accountMenu.hidden = true;
+        }
+        if (accountButton) {
+          accountButton.textContent = 'Account';
+        }
       }
+    }
+
+    async function handleSignOut() {
+      log('Signing out...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        log('Sign-out failed', error, 'error');
+        return;
+      }
+      log('Signed out.');
     }
 
     async function refreshSession() {
@@ -416,14 +456,15 @@
     }
 
     if (signoutButton) {
-      signoutButton.addEventListener('click', async () => {
-        log('Signing out...');
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          log('Sign-out failed', error, 'error');
-          return;
-        }
-        log('Signed out.');
+      signoutButton.addEventListener('click', () => {
+        handleSignOut();
+      });
+    }
+
+    if (accountLogoutLink) {
+      accountLogoutLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        handleSignOut();
       });
     }
 
