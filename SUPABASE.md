@@ -174,15 +174,9 @@ This documentation should give you everything needed to wire the frontend forms 
 
 ## Frontend integration in this repo
 
-The modal-based signup and login experience lives in [`assets/auth.js`](assets/auth.js). The script mounts an accessible popup, handles focus management, and calls Supabase Auth for `signUp` and `signInWithPassword`. Buttons that open the modal use the `data-open-auth` attribute (set to either `signup` or `login`). The script also watches the auth state so the primary “Sign up / Log in” CTA is hidden in favor of the account dropdown, and other CTAs switch to an “Open Creative Hub” action once the user is authenticated.
+The legacy modal-based signup and login flow has been removed. All “Sign up / Log in” buttons now link directly to [`supabase-test.html`](supabase-test.html), which hosts the standalone Supabase authentication experience. Update that page if you need to adjust copy, styling, or add new flows such as password resets.
 
-On `account.html` the modal is triggered automatically for visitors who still reach the legacy route. If you add new buttons that should always open the modal (even when a user is already signed in) mark them with `data-auth-no-redirect="true"` so the JavaScript keeps their label instead of switching to “Open Creative Hub.”
-
-### Captcha support
-
-If you enable hCaptcha for sign-ups inside Supabase Auth settings, no extra configuration is needed on the frontend. The modal calls the `/auth/v1/settings` endpoint to detect whether hCaptcha is enabled and automatically renders the widget with the configured site key. When the visitor completes the challenge the resulting `captchaToken` is sent along with the `signUp` request.
-
-Should you disable captcha in the future the widget disappears automatically, and sign-ups continue to work without any further code changes.
+If you introduce additional requirements (for example hCaptcha or multi-factor flows), build them straight into `supabase-test.html`. The rest of the site simply routes visitors there and no longer manages authentication state client-side.
 
 ## Best practices for memberships and Stripe subscriptions
 
@@ -195,5 +189,5 @@ To prepare for paid memberships you’ll want to store a little more state than 
 5. **Audit email + password flows** – enforce email confirmation in Supabase Auth, require a minimum password length (already set to 8 characters in the modal), and enable password reset emails so support requests stay manageable.
 6. **Store Stripe metadata** – include the Supabase user ID in Stripe Checkout Session metadata. That makes it trivial to link webhook payloads back to the right row in your database.
 
-With those pieces in place the popup UI in this repo can stay lightweight while the backend keeps an authoritative record of who should have access to paid features.
+With those pieces in place the standalone login page in this repo can stay lightweight while the backend keeps an authoritative record of who should have access to paid features.
 
