@@ -149,6 +149,14 @@ async function loadAuthSettings(){
     return authSettingsState;
   }
   authSettingsState.attempted = true;
+  const hasGetSettings = typeof supabase?.auth?.getSettings === 'function';
+  if (!hasGetSettings){
+    authSettingsState.captchaRequired = false;
+    authSettingsState.siteKey = null;
+    authSettingsState.disableSignup = false;
+    console.info('Supabase auth.getSettings is not available; using default auth settings.');
+    return authSettingsState;
+  }
   try {
     const { data, error } = await supabase.auth.getSettings();
     if (error){
