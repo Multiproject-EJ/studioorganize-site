@@ -307,6 +307,7 @@
 
         <!-- non-essential buttons collapse in focus mode -->
         <div class="topbar-group non-essential" role="group" aria-label="Quick panel toggles">
+          <button class="btn" type="button" id="saveSceneBtn">Save</button>
           <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
 
@@ -1664,6 +1665,10 @@
         if (fresh){ fresh.value = ''; fresh.focus(); }
       });
     }
+    const saveSceneBtn = document.getElementById('saveSceneBtn');
+    if (saveSceneBtn){
+      saveSceneBtn.addEventListener('click', ()=> saveActiveSceneToSupabase());
+    }
     const timelineBtn = document.getElementById('timelineModeBtn');
     if (timelineBtn){
       updateTimelineButton();
@@ -1920,6 +1925,47 @@
         if (userInitiated) alert('Backup failed. Please try again.');
         console.error('Supabase backup failed:', err);
         return false;
+      }
+    }
+
+    async function saveActiveSceneToSupabase(){
+      const supabase = window.supabaseClient;
+      if (!supabase){
+        alert('Supabase is still initializing. Please try again in a moment.');
+        return;
+      }
+      if (!project || !Array.isArray(project.scenes) || !project.scenes.length){
+        alert('No project loaded to save.');
+        return;
+      }
+      const sceneIndex = project.scenes.findIndex(s => s.id === activeSceneId);
+      if (sceneIndex < 0){
+        alert('Select a scene before saving.');
+        return;
+      }
+      try {
+        const session = await getSupabaseSession(supabase);
+        if (!session || !session.user){
+          alert('Sign in to save your scene to the cloud.');
+          return;
+        }
+        ensureProjectShape();
+        const scene = project.scenes[sceneIndex];
+        const ownerId = session.user.id;
+        const row = sceneToSupabaseRow(scene, sceneIndex, ownerId);
+        const { error } = await supabase
+          .from('scenes')
+          .upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+
+        updateSceneHash(scene);
+        lastSerializedMetaHash = metaSignature(project);
+        await saveLocal(project);
+
+        console.info('Saved active scene to Supabase.');
+      } catch (err) {
+        alert('Saving scene failed. Please try again.');
+        console.error('Supabase scene save failed:', err);
       }
     }
 
