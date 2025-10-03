@@ -336,7 +336,14 @@
 
         <!-- non-essential buttons collapse in focus mode -->
         <div class="topbar-group non-essential" role="group" aria-label="Quick panel toggles">
-          <button class="btn" type="button" id="saveSceneBtn">Save</button>
+          <div class="btn-menu" id="saveMenu">
+            <button class="btn" type="button" id="saveSceneBtn" aria-haspopup="true" aria-expanded="false">Save ▾</button>
+            <div class="btn-menu-list" id="saveMenuList" role="menu">
+              <button type="button" id="saveSceneMenuAction" data-save-action="save" role="menuitem">Save Scene</button>
+              <button type="button" data-save-action="backup" role="menuitem">Backup Now</button>
+              <button type="button" data-save-action="restore" role="menuitem">Restore…</button>
+            </div>
+          </div>
           <span class="save-status" id="saveSceneStatus" role="status" aria-live="polite" hidden></span>
           <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
@@ -349,8 +356,6 @@
           </div>
         </div>
 
-        <button class="btn non-essential" onclick="backupNow()">Backup Now</button>
-        <button class="btn non-essential" onclick="openRestore()">Restore…</button>
         <button class="btn non-essential" id="scriptBtn" type="button" onclick="openScriptDialog()">Script…</button>
 
         <!-- Focus toggle -->
@@ -1146,6 +1151,47 @@
       });
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.toggle('active', panel.dataset.tab === activeRightTab);
+      });
+    }
+
+    function setupSaveMenu(){
+      const menu = document.getElementById('saveMenu');
+      const toggle = document.getElementById('saveSceneBtn');
+      if (!menu || !toggle) return;
+      const list = document.getElementById('saveMenuList');
+      if (!list) return;
+
+      const setOpen = (open)=>{
+        menu.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+
+      list.addEventListener('click', e=>{
+        e.stopPropagation();
+      });
+
+      toggle.addEventListener('click', e=>{
+        e.stopPropagation();
+        setOpen(!menu.classList.contains('open'));
+      });
+
+      menu.querySelectorAll('[data-save-action]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          e.stopPropagation();
+          const action = btn.dataset.saveAction;
+          setOpen(false);
+          if (action === 'save') saveActiveSceneToSupabase();
+          else if (action === 'backup') backupNow();
+          else if (action === 'restore') openRestore();
+        });
+      });
+
+      document.addEventListener('click', e=>{
+        if (!menu.contains(e.target)) setOpen(false);
+      });
+
+      document.addEventListener('keydown', e=>{
+        if (e.key === 'Escape') setOpen(false);
       });
     }
 
@@ -2060,6 +2106,7 @@
     document.querySelectorAll('[data-tab-btn]').forEach(btn=>{
       btn.addEventListener('click', ()=> setRightTab(btn.dataset.tabBtn));
     });
+    setupSaveMenu();
     setupExportMenu();
     document.querySelectorAll('[data-slug-prefix]').forEach(btn=>{
       btn.addEventListener('click', ()=> setSceneSlugPart('prefix', btn.dataset.slugPrefix));
@@ -2108,10 +2155,6 @@
         const fresh = document.getElementById('newSoundCue');
         if (fresh){ fresh.value = ''; fresh.focus(); }
       });
-    }
-    const saveSceneBtn = document.getElementById('saveSceneBtn');
-    if (saveSceneBtn){
-      saveSceneBtn.addEventListener('click', ()=> saveActiveSceneToSupabase());
     }
     const timelineBtn = document.getElementById('timelineModeBtn');
     if (timelineBtn){
@@ -2396,6 +2439,10 @@
     async function saveActiveSceneToSupabase(){
       const supabase = window.supabaseClient;
       const saveSceneBtn = document.getElementById('saveSceneBtn');
+      const saveSceneMenuAction = document.getElementById('saveSceneMenuAction');
+      const saveMenu = document.getElementById('saveMenu');
+      if (saveMenu) saveMenu.classList.remove('open');
+      if (saveSceneBtn) saveSceneBtn.setAttribute('aria-expanded', 'false');
       if (!supabase){
         alert('Supabase is still initializing. Please try again in a moment.');
         setSaveSceneStatus('error', 'Supabase unavailable');
@@ -2414,7 +2461,7 @@
       }
 
       setSaveSceneStatus('saving', 'Saving…');
-      if (saveSceneBtn) saveSceneBtn.disabled = true;
+      if (saveSceneMenuAction) saveSceneMenuAction.disabled = true;
 
       try {
         const session = await getSupabaseSession(supabase);
@@ -2459,7 +2506,7 @@
         alert('Saving scene failed. Please try again.');
         console.error('Supabase scene save failed:', err);
       } finally {
-        if (saveSceneBtn) saveSceneBtn.disabled = false;
+        if (saveSceneMenuAction) saveSceneMenuAction.disabled = false;
       }
     }
 
