@@ -447,6 +447,99 @@ create policy "Scene sounds are deletable by owners"
         )
     );
 
+create table if not exists public.scene_storyboards (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    project_id uuid,
+    scene_id uuid not null references public.scenes (id) on delete cascade,
+    position integer not null default 0,
+    image_url text not null,
+    metadata jsonb default '{}'::jsonb not null,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists scene_storyboards_scene_idx on public.scene_storyboards (scene_id);
+create index if not exists scene_storyboards_owner_idx on public.scene_storyboards (owner_id);
+create index if not exists scene_storyboards_project_idx on public.scene_storyboards (project_id);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scene_storyboards_set_timestamp'
+          and tgrelid = 'public.scene_storyboards'::regclass
+    ) then
+        create trigger scene_storyboards_set_timestamp
+            before update on public.scene_storyboards
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.scene_storyboards enable row level security;
+
+drop policy if exists "Scene storyboards are viewable by owners" on public.scene_storyboards;
+create policy "Scene storyboards are viewable by owners"
+    on public.scene_storyboards
+    for select
+    using (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+drop policy if exists "Scene storyboards can be inserted by owners" on public.scene_storyboards;
+create policy "Scene storyboards can be inserted by owners"
+    on public.scene_storyboards
+    for insert
+    with check (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+drop policy if exists "Scene storyboards are editable by owners" on public.scene_storyboards;
+create policy "Scene storyboards are editable by owners"
+    on public.scene_storyboards
+    for update
+    using (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    )
+    with check (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+drop policy if exists "Scene storyboards are deletable by owners" on public.scene_storyboards;
+create policy "Scene storyboards are deletable by owners"
+    on public.scene_storyboards
+    for delete
+    using (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
 create table if not exists public.scene_links (
     id uuid primary key default gen_random_uuid(),
     scene_id uuid not null references public.scenes (id) on delete cascade,
