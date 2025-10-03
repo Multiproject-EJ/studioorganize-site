@@ -3100,7 +3100,7 @@
           try {
             const { data: storyboardData, error: storyboardFetchError } = await supabase
               .from('scene_storyboards')
-              .select('id, image_url, position, url')
+              .select('id, image_url, position')
               .eq('owner_id', ownerId)
               .eq('scene_id', row.id)
               .order('position', { ascending: true });
