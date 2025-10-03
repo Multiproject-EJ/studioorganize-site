@@ -81,6 +81,7 @@
       .notes{padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto}
       textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
       .row{display:flex; gap:8px}
+      .writer-theme-toggle{width:100%; justify-content:center}
       .counter{font-size:12px; color:var(--muted)}
       .tab-header{display:flex; padding:8px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
       .tab-btn{flex:1; background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; font-size:12px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
@@ -520,10 +521,7 @@
                   <option value="true">Smart format: ON</option>
                   <option value="false">Smart format: OFF</option>
                 </select>
-                <select id="themeSel" data-theme-select>
-                  <option value="dark">Theme: Dark</option>
-                  <option value="light">Theme: Light</option>
-                </select>
+                <button id="writerThemeToggle" class="theme-toggle writer-theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
               </div>
             </div>
             <div class="panel-footer-actions">
@@ -1653,8 +1651,6 @@
       const smartSel = document.getElementById('smartFormat');
       if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
       project.settings.theme = project.settings.theme || (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark'));
-      const themeSel = document.getElementById('themeSel');
-      if (themeSel) themeSel.value = project.settings.theme;
 
       // scenes list
       const list = document.getElementById('sceneList');
@@ -2778,22 +2774,12 @@
       project.settings.smartFormat = (e.target.value === 'true');
       bumpVersion(); scheduleSave();
     });
-    document.getElementById('themeSel').addEventListener('change', e=>{
-      project.settings.theme = e.target.value || 'dark';
-      bumpVersion(); scheduleSave(); applyTheme();
-    });
-
     document.addEventListener('themechange', e=>{
       const nextTheme = e.detail?.theme;
       if (!nextTheme || !project) return;
       if (project.settings.theme !== nextTheme){
         project.settings.theme = nextTheme;
-        const sel = document.getElementById('themeSel');
-        if (sel) sel.value = nextTheme;
         bumpVersion(); scheduleSave();
-      } else {
-        const sel = document.getElementById('themeSel');
-        if (sel && sel.value !== nextTheme) sel.value = nextTheme;
       }
     });
 
