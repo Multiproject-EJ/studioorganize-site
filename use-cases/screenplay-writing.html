@@ -738,222 +738,100 @@
      * Script library & dialog
      * =======================*/
     const DEFAULT_SCRIPT_IMAGE = 'https://placehold.co/240x160?text=Script';
-    const FALLBACK_SCRIPT_LIBRARY = [
-      {
-        id: 'demo-midnight-heist',
-        name: 'Midnight Heist',
-        description: 'A misfit crew attempts a daring art theft under a blood moon.',
-        image_url: 'https://placehold.co/240x160/1f2933/ffffff?text=Heist',
-        project: {
-          projectId: 'demo-midnight-heist',
-          title: 'Midnight Heist',
-          format: 'screenplay/v1',
-          createdAt: 1704067200000,
-          updatedAt: 1704067200000,
-          version: 3,
-          settings: { theme: 'dark', smartFormat: true, pageWidth: 60, focus: false },
-          catalogs: {
-            characters: [
-              { id: 'demo-midnight-heist-char-mara', name: 'MARA' },
-              { id: 'demo-midnight-heist-char-jules', name: 'JULES' }
-            ],
-            locations: [
-              { id: 'demo-midnight-heist-loc-museum', name: 'ART MUSEUM' },
-              { id: 'demo-midnight-heist-loc-rooftop', name: 'CITY ROOFTOP' }
-            ]
-          },
-          scenes: [
-            {
-              id: 'demo-midnight-heist-scene-1',
-              slug: 'INT. ART MUSEUM - NIGHT',
-              cards: ['Heist kickoff'],
-              elements: [
-                { t: 'action', txt: 'Moonlight spills across marble floors as MARA picks the final lock.' },
-                { t: 'character', txt: 'MARA' },
-                { t: 'dialogue', txt: "We're live. Keep the chatter down." },
-                { t: 'action', txt: 'JULES slides the laser cutter into place, igniting a clean beam.' }
-              ],
-              color: '#5FA8FF',
-              notes: '',
-              sounds: [
-                { id: 'demo-midnight-heist-sound-1', cue: 'Subtle alarm drone' }
-              ]
-            },
-            {
-              id: 'demo-midnight-heist-scene-2',
-              slug: 'EXT. CITY ROOFTOP - NIGHT',
-              cards: ['Getaway'],
-              elements: [
-                { t: 'action', txt: 'The crew bursts onto the rooftop, a drone lifting the stolen statue.' },
-                { t: 'character', txt: 'JULES' },
-                { t: 'dialogue', txt: 'Skyway is jammed. New exit plan!' },
-                { t: 'parenthetical', txt: 'into headset' },
-                { t: 'dialogue', txt: 'Mara, you owe me a miracle.' },
-                { t: 'action', txt: 'MARA spots a news chopper banking nearby and grins.' },
-                { t: 'transition', txt: 'CUT TO:' }
-              ],
-              color: '#9b5de5',
-              notes: '',
-              sounds: [
-                { id: 'demo-midnight-heist-sound-2', cue: 'Rotor blades whipping the air' }
-              ]
-            }
-          ],
-          notes: 'Imported from the demo library.',
-          _hashes: { scene: {} },
-          _lastBackedUpVersion: 0,
-          _deltaCountSinceFull: 0
-        }
-      },
-      {
-        id: 'demo-cosmic-dawn',
-        name: 'Cosmic Dawn',
-        description: 'An isolated astronaut makes first contact moments before a solar storm.',
-        image_url: 'https://placehold.co/240x160/202a44/ffffff?text=Sci-Fi',
-        project: {
-          projectId: 'demo-cosmic-dawn',
-          title: 'Cosmic Dawn',
-          format: 'screenplay/v1',
-          createdAt: 1706659200000,
-          updatedAt: 1706659200000,
-          version: 2,
-          settings: { theme: 'dark', smartFormat: true, pageWidth: 60, focus: false },
-          catalogs: {
-            characters: [
-              { id: 'demo-cosmic-dawn-char-ara', name: 'ARA' },
-              { id: 'demo-cosmic-dawn-char-orb', name: 'ORBITAL AI' }
-            ],
-            locations: [
-              { id: 'demo-cosmic-dawn-loc-orbit', name: 'LOW ORBIT STATION' },
-              { id: 'demo-cosmic-dawn-loc-surface', name: 'LUNAR RIDGE' }
-            ]
-          },
-          scenes: [
-            {
-              id: 'demo-cosmic-dawn-scene-1',
-              slug: 'INT. OBSERVATION DECK - ORBITAL STATION',
-              cards: ['Signal detected'],
-              elements: [
-                { t: 'action', txt: 'ARA floats weightless, watching auroras pulse across the planet below.' },
-                { t: 'character', txt: 'ORBITAL AI' },
-                { t: 'dialogue', txt: 'Unidentified transmission. Origin: beneath the ice.' },
-                { t: 'action', txt: 'Ara steadies herself, recording the harmonic pulses echoing in the hull.' }
-              ],
-              color: '#4cc9f0',
-              notes: '',
-              sounds: [
-                { id: 'demo-cosmic-dawn-sound-1', cue: 'Glassine chime rising' }
-              ]
-            },
-            {
-              id: 'demo-cosmic-dawn-scene-2',
-              slug: 'EXT. LUNAR RIDGE - CONTINUOUS',
-              cards: ['First contact'],
-              elements: [
-                { t: 'action', txt: 'Ara steps onto the ridge as ribbons of light pour from a fissure.' },
-                { t: 'character', txt: 'ARA' },
-                { t: 'dialogue', txt: 'I hear you. Show me where to look.' },
-                { t: 'action', txt: 'An orb of liquid data hovers, unfolding symbols across the regolith.' },
-                { t: 'transition', txt: 'FADE OUT.' }
-              ],
-              color: '#f72585',
-              notes: '',
-              sounds: [
-                { id: 'demo-cosmic-dawn-sound-2', cue: 'Electrostatic whisper' }
-              ]
-            }
-          ],
-          notes: 'Sample script for quick onboarding.',
-          _hashes: { scene: {} },
-          _lastBackedUpVersion: 0,
-          _deltaCountSinceFull: 0
-        }
-      }
-    ];
 
     let scriptOptionsCache = null;
+    let scriptOptionsStatus = '';
     let scriptDialogSelectedId = null;
     let scriptDialogLoading = false;
 
-    function mapFallbackScriptMeta(script){
-      return {
-        id: script.id,
-        name: script.name,
-        description: script.description || '',
-        image_url: script.image_url || DEFAULT_SCRIPT_IMAGE
-      };
-    }
-
     async function getScriptOptions(force = false){
-      if (scriptOptionsCache && !force) return scriptOptionsCache;
+      if (scriptOptionsCache && !force){
+        scriptOptionsStatus = '';
+        return scriptOptionsCache;
+      }
+      scriptOptionsStatus = '';
       let options = [];
       const supabase = window.supabaseClient;
-      if (supabase){
-        try {
-          const { data, error } = await supabase
-            .from('project_data')
-            .select('id, project_id, script_id, script_name, name, title, description, summary, image_url, thumbnail_url')
-            .order('script_name', { ascending: true })
-            .order('name', { ascending: true });
-          if (error) throw error;
-          options = (data || []).map(row => {
-            const id = row.id || row.project_id || row.script_id || null;
-            if (!id) return null;
-            return {
-              id,
-              name: row.script_name || row.name || row.title || 'Untitled Script',
-              description: row.description || row.summary || '',
-              image_url: row.image_url || row.thumbnail_url || DEFAULT_SCRIPT_IMAGE
-            };
-          }).filter(Boolean);
-        } catch (err){
-          console.warn('Script metadata fetch failed:', err);
+      if (!supabase){
+        scriptOptionsStatus = 'Connect Supabase to browse your saved scripts.';
+        scriptOptionsCache = null;
+        return [];
+      }
+      try {
+        const { data, error } = await supabase
+          .from('project_data')
+          .select('id, project_id, script_id, script_name, name, title, description, summary, image_url, thumbnail_url');
+        if (error) throw error;
+        options = (Array.isArray(data) ? data : []).map(row => {
+          const id = row.id || row.project_id || row.script_id || null;
+          if (!id) return null;
+          const name = row.script_name || row.name || row.title || 'Untitled Script';
+          return {
+            id,
+            project_id: row.project_id || null,
+            script_id: row.script_id || null,
+            name,
+            description: row.description || row.summary || '',
+            image_url: row.image_url || row.thumbnail_url || DEFAULT_SCRIPT_IMAGE
+          };
+        }).filter(Boolean);
+        options.sort((a, b) => {
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        });
+        if (!options.length){
+          scriptOptionsStatus = 'No scripts found yet. Save a script to Supabase to load it here.';
         }
+      } catch (err){
+        console.warn('Script metadata fetch failed:', err);
+        scriptOptionsStatus = 'Unable to load scripts from Supabase.';
+        scriptOptionsCache = null;
+        return [];
       }
-      if (!options.length){
-        options = FALLBACK_SCRIPT_LIBRARY.map(mapFallbackScriptMeta);
-      }
-      scriptOptionsCache = options;
+      scriptOptionsCache = options.length ? options : null;
       return options;
     }
 
     async function fetchScriptById(scriptId){
       if (!scriptId) return null;
       const supabase = window.supabaseClient;
-      if (supabase){
-        try {
-          const { data, error } = await supabase
-            .from('project_data')
-            .select('id, project_id, script_id, project_json, project, script, payload, data, name, script_name, title')
-            .eq('id', scriptId)
-            .maybeSingle();
-          if (error) throw error;
-          const payload = data?.project_json ?? data?.project ?? data?.script ?? data?.payload ?? data?.data;
-          if (payload){
-            if (typeof payload === 'string'){
-              try { return JSON.parse(payload); }
-              catch (err){ console.warn('Failed to parse script payload from Supabase', err); }
-            } else if (typeof payload === 'object'){
-              return payload;
-            }
-          }
-          if (data){
-            const clone = Object.assign({}, data);
-            delete clone.project_json;
-            delete clone.project;
-            delete clone.script;
-            delete clone.payload;
-            delete clone.data;
-            if (clone.scenes){
-              return clone;
-            }
-          }
-        } catch (err){
-          console.warn('Script fetch failed:', err);
-        }
+      if (!supabase){
+        console.warn('Supabase client is required to fetch scripts.');
+        return null;
       }
-      const fallback = FALLBACK_SCRIPT_LIBRARY.find(item => item.id === scriptId);
-      return fallback ? cloneValue(fallback.project) : null;
+      try {
+        const filters = [`id.eq.${scriptId}`];
+        filters.push(`project_id.eq.${scriptId}`);
+        filters.push(`script_id.eq.${scriptId}`);
+        const { data, error } = await supabase
+          .from('project_data')
+          .select('id, project_id, script_id, project_json, project, script, payload, data, name, script_name, title, description, summary')
+          .or(filters.join(','))
+          .maybeSingle();
+        if (error) throw error;
+        const payload = data?.project_json ?? data?.project ?? data?.script ?? data?.payload ?? data?.data;
+        if (payload){
+          if (typeof payload === 'string'){
+            try { return JSON.parse(payload); }
+            catch (err){ console.warn('Failed to parse script payload from Supabase', err); }
+          } else if (typeof payload === 'object'){
+            return payload;
+          }
+        }
+        if (data){
+          const clone = Object.assign({}, data);
+          delete clone.project_json;
+          delete clone.project;
+          delete clone.script;
+          delete clone.payload;
+          delete clone.data;
+          if (clone.scenes){
+            return clone;
+          }
+        }
+      } catch (err){
+        console.warn('Script fetch failed:', err);
+      }
+      return null;
     }
 
     function updateScriptDialogLoadState(){
@@ -963,6 +841,8 @@
       loadBtn.disabled = disable || scriptDialogLoading;
       if (scriptDialogLoading){
         loadBtn.textContent = 'Loading…';
+      } else if (!scriptDialogSelectedId){
+        loadBtn.textContent = 'Select a script';
       } else if (disable && scriptDialogSelectedId === project?.projectId){
         loadBtn.textContent = 'Current Script';
       } else {
@@ -1030,10 +910,10 @@
         } else {
           updateScriptPreview('');
         }
-        if (status) status.textContent = options.length ? '' : 'No scripts available yet.';
+        if (status) status.textContent = scriptOptionsStatus || (options.length ? '' : 'No scripts available yet.');
       } catch (err){
         console.warn(err);
-        if (status) status.textContent = 'Unable to load scripts right now.';
+        if (status) status.textContent = scriptOptionsStatus || 'Unable to load scripts right now.';
         updateScriptPreview('');
       } finally {
         scriptDialogLoading = false;
