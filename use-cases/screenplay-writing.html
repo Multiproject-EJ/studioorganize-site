@@ -1293,7 +1293,7 @@
 
     async function handleScriptDialogSave(){
       if (!project){
-        return;
+        return { success: false, reason: 'no_project' };
       }
       const status = document.getElementById('scriptDialogStatus');
       try { syncActiveScene(false); } catch(e){}
@@ -1301,46 +1301,51 @@
       const supabase = window.supabaseClient;
       if (!supabase){
         if (status) status.textContent = 'Supabase is still initializing. Please try again.';
-        return;
+        return { success: false, reason: 'supabase_unavailable' };
       }
       scriptDialogSaving = true;
       updateScriptDialogLoadState();
       if (status) status.textContent = 'Saving script…';
+      let outcome = { success: false, reason: 'unknown' };
       try {
         const session = await getSupabaseSession(supabase);
         if (!session || !session.user){
           if (status) status.textContent = 'Sign in to save scripts to your library.';
           alert('Sign in to save scripts to your library.');
-          return;
-        }
-        const entry = await saveScriptToLibrary(supabase, session.user.id);
-        if (status) status.textContent = 'Saved to your library.';
-        if (entry?.id){
-          lastSerializedMetaHash = metaSignature(project);
-          scriptDialogSelectedId = entry.id;
-          const select = document.getElementById('scriptSelect');
-          if (select){
-            let option = Array.from(select.options).find(opt => opt.value === entry.id);
-            if (!option){
-              option = document.createElement('option');
-              option.value = entry.id;
-              option.textContent = entry.name || 'Untitled Script';
-              select.appendChild(option);
-            } else {
-              option.textContent = entry.name || option.textContent;
+          outcome = { success: false, reason: 'auth_required' };
+        } else {
+          const entry = await saveScriptToLibrary(supabase, session.user.id);
+          if (status) status.textContent = 'Saved to your library.';
+          if (entry?.id){
+            lastSerializedMetaHash = metaSignature(project);
+            scriptDialogSelectedId = entry.id;
+            const select = document.getElementById('scriptSelect');
+            if (select){
+              let option = Array.from(select.options).find(opt => opt.value === entry.id);
+              if (!option){
+                option = document.createElement('option');
+                option.value = entry.id;
+                option.textContent = entry.name || 'Untitled Script';
+                select.appendChild(option);
+              } else {
+                option.textContent = entry.name || option.textContent;
+              }
+              select.value = entry.id;
             }
-            select.value = entry.id;
+            updateScriptPreview(entry.id);
           }
-          updateScriptPreview(entry.id);
+          outcome = { success: true };
         }
       } catch (err){
         console.error('Saving script to library failed:', err);
         if (status) status.textContent = 'Saving failed. Please try again.';
         alert('Saving your script failed. Please try again.');
+        outcome = { success: false, reason: 'error' };
       } finally {
         scriptDialogSaving = false;
         updateScriptDialogLoadState();
       }
+      return outcome;
     }
 
     async function handleScriptDialogCreate(){
@@ -1599,12 +1604,32 @@
       });
 
       menu.querySelectorAll('[data-save-action]').forEach(btn=>{
-        btn.addEventListener('click', e=>{
+        btn.addEventListener('click', async e=>{
           e.stopPropagation();
           const action = btn.dataset.saveAction;
           setOpen(false);
-          if (action === 'save') saveActiveSceneToSupabase();
-          else if (action === 'backup') backupNow();
+          if (action === 'save'){
+            const saveMenuButton = document.getElementById('saveSceneMenuAction');
+            if (saveMenuButton) saveMenuButton.disabled = true;
+            setSaveSceneStatus('saving', 'Saving…');
+            try {
+              const result = await handleScriptDialogSave();
+              if (result && result.success){
+                setSaveSceneStatus('success', 'Saved!');
+              } else {
+                const reason = result ? result.reason : 'error';
+                if (reason === 'supabase_unavailable') setSaveSceneStatus('error', 'Supabase unavailable');
+                else if (reason === 'no_project') setSaveSceneStatus('error', 'Nothing to save');
+                else if (reason === 'auth_required') setSaveSceneStatus('error', 'Sign in required');
+                else setSaveSceneStatus('error', 'Save failed. Please try again.');
+              }
+            } catch (saveError){
+              console.error('Save menu action failed:', saveError);
+              setSaveSceneStatus('error', 'Save failed. Please try again.');
+            } finally {
+              if (saveMenuButton) saveMenuButton.disabled = false;
+            }
+          } else if (action === 'backup') backupNow();
           else if (action === 'restore') openRestore();
         });
       });
