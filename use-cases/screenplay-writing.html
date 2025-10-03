@@ -90,6 +90,21 @@
       .tab-panel.active{display:flex}
       .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
       .panel-footer{padding:12px; border-top:1px solid var(--ring); display:flex; flex-direction:column; gap:10px; background:var(--panel)}
+      .storyboard-field{display:flex; flex-direction:column; gap:10px;}
+      .storyboard-viewer{position:relative; border:1px solid var(--ring); border-radius:12px; overflow:hidden; background:var(--card); aspect-ratio:16 / 9; display:flex; align-items:center; justify-content:center;}
+      .storyboard-viewer img{width:100%; height:100%; object-fit:cover; transition:opacity .2s ease;}
+      .storyboard-viewer[data-empty="true"] img{opacity:0.3; filter:saturate(0.1);}
+      .storyboard-empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:0 16px; font-size:0.95rem; color:var(--muted); pointer-events:none;}
+      .storyboard-viewer[data-empty="false"] .storyboard-empty{display:none;}
+      .storyboard-nav{position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.4); color:#fff; border:none; width:38px; height:38px; border-radius:999px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+      .storyboard-nav.prev{left:12px;}
+      .storyboard-nav.next{right:12px;}
+      .storyboard-nav[disabled]{opacity:0.45; cursor:not-allowed; background:rgba(0,0,0,0.25);}
+      .storyboard-meta{display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:0.9rem;}
+      .storyboard-input{display:flex; gap:8px; flex-wrap:wrap;}
+      .storyboard-input input{flex:1 1 220px;}
+      .storyboard-remove{background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.85rem; text-decoration:underline; padding:4px 0;}
+      .storyboard-remove[disabled]{cursor:not-allowed; opacity:0.5; text-decoration:none;}
       .panel-footer h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
       .panel-footer-actions{display:flex; flex-direction:column; gap:8px; padding:10px; border:1px solid var(--ring); border-radius:12px; background:var(--chip)}
       .panel-footer-actions .danger-btn{width:100%; text-align:center}
@@ -477,6 +492,22 @@
             <h2>Notes &amp; Meta</h2>
             <div class="notes">
               <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
+              <div class="storyboard-field">
+                <div class="storyboard-viewer" id="storyboardViewer" data-empty="true">
+                  <button class="storyboard-nav prev" type="button" id="storyboardPrev" aria-label="Previous storyboard image">&#x2039;</button>
+                  <img id="storyboardImage" src="https://placehold.co/480x270?text=Storyboard" alt="Storyboard preview" loading="lazy" />
+                  <div class="storyboard-empty" id="storyboardEmpty">No storyboard yet</div>
+                  <button class="storyboard-nav next" type="button" id="storyboardNext" aria-label="Next storyboard image">&#x203A;</button>
+                </div>
+                <div class="storyboard-meta">
+                  <span id="storyboardCounter" class="muted-text">No storyboard yet</span>
+                  <button class="storyboard-remove" type="button" id="removeStoryboardBtn" disabled>Remove current</button>
+                </div>
+                <div class="storyboard-input">
+                  <input id="newStoryboardUrl" placeholder="Storyboard image URL" inputmode="url" autocomplete="off" />
+                  <button class="btn" type="button" id="addStoryboardBtn">Add storyboard</button>
+                </div>
+              </div>
               <div class="row">
                 <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
                 <input id="sceneColor" type="color" />
@@ -667,6 +698,7 @@
     let lastSerializedMetaHash = '';
     let supabaseSession = null;
     let supabaseSessionBound = false;
+    const storyboardIndexState = new Map();
 
     function bindSupabaseSessionClient(client){
       if (!client || supabaseSessionBound) return;
@@ -741,10 +773,92 @@
       };
     }
 
+    function sanitizeStoryboardRowList(rows){
+      if (!Array.isArray(rows)) return [];
+      return rows
+        .filter(row => row && (typeof row.image_url === 'string' || typeof row.url === 'string'))
+        .map(row => {
+          const rawUrl = typeof row.image_url === 'string' ? row.image_url : row.url;
+          const url = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+          const position = Number.isFinite(row.position) ? row.position : 0;
+          return { id: row.id ?? null, url, position };
+        })
+        .filter(entry => !!entry.url)
+        .sort((a, b) => (a.position || 0) - (b.position || 0))
+        .map((entry, idx) => ({ id: entry.id, url: entry.url, position: idx }));
+    }
+
+    function ensureSceneStoryboardStructure(scene){
+      if (!scene || typeof scene !== 'object') return;
+      if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+      const metadataList = Array.isArray(scene.metadata.storyboards) ? scene.metadata.storyboards : [];
+      const baseList = Array.isArray(scene.storyboards) ? scene.storyboards : [];
+      const source = baseList.length ? baseList : metadataList;
+      const seen = new Set();
+      const sanitized = [];
+      source.forEach(item => {
+        let url = '';
+        let id = '';
+        if (typeof item === 'string'){
+          url = item.trim();
+        } else if (item && typeof item === 'object'){
+          const rawUrl = typeof item.url === 'string' ? item.url : item.image_url;
+          url = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+          id = item.id;
+        }
+        if (!url) return;
+        if (!id || seen.has(id)){
+          id = crypto.randomUUID();
+        }
+        seen.add(id);
+        sanitized.push({ id, url });
+      });
+      sanitized.forEach((entry, idx) => { entry.position = idx; });
+      scene.storyboards = sanitized;
+    }
+
+    function refreshStoryboardPositions(scene){
+      if (!scene || !Array.isArray(scene.storyboards)) return;
+      const filtered = [];
+      scene.storyboards.forEach(entry => {
+        if (!entry || typeof entry.url !== 'string') return;
+        const trimmed = entry.url.trim();
+        if (!trimmed) return;
+        if (!entry.id) entry.id = crypto.randomUUID();
+        entry.url = trimmed;
+        filtered.push(entry);
+      });
+      filtered.forEach((entry, idx) => { entry.position = idx; });
+      if (filtered.length !== scene.storyboards.length || filtered.some((entry, idx) => scene.storyboards[idx] !== entry)){
+        scene.storyboards.splice(0, scene.storyboards.length, ...filtered);
+      }
+    }
+
+    function getSceneStoryboards(scene){
+      if (!scene || !Array.isArray(scene.storyboards)) return [];
+      refreshStoryboardPositions(scene);
+      return scene.storyboards.map(entry => ({ id: entry.id, url: entry.url, position: entry.position }));
+    }
+
+    function sanitizeStoryboardStateForComparison(scene){
+      return getSceneStoryboards(scene).map(entry => ({ id: entry.id, url: entry.url, position: entry.position }));
+    }
+
+    function sanitizeStoryboardRowForComparison(rows){
+      return sanitizeStoryboardRowList(rows);
+    }
+
+    function isTableMissingError(error){
+      if (!error) return false;
+      if (error.code === '42P01') return true;
+      return typeof error.message === 'string' && error.message.includes('42P01');
+    }
+
     /* =========================
      * Script library & dialog
      * =======================*/
     const DEFAULT_SCRIPT_IMAGE = 'https://placehold.co/240x160?text=Script';
+    const DEFAULT_STORYBOARD_IMAGE = 'https://placehold.co/480x270?text=Storyboard';
 
     let scriptOptionsCache = null;
     let scriptOptionsStatus = '';
@@ -1003,6 +1117,10 @@
         if (!Array.isArray(scene.elements)) scene.elements = [];
         if (!Array.isArray(scene.sounds)) scene.sounds = [];
       });
+      storyboardIndexState.clear();
+      project.scenes.forEach(scene => {
+        storyboardIndexState.set(scene.id, 0);
+      });
       project._hashes = { scene: {} };
       project.scenes.forEach(scene => {
         project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
@@ -1096,7 +1214,7 @@
       return JSON.stringify({
         id: s.id, slug: s.slug,
         elements: s.elements, color: s.color, notes: s.notes,
-        sounds: s.sounds
+        sounds: s.sounds, storyboards: s.storyboards
       });
     }
     function metaSignature(p){
@@ -1134,7 +1252,18 @@
           sound.cue = typeof sound.cue === 'string' ? sound.cue : '';
           return sound;
         });
+        ensureSceneStoryboardStructure(scene);
+        refreshStoryboardPositions(scene);
         return scene;
+      });
+      project.scenes.forEach(scene => {
+        const max = Math.max(0, (scene.storyboards?.length || 1) - 1);
+        const current = storyboardIndexState.get(scene.id) ?? 0;
+        storyboardIndexState.set(scene.id, Math.max(0, Math.min(current, max)));
+      });
+      const validIds = new Set(project.scenes.map(scene => scene.id));
+      Array.from(storyboardIndexState.keys()).forEach(id => {
+        if (!validIds.has(id)) storyboardIndexState.delete(id);
       });
     }
 
@@ -1256,7 +1385,8 @@
           elements: [{t:'action', txt:'A room. Quiet.'}],
           color: '#5FA8FF',
           notes: '',
-          sounds: []
+          sounds: [],
+          storyboards: []
         }],
         notes: '',
         _hashes: { scene: {} },
@@ -1265,6 +1395,8 @@
       };
       project.scenes.forEach(s => { project._hashes.scene[s.id] = hashString(stableSceneString(s)); });
       activeSceneId = project.scenes[0].id;
+      storyboardIndexState.clear();
+      storyboardIndexState.set(activeSceneId, 0);
       setLastProjectId(pid);
     }
 
@@ -1308,19 +1440,21 @@
         updateHud();
         updatePomodoroUI();
         applyTheme();
-      renderCatalogs();
-      renderSoundList();
-      renderTimeline();
-      updateDeleteSceneButton();
-      applyActiveTabUI();
-      if (timelineMode) renderTimelineBoard();
-      else updateTimelineInsertLabel();
-      updateTimelineButton();
-      return;
-    }
+        renderStoryboard();
+        renderCatalogs();
+        renderSoundList();
+        renderTimeline();
+        updateDeleteSceneButton();
+        applyActiveTabUI();
+        if (timelineMode) renderTimelineBoard();
+        else updateTimelineInsertLabel();
+        updateTimelineButton();
+        return;
+      }
       if (!Array.isArray(scene.sounds)) scene.sounds = [];
       document.getElementById('sceneSlug').value = scene.slug || '';
       document.getElementById('sceneColor').value = scene.color || '#5FA8FF';
+      renderStoryboard();
 
       // editor render
       const editor = document.getElementById('editor');
@@ -1499,6 +1633,113 @@
         row.appendChild(btn);
         container.appendChild(row);
       });
+    }
+
+    function renderStoryboard(){
+      const scene = getActiveScene();
+      const viewer = document.getElementById('storyboardViewer');
+      const image = document.getElementById('storyboardImage');
+      const counter = document.getElementById('storyboardCounter');
+      const prevBtn = document.getElementById('storyboardPrev');
+      const nextBtn = document.getElementById('storyboardNext');
+      const removeBtn = document.getElementById('removeStoryboardBtn');
+      const emptyState = document.getElementById('storyboardEmpty');
+      if (!viewer || !image || !counter || !prevBtn || !nextBtn || !removeBtn || !emptyState){
+        return;
+      }
+      const storyboards = scene ? getSceneStoryboards(scene) : [];
+      let index = 0;
+      if (scene){
+        const current = storyboardIndexState.get(scene.id) ?? 0;
+        const max = Math.max(0, storyboards.length - 1);
+        index = Math.max(0, Math.min(current, max));
+        storyboardIndexState.set(scene.id, index);
+      }
+      const currentStoryboard = storyboards.length ? storyboards[index] : null;
+      const hasStoryboard = !!currentStoryboard;
+
+      viewer.dataset.empty = hasStoryboard ? 'false' : 'true';
+      image.src = hasStoryboard ? currentStoryboard.url : DEFAULT_STORYBOARD_IMAGE;
+      image.alt = hasStoryboard ? `Storyboard ${index + 1} of ${storyboards.length}` : 'Storyboard placeholder';
+      counter.textContent = hasStoryboard ? `Storyboard ${index + 1} of ${storyboards.length}` : 'No storyboard yet';
+      emptyState.textContent = hasStoryboard ? '' : 'No storyboard yet';
+
+      prevBtn.disabled = !hasStoryboard || index <= 0;
+      nextBtn.disabled = !hasStoryboard || index >= storyboards.length - 1;
+      removeBtn.disabled = !hasStoryboard;
+      removeBtn.hidden = !hasStoryboard;
+
+      if (!scene){
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        removeBtn.disabled = true;
+        removeBtn.hidden = true;
+      }
+    }
+
+    function stepStoryboard(delta){
+      const scene = getActiveScene();
+      if (!scene) return;
+      const storyboards = getSceneStoryboards(scene);
+      if (!storyboards.length) return;
+      const current = storyboardIndexState.get(scene.id) ?? 0;
+      const next = Math.max(0, Math.min(current + delta, storyboards.length - 1));
+      if (next === current) return;
+      storyboardIndexState.set(scene.id, next);
+      renderStoryboard();
+    }
+
+    function handleAddStoryboard(){
+      const input = document.getElementById('newStoryboardUrl');
+      const scene = getActiveScene();
+      if (!input || !scene) return;
+      let value = (input.value || '').trim();
+      if (!value){
+        input.focus();
+        return;
+      }
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)){
+        value = `https://${value}`;
+      }
+      let parsed;
+      try {
+        parsed = new URL(value);
+      } catch (err){
+        alert('Enter a valid storyboard URL (including http:// or https://).');
+        input.focus();
+        return;
+      }
+      if (!/^https?:$/i.test(parsed.protocol)){
+        alert('Storyboard images must use http or https URLs.');
+        input.focus();
+        return;
+      }
+      const normalizedUrl = parsed.href;
+      if (!Array.isArray(scene.storyboards)) scene.storyboards = [];
+      scene.storyboards.push({ id: crypto.randomUUID(), url: normalizedUrl });
+      refreshStoryboardPositions(scene);
+      storyboardIndexState.set(scene.id, Math.max(0, scene.storyboards.length - 1));
+      input.value = '';
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      renderStoryboard();
+    }
+
+    function handleRemoveStoryboard(){
+      const scene = getActiveScene();
+      if (!scene || !Array.isArray(scene.storyboards) || !scene.storyboards.length) return;
+      const current = storyboardIndexState.get(scene.id) ?? 0;
+      scene.storyboards.splice(current, 1);
+      refreshStoryboardPositions(scene);
+      const max = Math.max(0, (scene.storyboards.length || 1) - 1);
+      storyboardIndexState.set(scene.id, Math.min(current, max));
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      renderStoryboard();
     }
 
     function renderTimeline(){
@@ -1925,7 +2166,8 @@
         elements: [],
         color: '#8ab4f8',
         notes: '',
-        sounds: []
+        sounds: [],
+        storyboards: []
       };
       if (trimmedSummary){
         scene.elements = trimmedSummary
@@ -1944,6 +2186,7 @@
       const clamped = Math.max(0, Math.min(index, project.scenes.length));
       project.scenes.splice(clamped, 0, scene);
       project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
+      storyboardIndexState.set(scene.id, 0);
       activeSceneId = scene.id;
       bumpVersion();
       render();
@@ -1958,6 +2201,7 @@
       if (idx >= 0) {
         project.scenes.splice(idx,1);
         delete project._hashes.scene[id];
+        storyboardIndexState.delete(id);
         if (!project.scenes.length){
           addScene();
           return;
@@ -1968,6 +2212,7 @@
     }
     function updateSceneHash(scene){
       project._hashes = project._hashes || { scene: {} };
+      refreshStoryboardPositions(scene);
       project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
     }
 
@@ -2238,6 +2483,31 @@
       const s = getActiveScene(); if (!s) return;
       s.color = e.target.value; bumpVersion(); updateSceneHash(s); render(); scheduleSave(); scheduleBackup();
     });
+    const storyboardPrevBtn = document.getElementById('storyboardPrev');
+    if (storyboardPrevBtn){
+      storyboardPrevBtn.addEventListener('click', ()=> stepStoryboard(-1));
+    }
+    const storyboardNextBtn = document.getElementById('storyboardNext');
+    if (storyboardNextBtn){
+      storyboardNextBtn.addEventListener('click', ()=> stepStoryboard(1));
+    }
+    const storyboardRemoveBtn = document.getElementById('removeStoryboardBtn');
+    if (storyboardRemoveBtn){
+      storyboardRemoveBtn.addEventListener('click', ()=> handleRemoveStoryboard());
+    }
+    const storyboardAddBtn = document.getElementById('addStoryboardBtn');
+    if (storyboardAddBtn){
+      storyboardAddBtn.addEventListener('click', ()=> handleAddStoryboard());
+    }
+    const storyboardInput = document.getElementById('newStoryboardUrl');
+    if (storyboardInput){
+      storyboardInput.addEventListener('keydown', e=>{
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          handleAddStoryboard();
+        }
+      });
+    }
     document.getElementById('smartFormat').addEventListener('change', e=>{
       project.settings.smartFormat = (e.target.value === 'true');
       bumpVersion(); scheduleSave();
@@ -2355,6 +2625,7 @@
       const safeCards = Array.isArray(scene.cards) ? structuredClone(scene.cards) : [];
       const safeElements = Array.isArray(scene.elements) ? structuredClone(scene.elements) : [];
       const safeSounds = Array.isArray(scene.sounds) ? structuredClone(scene.sounds) : [];
+      const safeStoryboards = getSceneStoryboards(scene);
       const characters = Array.isArray(project?.catalogs?.characters)
         ? project.catalogs.characters.map(char => ({ id: char.id || null, name: char.name || '' }))
         : [];
@@ -2386,9 +2657,22 @@
             theme: project.settings?.theme || null,
             smartFormat: typeof project.settings?.smartFormat === 'boolean' ? project.settings.smartFormat : null
           },
-          catalogs: { characters, locations }
+          catalogs: { characters, locations },
+          storyboards: safeStoryboards
         }
       };
+    }
+
+    function sceneStoryboardsToRows(scene, ownerId){
+      const storyboards = getSceneStoryboards(scene);
+      return storyboards.map(entry => ({
+        id: entry.id,
+        owner_id: ownerId,
+        project_id: project.projectId,
+        scene_id: scene.id,
+        position: entry.position,
+        image_url: entry.url
+      }));
     }
 
     async function backupToSupabase(supabase, { userInitiated = false } = {}){
@@ -2405,6 +2689,7 @@
         const ownerId = session.user.id;
         ensureProjectShape();
         const scenes = project.scenes.map((scene, index) => sceneToSupabaseRow(scene, index, ownerId));
+        const storyboardRows = project.scenes.flatMap(scene => sceneStoryboardsToRows(scene, ownerId));
 
         const { error: deleteError } = await supabase
           .from('scenes')
@@ -2413,11 +2698,29 @@
           .eq('project_id', project.projectId);
         if (deleteError) throw deleteError;
 
+        let storyboardTableAvailable = true;
+        const { error: storyboardDeleteError } = await supabase
+          .from('scene_storyboards')
+          .delete()
+          .eq('owner_id', ownerId)
+          .eq('project_id', project.projectId);
+        if (storyboardDeleteError){
+          if (isTableMissingError(storyboardDeleteError)) storyboardTableAvailable = false;
+          else throw storyboardDeleteError;
+        }
+
         if (scenes.length){
           const { error: upsertError } = await supabase
             .from('scenes')
             .upsert(scenes, { onConflict: 'id' });
           if (upsertError) throw upsertError;
+        }
+
+        if (storyboardRows.length && storyboardTableAvailable){
+          const { error: storyboardUpsertError } = await supabase
+            .from('scene_storyboards')
+            .upsert(storyboardRows, { onConflict: 'id' });
+          if (storyboardUpsertError && !isTableMissingError(storyboardUpsertError)) throw storyboardUpsertError;
         }
 
         project._hashes.scene = {};
@@ -2481,6 +2784,29 @@
           .upsert(row, { onConflict: 'id' });
         if (error) throw error;
 
+        const storyboardRows = sceneStoryboardsToRows(scene, ownerId);
+        let storyboardTableAvailable = true;
+        try {
+          const { error: deleteStoryboardsError } = await supabase
+            .from('scene_storyboards')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('scene_id', row.id);
+          if (deleteStoryboardsError && !isTableMissingError(deleteStoryboardsError)) throw deleteStoryboardsError;
+          if (storyboardRows.length){
+            const { error: upsertStoryboardsError } = await supabase
+              .from('scene_storyboards')
+              .upsert(storyboardRows, { onConflict: 'id' });
+            if (upsertStoryboardsError && !isTableMissingError(upsertStoryboardsError)) throw upsertStoryboardsError;
+          }
+        } catch (storyboardSaveError){
+          if (isTableMissingError(storyboardSaveError)){
+            storyboardTableAvailable = false;
+          } else {
+            throw storyboardSaveError;
+          }
+        }
+
         const { data: fetchedRow, error: fetchError } = await supabase
           .from('scenes')
           .select('id, owner_id, project_id, slug, title, synopsis, scene_number, script_order, color, location, time_of_day, cards, elements, sounds, metadata')
@@ -2490,8 +2816,34 @@
         if (fetchError) throw fetchError;
         if (!fetchedRow) throw new Error('Saved scene not found for verification.');
 
+        let remoteStoryboardRows = [];
+        if (storyboardTableAvailable){
+          try {
+            const { data: storyboardData, error: storyboardFetchError } = await supabase
+              .from('scene_storyboards')
+              .select('id, image_url, position, url')
+              .eq('owner_id', ownerId)
+              .eq('scene_id', row.id)
+              .order('position', { ascending: true });
+            if (storyboardFetchError && !isTableMissingError(storyboardFetchError)) throw storyboardFetchError;
+            if (!storyboardFetchError) remoteStoryboardRows = Array.isArray(storyboardData) ? storyboardData : [];
+          } catch (storyboardFetchError){
+            if (isTableMissingError(storyboardFetchError)){
+              storyboardTableAvailable = false;
+            } else {
+              throw storyboardFetchError;
+            }
+          }
+        }
+
         const localSnapshot = sanitizeSceneRow(row);
+        if (storyboardTableAvailable){
+          localSnapshot.storyboards = sanitizeStoryboardStateForComparison(scene);
+        }
         const remoteSnapshot = sanitizeSceneRow(fetchedRow);
+        if (storyboardTableAvailable){
+          remoteSnapshot.storyboards = sanitizeStoryboardRowForComparison(remoteStoryboardRows);
+        }
         if (!scenesMatch(localSnapshot, remoteSnapshot)){
           console.error('Supabase verification mismatch:', { localSnapshot, remoteSnapshot });
           throw new Error('Saved scene verification failed.');
@@ -2599,6 +2951,11 @@
             if (entry.kind === 'delta') applyDeltaClient(state, JSON.parse(entry.payloadJSON));
           }
           project = state;
+          ensureProjectShape();
+          storyboardIndexState.clear();
+          (project.scenes || []).forEach(scene => {
+            storyboardIndexState.set(scene.id, 0);
+          });
           project._hashes = { scene: {} };
           project.scenes.forEach(s => project._hashes.scene[s.id] = hashString(stableSceneString(s)));
           project._lastBackedUpVersion = project.version || 0;
@@ -2834,6 +3191,11 @@
         const loaded = await loadLocal(lastId);
         if (loaded) {
           project = loaded;
+          ensureProjectShape();
+          storyboardIndexState.clear();
+          (project.scenes || []).forEach(scene => {
+            storyboardIndexState.set(scene.id, 0);
+          });
           activeSceneId = project.scenes?.[0]?.id || null;
         } else {
           newProject();
