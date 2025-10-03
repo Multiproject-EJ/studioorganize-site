@@ -707,6 +707,27 @@
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
 
+    function randomId(){
+      const cryptoObj = (typeof globalThis !== 'undefined' && globalThis.crypto)
+        || (typeof window !== 'undefined' && window.crypto)
+        || null;
+      if (cryptoObj && typeof cryptoObj.randomUUID === 'function'){
+        try {
+          return cryptoObj.randomUUID();
+        } catch (err){
+          console.warn('crypto.randomUUID failed, falling back to manual id generation.', err);
+        }
+      }
+      if (cryptoObj && typeof cryptoObj.getRandomValues === 'function'){
+        const bytes = cryptoObj.getRandomValues(new Uint8Array(16));
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const toHex = b => b.toString(16).padStart(2, '0');
+        return `${toHex(bytes[0])}${toHex(bytes[1])}${toHex(bytes[2])}${toHex(bytes[3])}-${toHex(bytes[4])}${toHex(bytes[5])}-${toHex(bytes[6])}${toHex(bytes[7])}-${toHex(bytes[8])}${toHex(bytes[9])}-${toHex(bytes[10])}${toHex(bytes[11])}${toHex(bytes[12])}${toHex(bytes[13])}${toHex(bytes[14])}${toHex(bytes[15])}`;
+      }
+      return `id-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+    }
+
     const BACKUP_IDLE_MS = 120000;   // 2 min idle → auto backup
     const FULL_SNAPSHOT_EVERY = 10;  // every 10 deltas
     const MAX_DELTA_BYTES = 128 * 1024;
@@ -826,7 +847,7 @@
         }
         if (!url) return;
         if (!id || seen.has(id)){
-          id = crypto.randomUUID();
+          id = randomId();
         }
         seen.add(id);
         sanitized.push({ id, url });
@@ -842,7 +863,7 @@
         if (!entry || typeof entry.url !== 'string') return;
         const trimmed = entry.url.trim();
         if (!trimmed) return;
-        if (!entry.id) entry.id = crypto.randomUUID();
+        if (!entry.id) entry.id = randomId();
         entry.url = trimmed;
         filtered.push(entry);
       });
@@ -1285,6 +1306,7 @@
         project.title = rawTitle;
         project.libraryEntryId = null;
         ensureProjectShape();
+        ensurePomodoroSettings();
         activeSceneId = project.scenes?.[0]?.id || null;
         render();
         applyFocusModeUI();
@@ -1308,7 +1330,7 @@
         throw new Error('Invalid project payload');
       }
       const loaded = cloneValue(nextProject);
-      loaded.projectId = loaded.projectId || meta.id || crypto.randomUUID();
+      loaded.projectId = loaded.projectId || meta.id || randomId();
       loaded.title = loaded.title || meta.name || 'Untitled Script';
       loaded.format = loaded.format || 'screenplay/v1';
       loaded.createdAt = loaded.createdAt || Date.now();
@@ -1322,7 +1344,7 @@
       ensureProjectShape();
       project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
       project.scenes.forEach(scene => {
-        if (!scene.id) scene.id = crypto.randomUUID();
+        if (!scene.id) scene.id = randomId();
         if (!Array.isArray(scene.cards)) scene.cards = [];
         if (!Array.isArray(scene.elements)) scene.elements = [];
         if (!Array.isArray(scene.sounds)) scene.sounds = [];
@@ -1440,16 +1462,16 @@
       }
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = (project.catalogs.characters || []).map(item => {
-        if (typeof item === 'string') return { id: crypto.randomUUID(), name: item };
-        if (!item || typeof item !== 'object') return { id: crypto.randomUUID(), name: '' };
-        if (!item.id) item.id = crypto.randomUUID();
+        if (typeof item === 'string') return { id: randomId(), name: item };
+        if (!item || typeof item !== 'object') return { id: randomId(), name: '' };
+        if (!item.id) item.id = randomId();
         item.name = typeof item.name === 'string' ? item.name : '';
         return item;
       });
       project.catalogs.locations = (project.catalogs.locations || []).map(item => {
-        if (typeof item === 'string') return { id: crypto.randomUUID(), name: item };
-        if (!item || typeof item !== 'object') return { id: crypto.randomUUID(), name: '' };
-        if (!item.id) item.id = crypto.randomUUID();
+        if (typeof item === 'string') return { id: randomId(), name: item };
+        if (!item || typeof item !== 'object') return { id: randomId(), name: '' };
+        if (!item.id) item.id = randomId();
         item.name = typeof item.name === 'string' ? item.name : '';
         return item;
       });
@@ -1457,9 +1479,9 @@
         if (!Array.isArray(scene.cards)) scene.cards = [];
         if (!Array.isArray(scene.elements)) scene.elements = [];
         scene.sounds = (scene.sounds || []).map(sound => {
-          if (typeof sound === 'string') return { id: crypto.randomUUID(), cue: sound };
-          if (!sound || typeof sound !== 'object') return { id: crypto.randomUUID(), cue: '' };
-          if (!sound.id) sound.id = crypto.randomUUID();
+          if (typeof sound === 'string') return { id: randomId(), cue: sound };
+          if (!sound || typeof sound !== 'object') return { id: randomId(), cue: '' };
+          if (!sound.id) sound.id = randomId();
           sound.cue = typeof sound.cue === 'string' ? sound.cue : '';
           return sound;
         });
@@ -1580,7 +1602,7 @@
     function setLastProjectId(id){ try { localStorage.setItem('SW_LAST_PROJECT_ID', id); } catch(e){} }
 
     function newProject(){
-      const pid = crypto.randomUUID();
+      const pid = randomId();
       project = {
         projectId: pid,
         title: 'Untitled Project',
@@ -1589,10 +1611,16 @@
         updatedAt: Date.now(),
         version: 1,
         libraryEntryId: null,
-        settings: { theme: (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark')), smartFormat:true, pageWidth:60, focus:false, pomodoro: undefined },
+        settings: {
+          theme: (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark')),
+          smartFormat: true,
+          pageWidth: 60,
+          focus: false,
+          pomodoro: { workMin: 25, breakMin: 5, autoStartBreak: true, autoStartWork: false }
+        },
         catalogs: { characters:[], locations:[] },
         scenes: [{
-          id: crypto.randomUUID(),
+          id: randomId(),
           slug: 'INT. HOUSE - DAY',
           cards: ['Opening image'],
           elements: [{t:'action', txt:'A room. Quiet.'}],
@@ -1603,6 +1631,7 @@
         }],
         notes: '',
         _hashes: { scene: {} },
+        _pomoState: null,
         _lastBackedUpVersion: 0,
         _deltaCountSinceFull: 0
       };
@@ -1929,7 +1958,7 @@
       }
       const normalizedUrl = parsed.href;
       if (!Array.isArray(scene.storyboards)) scene.storyboards = [];
-      scene.storyboards.push({ id: crypto.randomUUID(), url: normalizedUrl });
+      scene.storyboards.push({ id: randomId(), url: normalizedUrl });
       refreshStoryboardPositions(scene);
       storyboardIndexState.set(scene.id, Math.max(0, scene.storyboards.length - 1));
       input.value = '';
@@ -2290,7 +2319,7 @@
       if (!trimmed) return;
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = project.catalogs.characters || [];
-      project.catalogs.characters.push({ id: crypto.randomUUID(), name: trimmed });
+      project.catalogs.characters.push({ id: randomId(), name: trimmed });
       bumpVersion();
       scheduleSave(); scheduleBackup();
       render();
@@ -2309,7 +2338,7 @@
       if (!trimmed) return;
       project.catalogs = project.catalogs || {};
       project.catalogs.locations = project.catalogs.locations || [];
-      project.catalogs.locations.push({ id: crypto.randomUUID(), name: trimmed });
+      project.catalogs.locations.push({ id: randomId(), name: trimmed });
       bumpVersion();
       scheduleSave(); scheduleBackup();
       render();
@@ -2329,7 +2358,7 @@
       const trimmed = (text || '').trim();
       if (!trimmed) return;
       scene.sounds = scene.sounds || [];
-      scene.sounds.push({ id: crypto.randomUUID(), cue: trimmed });
+      scene.sounds.push({ id: randomId(), cue: trimmed });
       updateSceneHash(scene);
       bumpVersion();
       scheduleSave(); scheduleBackup();
@@ -2373,7 +2402,7 @@
       const trimmedSlug = typeof slug === 'string' ? slug.trim() : '';
       const trimmedSummary = typeof summary === 'string' ? summary.trim() : '';
       const scene = {
-        id: crypto.randomUUID(),
+        id: randomId(),
         slug: trimmedSlug || 'EXT. NEW PLACE - DAY',
         cards: [],
         elements: [],
