@@ -91,6 +91,8 @@
       .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
       .panel-footer{padding:12px; border-top:1px solid var(--ring); display:flex; flex-direction:column; gap:10px; background:var(--panel)}
       .panel-footer h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
+      .panel-footer-actions{display:flex; flex-direction:column; gap:8px; padding:10px; border:1px solid var(--ring); border-radius:12px; background:var(--chip)}
+      .panel-footer-actions .danger-btn{width:100%; text-align:center}
       .timeline-list{display:flex; flex-direction:column; gap:10px}
       .timeline-item{display:flex; gap:10px; align-items:flex-start; padding:10px; border:1px solid var(--ring); border-radius:12px; background:var(--chip); cursor:pointer; transition:background .2s, border-color .2s; font:inherit; color:inherit; text-align:left}
       .timeline-item:hover{border-color:var(--acc)}
@@ -412,9 +414,6 @@
                 </div>
               </div>
               <div class="tab-divider"></div>
-              <div>
-                <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
-              </div>
             </div>
             <div class="tab-panel" data-tab="characters" id="tabCharacters">
               <div>
@@ -477,7 +476,6 @@
           <div class="panel-footer">
             <h2>Notes &amp; Meta</h2>
             <div class="notes">
-              <input id="projectTitle" placeholder="Project Title" />
               <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
               <div class="row">
                 <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
@@ -493,6 +491,10 @@
                   <option value="light">Theme: Light</option>
                 </select>
               </div>
+            </div>
+            <div class="panel-footer-actions">
+              <input id="projectTitle" placeholder="Project Title" />
+              <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
             </div>
           </div>
         </div>
