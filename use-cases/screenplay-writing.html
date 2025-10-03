@@ -250,11 +250,14 @@
       .script-dialog__body{display:flex; flex-direction:column; gap:12px;}
       .script-dialog__field{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--ink);}
       .script-dialog__field select{width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px;}
+      .script-dialog__field input{width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px;}
       .script-dialog__status{min-height:18px;}
       .script-dialog__preview{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ring); border-radius:12px; padding:12px; background:var(--chip);}
       .script-dialog__preview img{width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--ring); background:rgba(255,255,255,0.04);}
       .script-dialog__preview h3{margin:0 0 4px; font-size:16px;}
       .script-dialog__preview p{margin:0;}
+      .script-dialog__section{border-top:1px solid var(--ring); margin-top:12px; padding-top:12px; display:flex; flex-direction:column; gap:12px;}
+      .script-dialog__new-actions{display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px;}
       @media (max-width: 600px){
         .script-dialog{padding:16px;}
@@ -356,7 +359,7 @@
           <div class="btn-menu" id="saveMenu">
             <button class="btn" type="button" id="saveSceneBtn" aria-haspopup="true" aria-expanded="false">Save ▾</button>
             <div class="btn-menu-list" id="saveMenuList" role="menu">
-              <button type="button" id="saveSceneMenuAction" data-save-action="save" role="menuitem">Save Scene</button>
+              <button type="button" id="saveSceneMenuAction" data-save-action="save" role="menuitem">Save</button>
               <button type="button" data-save-action="backup" role="menuitem">Backup Now</button>
               <button type="button" data-save-action="restore" role="menuitem">Restore…</button>
             </div>
@@ -621,9 +624,23 @@
               <p class="muted-text" id="scriptPreviewDescription"></p>
             </div>
           </div>
+          <div class="script-dialog__section">
+            <div class="script-dialog__field">
+              <strong>New script</strong>
+              <span class="muted-text">Give it a title and start fresh.</span>
+            </div>
+            <label class="script-dialog__field" for="scriptDialogNewTitle">
+              <span>Script title</span>
+              <input id="scriptDialogNewTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
+            </label>
+            <div class="script-dialog__new-actions">
+              <button type="button" class="btn" id="scriptDialogCreate">Create</button>
+            </div>
+          </div>
         </div>
         <div class="script-dialog__footer">
           <button type="button" class="btn non-essential" id="scriptDialogCancel">Cancel</button>
+          <button type="button" class="btn" id="scriptDialogSave">Save</button>
           <button type="button" class="btn btn-primary" id="scriptDialogLoad">Save &amp; Load</button>
         </div>
       </div>
@@ -865,6 +882,8 @@
     let scriptOptionsStatus = '';
     let scriptDialogSelectedId = null;
     let scriptDialogLoading = false;
+    let scriptDialogSaving = false;
+    let scriptDialogCreating = false;
 
     async function getScriptOptions(force = false){
       if (scriptOptionsCache && !force){
@@ -958,17 +977,36 @@
 
     function updateScriptDialogLoadState(){
       const loadBtn = document.getElementById('scriptDialogLoad');
-      if (!loadBtn) return;
-      const disable = !scriptDialogSelectedId || (project && scriptDialogSelectedId === project.projectId);
-      loadBtn.disabled = disable || scriptDialogLoading;
-      if (scriptDialogLoading){
-        loadBtn.textContent = 'Loading…';
-      } else if (!scriptDialogSelectedId){
-        loadBtn.textContent = 'Select a script';
-      } else if (disable && scriptDialogSelectedId === project?.projectId){
-        loadBtn.textContent = 'Current Script';
-      } else {
-        loadBtn.textContent = 'Save & Load';
+      const saveBtn = document.getElementById('scriptDialogSave');
+      const createBtn = document.getElementById('scriptDialogCreate');
+      const newTitleInput = document.getElementById('scriptDialogNewTitle');
+      const busy = scriptDialogLoading || scriptDialogSaving || scriptDialogCreating;
+      if (loadBtn){
+        const disable = !scriptDialogSelectedId || (project && scriptDialogSelectedId === project.projectId);
+        loadBtn.disabled = disable || busy;
+        if (scriptDialogLoading){
+          loadBtn.textContent = 'Loading…';
+        } else if (scriptDialogSaving || scriptDialogCreating){
+          loadBtn.textContent = 'Please wait…';
+        } else if (!scriptDialogSelectedId){
+          loadBtn.textContent = 'Select a script';
+        } else if (disable && scriptDialogSelectedId === project?.projectId){
+          loadBtn.textContent = 'Current Script';
+        } else {
+          loadBtn.textContent = 'Save & Load';
+        }
+      }
+      if (saveBtn){
+        saveBtn.disabled = busy;
+        saveBtn.textContent = scriptDialogSaving ? 'Saving…' : 'Save';
+      }
+      if (newTitleInput){
+        newTitleInput.disabled = scriptDialogLoading || scriptDialogSaving || scriptDialogCreating;
+      }
+      if (createBtn){
+        const hasTitle = Boolean(newTitleInput && newTitleInput.value.trim());
+        createBtn.disabled = busy || !hasTitle;
+        createBtn.textContent = scriptDialogCreating ? 'Creating…' : 'Create';
       }
     }
 
@@ -1005,6 +1043,12 @@
       if (select){
         select.innerHTML = '';
         select.disabled = true;
+      }
+      scriptDialogSaving = false;
+      scriptDialogCreating = false;
+      const newTitleInput = document.getElementById('scriptDialogNewTitle');
+      if (newTitleInput){
+        newTitleInput.value = '';
       }
       scriptDialogLoading = true;
       updateScriptDialogLoadState();
@@ -1054,6 +1098,12 @@
       document.body.classList.remove('script-dialog-open');
       scriptDialogSelectedId = null;
       scriptDialogLoading = false;
+      scriptDialogSaving = false;
+      scriptDialogCreating = false;
+      const status = document.getElementById('scriptDialogStatus');
+      if (status) status.textContent = '';
+      const newTitleInput = document.getElementById('scriptDialogNewTitle');
+      if (newTitleInput) newTitleInput.value = '';
       updateScriptDialogLoadState();
     }
 
@@ -1095,6 +1145,164 @@
       }
     }
 
+    function buildProjectLibraryPayload(){
+      if (!project) return null;
+      const payload = cloneValue(project);
+      if (!payload || typeof payload !== 'object') return null;
+      delete payload._hashes;
+      delete payload._lastBackedUpVersion;
+      delete payload._deltaCountSinceFull;
+      delete payload._pomoState;
+      delete payload.libraryEntryId;
+      return payload;
+    }
+
+    async function saveScriptToLibrary(supabase, ownerId){
+      if (!supabase) throw new Error('Supabase client unavailable');
+      if (!ownerId) throw new Error('Owner ID required');
+      if (!project) throw new Error('No project loaded');
+      ensureProjectShape();
+      const payload = buildProjectLibraryPayload();
+      if (!payload) throw new Error('Nothing to save');
+      const scriptName = (project.title || '').trim() || 'Untitled Script';
+      const description = typeof project.notes === 'string' ? project.notes : '';
+      const record = {
+        owner_id: ownerId,
+        project_id: project.projectId,
+        script_id: project.projectId,
+        script_name: scriptName,
+        name: scriptName,
+        title: scriptName,
+        description,
+        summary: description,
+        project_json: payload,
+        updated_at: new Date().toISOString()
+      };
+      if (project.libraryEntryId){
+        record.id = project.libraryEntryId;
+      }
+      const { data, error } = await supabase
+        .from('project_data')
+        .upsert(record, { onConflict: 'id' })
+        .select('id, script_name, description, image_url, thumbnail_url')
+        .maybeSingle();
+      if (error) throw error;
+      const savedId = data?.id || record.id || project.libraryEntryId || project.projectId;
+      project.libraryEntryId = savedId;
+      const entry = {
+        id: savedId,
+        name: record.script_name || 'Untitled Script',
+        description: data?.description ?? record.description ?? '',
+        image_url: data?.image_url || data?.thumbnail_url || DEFAULT_SCRIPT_IMAGE
+      };
+      if (Array.isArray(scriptOptionsCache)){
+        const next = scriptOptionsCache.slice();
+        const idx = next.findIndex(opt => opt.id === entry.id);
+        if (idx >= 0){
+          next[idx] = Object.assign({}, next[idx], entry);
+        } else {
+          next.push(entry);
+        }
+        next.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        scriptOptionsCache = next;
+      } else {
+        scriptOptionsCache = [entry];
+      }
+      scriptOptionsStatus = '';
+      return entry;
+    }
+
+    async function handleScriptDialogSave(){
+      if (!project){
+        return;
+      }
+      const status = document.getElementById('scriptDialogStatus');
+      try { syncActiveScene(false); } catch(e){}
+      try { await saveLocal(project); } catch (err){ console.error('Failed to persist script locally before saving to library:', err); }
+      const supabase = window.supabaseClient;
+      if (!supabase){
+        if (status) status.textContent = 'Supabase is still initializing. Please try again.';
+        return;
+      }
+      scriptDialogSaving = true;
+      updateScriptDialogLoadState();
+      if (status) status.textContent = 'Saving script…';
+      try {
+        const session = await getSupabaseSession(supabase);
+        if (!session || !session.user){
+          if (status) status.textContent = 'Sign in to save scripts to your library.';
+          alert('Sign in to save scripts to your library.');
+          return;
+        }
+        const entry = await saveScriptToLibrary(supabase, session.user.id);
+        if (status) status.textContent = 'Saved to your library.';
+        if (entry?.id){
+          lastSerializedMetaHash = metaSignature(project);
+          scriptDialogSelectedId = entry.id;
+          const select = document.getElementById('scriptSelect');
+          if (select){
+            let option = Array.from(select.options).find(opt => opt.value === entry.id);
+            if (!option){
+              option = document.createElement('option');
+              option.value = entry.id;
+              option.textContent = entry.name || 'Untitled Script';
+              select.appendChild(option);
+            } else {
+              option.textContent = entry.name || option.textContent;
+            }
+            select.value = entry.id;
+          }
+          updateScriptPreview(entry.id);
+        }
+      } catch (err){
+        console.error('Saving script to library failed:', err);
+        if (status) status.textContent = 'Saving failed. Please try again.';
+        alert('Saving your script failed. Please try again.');
+      } finally {
+        scriptDialogSaving = false;
+        updateScriptDialogLoadState();
+      }
+    }
+
+    async function handleScriptDialogCreate(){
+      const input = document.getElementById('scriptDialogNewTitle');
+      const status = document.getElementById('scriptDialogStatus');
+      const rawTitle = input ? input.value.trim() : '';
+      if (!rawTitle){
+        if (status) status.textContent = 'Enter a title to create a new script.';
+        if (input) input.focus();
+        return;
+      }
+      const confirmed = window.confirm('Create a new script? Your current work will be saved locally first.');
+      if (!confirmed) return;
+      try { syncActiveScene(false); } catch(e){}
+      try { await saveLocal(project); } catch (err){ console.error('Failed to save current script before creating a new one:', err); }
+      scriptDialogCreating = true;
+      updateScriptDialogLoadState();
+      if (status) status.textContent = 'Creating new script…';
+      try {
+        newProject();
+        project.title = rawTitle;
+        project.libraryEntryId = null;
+        ensureProjectShape();
+        activeSceneId = project.scenes?.[0]?.id || null;
+        render();
+        applyFocusModeUI();
+        updatePomodoroUI();
+        await saveLocal(project);
+        lastSerializedMetaHash = metaSignature(project);
+        scheduleBackup();
+        closeScriptDialog();
+      } catch (err){
+        console.error('New script creation failed:', err);
+        if (status) status.textContent = 'Unable to create a new script. Please try again.';
+        alert('Creating a new script failed. Please try again.');
+      } finally {
+        scriptDialogCreating = false;
+        updateScriptDialogLoadState();
+      }
+    }
+
     async function applyLoadedProject(nextProject, meta = {}){
       if (!nextProject || typeof nextProject !== 'object'){
         throw new Error('Invalid project payload');
@@ -1106,6 +1314,7 @@
       loaded.createdAt = loaded.createdAt || Date.now();
       loaded.updatedAt = Date.now();
       loaded.version = typeof loaded.version === 'number' ? loaded.version : 1;
+      loaded.libraryEntryId = loaded.libraryEntryId || meta.id || null;
       if (typeof loaded.notes !== 'string' && meta.description){
         loaded.notes = meta.description;
       }
@@ -1224,6 +1433,7 @@
 
     function ensureProjectShape(){
       project.settings = project.settings || {};
+      if (typeof project.libraryEntryId === 'undefined') project.libraryEntryId = null;
       if (!project.settings.theme){
         const globalTheme = (typeof window.getSiteTheme === 'function') ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark');
         project.settings.theme = globalTheme || 'dark';
@@ -1378,6 +1588,7 @@
         createdAt: Date.now(),
         updatedAt: Date.now(),
         version: 1,
+        libraryEntryId: null,
         settings: { theme: (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark')), smartFormat:true, pageWidth:60, focus:false, pomodoro: undefined },
         catalogs: { characters:[], locations:[] },
         scenes: [{
@@ -2462,9 +2673,33 @@
     if (scriptDialogLoad){
       scriptDialogLoad.addEventListener('click', ()=> handleScriptLoad());
     }
+    const scriptDialogSave = document.getElementById('scriptDialogSave');
+    if (scriptDialogSave){
+      scriptDialogSave.addEventListener('click', ()=> handleScriptDialogSave());
+    }
+    const scriptDialogCreate = document.getElementById('scriptDialogCreate');
+    if (scriptDialogCreate){
+      scriptDialogCreate.addEventListener('click', ()=> handleScriptDialogCreate());
+    }
     const scriptSelect = document.getElementById('scriptSelect');
     if (scriptSelect){
       scriptSelect.addEventListener('change', e=> updateScriptPreview(e.target.value));
+    }
+    const scriptDialogNewTitle = document.getElementById('scriptDialogNewTitle');
+    if (scriptDialogNewTitle){
+      scriptDialogNewTitle.addEventListener('input', ()=>{
+        const status = document.getElementById('scriptDialogStatus');
+        if (status && status.textContent){
+          status.textContent = '';
+        }
+        updateScriptDialogLoadState();
+      });
+      scriptDialogNewTitle.addEventListener('keydown', e=>{
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          handleScriptDialogCreate();
+        }
+      });
     }
 
     applyActiveTabUI();
