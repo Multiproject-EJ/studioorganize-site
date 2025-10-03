@@ -303,13 +303,68 @@
       body.focus-mode .app{ transform: translateY(calc(-1 * var(--nav-height, 0px))); }
 
       /* Bottom HUD visible only in focus mode */
-      #focusHud{
-        position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-        background: var(--hud); border: 1px solid var(--ring); border-radius: 12px;
-        padding: 8px 12px; display: none; gap: 8px; align-items: center;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 9999;
+      #focusHudDock{
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 9999;
+        width: max-content;
       }
-      body.focus-mode #focusHud{ display:flex; }
+      body.focus-mode #focusHudDock{ display:flex; }
+      #focusHudDock.floating-hidden{ gap: 0; }
+      #focusHudHandle{
+        width: 64px;
+        height: 8px;
+        border-radius: 999px;
+        border: none;
+        padding: 0;
+        display: block;
+        background: var(--ring);
+        cursor: pointer;
+        transition: width 0.35s ease, background 0.3s ease, opacity 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      }
+      #focusHudHandle:hover{ background: var(--acc); }
+      #focusHudHandle:focus-visible{
+        outline: 2px solid var(--acc);
+        outline-offset: 3px;
+      }
+      #focusHudDock.pinned #focusHudHandle{
+        background: var(--acc);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+      }
+      #focusHudDock.floating #focusHudHandle{ width: 64px; }
+      #focusHudDock.floating-hidden #focusHudHandle{ opacity: 0.85; }
+      #focusHudDock .focus-hud-shell{
+        overflow: hidden;
+        border-radius: 12px;
+        transition: max-height 0.35s ease;
+        max-height: 520px;
+      }
+      #focusHudDock.floating-hidden .focus-hud-shell{ max-height: 0; }
+      #focusHud{
+        background: var(--hud);
+        border: 1px solid var(--ring);
+        border-radius: 12px;
+        padding: 8px 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        transform: translateY(0);
+        opacity: 1;
+        transition: transform 0.35s ease, opacity 0.25s ease;
+      }
+      #focusHudDock.floating-hidden #focusHud{
+        transform: translateY(16px);
+        opacity: 0;
+        pointer-events: none;
+      }
       #focusHud .hud-text{ font-size:12px; color: var(--muted); white-space:nowrap }
       #focusHud select, #focusHud button{background:var(--chip); color:var(--ink); border:1px solid var(--ring);
         border-radius:10px; padding:6px 10px; font-size:12px; cursor:pointer
@@ -341,7 +396,7 @@
 
       /* Print to PDF: keep only the script */
       @media print{
-        .topbar, .layout .panel:first-child, .layout .panel:last-child, #focusHud{ display:none !important; }
+        .topbar, .layout .panel:first-child, .layout .panel:last-child, #focusHud, #focusHudDock{ display:none !important; }
         .layout{ grid-template-columns: 1fr; }
         .editor-area{ max-width: 70ch; margin:0 auto; }
         body{ background:#fff; color:#000; }
@@ -536,23 +591,28 @@
     </div>
 
     <!-- Minimal HUD for focus mode -->
-    <div id="focusHud">
-      <span class="hud-text" id="hudCounter">0 pages • 0 words</span>
-      <select id="hudScenePicker" onchange="pickSceneFromHud(this.value)"></select>
+    <div id="focusHudDock" class="floating">
+      <button id="focusHudHandle" type="button" aria-pressed="false" aria-label="Pin focus controls" title="Click to pin focus controls"></button>
+      <div class="focus-hud-shell">
+        <div id="focusHud">
+          <span class="hud-text" id="hudCounter">0 pages • 0 words</span>
+          <select id="hudScenePicker" onchange="pickSceneFromHud(this.value)"></select>
 
-      <div class="pomo-chip">
-        <div class="pomo-ring"><div class="pomo-dial" id="pomoTime">25:00</div></div>
-        <div class="pomo-meta">
-          <div class="pomo-mode" id="pomoMode">Work</div>
-          <div class="pomo-controls">
-            <button class="pomo-btn" id="pomoToggle" onclick="togglePomodoro()">Start</button>
-            <button class="pomo-btn" onclick="resetPomodoro()">Reset</button>
+          <div class="pomo-chip">
+            <div class="pomo-ring"><div class="pomo-dial" id="pomoTime">25:00</div></div>
+            <div class="pomo-meta">
+              <div class="pomo-mode" id="pomoMode">Work</div>
+              <div class="pomo-controls">
+                <button class="pomo-btn" id="pomoToggle" onclick="togglePomodoro()">Start</button>
+                <button class="pomo-btn" onclick="resetPomodoro()">Reset</button>
+              </div>
+            </div>
           </div>
+
+          <button onclick="addScene()">+ Scene</button>
+          <button onclick="toggleFocus()">Exit Focus</button>
         </div>
       </div>
-
-      <button onclick="addScene()">+ Scene</button>
-      <button onclick="toggleFocus()">Exit Focus</button>
     </div>
 
     <div id="timelineOverlay" aria-hidden="true">
@@ -2686,6 +2746,8 @@
       });
     }
 
+    setupFocusHudInteractions();
+
     const scriptDialogCancel = document.getElementById('scriptDialogCancel');
     if (scriptDialogCancel){
       scriptDialogCancel.addEventListener('click', ()=> closeScriptDialog());
@@ -3265,6 +3327,122 @@
     /* =========================
      * Focus Mode
      * =======================*/
+    const HUD_HIDE_DELAY = 5000;
+    let hudPinned = false;
+    let hudHideTimer = null;
+    let hudHovering = false;
+
+    function setupFocusHudInteractions(){
+      const dock = document.getElementById('focusHudDock');
+      const handle = document.getElementById('focusHudHandle');
+      if (!dock || !handle) return;
+      handle.addEventListener('click', ()=>{
+        if (!project) return;
+        project.settings = project.settings || {};
+        project.settings.focusHudPinned = !project.settings.focusHudPinned;
+        saveLocal(project);
+        syncFocusHudState();
+      });
+      handle.addEventListener('focus', ()=>{
+        if (!document.body.classList.contains('focus-mode')) return;
+        showHud();
+      });
+      handle.addEventListener('blur', ()=>{
+        if (!document.body.classList.contains('focus-mode')) return;
+        scheduleHudHide();
+      });
+      dock.addEventListener('pointerenter', ()=>{
+        if (!document.body.classList.contains('focus-mode')) return;
+        hudHovering = true;
+        showHud();
+      });
+      dock.addEventListener('pointerleave', ()=>{
+        if (!document.body.classList.contains('focus-mode')) return;
+        hudHovering = false;
+        scheduleHudHide();
+      });
+      dock.addEventListener('focusin', ()=>{
+        if (!document.body.classList.contains('focus-mode')) return;
+        hudHovering = true;
+        showHud();
+      });
+      dock.addEventListener('focusout', (e)=>{
+        if (!document.body.classList.contains('focus-mode')) return;
+        if (e.relatedTarget && dock.contains(e.relatedTarget)) return;
+        hudHovering = false;
+        scheduleHudHide();
+      });
+      window.addEventListener('resize', ()=>{
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateHudHandleWidth);
+        else updateHudHandleWidth();
+      });
+    }
+
+    function showHud(){
+      const dock = document.getElementById('focusHudDock');
+      if (!dock) return;
+      dock.classList.remove('floating-hidden');
+      clearTimeout(hudHideTimer);
+      hudHideTimer = null;
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateHudHandleWidth);
+      else updateHudHandleWidth();
+    }
+
+    function scheduleHudHide(){
+      if (hudPinned) return;
+      clearTimeout(hudHideTimer);
+      hudHideTimer = setTimeout(()=>{
+        if (hudPinned) return;
+        const dock = document.getElementById('focusHudDock');
+        if (dock) dock.classList.add('floating-hidden');
+        hudHideTimer = null;
+      }, HUD_HIDE_DELAY);
+    }
+
+    function updateHudHandleWidth(){
+      const handle = document.getElementById('focusHudHandle');
+      const hud = document.getElementById('focusHud');
+      if (!handle || !hud) return;
+      if (hudPinned){
+        const width = hud.offsetWidth;
+        if (width) handle.style.width = width + 'px';
+      } else {
+        handle.style.width = '';
+      }
+    }
+
+    function syncFocusHudState(){
+      const dock = document.getElementById('focusHudDock');
+      const handle = document.getElementById('focusHudHandle');
+      hudPinned = !!project?.settings?.focusHudPinned;
+      if (handle){
+        handle.setAttribute('aria-pressed', hudPinned ? 'true' : 'false');
+        handle.setAttribute('aria-label', hudPinned ? 'Click to float focus controls' : 'Click to pin focus controls');
+        handle.title = hudPinned ? 'Click to float focus controls' : 'Click to pin focus controls';
+      }
+      if (!dock) return;
+      dock.classList.toggle('pinned', hudPinned);
+      dock.classList.toggle('floating', !hudPinned);
+      if (!document.body.classList.contains('focus-mode')){
+        clearTimeout(hudHideTimer);
+        hudHideTimer = null;
+        dock.classList.remove('floating-hidden');
+        hudHovering = false;
+        updateHudHandleWidth();
+        return;
+      }
+      showHud();
+      if (hudPinned){
+        clearTimeout(hudHideTimer);
+        hudHideTimer = null;
+      } else if (!hudHovering) scheduleHudHide();
+      else {
+        clearTimeout(hudHideTimer);
+        hudHideTimer = null;
+      }
+      updateHudHandleWidth();
+    }
+
     function applyFocusModeUI(){
       const focused = !!project?.settings?.focus;
       document.body.classList.toggle('focus-mode', focused);
@@ -3274,6 +3452,7 @@
       markActiveLine();
       if (focused) centerActiveLine();
       syncNavHeight();
+      syncFocusHudState();
     }
     function toggleFocus(){
       project.settings = project.settings || {};
@@ -3295,6 +3474,8 @@
           hudSel.appendChild(opt);
         });
       }
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateHudHandleWidth);
+      else updateHudHandleWidth();
     }
     function pickSceneFromHud(sceneId){
       if (!sceneId) return;
@@ -3487,6 +3668,7 @@
 
       project.settings = project.settings || {};
       if (typeof project.settings.focus === 'undefined') project.settings.focus = false;
+      if (typeof project.settings.focusHudPinned === 'undefined') project.settings.focusHudPinned = false;
 
       ensurePomodoroSettings();
       if (project._pomoState) {
