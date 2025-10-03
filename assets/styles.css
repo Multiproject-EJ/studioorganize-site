@@ -19,6 +19,7 @@
   --acc:#5FA8FF;
   --nav-bg:rgba(11,15,20,0.8);
   --active-tab-text:#0b0f14;
+  --cta-text:#0b0f14;
 }
 
 :root[data-theme="light"]{
@@ -42,6 +43,7 @@
   --acc:#2563eb;
   --nav-bg:rgba(255,255,255,0.85);
   --active-tab-text:#f7f9fc;
+  --cta-text:#f8fbff;
 }
 
 *{box-sizing:border-box}
@@ -61,8 +63,8 @@ img{max-width:100%;display:block}
 .menu__link,.dropbtn,.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-weight:500;cursor:pointer;transition:color .12s ease,border-color .12s ease,background .12s ease,transform .12s ease;text-decoration:none}
 .menu__link:hover,.dropbtn:hover,.theme-toggle:hover{color:var(--text);border-color:var(--acc);background:var(--chip)}
 .menu__link.is-active{color:var(--text);border-color:var(--acc);background:var(--chip)}
-.menu__cta{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#0b0f14;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .12s ease;border:none;cursor:pointer;font:inherit}
-.menu__cta:hover{color:#0b0f14;transform:translateY(-1px)}
+.menu__cta{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .12s ease;border:none;cursor:pointer;font:inherit}
+.menu__cta:hover{color:var(--cta-text);transform:translateY(-1px)}
 .menu__cta:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
 .theme-toggle{background:var(--panel)}
 .theme-toggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -83,7 +85,7 @@ img{max-width:100%;display:block}
 .cta-row{display:flex;gap:12px;margin:16px 0 8px;flex-wrap:wrap}
 .btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:transparent}
 .btn:hover{border-color:#2a2f39}
-.btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#0b0c0f;font-weight:700;border:none}
+.btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);font-weight:700;border:none}
 .btn-ghost{color:var(--muted)}
 .hero__bullets{margin:16px 0 8px;padding-left:18px;color:var(--muted)}
 .hero__bullets li{margin:6px 0}
