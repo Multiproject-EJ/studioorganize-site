@@ -221,6 +221,30 @@
       .sound-item{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--ring); border-radius:10px; padding:8px 10px}
       .sound-item button{background:var(--chip); border:1px solid var(--ring); border-radius:8px; padding:4px 8px; font-size:11px; color:var(--ink); cursor:pointer}
 
+      /* ==== Script dialog ==== */
+      body.script-dialog-open{overflow:hidden;}
+      .script-dialog{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(11,15,20,0.75); z-index:1200; padding:24px;}
+      .script-dialog.open{display:flex;}
+      .script-dialog__backdrop{position:absolute; inset:0;}
+      .script-dialog__panel{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,0.45); max-width:420px; width:100%; padding:20px; display:flex; flex-direction:column; gap:16px; color:var(--ink);}
+      .script-dialog__header{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+      .script-dialog__header h2{margin:0; font-size:20px;}
+      .script-dialog__close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
+      .script-dialog__body{display:flex; flex-direction:column; gap:12px;}
+      .script-dialog__field{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--ink);}
+      .script-dialog__field select{width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px;}
+      .script-dialog__status{min-height:18px;}
+      .script-dialog__preview{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ring); border-radius:12px; padding:12px; background:var(--chip);}
+      .script-dialog__preview img{width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--ring); background:rgba(255,255,255,0.04);}
+      .script-dialog__preview h3{margin:0 0 4px; font-size:16px;}
+      .script-dialog__preview p{margin:0;}
+      .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px;}
+      @media (max-width: 600px){
+        .script-dialog{padding:16px;}
+        .script-dialog__panel{width:100%;}
+        .script-dialog__preview{flex-direction:column; align-items:center; text-align:center;}
+      }
+
       /* ==== Focus Mode ==== */
       body.focus-mode .layout{ grid-template-columns: 1fr; }
       body.focus-mode .layout .panel:first-child,
@@ -327,6 +351,7 @@
 
         <button class="btn non-essential" onclick="backupNow()">Backup Now</button>
         <button class="btn non-essential" onclick="openRestore()">Restore…</button>
+        <button class="btn non-essential" id="scriptBtn" type="button" onclick="openScriptDialog()">Script…</button>
 
         <!-- Focus toggle -->
         <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
@@ -531,6 +556,41 @@
       </div>
     </div>
 
+    <div id="scriptDialog" class="script-dialog" aria-hidden="true">
+      <div class="script-dialog__backdrop" data-close-script></div>
+      <div class="script-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="scriptDialogTitle">
+        <div class="script-dialog__header">
+          <div>
+            <h2 id="scriptDialogTitle">Load Script</h2>
+            <p class="muted-text" id="scriptDialogSubtitle">Save your current work, then switch to a different script.</p>
+          </div>
+          <button type="button" class="script-dialog__close" id="scriptDialogClose" aria-label="Close script dialog">✕</button>
+        </div>
+        <div class="script-dialog__body">
+          <div class="script-dialog__field">
+            <span class="muted-text">Current script</span>
+            <strong id="scriptDialogCurrentName">Untitled Project</strong>
+          </div>
+          <label class="script-dialog__field" for="scriptSelect">
+            <span>Choose a script</span>
+            <select id="scriptSelect"></select>
+          </label>
+          <div class="script-dialog__status muted-text" id="scriptDialogStatus"></div>
+          <div class="script-dialog__preview" id="scriptDialogPreview">
+            <img id="scriptPreviewImage" src="https://placehold.co/240x160?text=Script" alt="Selected script artwork" loading="lazy" />
+            <div>
+              <h3 id="scriptPreviewName">Select a script</h3>
+              <p class="muted-text" id="scriptPreviewDescription"></p>
+            </div>
+          </div>
+        </div>
+        <div class="script-dialog__footer">
+          <button type="button" class="btn non-essential" id="scriptDialogCancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="scriptDialogLoad">Save &amp; Load</button>
+        </div>
+      </div>
+    </div>
+
     <script>
     function syncNavHeight(){
       const nav = document.querySelector('.nav');
@@ -672,6 +732,296 @@
         sounds: cloneArray(row.sounds),
         metadata: cloneObject(row.metadata)
       };
+    }
+
+    /* =========================
+     * Script library & dialog
+     * =======================*/
+    const DEFAULT_SCRIPT_IMAGE = 'https://placehold.co/240x160?text=Script';
+
+    let scriptOptionsCache = null;
+    let scriptOptionsStatus = '';
+    let scriptDialogSelectedId = null;
+    let scriptDialogLoading = false;
+
+    async function getScriptOptions(force = false){
+      if (scriptOptionsCache && !force){
+        scriptOptionsStatus = '';
+        return scriptOptionsCache;
+      }
+      scriptOptionsStatus = '';
+      let options = [];
+      const supabase = window.supabaseClient;
+      if (!supabase){
+        scriptOptionsStatus = 'Connect Supabase to browse your saved scripts.';
+        scriptOptionsCache = null;
+        return [];
+      }
+      try {
+        const { data, error } = await supabase
+          .from('project_data')
+          .select('id, project_id, script_id, script_name, name, title, description, summary, image_url, thumbnail_url');
+        if (error) throw error;
+        options = (Array.isArray(data) ? data : []).map(row => {
+          const id = row.id || row.project_id || row.script_id || null;
+          if (!id) return null;
+          const name = row.script_name || row.name || row.title || 'Untitled Script';
+          return {
+            id,
+            project_id: row.project_id || null,
+            script_id: row.script_id || null,
+            name,
+            description: row.description || row.summary || '',
+            image_url: row.image_url || row.thumbnail_url || DEFAULT_SCRIPT_IMAGE
+          };
+        }).filter(Boolean);
+        options.sort((a, b) => {
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        });
+        if (!options.length){
+          scriptOptionsStatus = 'No scripts found yet. Save a script to Supabase to load it here.';
+        }
+      } catch (err){
+        console.warn('Script metadata fetch failed:', err);
+        scriptOptionsStatus = 'Unable to load scripts from Supabase.';
+        scriptOptionsCache = null;
+        return [];
+      }
+      scriptOptionsCache = options.length ? options : null;
+      return options;
+    }
+
+    async function fetchScriptById(scriptId){
+      if (!scriptId) return null;
+      const supabase = window.supabaseClient;
+      if (!supabase){
+        console.warn('Supabase client is required to fetch scripts.');
+        return null;
+      }
+      try {
+        const filters = [`id.eq.${scriptId}`];
+        filters.push(`project_id.eq.${scriptId}`);
+        filters.push(`script_id.eq.${scriptId}`);
+        const { data, error } = await supabase
+          .from('project_data')
+          .select('id, project_id, script_id, project_json, project, script, payload, data, name, script_name, title, description, summary')
+          .or(filters.join(','))
+          .maybeSingle();
+        if (error) throw error;
+        const payload = data?.project_json ?? data?.project ?? data?.script ?? data?.payload ?? data?.data;
+        if (payload){
+          if (typeof payload === 'string'){
+            try { return JSON.parse(payload); }
+            catch (err){ console.warn('Failed to parse script payload from Supabase', err); }
+          } else if (typeof payload === 'object'){
+            return payload;
+          }
+        }
+        if (data){
+          const clone = Object.assign({}, data);
+          delete clone.project_json;
+          delete clone.project;
+          delete clone.script;
+          delete clone.payload;
+          delete clone.data;
+          if (clone.scenes){
+            return clone;
+          }
+        }
+      } catch (err){
+        console.warn('Script fetch failed:', err);
+      }
+      return null;
+    }
+
+    function updateScriptDialogLoadState(){
+      const loadBtn = document.getElementById('scriptDialogLoad');
+      if (!loadBtn) return;
+      const disable = !scriptDialogSelectedId || (project && scriptDialogSelectedId === project.projectId);
+      loadBtn.disabled = disable || scriptDialogLoading;
+      if (scriptDialogLoading){
+        loadBtn.textContent = 'Loading…';
+      } else if (!scriptDialogSelectedId){
+        loadBtn.textContent = 'Select a script';
+      } else if (disable && scriptDialogSelectedId === project?.projectId){
+        loadBtn.textContent = 'Current Script';
+      } else {
+        loadBtn.textContent = 'Save & Load';
+      }
+    }
+
+    function updateScriptPreview(scriptId){
+      scriptDialogSelectedId = scriptId || null;
+      const options = scriptOptionsCache || [];
+      const meta = options.find(opt => opt.id === scriptId) || null;
+      const titleEl = document.getElementById('scriptPreviewName');
+      const descEl = document.getElementById('scriptPreviewDescription');
+      const imgEl = document.getElementById('scriptPreviewImage');
+      if (meta){
+        if (titleEl) titleEl.textContent = meta.name || 'Untitled Script';
+        if (descEl) descEl.textContent = meta.description || 'Ready when you are.';
+        if (imgEl) imgEl.src = meta.image_url || DEFAULT_SCRIPT_IMAGE;
+      } else {
+        if (titleEl) titleEl.textContent = 'Select a script';
+        if (descEl) descEl.textContent = '';
+        if (imgEl) imgEl.src = DEFAULT_SCRIPT_IMAGE;
+      }
+      updateScriptDialogLoadState();
+    }
+
+    async function openScriptDialog(){
+      const dialog = document.getElementById('scriptDialog');
+      if (!dialog || dialog.classList.contains('open')) return;
+      dialog.classList.add('open');
+      dialog.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('script-dialog-open');
+      const currentNameEl = document.getElementById('scriptDialogCurrentName');
+      if (currentNameEl) currentNameEl.textContent = project?.title || 'Untitled Script';
+      const select = document.getElementById('scriptSelect');
+      const status = document.getElementById('scriptDialogStatus');
+      if (status) status.textContent = 'Loading scripts…';
+      if (select){
+        select.innerHTML = '';
+        select.disabled = true;
+      }
+      scriptDialogLoading = true;
+      updateScriptDialogLoadState();
+      try {
+        const options = await getScriptOptions();
+        if (select){
+          const frag = document.createDocumentFragment();
+          options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.id;
+            option.textContent = opt.name || 'Untitled Script';
+            frag.appendChild(option);
+          });
+          select.appendChild(frag);
+          select.disabled = !options.length;
+          const initial = (()=>{
+            if (!options.length) return '';
+            const different = options.find(opt => opt.id !== project?.projectId);
+            return (different || options[0]).id;
+          })();
+          if (initial){
+            select.value = initial;
+          }
+          updateScriptPreview(select.value || '');
+        } else {
+          updateScriptPreview('');
+        }
+        if (status) status.textContent = scriptOptionsStatus || (options.length ? '' : 'No scripts available yet.');
+      } catch (err){
+        console.warn(err);
+        if (status) status.textContent = scriptOptionsStatus || 'Unable to load scripts right now.';
+        updateScriptPreview('');
+      } finally {
+        scriptDialogLoading = false;
+        updateScriptDialogLoadState();
+      }
+      setTimeout(()=>{
+        if (select && !select.disabled) select.focus();
+      }, 0);
+    }
+
+    function closeScriptDialog(){
+      const dialog = document.getElementById('scriptDialog');
+      if (!dialog) return;
+      dialog.classList.remove('open');
+      dialog.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('script-dialog-open');
+      scriptDialogSelectedId = null;
+      scriptDialogLoading = false;
+      updateScriptDialogLoadState();
+    }
+
+    async function handleScriptLoad(){
+      const select = document.getElementById('scriptSelect');
+      if (!select) return;
+      const scriptId = select.value;
+      if (!scriptId || (project && scriptId === project.projectId)){
+        closeScriptDialog();
+        return;
+      }
+      const confirmed = window.confirm('Save your current script before loading a new one? This ensures you do not lose any work.');
+      if (!confirmed) return;
+      try { syncActiveScene(false); } catch(e){}
+      try {
+        await saveLocal(project);
+      } catch (err){
+        console.error('Failed to save current script before switching:', err);
+        alert('Saving the current script failed. Please try again before switching.');
+        return;
+      }
+      scriptDialogLoading = true;
+      updateScriptDialogLoadState();
+      try {
+        const data = await fetchScriptById(scriptId);
+        if (!data){
+          alert('Unable to load that script right now. Please try again later.');
+          return;
+        }
+        const meta = (scriptOptionsCache || []).find(opt => opt.id === scriptId) || {};
+        await applyLoadedProject(data, meta);
+        closeScriptDialog();
+      } catch (err){
+        console.error('Script load failed:', err);
+        alert('Loading the selected script failed. Please try again.');
+      } finally {
+        scriptDialogLoading = false;
+        updateScriptDialogLoadState();
+      }
+    }
+
+    async function applyLoadedProject(nextProject, meta = {}){
+      if (!nextProject || typeof nextProject !== 'object'){
+        throw new Error('Invalid project payload');
+      }
+      const loaded = cloneValue(nextProject);
+      loaded.projectId = loaded.projectId || meta.id || crypto.randomUUID();
+      loaded.title = loaded.title || meta.name || 'Untitled Script';
+      loaded.format = loaded.format || 'screenplay/v1';
+      loaded.createdAt = loaded.createdAt || Date.now();
+      loaded.updatedAt = Date.now();
+      loaded.version = typeof loaded.version === 'number' ? loaded.version : 1;
+      if (typeof loaded.notes !== 'string' && meta.description){
+        loaded.notes = meta.description;
+      }
+      project = loaded;
+      ensureProjectShape();
+      project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
+      project.scenes.forEach(scene => {
+        if (!scene.id) scene.id = crypto.randomUUID();
+        if (!Array.isArray(scene.cards)) scene.cards = [];
+        if (!Array.isArray(scene.elements)) scene.elements = [];
+        if (!Array.isArray(scene.sounds)) scene.sounds = [];
+      });
+      project._hashes = { scene: {} };
+      project.scenes.forEach(scene => {
+        project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
+      });
+      project._lastBackedUpVersion = project.version || 0;
+      project._deltaCountSinceFull = 0;
+      project._pomoState = null;
+      activeSceneId = project.scenes?.[0]?.id || null;
+      setLastProjectId(project.projectId);
+      ensurePomodoroSettings();
+      closeTimelineMode();
+      timelineInsertIndex = project.scenes.length;
+      lastSerializedMetaHash = metaSignature(project);
+      render();
+      applyTheme();
+      applyFocusModeUI();
+      updatePomodoroUI();
+      updateHud();
+      updateTimelineButton();
+      markActiveLine();
+      try {
+        await saveLocal(project);
+      } catch (err){
+        console.error('Failed to persist loaded script locally:', err);
+      }
+      scheduleBackup();
     }
 
     function normalizeForComparison(value){
@@ -1804,6 +2154,27 @@
       });
     }
 
+    const scriptDialogCancel = document.getElementById('scriptDialogCancel');
+    if (scriptDialogCancel){
+      scriptDialogCancel.addEventListener('click', ()=> closeScriptDialog());
+    }
+    const scriptDialogClose = document.getElementById('scriptDialogClose');
+    if (scriptDialogClose){
+      scriptDialogClose.addEventListener('click', ()=> closeScriptDialog());
+    }
+    const scriptDialogBackdrop = document.querySelector('#scriptDialog [data-close-script]');
+    if (scriptDialogBackdrop){
+      scriptDialogBackdrop.addEventListener('click', ()=> closeScriptDialog());
+    }
+    const scriptDialogLoad = document.getElementById('scriptDialogLoad');
+    if (scriptDialogLoad){
+      scriptDialogLoad.addEventListener('click', ()=> handleScriptLoad());
+    }
+    const scriptSelect = document.getElementById('scriptSelect');
+    if (scriptSelect){
+      scriptSelect.addEventListener('change', e=> updateScriptPreview(e.target.value));
+    }
+
     applyActiveTabUI();
 
     document.getElementById('projectTitle').addEventListener('input', e=>{
@@ -2353,6 +2724,14 @@
      * Shortcuts
      * =======================*/
     document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape'){
+        const dialog = document.getElementById('scriptDialog');
+        if (dialog && dialog.classList.contains('open')){
+          e.preventDefault();
+          closeScriptDialog();
+          return;
+        }
+      }
       if (e.key === 'Escape' && timelineMode){
         const previewOpen = document.getElementById('timelinePreview')?.classList.contains('open');
         if (previewOpen) closeTimelinePreview();

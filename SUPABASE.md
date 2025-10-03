@@ -129,6 +129,35 @@ const { data, error } = await supabase
 
 Follow-up inserts into `scene_beats`, `scene_elements`, `scene_sounds`, and `scene_links` should include the `scene_id` returned above so they inherit ownership permissions automatically.
 
+### Script library metadata
+
+The screenplay writer’s “Load Script” dialog pulls its list from a `public.project_data` table in Supabase. Each row should include a human-readable script name so the dropdown can surface more than the UUID. Use the following SQL in the Supabase SQL editor to provision the table with the expected columns (including `script_name`). Because the column is part of the `CREATE TABLE` statement, you do **not** need to run a separate `ALTER TABLE` afterward.
+
+```sql
+create table if not exists public.project_data (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references public.profiles (id) on delete cascade,
+  project_id uuid,
+  script_id uuid,
+  script_name text,
+  name text,
+  title text,
+  description text,
+  summary text,
+  image_url text,
+  thumbnail_url text,
+  project_json jsonb,
+  project jsonb,
+  script jsonb,
+  payload jsonb,
+  data jsonb,
+  created_at timestamptz default timezone('utc', now()) not null,
+  updated_at timestamptz default timezone('utc', now()) not null
+);
+```
+
+If you already have a compatible `project_data` table, you can still run `ALTER TABLE public.project_data ADD COLUMN IF NOT EXISTS script_name text;` to add the column without redefining the table. After the column exists, populate it (and any artwork URLs) so the writer can display friendly titles and thumbnails in the modal.
+
 ### Applying the scene schema to an existing project
 
 If your Supabase project is already live, you do **not** need to reprovision the full StudioOrganize schema. Instead, run [`supabase/schema.sql`](supabase/schema.sql) directly:
