@@ -53,6 +53,11 @@
       .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
       .btn[data-tab-btn].active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
       .topbar-group{display:flex; gap:6px; align-items:center}
+      .save-status{font-size:12px; color:var(--muted); min-width:64px;}
+      .save-status[data-state="saving"]{color:var(--muted);}
+      .save-status[data-state="success"]{color:var(--acc);}
+      .save-status[data-state="error"]{color:#ff6b6b;}
+      .save-status[hidden]{display:none !important;}
       .btn-menu{position:relative}
       .btn-menu-list{display:none; position:absolute; right:0; top:calc(100% + 6px); min-width:180px; background:var(--panel); border:1px solid var(--ring); border-radius:12px; box-shadow:0 18px 40px rgba(0,0,0,0.4); padding:6px; z-index:30; flex-direction:column; gap:6px}
       .btn-menu.open .btn-menu-list{display:flex}
@@ -308,6 +313,7 @@
         <!-- non-essential buttons collapse in focus mode -->
         <div class="topbar-group non-essential" role="group" aria-label="Quick panel toggles">
           <button class="btn" type="button" id="saveSceneBtn">Save</button>
+          <span class="save-status" id="saveSceneStatus" role="status" aria-live="polite" hidden></span>
           <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
 
@@ -579,6 +585,7 @@
     let project = null;
     let activeSceneId = null;
     let saveTimer = null;
+    let saveSceneStatusTimer = null;
     let timelineMode = false;
     let timelineInsertIndex = 0;
     let timelineDragSceneId = null;
@@ -622,6 +629,93 @@
       if (error) throw error;
       supabaseSession = data?.session || null;
       return supabaseSession;
+    }
+
+    function cloneValue(value){
+      if (value === null || value === undefined) return value;
+      if (typeof structuredClone === 'function'){
+        try { return structuredClone(value); }
+        catch (err) { /* fall back */ }
+      }
+      try { return JSON.parse(JSON.stringify(value)); }
+      catch (err) { return value; }
+    }
+
+    function toFiniteNumber(value){
+      if (value === null || value === undefined) return null;
+      const num = Number(value);
+      return Number.isFinite(num) ? num : null;
+    }
+
+    function toStringOrNull(value){
+      return (value === null || value === undefined) ? null : String(value);
+    }
+
+    function sanitizeSceneRow(row){
+      if (!row) return null;
+      const cloneArray = (arr) => Array.isArray(arr) ? cloneValue(arr) : [];
+      const cloneObject = (obj) => (obj && typeof obj === 'object') ? cloneValue(obj) : {};
+      return {
+        id: row.id ?? null,
+        owner_id: row.owner_id ?? null,
+        project_id: row.project_id ?? null,
+        slug: typeof row.slug === 'string' ? row.slug : toStringOrNull(row.slug),
+        title: typeof row.title === 'string' ? row.title : toStringOrNull(row.title),
+        synopsis: typeof row.synopsis === 'string' ? row.synopsis : toStringOrNull(row.synopsis),
+        scene_number: toFiniteNumber(row.scene_number),
+        script_order: toFiniteNumber(row.script_order),
+        color: typeof row.color === 'string' ? row.color : toStringOrNull(row.color),
+        location: typeof row.location === 'string' ? row.location : toStringOrNull(row.location),
+        time_of_day: typeof row.time_of_day === 'string' ? row.time_of_day : toStringOrNull(row.time_of_day),
+        cards: cloneArray(row.cards),
+        elements: cloneArray(row.elements),
+        sounds: cloneArray(row.sounds),
+        metadata: cloneObject(row.metadata)
+      };
+    }
+
+    function normalizeForComparison(value){
+      if (Array.isArray(value)) return value.map(normalizeForComparison);
+      if (value && typeof value === 'object'){
+        const sorted = {};
+        Object.keys(value).sort().forEach(key => {
+          sorted[key] = normalizeForComparison(value[key]);
+        });
+        return sorted;
+      }
+      return value;
+    }
+
+    function scenesMatch(a, b){
+      if (!a || !b) return false;
+      return JSON.stringify(normalizeForComparison(a)) === JSON.stringify(normalizeForComparison(b));
+    }
+
+    function setSaveSceneStatus(state, message){
+      const el = document.getElementById('saveSceneStatus');
+      if (!el) return;
+      if (saveSceneStatusTimer){
+        clearTimeout(saveSceneStatusTimer);
+        saveSceneStatusTimer = null;
+      }
+      if (!state){
+        el.textContent = '';
+        el.dataset.state = '';
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      el.dataset.state = state;
+      el.textContent = message || '';
+      if (state === 'success'){
+        saveSceneStatusTimer = setTimeout(()=>{
+          if (el.dataset.state === 'success'){
+            el.textContent = '';
+            el.dataset.state = '';
+            el.hidden = true;
+          }
+        }, 3000);
+      }
     }
 
     const RIGHT_TAB_KEY = 'SW_RIGHT_TAB';
@@ -1930,22 +2024,31 @@
 
     async function saveActiveSceneToSupabase(){
       const supabase = window.supabaseClient;
+      const saveSceneBtn = document.getElementById('saveSceneBtn');
       if (!supabase){
         alert('Supabase is still initializing. Please try again in a moment.');
+        setSaveSceneStatus('error', 'Supabase unavailable');
         return;
       }
       if (!project || !Array.isArray(project.scenes) || !project.scenes.length){
         alert('No project loaded to save.');
+        setSaveSceneStatus('error', 'Nothing to save');
         return;
       }
       const sceneIndex = project.scenes.findIndex(s => s.id === activeSceneId);
       if (sceneIndex < 0){
         alert('Select a scene before saving.');
+        setSaveSceneStatus('error', 'No scene selected');
         return;
       }
+
+      setSaveSceneStatus('saving', 'Saving…');
+      if (saveSceneBtn) saveSceneBtn.disabled = true;
+
       try {
         const session = await getSupabaseSession(supabase);
         if (!session || !session.user){
+          setSaveSceneStatus('error', 'Sign in required');
           alert('Sign in to save your scene to the cloud.');
           return;
         }
@@ -1958,14 +2061,34 @@
           .upsert(row, { onConflict: 'id' });
         if (error) throw error;
 
+        const { data: fetchedRow, error: fetchError } = await supabase
+          .from('scenes')
+          .select('id, owner_id, project_id, slug, title, synopsis, scene_number, script_order, color, location, time_of_day, cards, elements, sounds, metadata')
+          .eq('owner_id', ownerId)
+          .eq('id', row.id)
+          .maybeSingle();
+        if (fetchError) throw fetchError;
+        if (!fetchedRow) throw new Error('Saved scene not found for verification.');
+
+        const localSnapshot = sanitizeSceneRow(row);
+        const remoteSnapshot = sanitizeSceneRow(fetchedRow);
+        if (!scenesMatch(localSnapshot, remoteSnapshot)){
+          console.error('Supabase verification mismatch:', { localSnapshot, remoteSnapshot });
+          throw new Error('Saved scene verification failed.');
+        }
+
         updateSceneHash(scene);
         lastSerializedMetaHash = metaSignature(project);
         await saveLocal(project);
 
         console.info('Saved active scene to Supabase.');
+        setSaveSceneStatus('success', 'Saved!');
       } catch (err) {
+        setSaveSceneStatus('error', 'Save failed. Please try again.');
         alert('Saving scene failed. Please try again.');
         console.error('Supabase scene save failed:', err);
+      } finally {
+        if (saveSceneBtn) saveSceneBtn.disabled = false;
       }
     }
 
