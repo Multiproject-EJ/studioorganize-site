@@ -754,6 +754,7 @@
       if (!row) return null;
       const cloneArray = (arr) => Array.isArray(arr) ? cloneValue(arr) : [];
       const cloneObject = (obj) => (obj && typeof obj === 'object') ? cloneValue(obj) : {};
+      const rawColor = typeof row.color === 'string' ? row.color : toStringOrNull(row.color);
       return {
         id: row.id ?? null,
         owner_id: row.owner_id ?? null,
@@ -763,7 +764,7 @@
         synopsis: typeof row.synopsis === 'string' ? row.synopsis : toStringOrNull(row.synopsis),
         scene_number: toFiniteNumber(row.scene_number),
         script_order: toFiniteNumber(row.script_order),
-        color: typeof row.color === 'string' ? row.color : toStringOrNull(row.color),
+        color: normalizeSceneColor(rawColor || ''),
         location: typeof row.location === 'string' ? row.location : toStringOrNull(row.location),
         time_of_day: typeof row.time_of_day === 'string' ? row.time_of_day : toStringOrNull(row.time_of_day),
         cards: cloneArray(row.cards),
@@ -1252,6 +1253,7 @@
           sound.cue = typeof sound.cue === 'string' ? sound.cue : '';
           return sound;
         });
+        scene.color = normalizeSceneColor(scene.color);
         ensureSceneStoryboardStructure(scene);
         refreshStoryboardPositions(scene);
         return scene;
@@ -1383,7 +1385,7 @@
           slug: 'INT. HOUSE - DAY',
           cards: ['Opening image'],
           elements: [{t:'action', txt:'A room. Quiet.'}],
-          color: '#5FA8FF',
+          color: DEFAULT_SCENE_COLOR,
           notes: '',
           sounds: [],
           storyboards: []
@@ -2164,7 +2166,7 @@
         slug: trimmedSlug || 'EXT. NEW PLACE - DAY',
         cards: [],
         elements: [],
-        color: '#8ab4f8',
+        color: DEFAULT_SCENE_COLOR,
         notes: '',
         sounds: [],
         storyboards: []
@@ -2604,6 +2606,17 @@
       }
     }
 
+    const DEFAULT_SCENE_COLOR = '#5FA8FF';
+
+    function normalizeSceneColor(color){
+      if (typeof color !== 'string') return DEFAULT_SCENE_COLOR;
+      const trimmed = color.trim();
+      if (!trimmed) return DEFAULT_SCENE_COLOR;
+      const hexMatch = trimmed.match(/^#?([0-9a-f]{6})$/i);
+      if (!hexMatch) return DEFAULT_SCENE_COLOR;
+      return `#${hexMatch[1].toUpperCase()}`;
+    }
+
     function parseSceneSlugParts(slug){
       if (!slug) return { location: null, timeOfDay: null };
       const trimmed = String(slug).trim();
@@ -2632,6 +2645,8 @@
       const locations = Array.isArray(project?.catalogs?.locations)
         ? project.catalogs.locations.map(loc => ({ id: loc.id || null, name: loc.name || '' }))
         : [];
+      const normalizedColor = normalizeSceneColor(scene.color);
+      if (scene.color !== normalizedColor) scene.color = normalizedColor;
       return {
         id: scene.id,
         owner_id: ownerId,
@@ -2641,7 +2656,7 @@
         synopsis: scene.notes || null,
         scene_number: index + 1,
         script_order: index,
-        color: scene.color || null,
+        color: normalizedColor,
         location,
         time_of_day: timeOfDay,
         cards: safeCards,
