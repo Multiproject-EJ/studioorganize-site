@@ -38,3 +38,7 @@ Writers can:
 
 Because every block is tagged, it is straightforward to extend the editor with richer UI affordances such as contextual menus or tag pickers: you can look at the `.dataset.t` value on the focused `.line` node to decide which quick actions to surface (e.g., toggling between Action/Dialog, attaching beat tags, or linking to characters/plot structures). Any inline mini menu would simply need to update that dataset and class list to keep the formatting consistent with the existing screenplay styles.
 
+## Persisted selection metadata
+
+The contextual selection menu stores every choice (line type, story part, three-act beat, and optional character owner) directly on each scene element before a save runs. The serialization helpers normalise every `.line` into a `scene.elements` entry with `t`, `txt`, `ownerId`, `storyPart`, and `storyBeat` fields, and those objects are what get pushed to Supabase. When the editor loads, `normalizeSceneElement()` rebuilds that structure so the renderer can rehydrate the badges and accents from persisted data. This means opening the same scene later—locally or from Supabase—preserves the mini-menu tagging without extra coding.
+
