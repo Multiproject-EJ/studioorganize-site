@@ -547,8 +547,8 @@
       .script-dialog__cover-preview[data-empty="true"] img{opacity:0.2; filter:saturate(0.1);}
       .script-dialog__cover-empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px; font-size:12px; color:var(--muted); pointer-events:none; opacity:0; transition:opacity 0.2s ease;}
       .script-dialog__cover-preview[data-empty="true"] .script-dialog__cover-empty{opacity:1;}
-      .script-dialog__new-actions{display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__actions{display:flex; justify-content:flex-end; gap:8px;}
+      .script-dialog__column-footer{margin-top:auto; padding-top:20px; border-top:1px solid var(--ring); display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__hint{margin:0; font-size:12px; color:var(--muted);}
       .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px;}
       @media (min-width: 720px){
@@ -1120,6 +1120,9 @@
                   <button type="button" class="btn" id="scriptDialogApplyCover">Update artwork</button>
                 </div>
               </section>
+              <div class="script-dialog__column-footer">
+                <button type="button" class="btn" id="scriptDialogSave">Save</button>
+              </div>
             </div>
           </div>
           <div class="script-dialog__column">
@@ -1143,6 +1146,9 @@
                   </div>
                 </div>
               </section>
+              <div class="script-dialog__column-footer">
+                <button type="button" class="btn btn-primary" id="scriptDialogLoad">Save &amp; Load</button>
+              </div>
             </div>
           </div>
           <div class="script-dialog__column">
@@ -1162,17 +1168,15 @@
                   <input id="scriptDialogNewCoverUrl" type="url" placeholder="https://example.com/new-script.jpg" autocomplete="off" inputmode="url" />
                 </label>
                 <p class="muted-text script-dialog__hint">Applied to the script you create.</p>
-                <div class="script-dialog__new-actions">
-                  <button type="button" class="btn" id="scriptDialogCreate">Create</button>
-                </div>
               </section>
+              <div class="script-dialog__column-footer">
+                <button type="button" class="btn" id="scriptDialogCreate">Create</button>
+              </div>
             </div>
           </div>
         </div>
         <div class="script-dialog__footer">
-          <button type="button" class="btn non-essential" id="scriptDialogCancel">Cancel</button>
-          <button type="button" class="btn" id="scriptDialogSave">Save</button>
-          <button type="button" class="btn btn-primary" id="scriptDialogLoad">Save &amp; Load</button>
+          <button type="button" class="btn non-essential" id="scriptDialogCancel">Close</button>
         </div>
       </div>
     </div>
