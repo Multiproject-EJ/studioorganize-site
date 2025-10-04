@@ -90,6 +90,33 @@
       .scene-card{background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer}
       .scene-card.active{outline:2px solid var(--acc)}
       .scene-card small{color:var(--muted)}
+      .scene-card.dragging{opacity:0.55}
+      .scene-card.drag-over{position:relative}
+      .scene-card.drag-over::before{
+        content:'';
+        position:absolute;
+        left:0;
+        right:0;
+        top:-6px;
+        border-top:2px solid var(--acc);
+        border-radius:2px;
+        pointer-events:none;
+      }
+      .scene-card[data-drop-position="after"]::before{
+        top:auto;
+        bottom:-6px;
+      }
+      .scenes.drag-over-end{position:relative}
+      .scenes.drag-over-end::after{
+        content:'';
+        position:absolute;
+        left:8px;
+        right:8px;
+        bottom:4px;
+        border-bottom:2px solid var(--acc);
+        border-radius:2px;
+        pointer-events:none;
+      }
       .editor{padding:0; display:flex; flex-direction:column; min-height:0}
       .editor-area{flex:1; overflow:auto; padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext}
       .line{margin:6px 0; position:relative}
@@ -1157,6 +1184,7 @@
     let timelineDragSceneId = null;
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
+    let sceneDragSceneId = null;
     const characterStudioState = {
       open: false,
       activeId: null
@@ -2295,10 +2323,29 @@
       // scenes list
       const list = document.getElementById('sceneList');
       list.innerHTML = '';
+      list.classList.remove('drag-over-end');
+      if (!list.dataset.sceneDragBound){
+        list.addEventListener('dragover', handleSceneListDragOver);
+        list.addEventListener('drop', handleSceneListDrop);
+        list.addEventListener('dragleave', handleSceneListDragLeave);
+        list.dataset.sceneDragBound = 'true';
+      }
       project.scenes.forEach((s, idx)=>{
         const div = document.createElement('div');
         div.className = 'scene-card' + (s.id===activeSceneId ? ' active':'');
-        div.onclick = ()=>{ activeSceneId = s.id; render(); };
+        div.dataset.sceneId = s.id;
+        div.dataset.index = String(idx);
+        div.draggable = true;
+        div.addEventListener('dragstart', handleSceneCardDragStart);
+        div.addEventListener('dragend', handleSceneCardDragEnd);
+        div.addEventListener('dragover', handleSceneCardDragOver);
+        div.addEventListener('dragleave', handleSceneCardDragLeave);
+        div.addEventListener('drop', handleSceneCardDrop);
+        div.onclick = ()=>{
+          if (sceneDragSceneId) return;
+          activeSceneId = s.id;
+          render();
+        };
         div.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
             <div>
@@ -2374,6 +2421,148 @@
       if (storyboardMode) renderStoryboardGallery();
       updateStoryboardButton();
       if (characterStudioState.open) renderCharacterStudio();
+    }
+
+    /* Scene list drag-and-drop helpers */
+    function clearSceneCardDropIndicators(){
+      document.querySelectorAll('#sceneList .scene-card.drag-over').forEach(card => {
+        card.classList.remove('drag-over');
+        card.removeAttribute('data-drop-position');
+      });
+    }
+
+    function clearSceneListDropIndicators(){
+      clearSceneCardDropIndicators();
+      const list = document.getElementById('sceneList');
+      if (list) list.classList.remove('drag-over-end');
+    }
+
+    function computeSceneDropTarget(card, event){
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const fromIdx = scenes.findIndex(s => s.id === sceneDragSceneId);
+      if (!card || !scenes.length){
+        return { fromIdx, toIdx: fromIdx, before: true };
+      }
+      const rawIdx = parseInt(card.dataset.index || '0', 10);
+      const targetIdx = Number.isNaN(rawIdx) ? 0 : rawIdx;
+      const rect = card.getBoundingClientRect();
+      const midpoint = rect ? rect.height / 2 : 0;
+      const offset = rect ? event.clientY - rect.top : 0;
+      const before = rect && rect.height ? offset < midpoint : true;
+      let insertIndex = before ? targetIdx : targetIdx + 1;
+      insertIndex = Math.max(0, Math.min(insertIndex, scenes.length));
+      let toIdx = insertIndex;
+      if (fromIdx < insertIndex) toIdx = insertIndex - 1;
+      toIdx = Math.max(0, Math.min(toIdx, scenes.length - 1));
+      return { fromIdx, toIdx, before };
+    }
+
+    function handleSceneCardDragStart(event){
+      const card = event.currentTarget;
+      sceneDragSceneId = card?.dataset?.sceneId || null;
+      if (card) card.classList.add('dragging');
+      clearSceneListDropIndicators();
+      if (event.dataTransfer){
+        event.dataTransfer.effectAllowed = 'move';
+        try { event.dataTransfer.setData('text/plain', sceneDragSceneId || ''); } catch (err) {}
+      }
+    }
+
+    function handleSceneCardDragEnd(event){
+      const card = event.currentTarget;
+      if (card) card.classList.remove('dragging');
+      sceneDragSceneId = null;
+      clearSceneListDropIndicators();
+    }
+
+    function handleSceneCardDragOver(event){
+      if (!sceneDragSceneId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      const card = event.currentTarget;
+      if (!card) return;
+      const list = document.getElementById('sceneList');
+      if (list) list.classList.remove('drag-over-end');
+      const { before } = computeSceneDropTarget(card, event);
+      clearSceneCardDropIndicators();
+      card.classList.add('drag-over');
+      card.dataset.dropPosition = before ? 'before' : 'after';
+    }
+
+    function handleSceneCardDragLeave(event){
+      const card = event.currentTarget;
+      if (!card) return;
+      const related = event.relatedTarget;
+      if (related && card.contains(related)) return;
+      card.classList.remove('drag-over');
+      card.removeAttribute('data-drop-position');
+    }
+
+    function handleSceneCardDrop(event){
+      if (!sceneDragSceneId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const card = event.currentTarget;
+      const { fromIdx, toIdx } = computeSceneDropTarget(card, event);
+      clearSceneListDropIndicators();
+      const draggingCard = document.querySelector('#sceneList .scene-card.dragging');
+      if (draggingCard) draggingCard.classList.remove('dragging');
+      if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx){
+        sceneDragSceneId = null;
+        return;
+      }
+      sceneDragSceneId = null;
+      moveScene(fromIdx, toIdx);
+    }
+
+    function handleSceneListDragOver(event){
+      if (!sceneDragSceneId) return;
+      const targetEl = event.target instanceof Element ? event.target : null;
+      if (targetEl && targetEl.closest('.scene-card')) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      const list = event.currentTarget;
+      clearSceneCardDropIndicators();
+      if (list) list.classList.add('drag-over-end');
+    }
+
+    function handleSceneListDragLeave(event){
+      if (!sceneDragSceneId) return;
+      const list = event.currentTarget;
+      if (!list) return;
+      const related = event.relatedTarget;
+      if (related && list.contains(related)) return;
+      list.classList.remove('drag-over-end');
+    }
+
+    function handleSceneListDrop(event){
+      if (!sceneDragSceneId) return;
+      const targetEl = event.target instanceof Element ? event.target : null;
+      if (targetEl && targetEl.closest('.scene-card')) return;
+      event.preventDefault();
+      const list = event.currentTarget;
+      clearSceneListDropIndicators();
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      if (!scenes.length) return;
+      const fromIdx = scenes.findIndex(s => s.id === sceneDragSceneId);
+      const draggingCard = document.querySelector('#sceneList .scene-card.dragging');
+      if (draggingCard) draggingCard.classList.remove('dragging');
+      if (fromIdx < 0){
+        sceneDragSceneId = null;
+        return;
+      }
+      const insertIndex = scenes.length;
+      let toIdx = insertIndex;
+      if (fromIdx < insertIndex) toIdx = insertIndex - 1;
+      toIdx = Math.max(0, Math.min(toIdx, scenes.length - 1));
+      if (fromIdx === toIdx){
+        sceneDragSceneId = null;
+        return;
+      }
+      sceneDragSceneId = null;
+      moveScene(fromIdx, toIdx);
+      if (list) list.classList.remove('drag-over-end');
     }
 
     /* Keep child nodes as .line blocks */
