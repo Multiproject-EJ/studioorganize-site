@@ -72,12 +72,38 @@
       .scene-card small{color:var(--muted)}
       .editor{padding:0; display:flex; flex-direction:column; min-height:0}
       .editor-area{flex:1; overflow:auto; padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext}
-      .line{margin:6px 0}
+      .line{margin:6px 0; position:relative}
       .line.slug{letter-spacing:.4px; font-weight:700}
       .line.character{text-transform:uppercase; margin-top:14px; margin-bottom:2px}
       .line.parenthetical{margin-left:30px; font-style:italic}
       .line.dialogue{margin-left:30px; max-width:60ch}
       .line.transition{text-align:right; letter-spacing:.2px}
+      .line.exposition{margin-left:30px; font-style:italic; color:var(--muted)}
+      .line[data-tag-label]{padding-bottom:20px}
+      .line[data-tag-label]::after{
+        content: attr(data-tag-label);
+        position:absolute;
+        left:0;
+        bottom:-4px;
+        transform:translateY(100%);
+        font-size:11px;
+        letter-spacing:.3px;
+        color:var(--muted);
+        background:var(--panel);
+        border:1px solid var(--ring);
+        border-radius:12px;
+        padding:2px 8px;
+        pointer-events:none;
+        white-space:nowrap;
+        box-shadow:0 6px 18px rgba(0,0,0,0.15);
+      }
+      .line[data-story-part="intro"]{border-left:3px solid var(--acc); padding-left:12px}
+      .line[data-story-part="beginning"]{border-left:3px solid #7c4dff; padding-left:12px}
+      .line[data-story-part="middle"]{border-left:3px solid #18a999; padding-left:12px}
+      .line[data-story-part="end"]{border-left:3px solid #ff6b6b; padding-left:12px}
+      .line[data-story-beat="setup"]{background-image:linear-gradient(90deg, rgba(79,123,255,0.18), transparent)}
+      .line[data-story-beat="confrontation"]{background-image:linear-gradient(90deg, rgba(255,170,64,0.2), transparent)}
+      .line[data-story-beat="resolution"]{background-image:linear-gradient(90deg, rgba(24,169,153,0.18), transparent)}
       .notes{padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto}
       textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
       .row{display:flex; gap:8px}
@@ -603,6 +629,15 @@
         body{ background:#fff; color:#000; }
         .panel{ border:none }
       }
+
+      .selection-menu{position:fixed; z-index:1400; background:var(--panel); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,0.35); padding:14px 16px; display:flex; flex-direction:column; gap:12px; min-width:220px; max-width:280px}
+      .selection-menu[hidden]{display:none !important;}
+      .selection-menu__section{display:flex; flex-direction:column; gap:6px}
+      .selection-menu__label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.35px}
+      .selection-menu__actions{display:flex; flex-wrap:wrap; gap:6px}
+      .selection-menu button{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; font-size:12px; color:var(--ink); cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease}
+      .selection-menu button:hover, .selection-menu button:focus{border-color:var(--acc); outline:none}
+      .selection-menu button.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
     </style>
     <div class="app">
       <div class="topbar">
@@ -789,7 +824,45 @@
               <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
             </div>
           </div>
+      </div>
+    </div>
+  </div>
+
+    <div id="selectionMenu" class="selection-menu" hidden>
+      <div class="selection-menu__section">
+        <span class="selection-menu__label">Format</span>
+        <div class="selection-menu__actions">
+          <button type="button" data-menu-line-type="slug">Scene Slug</button>
+          <button type="button" data-menu-line-type="action">Action</button>
+          <button type="button" data-menu-line-type="dialogue">Dialogue</button>
+          <button type="button" data-menu-line-type="character">Character</button>
+          <button type="button" data-menu-line-type="parenthetical">Parenthetical</button>
+          <button type="button" data-menu-line-type="transition">Transition</button>
+          <button type="button" data-menu-line-type="exposition">Exposition</button>
         </div>
+      </div>
+      <div class="selection-menu__section">
+        <span class="selection-menu__label">Story Part</span>
+        <div class="selection-menu__actions">
+          <button type="button" data-menu-story-part="intro">Intro</button>
+          <button type="button" data-menu-story-part="beginning">Beginning</button>
+          <button type="button" data-menu-story-part="middle">Middle</button>
+          <button type="button" data-menu-story-part="end">End</button>
+          <button type="button" data-menu-story-part="">Clear</button>
+        </div>
+      </div>
+      <div class="selection-menu__section">
+        <span class="selection-menu__label">Three-Act Beat</span>
+        <div class="selection-menu__actions">
+          <button type="button" data-menu-act="setup">Setup</button>
+          <button type="button" data-menu-act="confrontation">Confrontation</button>
+          <button type="button" data-menu-act="resolution">Resolution</button>
+          <button type="button" data-menu-act="">Clear</button>
+        </div>
+      </div>
+      <div class="selection-menu__section" data-selection-characters-section hidden>
+        <span class="selection-menu__label">Character</span>
+        <div class="selection-menu__actions" data-selection-characters></div>
       </div>
     </div>
 
@@ -1027,6 +1100,18 @@
       });
     }
 
+    const STORY_PART_LABELS = {
+      intro: 'Intro',
+      beginning: 'Beginning',
+      middle: 'Middle',
+      end: 'End'
+    };
+    const STORY_BEAT_LABELS = {
+      setup: 'Setup',
+      confrontation: 'Confrontation',
+      resolution: 'Resolution'
+    };
+
     /* =========================
      * State & Config
      * =======================*/
@@ -1125,6 +1210,28 @@
       normalized.ai.prompt = typeof normalized.ai.prompt === 'string' ? normalized.ai.prompt : '';
       normalized.ai.notes = typeof normalized.ai.notes === 'string' ? normalized.ai.notes : '';
       return normalized;
+    }
+
+    function createSceneElement(type='action', text='', ownerId=null, storyPart=null, storyBeat=null){
+      const normalizedType = typeof type === 'string' && type ? type : 'action';
+      const normalizedText = typeof text === 'string' ? text : '';
+      const owner = (typeof ownerId === 'string' && ownerId) ? ownerId : null;
+      const part = (typeof storyPart === 'string' && STORY_PART_LABELS[storyPart]) ? storyPart : null;
+      const beat = (typeof storyBeat === 'string' && STORY_BEAT_LABELS[storyBeat]) ? storyBeat : null;
+      return { t: normalizedType, txt: normalizedText, ownerId: owner, storyPart: part, storyBeat: beat };
+    }
+
+    function normalizeSceneElement(element){
+      if (!element || typeof element !== 'object'){
+        const fallbackText = typeof element === 'string' ? element : '';
+        return createSceneElement('action', fallbackText);
+      }
+      const type = typeof element.t === 'string' && element.t ? element.t : 'action';
+      const text = typeof element.txt === 'string' ? element.txt : '';
+      const owner = (typeof element.ownerId === 'string' && element.ownerId) ? element.ownerId : null;
+      const part = (typeof element.storyPart === 'string' && STORY_PART_LABELS[element.storyPart]) ? element.storyPart : null;
+      const beat = (typeof element.storyBeat === 'string' && STORY_BEAT_LABELS[element.storyBeat]) ? element.storyBeat : null;
+      return createSceneElement(type, text, owner, part, beat);
     }
 
     const BACKUP_IDLE_MS = 120000;   // 2 min idle → auto backup
@@ -1884,6 +1991,10 @@
       project.scenes = (project.scenes || []).map(scene => {
         if (!Array.isArray(scene.cards)) scene.cards = [];
         if (!Array.isArray(scene.elements)) scene.elements = [];
+        scene.elements = scene.elements.map(normalizeSceneElement);
+        if (!scene.elements.length){
+          scene.elements = [createSceneElement('action', '...')];
+        }
         scene.sounds = (scene.sounds || []).map(sound => {
           if (typeof sound === 'string') return { id: randomId(), cue: sound };
           if (!sound || typeof sound !== 'object') return { id: randomId(), cue: '' };
@@ -2073,6 +2184,7 @@
      * =======================*/
     function render(){
       ensureProjectShape();
+      hideSelectionMenu();
       document.getElementById('title').textContent = project.title || 'Untitled Project';
       const dialogTitleInput = document.getElementById('scriptDialogCurrentTitle');
       if (dialogTitleInput) dialogTitleInput.value = project.title || '';
@@ -2131,9 +2243,24 @@
       // editor render
       const editor = document.getElementById('editor');
       editor.innerHTML = scene.elements.map(el=>{
-        return `<div class="line ${el.t}" data-t="${el.t}">${escapeHtml(el.txt)}</div>`;
+        const normalized = normalizeSceneElement(el);
+        return `<div class="line ${escapeHtml(normalized.t)}" data-t="${escapeHtml(normalized.t)}">${escapeHtml(normalized.txt)}</div>`;
       }).join('');
       normalizeEditorLines(); // ensure structure
+      const nodes = Array.from(editor.querySelectorAll('.line'));
+      nodes.forEach((node, idx)=>{
+        const meta = normalizeSceneElement(scene.elements[idx] || createSceneElement('action', ''));
+        scene.elements[idx] = meta;
+        node.dataset.t = meta.t || 'action';
+        if (meta.ownerId) node.dataset.owner = meta.ownerId;
+        else delete node.dataset.owner;
+        if (meta.storyPart) node.dataset.storyPart = meta.storyPart;
+        else delete node.dataset.storyPart;
+        if (meta.storyBeat) node.dataset.storyBeat = meta.storyBeat;
+        else delete node.dataset.storyBeat;
+        applyLineTypeClass(node);
+        updateLineTagLabel(node);
+      });
 
       updateCounters();
       updateHud();
@@ -2162,27 +2289,32 @@
       for (let n of children){
         if (n.nodeType === 3){ // text node
           const div = document.createElement('div');
-          div.className = 'line action';
           div.dataset.t = 'action';
           div.textContent = (n.textContent || '').trim();
+          applyLineTypeClass(div);
+          updateLineTagLabel(div);
           normalized.push(div);
           changed = true;
         } else if (n.nodeType === 1){ // element
           if (n.classList.contains('line')) {
             if (!n.dataset.t) n.dataset.t = 'action';
+            applyLineTypeClass(n);
+            updateLineTagLabel(n);
             normalized.push(n);
           } else if (n.tagName === 'BR') {
             const div = document.createElement('div');
-            div.className = 'line action';
             div.dataset.t = 'action';
             div.textContent = '';
+            applyLineTypeClass(div);
+            updateLineTagLabel(div);
             normalized.push(div);
             changed = true;
           } else {
             const div = document.createElement('div');
-            div.className = 'line action';
             div.dataset.t = 'action';
             div.textContent = n.textContent || '';
+            applyLineTypeClass(div);
+            updateLineTagLabel(div);
             normalized.push(div);
             changed = true;
           }
@@ -2202,7 +2334,13 @@
       normalizeEditorLines();
       if (autoDetect && project.settings.smartFormat) autoDetectTypes();
       const nodes = Array.from(document.querySelectorAll('#editor .line'));
-      scene.elements = nodes.map(n=>({ t:n.dataset.t || 'action', txt:n.textContent }));
+      scene.elements = nodes.map(n=> createSceneElement(
+        n.dataset.t || 'action',
+        n.textContent,
+        n.dataset.owner || null,
+        n.dataset.storyPart || null,
+        n.dataset.storyBeat || null
+      ));
       updateSceneHash(scene);
       bumpVersion();
       updateCounters();
@@ -2289,6 +2427,8 @@
           });
         }
       }
+      updateSelectionMenuCharacters();
+      updateAllLineTagLabels();
     }
 
     function renderSoundList(){
@@ -3698,11 +3838,12 @@
       if (trimmedSummary){
         scene.elements = trimmedSummary
           .split(/\n+/)
-          .map(line => ({ t:'action', txt: line.trim() }))
-          .filter(el => !!el.txt);
+          .map(line => line.trim())
+          .filter(Boolean)
+          .map(line => createSceneElement('action', line));
       }
       if (!scene.elements.length){
-        scene.elements = [{t:'action', txt:'...'}];
+        scene.elements = [createSceneElement('action', '...')];
       }
       return scene;
     }
@@ -3780,6 +3921,238 @@
      * Editor interactions
      * =======================*/
     const editorEl = document.getElementById('editor');
+    const selectionMenuEl = document.getElementById('selectionMenu');
+    const selectionMenuCharactersSection = selectionMenuEl?.querySelector('[data-selection-characters-section]') || null;
+    const selectionMenuCharactersList = selectionMenuEl?.querySelector('[data-selection-characters]') || null;
+    const LINE_TYPE_CLASSES = ['slug','action','dialogue','character','parenthetical','transition','exposition'];
+    let selectionMenuTargetLine = null;
+    let selectionMenuFrame = null;
+
+    function getCharacterNameById(id){
+      if (!id || !project || !project.catalogs) return '';
+      const list = Array.isArray(project.catalogs.characters) ? project.catalogs.characters : [];
+      const match = list.find(char => char.id === id);
+      return match?.name || '';
+    }
+
+    function applyLineTypeClass(node){
+      if (!node) return;
+      let type = node.dataset.t || 'action';
+      if (!LINE_TYPE_CLASSES.includes(type)) type = 'action';
+      node.dataset.t = type;
+      node.classList.add('line');
+      LINE_TYPE_CLASSES.forEach(cls => {
+        if (cls !== type) node.classList.remove(cls);
+      });
+      node.classList.add(type);
+    }
+
+    function updateLineTagLabel(node){
+      if (!node) return;
+      const tags = [];
+      const ownerId = node.dataset.owner || '';
+      if (ownerId){
+        const name = getCharacterNameById(ownerId) || 'Character';
+        node.dataset.ownerLabel = name;
+        tags.push(name);
+      } else {
+        delete node.dataset.ownerLabel;
+      }
+      const part = node.dataset.storyPart || '';
+      if (part){
+        const label = STORY_PART_LABELS[part] || part;
+        node.dataset.storyPartLabel = label;
+        tags.push(label);
+      } else {
+        delete node.dataset.storyPartLabel;
+      }
+      const beat = node.dataset.storyBeat || '';
+      if (beat){
+        const label = STORY_BEAT_LABELS[beat] || beat;
+        node.dataset.storyBeatLabel = label;
+        tags.push(label);
+      } else {
+        delete node.dataset.storyBeatLabel;
+      }
+      if (tags.length){
+        node.dataset.tagLabel = tags.join(' • ');
+      } else {
+        delete node.dataset.tagLabel;
+      }
+    }
+
+    function updateAllLineTagLabels(){
+      if (!editorEl) return;
+      editorEl.querySelectorAll('.line').forEach(updateLineTagLabel);
+    }
+
+    function updateSelectionMenuCharacters(){
+      if (!selectionMenuEl || !selectionMenuCharactersSection || !selectionMenuCharactersList) return;
+      const characters = Array.isArray(project?.catalogs?.characters) ? project.catalogs.characters : [];
+      selectionMenuCharactersList.innerHTML = '';
+      if (!characters.length){
+        selectionMenuCharactersSection.hidden = true;
+        refreshSelectionMenuState();
+        return;
+      }
+      characters.forEach(char => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.menuOwner = char.id || '';
+        btn.textContent = char.name || 'Unnamed';
+        selectionMenuCharactersList.appendChild(btn);
+      });
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.dataset.menuOwner = '';
+      clearBtn.textContent = 'Clear';
+      selectionMenuCharactersList.appendChild(clearBtn);
+      selectionMenuCharactersSection.hidden = false;
+      refreshSelectionMenuState();
+    }
+
+    function refreshSelectionMenuState(){
+      if (!selectionMenuEl || !selectionMenuTargetLine) return;
+      const type = selectionMenuTargetLine.dataset.t || 'action';
+      selectionMenuEl.querySelectorAll('[data-menu-line-type]').forEach(btn => {
+        const isActive = btn.dataset.menuLineType === type;
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        btn.classList.toggle('active', isActive);
+      });
+      const part = selectionMenuTargetLine.dataset.storyPart || '';
+      selectionMenuEl.querySelectorAll('[data-menu-story-part]').forEach(btn => {
+        const value = btn.dataset.menuStoryPart || '';
+        const isActive = value ? value === part : !part;
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        btn.classList.toggle('active', isActive);
+      });
+      const beat = selectionMenuTargetLine.dataset.storyBeat || '';
+      selectionMenuEl.querySelectorAll('[data-menu-act]').forEach(btn => {
+        const value = btn.dataset.menuAct || '';
+        const isActive = value ? value === beat : !beat;
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        btn.classList.toggle('active', isActive);
+      });
+      if (selectionMenuCharactersList){
+        const owner = selectionMenuTargetLine.dataset.owner || '';
+        selectionMenuCharactersList.querySelectorAll('button[data-menu-owner]').forEach(btn => {
+          const value = btn.dataset.menuOwner || '';
+          const isActive = value ? value === owner : !owner;
+          btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          btn.classList.toggle('active', isActive);
+        });
+      }
+    }
+
+    function hideSelectionMenu(){
+      if (!selectionMenuEl) return;
+      selectionMenuEl.setAttribute('hidden', '');
+      selectionMenuEl.style.top = '';
+      selectionMenuEl.style.left = '';
+      selectionMenuEl.style.opacity = '';
+      selectionMenuEl.style.visibility = '';
+      selectionMenuTargetLine = null;
+    }
+
+    function positionSelectionMenu(rect){
+      if (!selectionMenuEl) return;
+      selectionMenuEl.removeAttribute('hidden');
+      selectionMenuEl.style.visibility = 'hidden';
+      selectionMenuEl.style.opacity = '0';
+      requestAnimationFrame(()=>{
+        const menuRect = selectionMenuEl.getBoundingClientRect();
+        let top = rect.top - menuRect.height - 12;
+        if (top < 16){
+          top = rect.bottom + 12;
+        }
+        let left = rect.left + (rect.width / 2) - (menuRect.width / 2);
+        left = Math.max(16, Math.min(left, window.innerWidth - menuRect.width - 16));
+        selectionMenuEl.style.top = `${Math.round(top)}px`;
+        selectionMenuEl.style.left = `${Math.round(left)}px`;
+        selectionMenuEl.style.visibility = 'visible';
+        selectionMenuEl.style.opacity = '1';
+      });
+    }
+
+    function handleSelectionChange(){
+      selectionMenuFrame = null;
+      if (!selectionMenuEl || !editorEl) return;
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed){
+        hideSelectionMenu();
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      if (!editorEl.contains(range.commonAncestorContainer)){
+        hideSelectionMenu();
+        return;
+      }
+      const rect = range.getBoundingClientRect();
+      if (!rect || (!rect.width && !rect.height)){
+        hideSelectionMenu();
+        return;
+      }
+      const line = getActiveLineNode();
+      if (!line){
+        hideSelectionMenu();
+        return;
+      }
+      selectionMenuTargetLine = line;
+      refreshSelectionMenuState();
+      positionSelectionMenu(rect);
+    }
+
+    function handleSelectionMenuClick(event){
+      if (!selectionMenuTargetLine) return;
+      const button = event.target.closest('button');
+      if (!button) return;
+      event.preventDefault();
+      const sel = window.getSelection();
+      if (button.dataset.menuLineType){
+        const type = button.dataset.menuLineType;
+        selectionMenuTargetLine.dataset.t = type;
+        applyLineTypeClass(selectionMenuTargetLine);
+      }
+      if (button.hasAttribute('data-menu-story-part')){
+        const value = button.dataset.menuStoryPart || '';
+        if (value) selectionMenuTargetLine.dataset.storyPart = value;
+        else delete selectionMenuTargetLine.dataset.storyPart;
+      }
+      if (button.hasAttribute('data-menu-act')){
+        const value = button.dataset.menuAct || '';
+        if (value) selectionMenuTargetLine.dataset.storyBeat = value;
+        else delete selectionMenuTargetLine.dataset.storyBeat;
+      }
+      if (button.hasAttribute('data-menu-owner')){
+        const value = button.dataset.menuOwner || '';
+        if (value) selectionMenuTargetLine.dataset.owner = value;
+        else delete selectionMenuTargetLine.dataset.owner;
+      }
+      updateLineTagLabel(selectionMenuTargetLine);
+      refreshSelectionMenuState();
+      syncActiveScene(false);
+      if (sel && sel.rangeCount){
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        positionSelectionMenu(rect);
+      }
+    }
+
+    if (selectionMenuEl){
+      selectionMenuEl.addEventListener('pointerdown', e => e.preventDefault());
+      selectionMenuEl.addEventListener('click', handleSelectionMenuClick);
+    }
+    document.addEventListener('selectionchange', ()=>{
+      if (selectionMenuFrame) cancelAnimationFrame(selectionMenuFrame);
+      selectionMenuFrame = requestAnimationFrame(handleSelectionChange);
+    });
+    document.addEventListener('pointerdown', e => {
+      if (!selectionMenuEl) return;
+      if (selectionMenuEl.contains(e.target)) return;
+      if (editorEl && editorEl.contains(e.target)) return;
+      hideSelectionMenu();
+    });
+    window.addEventListener('resize', hideSelectionMenu);
+    document.addEventListener('scroll', hideSelectionMenu, true);
 
     function getActiveLineNode(){
       const sel = window.getSelection();
@@ -3821,12 +4194,16 @@
       const editor = document.getElementById('editor');
       if (!editor) return;
       const node = document.createElement('div');
-      node.className = 'line ' + type;
       node.dataset.t = type;
+      applyLineTypeClass(node);
       let text = preset || '';
       if (type === 'character' && text) text = text.toUpperCase();
       if (text) node.textContent = text;
       else node.innerHTML = '<br>';
+      delete node.dataset.owner;
+      delete node.dataset.storyPart;
+      delete node.dataset.storyBeat;
+      updateLineTagLabel(node);
       const active = getActiveLineNode();
       if (active && active.parentElement === editor) active.after(node);
       else editor.appendChild(node);
@@ -3868,8 +4245,8 @@
         else if (/^\(.+\)$/.test(text)) t = 'parenthetical';
         else if (/^(CUT TO:|FADE OUT\.?|FADE IN\.?|SMASH CUT:|DISSOLVE TO:)/i.test(text)) t = 'transition';
         else if (!t || ['slug','character','parenthetical','transition'].includes(t)) t = 'action';
-        n.className = 'line ' + t;
         n.dataset.t = t;
+        applyLineTypeClass(n);
       });
     }
 

@@ -25,3 +25,16 @@ SQL migrations and schema documentation for Supabase live in the [`supabase/`](s
 
 The screenplay writer now includes a Character Studio workspace that launches from the **Characters** tab. Writers can review their cast, update profiles, manage look references, track stats, plan arcs, and queue AI prompts from the dedicated overlay view. Character data is saved locally inside the writer experience and can be synchronized with Supabase using the `public.characters` table described in [`SUPABASE.md`](SUPABASE.md).
 
+## Script editor formatting capabilities
+
+Inside the screenplay writer, the main script panel is a structured `contenteditable` surface that stores every paragraph as a `.line` element with a semantic type (slug, action, character, parenthetical, dialogue, or transition). This keeps the layout screenplay-friendly while still allowing writers to type freely. The CSS rules in [`use-cases/screenplay-writing.html`](use-cases/screenplay-writing.html) define the visual treatment for each line type so slugs appear bold, characters are uppercased, parentheticals are indented, and so on.
+
+Writers can:
+
+* Click the **Insert Line** chips (Slug, Action, Character, Parenthetical, Dialogue, Transition) in the right sidebar to inject a new formatted block next to the active cursor.
+* Use the **Scene Slug** chips to quickly prepend common prefixes such as `INT.`/`EXT.` and suffixes like `DAY`/`NIGHT` to the current scene’s slug field.
+* Tap any character in the **Characters** tab to insert that name as a properly formatted CHARACTER line without retyping it.
+* Enable **Smart format** in settings so the editor auto-detects the appropriate line class (e.g., automatically converting `INT.` lines to slugs or uppercased names to CHARACTER lines) after each edit.
+
+Because every block is tagged, it is straightforward to extend the editor with richer UI affordances such as contextual menus or tag pickers: you can look at the `.dataset.t` value on the focused `.line` node to decide which quick actions to surface (e.g., toggling between Action/Dialog, attaching beat tags, or linking to characters/plot structures). Any inline mini menu would simply need to update that dataset and class list to keep the formatting consistent with the existing screenplay styles.
+
