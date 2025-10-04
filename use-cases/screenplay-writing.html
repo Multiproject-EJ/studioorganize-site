@@ -5897,10 +5897,15 @@
 
     function printPDF(){
       const html = buildPrintableDocument();
-      const printWindow = window.open('', '_blank', 'noopener');
+      const printWindow = window.open('', '_blank');
       if (!printWindow){
         alert('Allow pop-ups to export your PDF.');
         return;
+      }
+      try {
+        printWindow.opener = null;
+      } catch (err) {
+        console.warn('Unable to clear opener on print window:', err);
       }
       printWindow.document.open();
       printWindow.document.write(html);
