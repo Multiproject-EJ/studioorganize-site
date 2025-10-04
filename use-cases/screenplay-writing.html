@@ -581,7 +581,6 @@
               </div>
             </div>
             <div class="panel-footer-actions">
-              <input id="projectTitle" placeholder="Project Title" />
               <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
             </div>
           </div>
@@ -671,6 +670,10 @@
             <span class="muted-text">Current script</span>
             <strong id="scriptDialogCurrentName">Untitled Project</strong>
           </div>
+          <label class="script-dialog__field" for="scriptDialogCurrentTitle">
+            <span>Script title</span>
+            <input id="scriptDialogCurrentTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
+          </label>
           <label class="script-dialog__field" for="scriptSelect">
             <span>Choose a script</span>
             <select id="scriptSelect"></select>
@@ -1117,6 +1120,8 @@
       document.body.classList.add('script-dialog-open');
       const currentNameEl = document.getElementById('scriptDialogCurrentName');
       if (currentNameEl) currentNameEl.textContent = project?.title || 'Untitled Script';
+      const currentTitleInput = document.getElementById('scriptDialogCurrentTitle');
+      if (currentTitleInput) currentTitleInput.value = project?.title || '';
       const select = document.getElementById('scriptSelect');
       const status = document.getElementById('scriptDialogStatus');
       if (status) status.textContent = 'Loading scripts…';
@@ -1732,7 +1737,10 @@
     function render(){
       ensureProjectShape();
       document.getElementById('title').textContent = project.title || 'Untitled Project';
-      document.getElementById('projectTitle').value = project.title || '';
+      const dialogTitleInput = document.getElementById('scriptDialogCurrentTitle');
+      if (dialogTitleInput) dialogTitleInput.value = project.title || '';
+      const dialogCurrentName = document.getElementById('scriptDialogCurrentName');
+      if (dialogCurrentName) dialogCurrentName.textContent = project.title || 'Untitled Script';
       document.getElementById('projectNotes').value = project.notes || '';
       const smartSel = document.getElementById('smartFormat');
       if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
@@ -2817,11 +2825,16 @@
 
     applyActiveTabUI();
 
-    document.getElementById('projectTitle').addEventListener('input', e=>{
-      project.title = e.target.value;
-      document.getElementById('title').textContent = project.title || 'Untitled Project';
-      bumpVersion(); scheduleSave(); scheduleBackup();
-    });
+    const currentScriptTitleInput = document.getElementById('scriptDialogCurrentTitle');
+    if (currentScriptTitleInput){
+      currentScriptTitleInput.addEventListener('input', e=>{
+        project.title = e.target.value;
+        document.getElementById('title').textContent = project.title || 'Untitled Project';
+        const currentNameEl = document.getElementById('scriptDialogCurrentName');
+        if (currentNameEl) currentNameEl.textContent = project.title || 'Untitled Script';
+        bumpVersion(); scheduleSave(); scheduleBackup();
+      });
+    }
     document.getElementById('projectNotes').addEventListener('input', e=>{
       project.notes = e.target.value; bumpVersion(); scheduleSave(); scheduleBackup();
     });
