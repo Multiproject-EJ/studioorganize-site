@@ -117,6 +117,9 @@
         border-radius:2px;
         pointer-events:none;
       }
+      .scene-card-color{display:inline-flex; width:14px; height:14px; border-radius:50%; border:1px solid rgba(15,23,42,0.3);}
+      .scene-card[data-color-source="auto"] .scene-card-color{box-shadow:0 0 0 2px rgba(79,123,255,0.2);}
+      .timeline-card-color{display:inline-flex; width:12px; height:12px; border-radius:50%; border:1px solid rgba(15,23,42,0.25);}
       .editor{padding:0; display:flex; flex-direction:column; min-height:0}
       .editor-area{flex:1; overflow:auto; padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext}
       .line{margin:6px 0; position:relative}
@@ -154,6 +157,16 @@
       .notes{padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto}
       textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
       .row{display:flex; gap:8px}
+      .scene-color-control{display:flex; align-items:center; gap:6px; flex:1}
+      .scene-color-control input[type="color"]{flex:0 0 44px; min-width:44px; width:44px; height:40px; padding:0; border-radius:10px; cursor:pointer}
+      .scene-color-control .scene-color-auto-btn{flex:1; font-size:12px; padding:8px 10px}
+      .scene-color-control .scene-color-auto-btn:disabled{opacity:0.65; cursor:default}
+      .scene-color-meta{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin:-2px 0 2px}
+      .scene-color-meta[hidden]{display:none !important}
+      .scene-color-badge{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; border:1px solid var(--ring); background:var(--chip); color:var(--ink); transition:background 0.2s ease, color 0.2s ease}
+      .scene-color-badge::before{content:''; width:10px; height:10px; border-radius:50%; border:1px solid rgba(15,23,42,0.24); background:currentColor; opacity:0.9}
+      .scene-color-badge[data-source="auto"]{box-shadow:0 0 0 1px rgba(79,123,255,0.22)}
+      .scene-color-badge[data-source="custom"]{box-shadow:0 0 0 1px rgba(15,23,42,0.12)}
       .writer-theme-toggle{width:100%; justify-content:center}
       .counter{font-size:12px; color:var(--muted)}
       .tab-header{display:flex; padding:8px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
@@ -911,7 +924,14 @@
               <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
               <div class="row">
                 <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
-                <input id="sceneColor" type="color" />
+                <div class="scene-color-control">
+                  <input id="sceneColor" type="color" aria-describedby="sceneColorDescription" />
+                  <button id="sceneColorAutoBtn" class="btn scene-color-auto-btn" type="button">Auto from slug</button>
+                </div>
+              </div>
+              <div class="scene-color-meta" id="sceneColorMeta" aria-live="polite">
+                <span class="scene-color-badge" id="sceneColorBadge" data-source="auto">Auto</span>
+                <span id="sceneColorDescription">Stripboard palette ready.</span>
               </div>
               <div class="row">
                 <select id="smartFormat">
@@ -2287,10 +2307,16 @@
       return (h >>> 0).toString(16);
     }
     function stableSceneString(s){
+      const colorMeta = getSceneColorMeta(s);
       return JSON.stringify({
-        id: s.id, slug: s.slug,
-        elements: s.elements, color: s.color, notes: s.notes,
-        sounds: s.sounds, storyboards: s.storyboards
+        id: s.id,
+        slug: s.slug,
+        elements: s.elements,
+        color: colorMeta.color,
+        colorSource: s.colorSource || SCENE_COLOR_SOURCE_AUTO,
+        notes: s.notes,
+        sounds: s.sounds,
+        storyboards: s.storyboards
       });
     }
     function metaSignature(p){
@@ -2321,6 +2347,7 @@
         return item;
       });
       project.scenes = (project.scenes || []).map(scene => {
+        if (!scene || typeof scene !== 'object') scene = {};
         if (!Array.isArray(scene.cards)) scene.cards = [];
         if (!Array.isArray(scene.elements)) scene.elements = [];
         scene.elements = scene.elements.map(normalizeSceneElement);
@@ -2334,7 +2361,16 @@
           sound.cue = typeof sound.cue === 'string' ? sound.cue : '';
           return sound;
         });
-        scene.color = normalizeSceneColor(scene.color);
+        if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+        const normalizedColor = normalizeSceneColor(scene.color);
+        const rawSource = typeof scene.colorSource === 'string' ? scene.colorSource : scene.metadata.sceneColorSource;
+        let source = (rawSource === SCENE_COLOR_SOURCE_CUSTOM || rawSource === SCENE_COLOR_SOURCE_AUTO) ? rawSource : null;
+        if (!source){
+          source = normalizedColor !== DEFAULT_SCENE_COLOR ? SCENE_COLOR_SOURCE_CUSTOM : SCENE_COLOR_SOURCE_AUTO;
+        }
+        scene.colorSource = source;
+        scene.color = normalizedColor;
+        scene.metadata.sceneColorSource = scene.colorSource;
         ensureSceneStoryboardStructure(scene);
         refreshStoryboardPositions(scene);
         return scene;
@@ -2495,9 +2531,11 @@
           cards: ['Opening image'],
           elements: [{t:'action', txt:'A room. Quiet.'}],
           color: DEFAULT_SCENE_COLOR,
+          colorSource: SCENE_COLOR_SOURCE_AUTO,
           notes: '',
           sounds: [],
-          storyboards: []
+          storyboards: [],
+          metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO }
         }],
         notes: '',
         _hashes: { scene: {} },
@@ -2544,6 +2582,8 @@
         div.className = 'scene-card' + (s.id===activeSceneId ? ' active':'');
         div.dataset.sceneId = s.id;
         div.dataset.index = String(idx);
+        const colorMeta = getSceneColorMeta(s);
+        div.dataset.colorSource = colorMeta.source;
         div.draggable = true;
         div.addEventListener('dragstart', handleSceneCardDragStart);
         div.addEventListener('dragend', handleSceneCardDragEnd);
@@ -2555,13 +2595,15 @@
           activeSceneId = s.id;
           render();
         };
+        const colorTitle = colorMeta.tooltip || colorMeta.description || 'Scene color';
+        const colorBorder = hexToRgba(colorMeta.textColor, 0.35);
         div.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
             <div>
               <strong>${escapeHtml(s.slug || '(no slug)')}</strong><br/>
               <small>Scene ${idx+1}</small>
             </div>
-            <span title="Color" style="width:12px;height:12px;border-radius:50%;background:${s.color||'#5FA8FF'}"></span>
+            <span class="scene-card-color" title="${escapeHtml(colorTitle)}" style="background:${colorMeta.color};border-color:${colorBorder}"></span>
           </div>`;
         list.appendChild(div);
       });
@@ -2569,6 +2611,7 @@
       // right-side bindings
       const scene = getActiveScene();
       if (!scene){
+        updateSceneColorUI(null);
         document.getElementById('editor').innerHTML = '';
         updateCounters();
         updateHud();
@@ -2590,7 +2633,7 @@
       }
       if (!Array.isArray(scene.sounds)) scene.sounds = [];
       document.getElementById('sceneSlug').value = scene.slug || '';
-      document.getElementById('sceneColor').value = scene.color || '#5FA8FF';
+      updateSceneColorUI(scene);
       renderStoryboard();
 
       // editor render
@@ -2630,6 +2673,54 @@
       if (storyboardMode) renderStoryboardGallery();
       updateStoryboardButton();
       if (characterStudioState.open) renderCharacterStudio();
+    }
+
+    function updateSceneColorUI(scene){
+      const colorInput = document.getElementById('sceneColor');
+      const autoBtn = document.getElementById('sceneColorAutoBtn');
+      const badge = document.getElementById('sceneColorBadge');
+      const description = document.getElementById('sceneColorDescription');
+      const metaContainer = document.getElementById('sceneColorMeta');
+      if (!colorInput || !badge || !description || !metaContainer) return;
+      if (!scene){
+        colorInput.value = DEFAULT_SCENE_COLOR;
+        colorInput.disabled = true;
+        colorInput.removeAttribute('title');
+        if (autoBtn){
+          autoBtn.disabled = true;
+          autoBtn.textContent = 'Auto from slug';
+          autoBtn.setAttribute('aria-pressed', 'false');
+          autoBtn.removeAttribute('title');
+        }
+        badge.textContent = 'Auto';
+        badge.dataset.source = SCENE_COLOR_SOURCE_AUTO;
+        badge.style.background = 'var(--chip)';
+        badge.style.color = 'var(--ink)';
+        badge.style.borderColor = 'var(--ring)';
+        description.textContent = 'Select a scene to edit its color.';
+        metaContainer.dataset.source = SCENE_COLOR_SOURCE_AUTO;
+        metaContainer.hidden = false;
+        return;
+      }
+      const meta = getSceneColorMeta(scene);
+      colorInput.disabled = false;
+      colorInput.value = meta.color;
+      colorInput.setAttribute('title', meta.description || 'Scene color');
+      colorInput.dataset.source = meta.source;
+      if (autoBtn){
+        autoBtn.disabled = meta.source === SCENE_COLOR_SOURCE_AUTO;
+        autoBtn.textContent = meta.source === SCENE_COLOR_SOURCE_AUTO ? 'Auto color active' : 'Use auto color';
+        autoBtn.setAttribute('aria-pressed', meta.source === SCENE_COLOR_SOURCE_AUTO ? 'true' : 'false');
+        autoBtn.setAttribute('title', 'Reapply the automatic stripboard palette');
+      }
+      badge.textContent = meta.sourceLabel;
+      badge.dataset.source = meta.source;
+      badge.style.background = meta.color;
+      badge.style.color = meta.textColor;
+      badge.style.borderColor = hexToRgba(meta.textColor, 0.35);
+      description.textContent = meta.description || 'Scene color';
+      metaContainer.dataset.source = meta.source;
+      metaContainer.hidden = false;
     }
 
     /* Scene list drag-and-drop helpers */
@@ -3822,17 +3913,21 @@
       const card = document.createElement('div');
       card.className = 'timeline-card' + (scene.id === activeSceneId ? ' active' : '');
       card.dataset.sceneId = scene.id;
+      const colorMeta = getSceneColorMeta(scene);
+      card.dataset.colorSource = colorMeta.source;
       card.draggable = true;
       const beats = Array.isArray(scene.cards) ? scene.cards.length : 0;
       const snippet = getSceneSnippet(scene) || 'Tap to add more detail.';
       const beatsLabel = beats ? `${beats} beat${beats === 1 ? '' : 's'}` : 'No beats yet';
+      const colorTitle = colorMeta.tooltip || colorMeta.description || 'Scene color';
+      const colorBorder = hexToRgba(colorMeta.textColor, 0.35);
       card.innerHTML = `
         <small>${escapeHtml(`Scene ${idx + 1}`)}</small>
         <h4>${escapeHtml(scene.slug || '(no slug)')}</h4>
         <p class="timeline-card-snippet">${escapeHtml(snippet)}</p>
         <div class="timeline-card-actions">
           <span>${escapeHtml(beatsLabel)}</span>
-          <span style="width:12px;height:12px;border-radius:50%;background:${scene.color || '#5FA8FF'}"></span>
+          <span class="timeline-card-color" title="${escapeHtml(colorTitle)}" style="background:${colorMeta.color};border-color:${colorBorder}"></span>
         </div>`;
       card.addEventListener('click', ()=>{
         if (timelineSuppressClick) return;
@@ -4762,9 +4857,11 @@
         cards: [],
         elements: [],
         color: DEFAULT_SCENE_COLOR,
+        colorSource: SCENE_COLOR_SOURCE_AUTO,
         notes: '',
         sounds: [],
-        storyboards: []
+        storyboards: [],
+        metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO }
       };
       if (trimmedSummary){
         scene.elements = trimmedSummary
@@ -5467,8 +5564,23 @@
     });
     document.getElementById('sceneColor').addEventListener('input', e=>{
       const s = getActiveScene(); if (!s) return;
-      s.color = e.target.value; bumpVersion(); updateSceneHash(s); render(); scheduleSave(); scheduleBackup();
+      const normalized = normalizeSceneColor(e.target.value);
+      s.colorSource = SCENE_COLOR_SOURCE_CUSTOM;
+      s.color = normalized;
+      if (s.metadata && typeof s.metadata === 'object') s.metadata.sceneColorSource = s.colorSource;
+      e.target.value = normalized;
+      bumpVersion(); updateSceneHash(s); render(); scheduleSave(); scheduleBackup();
     });
+    const sceneColorAutoBtn = document.getElementById('sceneColorAutoBtn');
+    if (sceneColorAutoBtn){
+      sceneColorAutoBtn.addEventListener('click', ()=>{
+        const s = getActiveScene(); if (!s) return;
+        s.colorSource = SCENE_COLOR_SOURCE_AUTO;
+        s.color = DEFAULT_SCENE_COLOR;
+        if (s.metadata && typeof s.metadata === 'object') s.metadata.sceneColorSource = s.colorSource;
+        bumpVersion(); updateSceneHash(s); render(); scheduleSave(); scheduleBackup();
+      });
+    }
     const storyboardPrevBtn = document.getElementById('storyboardPrev');
     if (storyboardPrevBtn){
       storyboardPrevBtn.addEventListener('click', ()=> stepStoryboard(-1));
@@ -5858,6 +5970,99 @@
     }
 
     const DEFAULT_SCENE_COLOR = '#5FA8FF';
+    const SCENE_COLOR_SOURCE_AUTO = 'auto';
+    const SCENE_COLOR_SOURCE_CUSTOM = 'custom';
+
+    const STRIPBOARD_COLOR_RULES = [
+      {
+        id: 'flashback',
+        color: '#FFEAB6',
+        textColor: '#92400E',
+        label: 'Flashback',
+        detail: 'Flashback sequence palette',
+        test: info => info.isFlashback
+      },
+      {
+        id: 'dream',
+        color: '#E3DDFD',
+        textColor: '#4338CA',
+        label: 'Dream / Vision',
+        detail: 'Dream or imagined sequence',
+        test: info => info.isDream
+      },
+      {
+        id: 'montage',
+        color: '#FFE5F1',
+        textColor: '#9D174D',
+        label: 'Montage',
+        detail: 'Montage sequence highlight',
+        test: info => info.isMontage
+      },
+      {
+        id: 'int-ext-day',
+        color: '#E8E7FF',
+        textColor: '#312E81',
+        label: 'Int./Ext. Day',
+        detail: 'Stripboard palette (INT/EXT day)',
+        test: info => info.interior && info.exterior && info.timeGroup === 'DAY'
+      },
+      {
+        id: 'int-ext-night',
+        color: '#F3D1FF',
+        textColor: '#86198F',
+        label: 'Int./Ext. Night',
+        detail: 'Stripboard palette (INT/EXT night)',
+        test: info => info.interior && info.exterior && info.timeGroup === 'NIGHT'
+      },
+      {
+        id: 'int-day',
+        color: '#F8F4E6',
+        textColor: '#1F2937',
+        label: 'Interior Day',
+        detail: 'Stripboard palette (INT. day)',
+        test: info => info.interior && !info.exterior && info.timeGroup === 'DAY'
+      },
+      {
+        id: 'int-night',
+        color: '#FFF4CC',
+        textColor: '#92400E',
+        label: 'Interior Night',
+        detail: 'Stripboard palette (INT. night)',
+        test: info => info.interior && !info.exterior && info.timeGroup === 'NIGHT'
+      },
+      {
+        id: 'ext-day',
+        color: '#E1F8E5',
+        textColor: '#065F46',
+        label: 'Exterior Day',
+        detail: 'Stripboard palette (EXT. day)',
+        test: info => info.exterior && !info.interior && info.timeGroup === 'DAY'
+      },
+      {
+        id: 'ext-night',
+        color: '#CFE0FF',
+        textColor: '#1E3A8A',
+        label: 'Exterior Night',
+        detail: 'Stripboard palette (EXT. night)',
+        test: info => info.exterior && !info.interior && info.timeGroup === 'NIGHT'
+      },
+      {
+        id: 'dawn-dusk',
+        color: '#FFDDE1',
+        textColor: '#9F1239',
+        label: 'Dawn / Dusk',
+        detail: 'Stripboard palette (dawn/dusk)',
+        test: info => info.timeGroup === 'DAWN_DUSK'
+      },
+      {
+        id: 'continuous',
+        color: '#FBE7FF',
+        textColor: '#86198F',
+        label: 'Continuous',
+        detail: 'Continuous time callout',
+        test: info => info.timeGroup === 'CONTINUOUS'
+      }
+    ];
 
     function normalizeSceneColor(color){
       if (typeof color !== 'string') return DEFAULT_SCENE_COLOR;
@@ -5866,6 +6071,186 @@
       const hexMatch = trimmed.match(/^#?([0-9a-f]{6})$/i);
       if (!hexMatch) return DEFAULT_SCENE_COLOR;
       return `#${hexMatch[1].toUpperCase()}`;
+    }
+
+    function classifySceneHeading(scene){
+      const slug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
+      const upperSlug = slug.toUpperCase();
+      const prefixMatch = slug.match(/^(INT\.\/EXT\.|INT-EXT\.|INT\/EXT\.|INT\.|EXT\.)\s*/i);
+      const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : '';
+      const interior = prefix.includes('INT');
+      const exterior = prefix.includes('EXT');
+      const { location, timeOfDay } = parseSceneSlugParts(slug);
+      const timeContext = `${(timeOfDay || '').toUpperCase()} ${upperSlug}`;
+      const isFlashback = /FLASH\s*BACK|FLASHBACK/.test(timeContext);
+      const isDream = /(DREAM|IMAGIN|VISION|HALLUCIN|FANTASY)/.test(timeContext);
+      const isMontage = /MONTAGE/.test(timeContext);
+      let timeGroup = null;
+      if (/(DAWN|SUNRISE|SUNSET|DUSK|TWILIGHT|GOLDEN HOUR|EVENING)/.test(timeContext)) timeGroup = 'DAWN_DUSK';
+      else if (/(CONTINUOUS|CONT\.|SAME TIME|CONTINUED)/.test(timeContext)) timeGroup = 'CONTINUOUS';
+      else if (/(NIGHT|MIDNIGHT|LATE NIGHT|AFTER DARK)/.test(timeContext)) timeGroup = 'NIGHT';
+      else if (/(DAY|MORNING|AFTERNOON|NOON|A\.M\.|AM|SUNLIT)/.test(timeContext)) timeGroup = 'DAY';
+      if (!timeGroup && /(PM|P\.M\.)/.test(timeContext)) timeGroup = 'NIGHT';
+      if (!timeGroup && /(AM|A\.M\.)/.test(timeContext)) timeGroup = 'DAY';
+      return {
+        slug,
+        interior,
+        exterior,
+        location: location || '',
+        timeGroup,
+        isFlashback,
+        isDream,
+        isMontage
+      };
+    }
+
+    function hashToHue(str){
+      const input = (typeof str === 'string' && str.trim()) ? str.trim() : 'DEFAULT';
+      let hash = 0;
+      for (let i = 0; i < input.length; i++){
+        hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+      }
+      return hash % 360;
+    }
+
+    function hslToHex(h, s, l){
+      const hue = ((h % 360) + 360) % 360;
+      const sat = Math.max(0, Math.min(100, s)) / 100;
+      const light = Math.max(0, Math.min(100, l)) / 100;
+      const chroma = (1 - Math.abs(2 * light - 1)) * sat;
+      const hp = hue / 60;
+      const x = chroma * (1 - Math.abs((hp % 2) - 1));
+      let r1 = 0, g1 = 0, b1 = 0;
+      if (hp >= 0 && hp < 1){ r1 = chroma; g1 = x; }
+      else if (hp >= 1 && hp < 2){ r1 = x; g1 = chroma; }
+      else if (hp >= 2 && hp < 3){ g1 = chroma; b1 = x; }
+      else if (hp >= 3 && hp < 4){ g1 = x; b1 = chroma; }
+      else if (hp >= 4 && hp < 5){ r1 = x; b1 = chroma; }
+      else if (hp >= 5 && hp < 6){ r1 = chroma; b1 = x; }
+      const m = light - chroma / 2;
+      const toHex = (value) => Math.round((value + m) * 255).toString(16).padStart(2, '0');
+      return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`.toUpperCase();
+    }
+
+    function hexToRgb(hex){
+      const match = /^#?([0-9A-F]{6})$/i.exec(typeof hex === 'string' ? hex.trim() : '');
+      if (!match) return { r: 0, g: 0, b: 0 };
+      const value = parseInt(match[1], 16);
+      return { r: (value >> 16) & 255, g: (value >> 8) & 255, b: value & 255 };
+    }
+
+    function getContrastingTextColor(hex){
+      const { r, g, b } = hexToRgb(hex);
+      const toLinear = (channel) => {
+        const norm = channel / 255;
+        return norm <= 0.03928 ? norm / 12.92 : Math.pow((norm + 0.055) / 1.055, 2.4);
+      };
+      const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+      return luminance > 0.55 ? '#0F172A' : '#F8FAFC';
+    }
+
+    function hexToRgba(hex, alpha){
+      const { r, g, b } = hexToRgb(hex);
+      const clamped = Math.max(0, Math.min(1, Number.isFinite(alpha) ? alpha : 1));
+      return `rgba(${r}, ${g}, ${b}, ${clamped})`;
+    }
+
+    function buildLocationPalette(location, fallbackKey){
+      const key = (typeof location === 'string' && location.trim()) ? location.trim() : '';
+      const basis = key || (typeof fallbackKey === 'string' ? fallbackKey.trim() : 'DEFAULT');
+      const hue = hashToHue(basis || 'DEFAULT');
+      const color = hslToHex(hue, 45, 68);
+      const textColor = getContrastingTextColor(color);
+      const detail = key ? `Keyed to “${location.trim()}”` : 'Keyed to scene heading';
+      const label = key ? 'Location palette' : 'Default palette';
+      return { color, textColor, label, detail };
+    }
+
+    function computeAutoSceneColor(scene){
+      const info = classifySceneHeading(scene);
+      for (const rule of STRIPBOARD_COLOR_RULES){
+        try {
+          if (rule.test(info)){
+            const normalized = normalizeSceneColor(rule.color);
+            return {
+              color: normalized,
+              textColor: rule.textColor || getContrastingTextColor(normalized),
+              label: rule.label,
+              detail: rule.detail,
+              source: SCENE_COLOR_SOURCE_AUTO
+            };
+          }
+        } catch (err) {
+          continue;
+        }
+      }
+      if (info.timeGroup === 'DAY'){
+        const color = '#DBF0FF';
+        return { color, textColor: '#075985', label: 'Daylight', detail: 'Generic daylight palette', source: SCENE_COLOR_SOURCE_AUTO };
+      }
+      if (info.timeGroup === 'NIGHT'){
+        const color = '#C7D2FE';
+        return { color, textColor: '#1D4ED8', label: 'Night', detail: 'Generic night palette', source: SCENE_COLOR_SOURCE_AUTO };
+      }
+      if (info.timeGroup === 'DAWN_DUSK'){
+        const color = '#FFE5F0';
+        return { color, textColor: '#9D174D', label: 'Dawn / Dusk', detail: 'Generic twilight palette', source: SCENE_COLOR_SOURCE_AUTO };
+      }
+      if (info.timeGroup === 'CONTINUOUS'){
+        const color = '#EDE9FE';
+        return { color, textColor: '#5B21B6', label: 'Continuous', detail: 'Continuous action', source: SCENE_COLOR_SOURCE_AUTO };
+      }
+      const palette = buildLocationPalette(info.location, scene?.slug || scene?.id || 'SCENE');
+      return { color: palette.color, textColor: palette.textColor, label: palette.label, detail: palette.detail, source: SCENE_COLOR_SOURCE_AUTO };
+    }
+
+    function getSceneColorMeta(scene){
+      if (!scene){
+        const color = DEFAULT_SCENE_COLOR;
+        const textColor = getContrastingTextColor(color);
+        return {
+          color,
+          textColor,
+          label: 'Default palette',
+          detail: 'No scene selected',
+          source: SCENE_COLOR_SOURCE_AUTO,
+          sourceLabel: 'Auto',
+          description: 'Default palette',
+          tooltip: 'Default palette'
+        };
+      }
+      const source = scene.colorSource === SCENE_COLOR_SOURCE_CUSTOM ? SCENE_COLOR_SOURCE_CUSTOM : SCENE_COLOR_SOURCE_AUTO;
+      if (source === SCENE_COLOR_SOURCE_CUSTOM){
+        const normalized = normalizeSceneColor(scene.color);
+        const textColor = getContrastingTextColor(normalized);
+        return {
+          color: normalized,
+          textColor,
+          label: 'Custom color',
+          detail: 'Manually selected',
+          source: SCENE_COLOR_SOURCE_CUSTOM,
+          sourceLabel: 'Custom',
+          description: 'Custom color • manually selected',
+          tooltip: 'Custom color'
+        };
+      }
+      const autoMeta = computeAutoSceneColor(scene);
+      const normalizedColor = normalizeSceneColor(autoMeta.color);
+      const textColor = autoMeta.textColor || getContrastingTextColor(normalizedColor);
+      const detail = autoMeta.detail || 'Auto color';
+      const label = autoMeta.label || 'Auto color';
+      const description = detail ? `${label} • ${detail}` : label;
+      const tooltip = detail ? `${label} — ${detail}` : label;
+      return {
+        color: normalizedColor,
+        textColor,
+        label,
+        detail,
+        source: SCENE_COLOR_SOURCE_AUTO,
+        sourceLabel: 'Auto',
+        description,
+        tooltip
+      };
     }
 
     function parseSceneSlugParts(slug){
@@ -5896,8 +6281,16 @@
       const locations = Array.isArray(project?.catalogs?.locations)
         ? project.catalogs.locations.map(loc => ({ id: loc.id || null, name: loc.name || '' }))
         : [];
-      const normalizedColor = normalizeSceneColor(scene.color);
-      if (scene.color !== normalizedColor) scene.color = normalizedColor;
+      const colorMeta = getSceneColorMeta(scene);
+      const normalizedColor = normalizeSceneColor(colorMeta.color);
+      if (scene.colorSource === SCENE_COLOR_SOURCE_CUSTOM){
+        const manual = normalizeSceneColor(scene.color);
+        if (scene.color !== manual) scene.color = manual;
+      } else if (scene.color !== DEFAULT_SCENE_COLOR){
+        scene.color = DEFAULT_SCENE_COLOR;
+      }
+      if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+      scene.metadata.sceneColorSource = scene.colorSource || SCENE_COLOR_SOURCE_AUTO;
       return {
         id: scene.id,
         owner_id: ownerId,
@@ -5924,7 +6317,10 @@
             smartFormat: typeof project.settings?.smartFormat === 'boolean' ? project.settings.smartFormat : null
           },
           catalogs: { characters, locations },
-          storyboards: safeStoryboards
+          storyboards: safeStoryboards,
+          sceneColorSource: scene.colorSource || SCENE_COLOR_SOURCE_AUTO,
+          sceneAutoColorLabel: colorMeta.label,
+          sceneAutoColorDetail: colorMeta.detail
         }
       };
     }
