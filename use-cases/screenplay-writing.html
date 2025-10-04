@@ -463,6 +463,23 @@
           </div>
           <div class="tab-panels">
             <div class="tab-panel" data-tab="write" id="tabWrite">
+              <div class="storyboard-field">
+                <div class="storyboard-viewer" id="storyboardViewer" data-empty="true">
+                  <button class="storyboard-nav prev" type="button" id="storyboardPrev" aria-label="Previous storyboard image">&#x2039;</button>
+                  <img id="storyboardImage" src="https://placehold.co/480x270?text=Storyboard" alt="Storyboard preview" loading="lazy" />
+                  <div class="storyboard-empty" id="storyboardEmpty">No storyboard yet</div>
+                  <button class="storyboard-nav next" type="button" id="storyboardNext" aria-label="Next storyboard image">&#x203A;</button>
+                </div>
+                <div class="storyboard-meta">
+                  <span id="storyboardCounter" class="muted-text">No storyboard yet</span>
+                  <button class="storyboard-remove" type="button" id="removeStoryboardBtn" disabled>Remove current</button>
+                </div>
+                <div class="storyboard-input">
+                  <input id="newStoryboardUrl" placeholder="Storyboard image URL" inputmode="url" autocomplete="off" />
+                  <button class="btn" type="button" id="addStoryboardBtn">Add storyboard</button>
+                </div>
+              </div>
+              <div class="tab-divider"></div>
               <div>
                 <h3>Scene Slug</h3>
                 <div class="tab-chip-group">
@@ -551,22 +568,6 @@
             <h2>Notes &amp; Meta</h2>
             <div class="notes">
               <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
-              <div class="storyboard-field">
-                <div class="storyboard-viewer" id="storyboardViewer" data-empty="true">
-                  <button class="storyboard-nav prev" type="button" id="storyboardPrev" aria-label="Previous storyboard image">&#x2039;</button>
-                  <img id="storyboardImage" src="https://placehold.co/480x270?text=Storyboard" alt="Storyboard preview" loading="lazy" />
-                  <div class="storyboard-empty" id="storyboardEmpty">No storyboard yet</div>
-                  <button class="storyboard-nav next" type="button" id="storyboardNext" aria-label="Next storyboard image">&#x203A;</button>
-                </div>
-                <div class="storyboard-meta">
-                  <span id="storyboardCounter" class="muted-text">No storyboard yet</span>
-                  <button class="storyboard-remove" type="button" id="removeStoryboardBtn" disabled>Remove current</button>
-                </div>
-                <div class="storyboard-input">
-                  <input id="newStoryboardUrl" placeholder="Storyboard image URL" inputmode="url" autocomplete="off" />
-                  <button class="btn" type="button" id="addStoryboardBtn">Add storyboard</button>
-                </div>
-              </div>
               <div class="row">
                 <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
                 <input id="sceneColor" type="color" />
