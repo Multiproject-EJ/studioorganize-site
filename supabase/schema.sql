@@ -178,6 +178,83 @@ create policy "Scenes are deletable by owners"
     for delete
     using (auth.uid() = owner_id);
 
+-- ---------------------------------------------------------------------------
+-- Character catalog (Character Studio)
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.characters (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    project_id uuid,
+    name text not null default '',
+    role text,
+    archetype text,
+    pronouns text,
+    age text,
+    summary text,
+    background text,
+    family_tree text,
+    traits text[] not null default '{}'::text[],
+    stats_scenes integer not null default 0,
+    stats_screen_time numeric not null default 0,
+    stats_dialogue integer not null default 0,
+    arc_setup text,
+    arc_development text,
+    arc_resolution text,
+    look_portrait_url text,
+    look_turnaround_urls text[] not null default '{}'::text[],
+    look_expression_urls text[] not null default '{}'::text[],
+    ai_prompt text,
+    ai_notes text,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists characters_owner_idx on public.characters (owner_id);
+create index if not exists characters_project_idx on public.characters (project_id);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'characters_set_timestamp'
+          and tgrelid = 'public.characters'::regclass
+    ) then
+        create trigger characters_set_timestamp
+            before update on public.characters
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.characters enable row level security;
+
+drop policy if exists "Characters are viewable by owners" on public.characters;
+create policy "Characters are viewable by owners"
+    on public.characters
+    for select
+    using (auth.uid() = owner_id);
+
+drop policy if exists "Characters can be inserted by owners" on public.characters;
+create policy "Characters can be inserted by owners"
+    on public.characters
+    for insert
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Characters are editable by owners" on public.characters;
+create policy "Characters are editable by owners"
+    on public.characters
+    for update
+    using (auth.uid() = owner_id)
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Characters are deletable by owners" on public.characters;
+create policy "Characters are deletable by owners"
+    on public.characters
+    for delete
+    using (auth.uid() = owner_id);
+
 create table if not exists public.scene_beats (
     id uuid primary key default gen_random_uuid(),
     scene_id uuid not null references public.scenes (id) on delete cascade,
