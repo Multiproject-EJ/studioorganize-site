@@ -147,6 +147,48 @@ img{max-width:100%;display:block}
 @media (max-width:900px){.app-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.app-grid{grid-template-columns:1fr}}
 
+/* creator dashboard */
+.creator-dashboard{margin-top:48px;display:flex;flex-direction:column;gap:32px}
+.creator-dashboard__intro h2{margin:0;font-size:28px}
+.creator-dashboard__intro p{max-width:640px}
+.creator-dashboard__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.insight-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:18px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.insight-card__header{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.insight-card__header h3{margin:0;font-size:20px}
+.insight-card__tag{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--chip);color:var(--muted);border:1px solid var(--line)}
+.insight-card__stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:0}
+.insight-card__stats div{background:var(--hud);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.insight-card__stats dt{font-size:13px;color:var(--muted)}
+.insight-card__stats dd{margin:0;font-size:24px;font-weight:700;color:var(--ink)}
+.commitment-grid{display:flex;flex-direction:column;gap:12px}
+.commitment-grid__row{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;font-size:12px;color:var(--muted)}
+.commitment-grid__matrix{display:grid;grid-template-columns:repeat(12,1fr);gap:6px}
+.commitment-grid__matrix span{display:block;aspect-ratio:1/1;border-radius:6px;background:var(--progressTrack);position:relative}
+.commitment-grid__matrix span::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,var(--brand),var(--brand-2));opacity:0}
+.commitment-grid__matrix span[data-level="1"]::after{opacity:.2}
+.commitment-grid__matrix span[data-level="2"]::after{opacity:.4}
+.commitment-grid__matrix span[data-level="3"]::after{opacity:.65}
+.commitment-grid__matrix span[data-level="4"]::after{opacity:.9}
+.commitment-grid__legend{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
+.commitment-grid__legend--scale{margin-top:4px}
+.commitment-grid__scale{display:flex;gap:6px;align-items:center}
+.commitment-grid__scale span{width:18px;height:18px;border-radius:4px;background:var(--progressTrack);position:relative}
+.commitment-grid__scale span::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,var(--brand),var(--brand-2));opacity:0}
+.commitment-grid__scale span[data-level="1"]::after{opacity:.2}
+.commitment-grid__scale span[data-level="2"]::after{opacity:.4}
+.commitment-grid__scale span[data-level="3"]::after{opacity:.65}
+.commitment-grid__scale span[data-level="4"]::after{opacity:.9}
+.goal-form{display:flex;flex-direction:column;gap:16px}
+.goal-form__field{display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted)}
+.goal-form__field input,.goal-form__field select,.goal-form__field textarea{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--text);font:inherit}
+.goal-form__field input:focus-visible,.goal-form__field select:focus-visible,.goal-form__field textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.goal-form__submit{align-self:flex-start;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);border:none;border-radius:999px;padding:12px 20px;font-weight:600;cursor:pointer;box-shadow:0 12px 24px rgba(0,0,0,.2)}
+.goal-form__submit:hover{transform:translateY(-1px)}
+.goal-form__footnote{font-size:12px;line-height:1.4}
+@media (max-width:1100px){.creator-dashboard__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.creator-dashboard__grid{grid-template-columns:1fr}.insight-card{padding:18px}}
+@media (max-width:520px){.creator-dashboard{margin-top:32px}.creator-dashboard__intro h2{font-size:24px}.commitment-grid__row,.commitment-grid__matrix{gap:4px}}
+
 /* footer */
 .footer{border-top:1px solid var(--line);padding:24px 18px;margin-top:24px}
 .footer__grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
