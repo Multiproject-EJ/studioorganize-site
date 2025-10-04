@@ -230,7 +230,9 @@
       .danger-btn:disabled{opacity:0.5; cursor:not-allowed}
       .catalog-list{display:flex; flex-direction:column; gap:6px}
       .catalog-item{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--ring); border-radius:10px; padding:8px 10px}
-      .catalog-item span{font-size:13px}
+      .catalog-item-label{display:flex; flex-direction:column; gap:2px; line-height:1.25}
+      .catalog-item-label span{font-size:13px}
+      .catalog-meta{font-size:11px; color:var(--muted)}
       .catalog-actions{display:flex; gap:6px}
       .catalog-actions button{background:var(--chip); border:1px solid var(--ring); border-radius:8px; padding:4px 8px; font-size:11px; color:var(--ink); cursor:pointer}
       .muted-text{color:var(--muted); font-size:12px}
@@ -238,6 +240,106 @@
       .sound-list{display:flex; flex-direction:column; gap:6px}
       .sound-item{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--ring); border-radius:10px; padding:8px 10px}
       .sound-item button{background:var(--chip); border:1px solid var(--ring); border-radius:8px; padding:4px 8px; font-size:11px; color:var(--ink); cursor:pointer}
+
+      /* ==== Character Studio ==== */
+      body.character-studio-mode{overflow:hidden;}
+      #characterStudioOverlay{
+        position:fixed; left:0; right:0; bottom:0; top:var(--nav-height, 72px);
+        background:rgba(7,9,14,0.82);
+        backdrop-filter:blur(18px);
+        display:none; align-items:flex-start; justify-content:center;
+        padding:24px clamp(16px, 4vw, 48px) 32px;
+        z-index:420;
+      }
+      body.character-studio-mode #characterStudioOverlay{display:flex;}
+      .character-studio-window{
+        position:relative; width:100%; max-width:1200px; min-height:0;
+        background:var(--panel); border:1px solid var(--ring);
+        border-radius:24px; box-shadow:0 36px 110px rgba(0,0,0,0.5);
+        display:flex; flex-direction:column; overflow:hidden;
+      }
+      .character-studio-window:focus{outline:none;}
+      .character-studio-header{
+        display:flex; align-items:center; justify-content:space-between;
+        padding:22px 26px; border-bottom:1px solid var(--ring);
+        gap:16px; background:var(--chip);
+      }
+      .character-studio-header h2{margin:0; font-size:20px; font-weight:600;}
+      .character-studio-header .muted-text{margin:4px 0 0; max-width:48ch;}
+      .character-studio-close{
+        background:var(--chip); border:1px solid var(--ring); border-radius:999px;
+        padding:8px 16px; cursor:pointer; color:var(--ink);
+      }
+      .character-studio-body{padding:24px 26px 28px; flex:1; overflow:auto;}
+      .character-studio-layout{display:grid; grid-template-columns:280px 1fr; gap:20px; min-height:0;}
+      .character-studio-sidebar{display:flex; flex-direction:column; gap:12px; min-height:0;}
+      .character-studio-sidebar-header{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+      .character-studio-sidebar h3{margin:0; font-size:12px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
+      .character-studio-add{
+        background:var(--acc); border:1px solid var(--acc); color:var(--active-tab-text);
+        border-radius:999px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;
+      }
+      .character-studio-sidebar-list{display:flex; flex-direction:column; gap:8px; overflow:auto; padding-right:4px; max-height:100%;}
+      .character-studio-list-item{
+        background:var(--card); border:1px solid var(--ring); border-radius:14px;
+        padding:10px 12px; text-align:left; display:flex; flex-direction:column; gap:4px;
+        cursor:pointer; color:inherit; font:inherit;
+      }
+      .character-studio-list-item strong{font-size:14px;}
+      .character-studio-list-item span{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
+      .character-studio-list-item:hover{border-color:var(--acc);}
+      .character-studio-list-item.active{border-color:var(--acc); box-shadow:0 18px 48px rgba(47,110,255,0.25); background:var(--acc); color:var(--active-tab-text);}
+      .character-studio-list-item.active span{color:var(--active-tab-text); opacity:0.9;}
+      .character-studio-sidebar-note{font-size:11px; color:var(--muted); line-height:1.4;}
+      .character-studio-details{display:flex; flex-direction:column; gap:18px; min-height:0;}
+      .character-studio-detail-header{display:flex; justify-content:space-between; align-items:flex-start; gap:18px; flex-wrap:wrap;}
+      .character-studio-detail-header h2{margin:0; font-size:24px; font-weight:600;}
+      .character-studio-detail-header .muted-text{margin:6px 0 0; font-size:13px;}
+      .character-studio-header-actions{display:flex; align-items:center; gap:8px;}
+      .character-studio-tertiary{
+        background:none; border:1px solid var(--ring); border-radius:12px;
+        padding:6px 12px; font-size:12px; cursor:pointer; color:var(--muted);
+      }
+      .character-studio-section{
+        background:var(--card); border:1px solid var(--ring); border-radius:18px;
+        padding:20px 22px; display:flex; flex-direction:column; gap:14px;
+      }
+      .character-studio-section h3{margin:0; font-size:14px; font-weight:600;}
+      .character-studio-section p{margin:0;}
+      .character-studio-two-col{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));}
+      .character-studio-field{display:flex; flex-direction:column; gap:6px; font-size:13px;}
+      .character-studio-field span{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
+      .character-studio-section textarea{min-height:96px; resize:vertical;}
+      .character-studio-section textarea.small{min-height:72px;}
+      .character-studio-stats-grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));}
+      .character-studio-stat{background:var(--chip); border:1px solid var(--ring); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+      .character-studio-stat-value{font-size:22px; font-weight:700;}
+      .character-studio-stat-label{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
+      .character-studio-traits-preview{display:flex; flex-wrap:wrap; gap:8px; min-height:34px; align-items:flex-start;}
+      .character-studio-chip{background:var(--chip); border:1px solid var(--ring); border-radius:999px; padding:4px 10px; font-size:12px;}
+      .character-studio-chip strong{font-weight:600;}
+      .character-studio-look-grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));}
+      .character-studio-look-card{position:relative; border:1px solid var(--ring); border-radius:16px; overflow:hidden; background:var(--chip); aspect-ratio:4 / 3; display:flex; align-items:center; justify-content:center; text-align:center;}
+      .character-studio-look-card img{width:100%; height:100%; object-fit:cover;}
+      .character-studio-look-empty{padding:0 16px; font-size:12px; color:var(--muted); line-height:1.45;}
+      .character-studio-look-label{position:absolute; top:10px; left:10px; padding:4px 8px; border-radius:999px; font-size:11px; text-transform:uppercase; letter-spacing:.3px; background:rgba(15,18,30,0.65); color:#fff;}
+      .character-studio-ai-actions{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+      .character-studio-ai-actions button{background:var(--acc); border:1px solid var(--acc); color:var(--active-tab-text); border-radius:999px; padding:8px 16px; font-weight:600; cursor:pointer;}
+      .character-studio-status{font-size:12px; color:var(--muted); min-height:18px;}
+      .character-studio-status[data-state="ready"]{color:var(--acc);}
+      .character-studio-status[data-state="warning"]{color:#f97316;}
+      .character-studio-empty, .character-studio-empty-list{border:1px dashed var(--ring); border-radius:16px; padding:28px; text-align:center; display:flex; flex-direction:column; gap:10px; color:var(--muted);}
+      .character-studio-empty h2{margin:0; font-size:20px; color:var(--ink);}
+      .character-studio-empty p{margin:0; font-size:13px;}
+      .character-studio-empty-list{color:var(--muted); font-size:12px; align-items:center;}
+      @media (max-width: 1100px){
+        .character-studio-layout{grid-template-columns:240px 1fr;}
+      }
+      @media (max-width: 900px){
+        .character-studio-layout{grid-template-columns:1fr;}
+        .character-studio-sidebar{order:2;}
+        .character-studio-details{order:1;}
+      }
 
       /* ==== Script dialog ==== */
       body.script-dialog-open{overflow:hidden;}
@@ -515,7 +617,11 @@
                 <input id="newCharacterName" placeholder="Add character" />
                 <button class="btn" id="addCharacterBtn">Add</button>
               </div>
+              <div class="row">
+                <button class="btn" type="button" id="openCharacterStudioBtn">Character Studio</button>
+              </div>
               <p class="muted-text">Tap a name to insert it as a CHARACTER line.</p>
+              <p class="muted-text">Open Character Studio to develop arcs, looks, and family trees.</p>
             </div>
             <div class="tab-panel" data-tab="set" id="tabSet">
               <div>
@@ -609,6 +715,36 @@
 
           <button onclick="addScene()">+ Scene</button>
           <button onclick="toggleFocus()">Exit Focus</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="characterStudioOverlay" aria-hidden="true">
+      <div class="character-studio-window" role="dialog" aria-modal="true" aria-labelledby="characterStudioTitle" tabindex="-1">
+        <div class="character-studio-header">
+          <div>
+            <h2 id="characterStudioTitle">Character Studio</h2>
+            <p class="muted-text">Craft multidimensional characters with dedicated planners, lookbooks, and AI prompts.</p>
+          </div>
+          <button class="character-studio-close" type="button" id="characterStudioClose">Close ✕</button>
+        </div>
+        <div class="character-studio-body">
+          <div class="character-studio-layout">
+            <aside class="character-studio-sidebar">
+              <div class="character-studio-sidebar-header">
+                <h3>Cast</h3>
+                <button class="character-studio-add" type="button" id="characterStudioAddBtn">+ New</button>
+              </div>
+              <div class="character-studio-sidebar-list" data-character-list></div>
+              <p class="character-studio-sidebar-note">Keep track of stats, arcs, and visual references for every character in one place.</p>
+            </aside>
+            <section class="character-studio-details" data-character-details>
+              <div class="character-studio-empty">
+                <h2>No characters yet</h2>
+                <p>Add a character to start building their profile, traits, and arc.</p>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </div>
@@ -768,6 +904,10 @@
     let timelineDragSceneId = null;
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
+    const characterStudioState = {
+      open: false,
+      activeId: null
+    };
 
     function randomId(){
       const cryptoObj = (typeof globalThis !== 'undefined' && globalThis.crypto)
@@ -788,6 +928,66 @@
         return `${toHex(bytes[0])}${toHex(bytes[1])}${toHex(bytes[2])}${toHex(bytes[3])}-${toHex(bytes[4])}${toHex(bytes[5])}-${toHex(bytes[6])}${toHex(bytes[7])}-${toHex(bytes[8])}${toHex(bytes[9])}-${toHex(bytes[10])}${toHex(bytes[11])}${toHex(bytes[12])}${toHex(bytes[13])}${toHex(bytes[14])}${toHex(bytes[15])}`;
       }
       return `id-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+    }
+
+    function createCharacterData(name=''){
+      const trimmed = (name || '').trim();
+      return {
+        id: randomId(),
+        name: trimmed,
+        role: '',
+        archetype: '',
+        pronouns: '',
+        age: '',
+        summary: '',
+        traits: [],
+        background: '',
+        familyTree: '',
+        stats: { scenes: 0, screenTime: 0, dialogue: 0 },
+        arc: { setup: '', development: '', resolution: '' },
+        looks: { portrait: '', turnarounds: [], expressions: [] },
+        ai: { prompt: '', notes: '' }
+      };
+    }
+
+    function normalizeList(value){
+      if (Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
+      if (typeof value === 'string') return value.split(/\r?\n+/).map(v => v.trim()).filter(Boolean);
+      return [];
+    }
+
+    function normalizeCharacter(item){
+      const base = createCharacterData(item && typeof item.name === 'string' ? item.name : '');
+      if (!item || typeof item !== 'object') return base;
+      const normalized = { ...base, ...item };
+      normalized.id = item.id || base.id;
+      normalized.name = typeof item.name === 'string' ? item.name : base.name;
+      normalized.role = typeof item.role === 'string' ? item.role : '';
+      normalized.archetype = typeof item.archetype === 'string' ? item.archetype : '';
+      if (typeof item.pronouns === 'string') normalized.pronouns = item.pronouns;
+      if (typeof item.age === 'string') normalized.age = item.age;
+      else if (typeof item.age === 'number') normalized.age = String(item.age);
+      normalized.summary = typeof item.summary === 'string' ? item.summary : '';
+      normalized.background = typeof item.background === 'string' ? item.background : '';
+      normalized.familyTree = typeof item.familyTree === 'string' ? item.familyTree : '';
+      if (Array.isArray(item.traits)) normalized.traits = item.traits.map(t => String(t || '').trim()).filter(Boolean);
+      else if (typeof item.traits === 'string') normalized.traits = normalizeList(item.traits);
+      normalized.stats = { ...base.stats, ...(item.stats || {}) };
+      normalized.stats.scenes = Number.isFinite(Number(normalized.stats.scenes)) ? Number(normalized.stats.scenes) : 0;
+      normalized.stats.screenTime = Number.isFinite(Number(normalized.stats.screenTime)) ? Number(normalized.stats.screenTime) : 0;
+      normalized.stats.dialogue = Number.isFinite(Number(normalized.stats.dialogue)) ? Number(normalized.stats.dialogue) : 0;
+      normalized.arc = { ...base.arc, ...(item.arc || {}) };
+      normalized.arc.setup = typeof normalized.arc.setup === 'string' ? normalized.arc.setup : '';
+      normalized.arc.development = typeof normalized.arc.development === 'string' ? normalized.arc.development : '';
+      normalized.arc.resolution = typeof normalized.arc.resolution === 'string' ? normalized.arc.resolution : '';
+      normalized.looks = { ...base.looks, ...(item.looks || {}) };
+      normalized.looks.portrait = typeof normalized.looks.portrait === 'string' ? normalized.looks.portrait : '';
+      normalized.looks.turnarounds = normalizeList(normalized.looks.turnarounds);
+      normalized.looks.expressions = normalizeList(normalized.looks.expressions);
+      normalized.ai = { ...base.ai, ...(item.ai || {}) };
+      normalized.ai.prompt = typeof normalized.ai.prompt === 'string' ? normalized.ai.prompt : '';
+      normalized.ai.notes = typeof normalized.ai.notes === 'string' ? normalized.ai.notes : '';
+      return normalized;
     }
 
     const BACKUP_IDLE_MS = 120000;   // 2 min idle → auto backup
@@ -1531,11 +1731,10 @@
       }
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = (project.catalogs.characters || []).map(item => {
-        if (typeof item === 'string') return { id: randomId(), name: item };
-        if (!item || typeof item !== 'object') return { id: randomId(), name: '' };
-        if (!item.id) item.id = randomId();
-        item.name = typeof item.name === 'string' ? item.name : '';
-        return item;
+        if (typeof item === 'string') return normalizeCharacter({ id: randomId(), name: item });
+        const normalized = normalizeCharacter(item);
+        if (!normalized.id) normalized.id = randomId();
+        return normalized;
       });
       project.catalogs.locations = (project.catalogs.locations || []).map(item => {
         if (typeof item === 'string') return { id: randomId(), name: item };
@@ -1774,15 +1973,16 @@
         applyTheme();
         renderStoryboard();
         renderCatalogs();
-        renderSoundList();
-        renderTimeline();
-        updateDeleteSceneButton();
-        applyActiveTabUI();
-        if (timelineMode) renderTimelineBoard();
-        else updateTimelineInsertLabel();
-        updateTimelineButton();
-        return;
-      }
+      renderSoundList();
+      renderTimeline();
+      updateDeleteSceneButton();
+      applyActiveTabUI();
+      if (timelineMode) renderTimelineBoard();
+      else updateTimelineInsertLabel();
+      updateTimelineButton();
+      if (characterStudioState.open) renderCharacterStudio();
+      return;
+    }
       if (!Array.isArray(scene.sounds)) scene.sounds = [];
       document.getElementById('sceneSlug').value = scene.slug || '';
       document.getElementById('sceneColor').value = scene.color || '#5FA8FF';
@@ -1807,6 +2007,7 @@
       if (timelineMode) renderTimelineBoard();
       else updateTimelineInsertLabel();
       updateTimelineButton();
+      if (characterStudioState.open) renderCharacterStudio();
     }
 
     /* Keep child nodes as .line blocks */
@@ -1880,8 +2081,22 @@
           project.catalogs.characters.forEach(char => {
             const row = document.createElement('div');
             row.className = 'catalog-item';
+            const label = document.createElement('div');
+            label.className = 'catalog-item-label';
             const name = document.createElement('span');
             name.textContent = char.name || '';
+            label.appendChild(name);
+            const metaParts = [];
+            if (char.role) metaParts.push(char.role);
+            const identity = [char.pronouns, char.age].filter(Boolean).join(' • ');
+            if (identity) metaParts.push(identity);
+            if (!metaParts.length && char.archetype) metaParts.push(char.archetype);
+            if (metaParts.length){
+              const meta = document.createElement('span');
+              meta.className = 'catalog-meta';
+              meta.textContent = metaParts.join(' — ');
+              label.appendChild(meta);
+            }
             const actions = document.createElement('div');
             actions.className = 'catalog-actions';
             const insertBtn = document.createElement('button');
@@ -1897,7 +2112,7 @@
             });
             actions.appendChild(insertBtn);
             actions.appendChild(delBtn);
-            row.appendChild(name);
+            row.appendChild(label);
             row.appendChild(actions);
             charContainer.appendChild(row);
           });
@@ -2402,17 +2617,623 @@
     }
 
     /* =========================
+     * Character Studio
+     * =======================*/
+    const CHARACTER_LOOK_LABELS = {
+      portrait: 'Portrait',
+      turnaround: 'Turnaround Sheet',
+      expression: 'Expression Sheet'
+    };
+
+    function getCharacterById(id){
+      if (!id) return null;
+      const list = project?.catalogs?.characters;
+      if (!Array.isArray(list)) return null;
+      return list.find(c => c.id === id) || null;
+    }
+
+    function parseMultilineListInput(value){
+      return normalizeList(value || '');
+    }
+
+    function parseIntegerInput(value){
+      const num = parseInt(value, 10);
+      return Number.isFinite(num) && num >= 0 ? num : 0;
+    }
+
+    function parseFloatInput(value){
+      const num = parseFloat(value);
+      return Number.isFinite(num) && num >= 0 ? Number(num.toFixed(2)) : 0;
+    }
+
+    function buildCharacterSubheading(character){
+      if (!character) return '';
+      const parts = [];
+      if (character.role) parts.push(character.role);
+      const identity = [character.pronouns, character.age].filter(Boolean).join(' • ');
+      if (identity) parts.push(identity);
+      if (character.archetype) parts.push(character.archetype);
+      return parts.join(' — ');
+    }
+
+    function characterSidebarMeta(character){
+      if (!character) return '';
+      if (character.role) return character.role;
+      if (character.archetype) return character.archetype;
+      const identity = [character.pronouns, character.age].filter(Boolean).join(' • ');
+      if (identity) return identity;
+      return 'Tap to detail profile';
+    }
+
+    function buildTraitsPreviewMarkup(character){
+      const traits = Array.isArray(character?.traits) ? character.traits : [];
+      if (!traits.length) return '<span class="muted-text">Add traits to see quick reference chips.</span>';
+      return traits.map(trait => `<span class="character-studio-chip">${escapeHtml(trait)}</span>`).join('');
+    }
+
+    function characterLookPreviewMarkup(kind, url, character){
+      const label = CHARACTER_LOOK_LABELS[kind] || 'Reference';
+      const name = character?.name ? character.name : 'Character';
+      if (url){
+        return `<img src="${escapeHtml(url)}" alt="${escapeHtml(`${name} ${label.toLowerCase()}`)}" />`;
+      }
+      return `<div class="character-studio-look-empty">Add a ${escapeHtml(label.toLowerCase())} URL to preview.</div>`;
+    }
+
+    function updateCharacterPreview(kind, character){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      const slot = overlay.querySelector(`[data-look-preview="${kind}"]`);
+      if (!slot) return;
+      let url = '';
+      if (kind === 'portrait') url = (character?.looks?.portrait || '').trim();
+      else if (kind === 'turnaround') url = (Array.isArray(character?.looks?.turnarounds) ? character.looks.turnarounds[0] : '') || '';
+      else if (kind === 'expression') url = (Array.isArray(character?.looks?.expressions) ? character.looks.expressions[0] : '') || '';
+      slot.innerHTML = characterLookPreviewMarkup(kind, url, character);
+    }
+
+    function refreshCharacterTraitsPreview(character){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      const target = overlay.querySelector('[data-traits-preview]');
+      if (target) target.innerHTML = buildTraitsPreviewMarkup(character);
+    }
+
+    function refreshCharacterStudioMeta(character){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      const heading = overlay.querySelector('[data-character-heading]');
+      if (heading) heading.textContent = character?.name ? character.name : 'Untitled Character';
+      const subheading = overlay.querySelector('[data-character-subheading]');
+      if (subheading){
+        const text = buildCharacterSubheading(character);
+        subheading.textContent = text || 'Add role, pronouns, or age details.';
+      }
+    }
+
+    function escapeAttrSelector(value){
+      return String(value).replace(/["\\]/g, '\\$&');
+    }
+
+    function refreshCharacterStudioListItem(id){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      const item = overlay.querySelector(`[data-character-item="${escapeAttrSelector(id)}"]`);
+      if (!item) return;
+      const char = getCharacterById(id);
+      if (!char) return;
+      const title = item.querySelector('strong');
+      if (title) title.textContent = char.name || 'Untitled Character';
+      const meta = item.querySelector('span');
+      if (meta) meta.textContent = characterSidebarMeta(char);
+      item.classList.toggle('active', char.id === characterStudioState.activeId);
+    }
+
+    function updateCharacterField(id, path, value){
+      const char = getCharacterById(id);
+      if (!char) return;
+      const before = JSON.stringify(char);
+      const parts = path.split('.');
+      let target = char;
+      for (let i = 0; i < parts.length - 1; i++){
+        const key = parts[i];
+        if (typeof target[key] !== 'object' || target[key] === null) target[key] = {};
+        target = target[key];
+      }
+      target[parts[parts.length - 1]] = value;
+      const after = JSON.stringify(char);
+      if (before === after) return;
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      renderCatalogs();
+    }
+
+    function renderCharacterStudio(){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      const listEl = overlay.querySelector('[data-character-list]');
+      const detailsEl = overlay.querySelector('[data-character-details]');
+      if (!listEl || !detailsEl) return;
+      const characters = Array.isArray(project?.catalogs?.characters) ? project.catalogs.characters : [];
+      listEl.innerHTML = '';
+      if (!characters.length){
+        const empty = document.createElement('div');
+        empty.className = 'character-studio-empty-list';
+        empty.textContent = 'No characters yet.';
+        listEl.appendChild(empty);
+        detailsEl.innerHTML = `
+          <div class="character-studio-empty">
+            <h2>No characters yet</h2>
+            <p>Add a character to start building their profile, traits, and arc.</p>
+          </div>`;
+        return;
+      }
+      if (!characterStudioState.activeId || !characters.some(c => c.id === characterStudioState.activeId)){
+        characterStudioState.activeId = characters[0].id;
+      }
+      characters.forEach(char => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'character-studio-list-item' + (char.id === characterStudioState.activeId ? ' active' : '');
+        item.dataset.characterItem = char.id;
+        item.innerHTML = `<strong>${escapeHtml(char.name || 'Untitled Character')}</strong><span>${escapeHtml(characterSidebarMeta(char))}</span>`;
+        item.addEventListener('click', ()=>{
+          if (characterStudioState.activeId === char.id) return;
+          characterStudioState.activeId = char.id;
+          renderCharacterStudio();
+        });
+        listEl.appendChild(item);
+      });
+
+      const active = getCharacterById(characterStudioState.activeId);
+      if (!active){
+        detailsEl.innerHTML = `
+          <div class="character-studio-empty">
+            <h2>No character selected</h2>
+            <p>Choose a character from the left to start planning.</p>
+          </div>`;
+        return;
+      }
+
+      const traitsText = Array.isArray(active.traits) ? active.traits.join('\n') : (active.traits || '');
+      const turnaroundsText = Array.isArray(active.looks?.turnarounds) ? active.looks.turnarounds.join('\n') : '';
+      const expressionsText = Array.isArray(active.looks?.expressions) ? active.looks.expressions.join('\n') : '';
+      const portraitUrl = (active.looks?.portrait || '').trim();
+      const turnaroundPreview = (Array.isArray(active.looks?.turnarounds) ? active.looks.turnarounds[0] : '') || '';
+      const expressionPreview = (Array.isArray(active.looks?.expressions) ? active.looks.expressions[0] : '') || '';
+      const statsScenes = Number.isFinite(active.stats?.scenes) ? active.stats.scenes : 0;
+      const statsDialogue = Number.isFinite(active.stats?.dialogue) ? active.stats.dialogue : 0;
+      const statsScreenTime = Number.isFinite(active.stats?.screenTime) ? active.stats.screenTime : 0;
+      const subheading = buildCharacterSubheading(active);
+      const traitsPreview = buildTraitsPreviewMarkup(active);
+      const aiPrompt = active.ai?.prompt || '';
+      const aiNotes = active.ai?.notes || '';
+
+      detailsEl.innerHTML = `
+        <div class="character-studio-detail-header">
+          <div>
+            <h2 data-character-heading>${escapeHtml(active.name || 'Untitled Character')}</h2>
+            <p class="muted-text" data-character-subheading>${escapeHtml(subheading || 'Add role, pronouns, or age details.')}</p>
+          </div>
+          <div class="character-studio-header-actions">
+            <button class="character-studio-tertiary" type="button" data-character-delete>Delete Character</button>
+          </div>
+        </div>
+        <section class="character-studio-section">
+          <h3>Profile</h3>
+          <p class="muted-text">Keep the essentials handy when writing.</p>
+          <div class="character-studio-two-col">
+            <label class="character-studio-field">
+              <span>Name</span>
+              <input type="text" value="${escapeHtml(active.name || '')}" data-character-field="name" placeholder="Character name" />
+            </label>
+            <label class="character-studio-field">
+              <span>Role</span>
+              <input type="text" value="${escapeHtml(active.role || '')}" data-character-field="role" placeholder="Protagonist, Antagonist..." />
+            </label>
+            <label class="character-studio-field">
+              <span>Archetype</span>
+              <input type="text" value="${escapeHtml(active.archetype || '')}" data-character-field="archetype" placeholder="e.g. Reluctant hero" />
+            </label>
+            <label class="character-studio-field">
+              <span>Pronouns</span>
+              <input type="text" value="${escapeHtml(active.pronouns || '')}" data-character-field="pronouns" placeholder="They/Them" />
+            </label>
+            <label class="character-studio-field">
+              <span>Age</span>
+              <input type="text" value="${escapeHtml(active.age || '')}" data-character-field="age" placeholder="32" />
+            </label>
+          </div>
+          <label class="character-studio-field">
+            <span>Summary</span>
+            <textarea class="small" data-character-field="summary" placeholder="Logline summary">${escapeHtml(active.summary || '')}</textarea>
+          </label>
+        </section>
+        <section class="character-studio-section">
+          <h3>Stats &amp; Spotlight</h3>
+          <p class="muted-text">Track how often this character appears in the script.</p>
+          <div class="character-studio-stats-grid">
+            <div class="character-studio-stat">
+              <span class="character-studio-stat-value" data-character-stat="scenes">${escapeHtml(String(statsScenes))}</span>
+              <span class="character-studio-stat-label">Scenes</span>
+            </div>
+            <div class="character-studio-stat">
+              <span class="character-studio-stat-value" data-character-stat="dialogue">${escapeHtml(String(statsDialogue))}</span>
+              <span class="character-studio-stat-label">Dialogue Lines</span>
+            </div>
+            <div class="character-studio-stat">
+              <span class="character-studio-stat-value" data-character-stat="screenTime">${escapeHtml(String(statsScreenTime))}</span>
+              <span class="character-studio-stat-label">Estimated Minutes</span>
+            </div>
+          </div>
+          <div class="character-studio-two-col">
+            <label class="character-studio-field">
+              <span>Total scenes</span>
+              <input type="number" min="0" value="${escapeHtml(String(statsScenes))}" data-character-field="stats.scenes" />
+            </label>
+            <label class="character-studio-field">
+              <span>Dialogue lines</span>
+              <input type="number" min="0" value="${escapeHtml(String(statsDialogue))}" data-character-field="stats.dialogue" />
+            </label>
+            <label class="character-studio-field">
+              <span>Screen time (minutes)</span>
+              <input type="number" min="0" step="0.1" value="${escapeHtml(String(statsScreenTime))}" data-character-field="stats.screenTime" />
+            </label>
+          </div>
+        </section>
+        <section class="character-studio-section">
+          <h3>Traits &amp; Personality</h3>
+          <p class="muted-text">List defining qualities, habits, and secrets.</p>
+          <div class="character-studio-traits-preview" data-traits-preview>${traitsPreview}</div>
+          <label class="character-studio-field">
+            <span>Traits (one per line)</span>
+            <textarea data-character-field="traits" placeholder="Resilient&#10;Impulsive&#10;Secret romantic">${escapeHtml(traitsText)}</textarea>
+          </label>
+        </section>
+        <section class="character-studio-section">
+          <h3>Background &amp; Family</h3>
+          <div class="character-studio-two-col">
+            <label class="character-studio-field">
+              <span>Background story</span>
+              <textarea data-character-field="background" placeholder="Origin story, formative experiences">${escapeHtml(active.background || '')}</textarea>
+            </label>
+            <label class="character-studio-field">
+              <span>Family tree / relationships</span>
+              <textarea data-character-field="familyTree" placeholder="Parents, siblings, key relationships">${escapeHtml(active.familyTree || '')}</textarea>
+            </label>
+          </div>
+        </section>
+        <section class="character-studio-section">
+          <h3>Character Arc</h3>
+          <p class="muted-text">Map how the character transforms across the story.</p>
+          <div class="character-studio-two-col">
+            <label class="character-studio-field">
+              <span>Setup</span>
+              <textarea data-character-field="arc.setup" placeholder="Who are they at the beginning?">${escapeHtml(active.arc?.setup || '')}</textarea>
+            </label>
+            <label class="character-studio-field">
+              <span>Development</span>
+              <textarea data-character-field="arc.development" placeholder="Challenges, midpoint, reversals">${escapeHtml(active.arc?.development || '')}</textarea>
+            </label>
+            <label class="character-studio-field">
+              <span>Resolution</span>
+              <textarea data-character-field="arc.resolution" placeholder="Where do they end up?">${escapeHtml(active.arc?.resolution || '')}</textarea>
+            </label>
+          </div>
+        </section>
+        <section class="character-studio-section">
+          <h3>Lookbook</h3>
+          <p class="muted-text">Collect portrait, turnaround, and expression references.</p>
+          <div class="character-studio-two-col">
+            <label class="character-studio-field">
+              <span>Portrait URL</span>
+              <input type="url" data-character-field="looks.portrait" value="${escapeHtml(portraitUrl)}" placeholder="https://..." />
+            </label>
+            <label class="character-studio-field">
+              <span>Turnarounds (one per line)</span>
+              <textarea data-character-field="looks.turnarounds" class="small" placeholder="Link to turnaround sheets">${escapeHtml(turnaroundsText)}</textarea>
+            </label>
+            <label class="character-studio-field">
+              <span>Expression sheets (one per line)</span>
+              <textarea data-character-field="looks.expressions" class="small" placeholder="Link to expressions">${escapeHtml(expressionsText)}</textarea>
+            </label>
+          </div>
+          <div class="character-studio-look-grid">
+            <div class="character-studio-look-card" data-look-preview="portrait">
+              <span class="character-studio-look-label">Portrait</span>
+              ${characterLookPreviewMarkup('portrait', portraitUrl, active)}
+            </div>
+            <div class="character-studio-look-card" data-look-preview="turnaround">
+              <span class="character-studio-look-label">Turnaround</span>
+              ${characterLookPreviewMarkup('turnaround', turnaroundPreview, active)}
+            </div>
+            <div class="character-studio-look-card" data-look-preview="expression">
+              <span class="character-studio-look-label">Expressions</span>
+              ${characterLookPreviewMarkup('expression', expressionPreview, active)}
+            </div>
+          </div>
+        </section>
+        <section class="character-studio-section">
+          <h3>AI Concepting</h3>
+          <p class="muted-text">Draft prompts for StudioOrganize AI or export for other tools.</p>
+          <label class="character-studio-field">
+            <span>AI prompt</span>
+            <textarea data-character-field="ai.prompt" placeholder="Describe the character's look, vibe, and scene">${escapeHtml(aiPrompt)}</textarea>
+          </label>
+          <label class="character-studio-field">
+            <span>Notes / references</span>
+            <textarea data-character-field="ai.notes" class="small" placeholder="Shot list, wardrobe callouts, artist references">${escapeHtml(aiNotes)}</textarea>
+          </label>
+          <div class="character-studio-ai-actions">
+            <button type="button" data-character-ai-generate>Save prompt &amp; prep AI render</button>
+            <span class="character-studio-status" data-ai-status></span>
+          </div>
+        </section>
+      `;
+
+      bindCharacterStudioFields(detailsEl, active);
+    }
+
+    function bindCharacterStudioFields(container, active){
+      if (!container || !active) return;
+      const id = active.id;
+      const aiStatus = container.querySelector('[data-ai-status]');
+      const clearAiStatus = ()=>{
+        if (aiStatus){
+          aiStatus.textContent = '';
+          aiStatus.removeAttribute('data-state');
+        }
+      };
+
+      const nameInput = container.querySelector('[data-character-field="name"]');
+      if (nameInput){
+        nameInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'name', e.target.value);
+          refreshCharacterStudioListItem(id);
+          refreshCharacterStudioMeta(active);
+          updateCharacterPreview('portrait', active);
+          updateCharacterPreview('turnaround', active);
+          updateCharacterPreview('expression', active);
+        });
+      }
+
+      const roleInput = container.querySelector('[data-character-field="role"]');
+      if (roleInput){
+        roleInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'role', e.target.value.trim());
+          refreshCharacterStudioListItem(id);
+          refreshCharacterStudioMeta(active);
+        });
+      }
+
+      const archetypeInput = container.querySelector('[data-character-field="archetype"]');
+      if (archetypeInput){
+        archetypeInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'archetype', e.target.value.trim());
+          refreshCharacterStudioListItem(id);
+          refreshCharacterStudioMeta(active);
+        });
+      }
+
+      const pronounInput = container.querySelector('[data-character-field="pronouns"]');
+      if (pronounInput){
+        pronounInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'pronouns', e.target.value.trim());
+          refreshCharacterStudioListItem(id);
+          refreshCharacterStudioMeta(active);
+        });
+      }
+
+      const ageInput = container.querySelector('[data-character-field="age"]');
+      if (ageInput){
+        ageInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'age', e.target.value.trim());
+          refreshCharacterStudioListItem(id);
+          refreshCharacterStudioMeta(active);
+        });
+      }
+
+      const summaryInput = container.querySelector('[data-character-field="summary"]');
+      if (summaryInput){
+        summaryInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'summary', e.target.value);
+        });
+      }
+
+      const scenesInput = container.querySelector('[data-character-field="stats.scenes"]');
+      if (scenesInput){
+        scenesInput.addEventListener('input', e=>{
+          const value = parseIntegerInput(e.target.value);
+          updateCharacterField(id, 'stats.scenes', value);
+          const statEl = container.querySelector('[data-character-stat="scenes"]');
+          if (statEl) statEl.textContent = value;
+        });
+      }
+
+      const dialogueInput = container.querySelector('[data-character-field="stats.dialogue"]');
+      if (dialogueInput){
+        dialogueInput.addEventListener('input', e=>{
+          const value = parseIntegerInput(e.target.value);
+          updateCharacterField(id, 'stats.dialogue', value);
+          const statEl = container.querySelector('[data-character-stat="dialogue"]');
+          if (statEl) statEl.textContent = value;
+        });
+      }
+
+      const screenTimeInput = container.querySelector('[data-character-field="stats.screenTime"]');
+      if (screenTimeInput){
+        screenTimeInput.addEventListener('input', e=>{
+          const value = parseFloatInput(e.target.value);
+          updateCharacterField(id, 'stats.screenTime', value);
+          const statEl = container.querySelector('[data-character-stat="screenTime"]');
+          if (statEl) statEl.textContent = value;
+        });
+      }
+
+      const traitsInput = container.querySelector('[data-character-field="traits"]');
+      if (traitsInput){
+        traitsInput.addEventListener('input', e=>{
+          const list = parseMultilineListInput(e.target.value);
+          updateCharacterField(id, 'traits', list);
+          refreshCharacterTraitsPreview(active);
+        });
+      }
+
+      const backgroundInput = container.querySelector('[data-character-field="background"]');
+      if (backgroundInput){
+        backgroundInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'background', e.target.value);
+        });
+      }
+
+      const familyInput = container.querySelector('[data-character-field="familyTree"]');
+      if (familyInput){
+        familyInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'familyTree', e.target.value);
+        });
+      }
+
+      const arcSetupInput = container.querySelector('[data-character-field="arc.setup"]');
+      if (arcSetupInput){
+        arcSetupInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'arc.setup', e.target.value);
+        });
+      }
+
+      const arcDevInput = container.querySelector('[data-character-field="arc.development"]');
+      if (arcDevInput){
+        arcDevInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'arc.development', e.target.value);
+        });
+      }
+
+      const arcResolutionInput = container.querySelector('[data-character-field="arc.resolution"]');
+      if (arcResolutionInput){
+        arcResolutionInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'arc.resolution', e.target.value);
+        });
+      }
+
+      const portraitInput = container.querySelector('[data-character-field="looks.portrait"]');
+      if (portraitInput){
+        portraitInput.addEventListener('input', e=>{
+          const value = e.target.value.trim();
+          updateCharacterField(id, 'looks.portrait', value);
+          updateCharacterPreview('portrait', active);
+        });
+      }
+
+      const turnaroundsInput = container.querySelector('[data-character-field="looks.turnarounds"]');
+      if (turnaroundsInput){
+        turnaroundsInput.addEventListener('input', e=>{
+          const list = parseMultilineListInput(e.target.value);
+          updateCharacterField(id, 'looks.turnarounds', list);
+          updateCharacterPreview('turnaround', active);
+        });
+      }
+
+      const expressionsInput = container.querySelector('[data-character-field="looks.expressions"]');
+      if (expressionsInput){
+        expressionsInput.addEventListener('input', e=>{
+          const list = parseMultilineListInput(e.target.value);
+          updateCharacterField(id, 'looks.expressions', list);
+          updateCharacterPreview('expression', active);
+        });
+      }
+
+      const promptInput = container.querySelector('[data-character-field="ai.prompt"]');
+      if (promptInput){
+        promptInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'ai.prompt', e.target.value);
+          clearAiStatus();
+        });
+      }
+
+      const notesInput = container.querySelector('[data-character-field="ai.notes"]');
+      if (notesInput){
+        notesInput.addEventListener('input', e=>{
+          updateCharacterField(id, 'ai.notes', e.target.value);
+          clearAiStatus();
+        });
+      }
+
+      const aiButton = container.querySelector('[data-character-ai-generate]');
+      if (aiButton){
+        aiButton.addEventListener('click', ()=>{
+          const prompt = (active.ai?.prompt || '').trim();
+          if (!prompt){
+            if (aiStatus){
+              aiStatus.textContent = 'Add an AI prompt to generate concept art.';
+              aiStatus.dataset.state = 'warning';
+            }
+            return;
+          }
+          if (aiStatus){
+            aiStatus.textContent = 'Prompt saved! Connect to StudioOrganize AI to generate character images.';
+            aiStatus.dataset.state = 'ready';
+          }
+        });
+      }
+
+      const deleteBtn = container.querySelector('[data-character-delete]');
+      if (deleteBtn){
+        deleteBtn.addEventListener('click', ()=>{
+          const name = active.name || 'this character';
+          const ok = confirm(`Delete ${name}? This will remove their notes and stats.`);
+          if (!ok) return;
+          const currentId = active.id;
+          removeCharacter(currentId);
+          const characters = Array.isArray(project?.catalogs?.characters) ? project.catalogs.characters : [];
+          if (characters.length){
+            characterStudioState.activeId = characters[0].id;
+          } else {
+            characterStudioState.activeId = null;
+          }
+          renderCharacterStudio();
+        });
+      }
+    }
+
+    function openCharacterStudio(characterId = null){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      if (timelineMode) closeTimelineMode();
+      characterStudioState.open = true;
+      if (characterId) characterStudioState.activeId = characterId;
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('character-studio-mode');
+      renderCharacterStudio();
+      const windowEl = overlay.querySelector('.character-studio-window');
+      if (windowEl && typeof windowEl.focus === 'function'){
+        windowEl.focus();
+      }
+    }
+
+    function closeCharacterStudio(){
+      const overlay = document.getElementById('characterStudioOverlay');
+      if (!overlay) return;
+      characterStudioState.open = false;
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('character-studio-mode');
+      const trigger = document.getElementById('openCharacterStudioBtn');
+      if (trigger && typeof trigger.focus === 'function') trigger.focus();
+    }
+
+    /* =========================
      * Catalog helpers
      * =======================*/
     function addCharacter(name){
       const trimmed = (name || '').trim();
-      if (!trimmed) return;
+      if (!trimmed) return null;
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = project.catalogs.characters || [];
-      project.catalogs.characters.push({ id: randomId(), name: trimmed });
+      const character = createCharacterData(trimmed);
+      project.catalogs.characters.push(character);
       bumpVersion();
       scheduleSave(); scheduleBackup();
       render();
+      return character;
     }
 
     function removeCharacter(id){
@@ -2715,6 +3536,36 @@
         if (fresh){ fresh.value = ''; fresh.focus(); }
       });
     }
+    const characterStudioBtn = document.getElementById('openCharacterStudioBtn');
+    if (characterStudioBtn){
+      characterStudioBtn.addEventListener('click', ()=> openCharacterStudio());
+    }
+    const characterStudioOverlay = document.getElementById('characterStudioOverlay');
+    if (characterStudioOverlay){
+      characterStudioOverlay.addEventListener('click', e=>{
+        if (e.target === characterStudioOverlay) closeCharacterStudio();
+      });
+    }
+    const characterStudioClose = document.getElementById('characterStudioClose');
+    if (characterStudioClose){
+      characterStudioClose.addEventListener('click', ()=> closeCharacterStudio());
+    }
+    const characterStudioAddBtn = document.getElementById('characterStudioAddBtn');
+    if (characterStudioAddBtn){
+      characterStudioAddBtn.addEventListener('click', ()=>{
+        const created = addCharacter('New Character');
+        if (!created) return;
+        characterStudioState.activeId = created.id;
+        renderCharacterStudio();
+        const nameField = document.querySelector('#characterStudioOverlay [data-character-field="name"]');
+        if (nameField){
+          requestAnimationFrame(()=>{
+            nameField.focus();
+            if (typeof nameField.select === 'function') nameField.select();
+          });
+        }
+      });
+    }
     const addSetBtn = document.getElementById('addSetBtn');
     if (addSetBtn){
       addSetBtn.addEventListener('click', ()=>{
@@ -2775,6 +3626,12 @@
         if (e.target === timelinePreviewLayer) closeTimelinePreview();
       });
     }
+
+    document.addEventListener('keydown', e=>{
+      if (e.key === 'Escape' && characterStudioState.open){
+        closeCharacterStudio();
+      }
+    });
 
     setupFocusHudInteractions();
 
