@@ -490,27 +490,50 @@
       .script-dialog{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(11,15,20,0.75); z-index:1200; padding:24px;}
       .script-dialog.open{display:flex;}
       .script-dialog__backdrop{position:absolute; inset:0;}
-      .script-dialog__panel{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,0.45); max-width:420px; width:100%; padding:20px; display:flex; flex-direction:column; gap:16px; color:var(--ink);}
+      .script-dialog__panel{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,0.45); max-width:1000px; width:100%; padding:24px; display:flex; flex-direction:column; gap:20px; color:var(--ink);}
       .script-dialog__header{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
       .script-dialog__header h2{margin:0; font-size:20px;}
       .script-dialog__close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
-      .script-dialog__body{display:flex; flex-direction:column; gap:12px;}
+      .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; align-items:start;}
+      .script-dialog__column{display:flex; flex-direction:column; gap:12px; align-self:stretch;}
+      .script-dialog__column-title{margin:0; font-size:15px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
+      .script-dialog__column-card{display:flex; flex-direction:column; gap:20px; border:1px solid var(--ring); border-radius:16px; padding:20px; background:var(--chip); transition:border-color .2s ease, box-shadow .2s ease; flex:1;}
+      .script-dialog__column-card:hover,
+      .script-dialog__column-card:focus-within{border-color:var(--acc); box-shadow:0 0 0 3px rgba(79,123,255,0.25);}
       .script-dialog__field{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--ink);}
       .script-dialog__field select{width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px;}
       .script-dialog__field input{width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px;}
       .script-dialog__status{min-height:18px;}
-      .script-dialog__preview{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ring); border-radius:12px; padding:12px; background:var(--chip);}
+      .script-dialog__section{display:flex; flex-direction:column; gap:16px;}
+      .script-dialog__section + .script-dialog__section{border-top:1px solid var(--ring); padding-top:20px;}
+      .script-dialog__section-header{display:flex; flex-direction:column; gap:4px;}
+      .script-dialog__section-header h4{margin:0; font-size:16px;}
+      .script-dialog__section-header p{margin:0; font-size:13px; color:var(--muted);}
+      .script-dialog__preview{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ring); border-radius:12px; padding:12px; background:rgba(255,255,255,0.04);}
       .script-dialog__preview img{width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--ring); background:rgba(255,255,255,0.04);}
       .script-dialog__preview h3{margin:0 0 4px; font-size:16px;}
       .script-dialog__preview p{margin:0;}
-      .script-dialog__section{border-top:1px solid var(--ring); margin-top:12px; padding-top:12px; display:flex; flex-direction:column; gap:12px;}
+      .script-dialog__cover-group{display:flex; gap:12px; align-items:flex-start;}
+      .script-dialog__cover-field{flex:1;}
+      .script-dialog__cover-preview{position:relative; width:128px; aspect-ratio:3 / 2; border:1px solid var(--ring); border-radius:12px; overflow:hidden; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center;}
+      .script-dialog__cover-preview img{width:100%; height:100%; object-fit:cover; transition:opacity 0.2s ease, filter 0.2s ease;}
+      .script-dialog__cover-preview[data-empty="true"] img{opacity:0.2; filter:saturate(0.1);}
+      .script-dialog__cover-empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px; font-size:12px; color:var(--muted); pointer-events:none; opacity:0; transition:opacity 0.2s ease;}
+      .script-dialog__cover-preview[data-empty="true"] .script-dialog__cover-empty{opacity:1;}
       .script-dialog__new-actions{display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__actions{display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__hint{margin:0; font-size:12px; color:var(--muted);}
       .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px;}
+      @media (min-width: 720px){
+        .script-dialog__body{grid-template-columns:repeat(2,minmax(0,1fr));}
+      }
+      @media (min-width: 1080px){
+        .script-dialog__body{grid-template-columns:repeat(3,minmax(0,1fr));}
+      }
       @media (max-width: 600px){
         .script-dialog{padding:16px;}
-        .script-dialog__panel{width:100%;}
+        .script-dialog__panel{width:100%; padding:20px;}
+        .script-dialog__body{grid-template-columns:1fr;}
         .script-dialog__preview{flex-direction:column; align-items:center; text-align:center;}
       }
 
@@ -1032,46 +1055,90 @@
           <button type="button" class="script-dialog__close" id="scriptDialogClose" aria-label="Close script dialog">✕</button>
         </div>
         <div class="script-dialog__body">
-          <div class="script-dialog__field">
-            <span class="muted-text">Current script</span>
-            <strong id="scriptDialogCurrentName">Untitled Project</strong>
-          </div>
-          <label class="script-dialog__field" for="scriptDialogCurrentTitle">
-            <span>Script title</span>
-            <input id="scriptDialogCurrentTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
-          </label>
-          <label class="script-dialog__field" for="scriptSelect">
-            <span>Choose a script</span>
-            <select id="scriptSelect"></select>
-          </label>
-          <div class="script-dialog__status muted-text" id="scriptDialogStatus"></div>
-          <div class="script-dialog__preview" id="scriptDialogPreview">
-            <img id="scriptPreviewImage" src="https://placehold.co/240x160?text=Script" alt="Selected script artwork" loading="lazy" />
-            <div>
-              <h3 id="scriptPreviewName">Select a script</h3>
-              <p class="muted-text" id="scriptPreviewDescription"></p>
+          <div class="script-dialog__column">
+            <h3 class="script-dialog__column-title">Current script</h3>
+            <div class="script-dialog__column-card">
+              <section class="script-dialog__section">
+                <div class="script-dialog__section-header">
+                  <h4>Project details</h4>
+                  <p>Update the name of your active project.</p>
+                </div>
+                <div class="script-dialog__field">
+                  <span class="muted-text">Current name</span>
+                  <strong id="scriptDialogCurrentName">Untitled Project</strong>
+                </div>
+                <label class="script-dialog__field" for="scriptDialogCurrentTitle">
+                  <span>Script title</span>
+                  <input id="scriptDialogCurrentTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
+                </label>
+              </section>
+              <section class="script-dialog__section">
+                <div class="script-dialog__section-header">
+                  <h4>Current script artwork</h4>
+                  <p>Use an image to represent the script you have open right now.</p>
+                </div>
+                <div class="script-dialog__cover-group">
+                  <div class="script-dialog__cover-preview" id="scriptDialogCurrentCoverPreview" data-empty="true">
+                    <img id="scriptDialogCurrentCoverImage" src="https://placehold.co/240x160?text=Script" alt="Current script title artwork" loading="lazy" />
+                    <div class="script-dialog__cover-empty">No artwork yet</div>
+                  </div>
+                  <label class="script-dialog__field script-dialog__cover-field" for="scriptDialogCoverUrl">
+                    <span>Title image URL</span>
+                    <input id="scriptDialogCoverUrl" type="url" placeholder="https://example.com/cover.jpg" autocomplete="off" inputmode="url" />
+                  </label>
+                </div>
+                <p class="muted-text script-dialog__hint">Shown wherever the current script needs a cover.</p>
+                <div class="script-dialog__actions">
+                  <button type="button" class="btn non-essential" id="scriptDialogClearCover">Remove artwork</button>
+                  <button type="button" class="btn" id="scriptDialogApplyCover">Update artwork</button>
+                </div>
+              </section>
             </div>
           </div>
-          <label class="script-dialog__field" for="scriptDialogCoverUrl">
-            <span>Title image URL</span>
-            <input id="scriptDialogCoverUrl" type="url" placeholder="https://example.com/cover.jpg" autocomplete="off" inputmode="url" />
-          </label>
-          <p class="muted-text script-dialog__hint">Shown when scenes have no storyboard frames.</p>
-          <div class="script-dialog__actions">
-            <button type="button" class="btn non-essential" id="scriptDialogClearCover">Clear</button>
-            <button type="button" class="btn" id="scriptDialogApplyCover">Apply</button>
-          </div>
-          <div class="script-dialog__section">
-            <div class="script-dialog__field">
-              <strong>New script</strong>
-              <span class="muted-text">Give it a title and start fresh.</span>
+          <div class="script-dialog__column">
+            <h3 class="script-dialog__column-title">Switch scripts</h3>
+            <div class="script-dialog__column-card">
+              <section class="script-dialog__section">
+                <div class="script-dialog__section-header">
+                  <h4>Script selection</h4>
+                  <p>Select another script to load its details.</p>
+                </div>
+                <label class="script-dialog__field" for="scriptSelect">
+                  <span>Choose a script</span>
+                  <select id="scriptSelect"></select>
+                </label>
+                <div class="script-dialog__status muted-text" id="scriptDialogStatus"></div>
+                <div class="script-dialog__preview" id="scriptDialogPreview">
+                  <img id="scriptPreviewImage" src="https://placehold.co/240x160?text=Script" alt="Selected script artwork" loading="lazy" />
+                  <div>
+                    <h3 id="scriptPreviewName">Select a script</h3>
+                    <p class="muted-text" id="scriptPreviewDescription"></p>
+                  </div>
+                </div>
+              </section>
             </div>
-            <label class="script-dialog__field" for="scriptDialogNewTitle">
-              <span>Script title</span>
-              <input id="scriptDialogNewTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
-            </label>
-            <div class="script-dialog__new-actions">
-              <button type="button" class="btn" id="scriptDialogCreate">Create</button>
+          </div>
+          <div class="script-dialog__column">
+            <h3 class="script-dialog__column-title">Create new script</h3>
+            <div class="script-dialog__column-card">
+              <section class="script-dialog__section">
+                <div class="script-dialog__section-header">
+                  <h4>New script</h4>
+                  <p>Start a blank project with its own scenes.</p>
+                </div>
+                <label class="script-dialog__field" for="scriptDialogNewTitle">
+                  <span>Script title</span>
+                  <input id="scriptDialogNewTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
+                </label>
+                <label class="script-dialog__field" for="scriptDialogNewCoverUrl">
+                  <span>Optional cover image URL</span>
+                  <input id="scriptDialogNewCoverUrl" type="url" placeholder="https://example.com/new-script.jpg" autocomplete="off" inputmode="url" />
+                </label>
+                <p class="muted-text script-dialog__hint">Applied to the script you create.</p>
+                <div class="script-dialog__new-actions">
+                  <button type="button" class="btn" id="scriptDialogCreate">Create</button>
+                </div>
+              </section>
             </div>
           </div>
         </div>
@@ -1442,6 +1509,20 @@
       return typeof raw === 'string' ? raw.trim() : '';
     }
 
+    function updateCurrentCoverPreview(url){
+      const normalized = (url || '').trim();
+      const preview = document.getElementById('scriptDialogCurrentCoverPreview');
+      const img = document.getElementById('scriptDialogCurrentCoverImage');
+      const source = normalized || DEFAULT_SCRIPT_IMAGE;
+      if (img){
+        img.src = source;
+        img.alt = normalized ? 'Current script title artwork' : 'Current script title artwork placeholder';
+      }
+      if (preview){
+        preview.dataset.empty = normalized ? 'false' : 'true';
+      }
+    }
+
     function getStoryboardPlaceholderImage(){
       const cover = getCoverImageUrl();
       return cover || DEFAULT_STORYBOARD_IMAGE;
@@ -1564,6 +1645,7 @@
       const coverInput = document.getElementById('scriptDialogCoverUrl');
       const coverApplyBtn = document.getElementById('scriptDialogApplyCover');
       const coverClearBtn = document.getElementById('scriptDialogClearCover');
+      const newCoverInput = document.getElementById('scriptDialogNewCoverUrl');
       const busy = scriptDialogLoading || scriptDialogSaving || scriptDialogCreating;
       if (loadBtn){
         const disable = !scriptDialogSelectedId || (project && scriptDialogSelectedId === project.projectId);
@@ -1601,6 +1683,9 @@
       if (coverClearBtn){
         coverClearBtn.disabled = busy;
       }
+      if (newCoverInput){
+        newCoverInput.disabled = scriptDialogLoading || scriptDialogSaving || scriptDialogCreating;
+      }
     }
 
     function updateScriptPreview(scriptId){
@@ -1628,6 +1713,7 @@
         if (descEl) descEl.textContent = '';
         if (imgEl) imgEl.src = defaultImage;
       }
+      updateCurrentCoverPreview(getCoverImageUrl());
       updateScriptDialogLoadState();
     }
 
@@ -1643,6 +1729,7 @@
       if (currentTitleInput) currentTitleInput.value = project?.title || '';
       const coverInput = document.getElementById('scriptDialogCoverUrl');
       if (coverInput) coverInput.value = getCoverImageUrl();
+      updateCurrentCoverPreview(getCoverImageUrl());
       const select = document.getElementById('scriptSelect');
       const status = document.getElementById('scriptDialogStatus');
       if (status) status.textContent = 'Loading scripts…';
@@ -1655,6 +1742,10 @@
       const newTitleInput = document.getElementById('scriptDialogNewTitle');
       if (newTitleInput){
         newTitleInput.value = '';
+      }
+      const newCoverInput = document.getElementById('scriptDialogNewCoverUrl');
+      if (newCoverInput){
+        newCoverInput.value = '';
       }
       scriptDialogSelectedId = null;
       updateScriptPreview('');
@@ -1712,6 +1803,8 @@
       if (status) status.textContent = '';
       const newTitleInput = document.getElementById('scriptDialogNewTitle');
       if (newTitleInput) newTitleInput.value = '';
+      const newCoverInput = document.getElementById('scriptDialogNewCoverUrl');
+      if (newCoverInput) newCoverInput.value = '';
       updateScriptDialogLoadState();
     }
 
@@ -1890,10 +1983,23 @@
       const input = document.getElementById('scriptDialogNewTitle');
       const status = document.getElementById('scriptDialogStatus');
       const rawTitle = input ? input.value.trim() : '';
+      const newCoverInput = document.getElementById('scriptDialogNewCoverUrl');
+      const rawCover = newCoverInput ? newCoverInput.value.trim() : '';
+      let normalizedCover = '';
       if (!rawTitle){
         if (status) status.textContent = 'Enter a title to create a new script.';
         if (input) input.focus();
         return;
+      }
+      if (rawCover){
+        const parsedCover = normalizeStoryboardUrl(rawCover);
+        if (!parsedCover){
+          if (status) status.textContent = 'Enter a valid image URL for the new script cover, or leave it blank.';
+          alert('Enter a valid image URL (including http:// or https://) for the new script cover, or leave it blank.');
+          if (newCoverInput) newCoverInput.focus();
+          return;
+        }
+        normalizedCover = parsedCover;
       }
       const confirmed = window.confirm('Create a new script? Your current work will be saved locally first.');
       if (!confirmed) return;
@@ -1907,6 +2013,7 @@
         project.title = rawTitle;
         project.libraryEntryId = null;
         ensureProjectShape();
+        setProjectCoverImage(normalizedCover);
         ensurePomodoroSettings();
         activeSceneId = project.scenes?.[0]?.id || null;
         render();
