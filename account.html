@@ -237,35 +237,51 @@
         <p class="muted">Share your progress with collaborators for extra accountability.</p>
       </div>
 
-      <div class="insight-card">
+      <div class="insight-card insight-card--full">
         <div class="insight-card__header">
           <h3>Milestones &amp; Reminders</h3>
           <span class="insight-card__tag">Stay accountable</span>
         </div>
-        <form class="goal-form">
-          <label class="goal-form__field">
-            <span>Goal title</span>
-            <input type="text" name="goal" placeholder="Finish storyboard draft" />
-          </label>
-          <label class="goal-form__field">
-            <span>Target date</span>
-            <input type="date" name="deadline" />
-          </label>
-          <label class="goal-form__field">
-            <span>Email reminders</span>
-            <select name="reminder">
-              <option value="weekly">Weekly digest</option>
-              <option value="three-days">3 days before</option>
-              <option value="day-before">Day before deadline</option>
-              <option value="off">No reminders</option>
-            </select>
-          </label>
-          <label class="goal-form__field">
-            <span>Add a note (optional)</span>
-            <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
-          </label>
-          <button class="goal-form__submit" type="submit">Save goal</button>
-        </form>
+        <div class="goal-planner">
+          <aside class="goal-planner__form-panel" aria-label="Add a milestone goal">
+            <h4 class="goal-planner__heading">Plan a new milestone</h4>
+            <p class="goal-planner__copy">Set a focus target, pick when it is due, and choose how you would like to be nudged.</p>
+            <form class="goal-form" data-goal-form>
+              <label class="goal-form__field">
+                <span>Goal title</span>
+                <input type="text" name="goal" placeholder="Finish storyboard draft" />
+              </label>
+              <label class="goal-form__field">
+                <span>Target date</span>
+                <input type="date" name="deadline" />
+              </label>
+              <label class="goal-form__field">
+                <span>Email reminders</span>
+                <select name="reminder">
+                  <option value="weekly">Weekly digest</option>
+                  <option value="three-days">3 days before</option>
+                  <option value="day-before">Day before deadline</option>
+                  <option value="off">No reminders</option>
+                </select>
+              </label>
+              <label class="goal-form__field">
+                <span>Add a note (optional)</span>
+                <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
+              </label>
+              <button class="goal-form__submit" type="submit">Save goal</button>
+            </form>
+          </aside>
+          <section class="goal-planner__list-panel" aria-live="polite">
+            <div class="goal-list">
+              <header class="goal-list__header">
+                <h4>Saved goals</h4>
+                <p class="muted">Track multiple milestones and update them as you progress.</p>
+              </header>
+              <ol class="goal-list__items" data-goal-list></ol>
+              <p class="goal-list__empty" data-goal-empty hidden>You have not saved any goals yet.</p>
+            </div>
+          </section>
+        </div>
         <p class="muted goal-form__footnote">
           Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any time.
         </p>

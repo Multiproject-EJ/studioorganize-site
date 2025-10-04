@@ -202,3 +202,184 @@ if (supabaseClient && navHasAuthControls){
   });
   refreshAccountSession();
 }
+
+const GOALS_STORAGE_KEY = 'SO_ACCOUNT_GOALS';
+
+function parseStoredGoals(value){
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error){
+    return [];
+  }
+}
+
+function loadStoredGoals(){
+  try {
+    const stored = localStorage.getItem(GOALS_STORAGE_KEY);
+    return parseStoredGoals(stored);
+  } catch (_error){
+    return [];
+  }
+}
+
+function persistGoals(goals){
+  try {
+    localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
+  } catch (_error){
+    /* ignore write errors (e.g. private mode) */
+  }
+}
+
+function formatGoalDate(dateString){
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())){
+    return '';
+  }
+  return date.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+}
+
+function buildGoalListItem(goal){
+  const item = document.createElement('li');
+  item.className = 'goal-list__item';
+  item.dataset.goalId = goal.id;
+
+  const header = document.createElement('div');
+  header.className = 'goal-list__item-header';
+
+  const title = document.createElement('p');
+  title.className = 'goal-list__item-title';
+  title.textContent = goal.title;
+
+  const actions = document.createElement('div');
+  actions.className = 'goal-list__actions';
+
+  const removeButton = document.createElement('button');
+  removeButton.type = 'button';
+  removeButton.className = 'goal-list__remove';
+  removeButton.textContent = 'Remove goal';
+  removeButton.setAttribute('data-goal-remove', goal.id);
+  removeButton.setAttribute('aria-label', `Remove goal “${goal.title}”`);
+
+  actions.appendChild(removeButton);
+  header.append(title, actions);
+  item.appendChild(header);
+
+  const meta = document.createElement('div');
+  meta.className = 'goal-list__item-meta';
+
+  const metaPieces = [];
+  const deadlineLabel = goal.deadline ? formatGoalDate(goal.deadline) : '';
+  if (deadlineLabel){
+    metaPieces.push(`Target: ${deadlineLabel}`);
+  }
+  if (goal.reminderLabel){
+    metaPieces.push(`Reminder: ${goal.reminderLabel}`);
+  }
+  if (goal.createdAt){
+    const createdLabel = formatGoalDate(goal.createdAt);
+    if (createdLabel){
+      metaPieces.push(`Added: ${createdLabel}`);
+    }
+  }
+
+  if (metaPieces.length){
+    meta.textContent = metaPieces.join(' • ');
+    item.appendChild(meta);
+  }
+
+  if (goal.note){
+    const note = document.createElement('p');
+    note.className = 'goal-list__item-note';
+    note.textContent = goal.note;
+    item.appendChild(note);
+  }
+
+  return item;
+}
+
+function renderGoalList(goals, listElement, emptyState){
+  if (!listElement || !emptyState) return;
+  listElement.textContent = '';
+  if (!Array.isArray(goals) || goals.length === 0){
+    emptyState.hidden = false;
+    return;
+  }
+
+  emptyState.hidden = true;
+  const fragment = document.createDocumentFragment();
+  goals.forEach(goal => {
+    fragment.appendChild(buildGoalListItem(goal));
+  });
+  listElement.appendChild(fragment);
+}
+
+function initGoalPlanner(){
+  const form = document.querySelector('[data-goal-form]');
+  const list = document.querySelector('[data-goal-list]');
+  const empty = document.querySelector('[data-goal-empty]');
+  if (!form || !list || !empty) return;
+
+  const titleInput = form.querySelector('input[name="goal"]');
+  const dateInput = form.querySelector('input[name="deadline"]');
+  const reminderSelect = form.querySelector('select[name="reminder"]');
+  const noteInput = form.querySelector('textarea[name="note"]');
+
+  let goals = loadStoredGoals();
+  renderGoalList(goals, list, empty);
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const title = (titleInput?.value || '').trim();
+    if (!title){
+      if (titleInput){
+        titleInput.setCustomValidity('Please enter a goal title.');
+        titleInput.reportValidity();
+        titleInput.focus();
+      }
+      return;
+    }
+    if (titleInput){
+      titleInput.setCustomValidity('');
+    }
+
+    const deadlineValue = (dateInput?.value || '').trim();
+    const reminderValue = reminderSelect?.value || '';
+    const reminderLabel = reminderSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
+    const noteValue = (noteInput?.value || '').trim();
+
+    const goal = {
+      id: `goal-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      title,
+      deadline: deadlineValue ? `${deadlineValue}T00:00:00` : '',
+      reminder: reminderValue,
+      reminderLabel,
+      note: noteValue,
+      createdAt: new Date().toISOString(),
+    };
+
+    goals = [goal, ...goals];
+    persistGoals(goals);
+    renderGoalList(goals, list, empty);
+    form.reset();
+    titleInput?.focus();
+  });
+
+  list.addEventListener('click', event => {
+    const button = event.target instanceof HTMLElement ? event.target.closest('[data-goal-remove]') : null;
+    if (!button) return;
+    const goalId = button.getAttribute('data-goal-remove');
+    if (!goalId) return;
+    goals = goals.filter(goal => goal.id !== goalId);
+    persistGoals(goals);
+    renderGoalList(goals, list, empty);
+  });
+}
+
+if (document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initGoalPlanner, { once: true });
+} else {
+  initGoalPlanner();
+}
