@@ -215,6 +215,12 @@
         gap:12px; background:var(--chip);
       }
       .storyboard-overlay-header h2{margin:0; font-size:18px; font-weight:600;}
+      .storyboard-ai-config{margin-top:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;}
+      .storyboard-ai-config-field{display:flex; flex-direction:column; gap:6px; flex:1 1 220px;}
+      .storyboard-ai-config-field span{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
+      .storyboard-ai-config-field input,
+      .storyboard-ai-config-field select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; width:100%;}
+      .storyboard-ai-config-hint{margin:0; font-size:11px; flex-basis:100%;}
       .storyboard-close-btn{
         background:var(--chip); border:1px solid var(--ring); border-radius:999px;
         padding:6px 12px; cursor:pointer; color:var(--ink);
@@ -259,6 +265,29 @@
       .storyboard-gallery-heading p{margin:4px 0 0; font-size:13px;}
       .storyboard-gallery-input{display:flex; gap:10px; flex-wrap:wrap;}
       .storyboard-gallery-input input{flex:1 1 240px;}
+      .storyboard-ai-panel{border:1px solid var(--ring); border-radius:16px; background:var(--panel); padding:16px; display:flex; flex-direction:column; gap:12px;}
+      .storyboard-ai-panel-header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+      .storyboard-ai-panel-header h4{margin:0; font-size:15px; font-weight:600;}
+      .storyboard-ai-panel-header p{margin:4px 0 0; font-size:12px; max-width:52ch;}
+      .storyboard-ai-count{display:flex; flex-direction:column; gap:6px; min-width:120px;}
+      .storyboard-ai-count span{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
+      .storyboard-ai-field{display:flex; flex-direction:column; gap:6px;}
+      .storyboard-ai-field span{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
+      .storyboard-ai-field textarea{min-height:96px; resize:vertical;}
+      .storyboard-ai-characters{display:flex; flex-direction:column; gap:8px;}
+      .storyboard-ai-label{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
+      .storyboard-ai-character-list{display:flex; flex-direction:column; gap:8px;}
+      .storyboard-ai-character{display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px solid var(--ring); border-radius:12px; background:var(--chip);}
+      .storyboard-ai-character input{width:auto; flex:0 0 auto; margin-top:4px;}
+      .storyboard-ai-character-details{display:flex; flex-direction:column; gap:2px; font-size:13px;}
+      .storyboard-ai-character-token{font-size:11px; font-weight:600; letter-spacing:.3px; color:var(--muted);}
+      .storyboard-ai-character-notes{font-size:12px; color:var(--muted);}
+      .storyboard-ai-character-empty{font-size:12px; color:var(--muted);}
+      .storyboard-ai-actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+      .storyboard-ai-status{min-height:1.2em; font-size:12px;}
+      .storyboard-ai-status[data-state="error"]{color:#ff6b6b;}
+      .storyboard-ai-status[data-state="success"]{color:#18a999;}
+      .storyboard-ai-status[data-state="pending"]{color:var(--ink);}
       .storyboard-gallery-grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));}
       .storyboard-gallery-card{
         border:1px solid var(--ring); border-radius:16px; overflow:hidden;
@@ -999,6 +1028,19 @@
           <div>
             <h2 id="storyboardOverlayTitle">Storyboard</h2>
             <p class="muted-text">Map out every beat with scene-linked frames you can update in seconds.</p>
+            <div class="storyboard-ai-config" role="group" aria-label="AI configuration">
+              <label class="storyboard-ai-config-field" for="storyboardApiKey">
+                <span>OpenRouter API key</span>
+                <input id="storyboardApiKey" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
+              </label>
+              <label class="storyboard-ai-config-field" for="storyboardModel">
+                <span>Model</span>
+                <select id="storyboardModel">
+                  <option value="google/gemini-2.5-flash-image-preview">Gemini 2.5 Image Preview</option>
+                </select>
+              </label>
+              <p class="storyboard-ai-config-hint muted-text">Keys stay on this device. Use consistent character handles for reliable panels.</p>
+            </div>
           </div>
           <button class="storyboard-close-btn" type="button" id="storyboardOverlayClose">Close ✕</button>
         </div>
@@ -1022,6 +1064,30 @@
               <input id="storyboardQuickUrl" placeholder="Paste storyboard image URL" inputmode="url" autocomplete="off" disabled />
               <button class="btn" type="button" id="storyboardQuickAdd" disabled>Add storyboard</button>
             </div>
+            <section class="storyboard-ai-panel" aria-labelledby="storyboardAIPanelTitle">
+              <div class="storyboard-ai-panel-header">
+                <div>
+                  <h4 id="storyboardAIPanelTitle">AI storyboard assistant</h4>
+                  <p class="muted-text">Describe the shot and Gemini 2.5 Image Preview will render frames that keep your cast on model.</p>
+                </div>
+                <label class="storyboard-ai-count" for="storyboardAIFrameCount">
+                  <span>Frames</span>
+                  <input id="storyboardAIFrameCount" type="number" min="1" max="4" value="1" inputmode="numeric" />
+                </label>
+              </div>
+              <label class="storyboard-ai-field" for="storyboardAIPrompt">
+                <span>Shot description</span>
+                <textarea id="storyboardAIPrompt" rows="3" placeholder="Describe the composition, action, and emotion you want to visualize…"></textarea>
+              </label>
+              <div class="storyboard-ai-characters">
+                <span class="storyboard-ai-label">Character handles</span>
+                <div id="storyboardAICharacterList" class="storyboard-ai-character-list"></div>
+              </div>
+              <div class="storyboard-ai-actions">
+                <button class="btn" type="button" id="storyboardAIGenerate">Generate storyboard</button>
+                <span class="storyboard-ai-status muted-text" id="storyboardAIStatus" role="status" aria-live="polite"></span>
+              </div>
+            </section>
             <div class="storyboard-gallery-grid" id="storyboardGalleryGrid"></div>
             <div class="storyboard-gallery-empty" id="storyboardGalleryEmpty">Select a scene to start building a storyboard.</div>
           </section>
@@ -1240,6 +1306,30 @@
       confrontation: 'Confrontation',
       resolution: 'Resolution'
     };
+    const STORYBOARD_AI_CONFIG_STORAGE_KEY = 'SW_STORYBOARD_AI_CONFIG_V1';
+    const STORYBOARD_AI_DEFAULT_MODEL = 'google/gemini-2.5-flash-image-preview';
+    function getDefaultStoryboardAIConfig(){
+      return { apiKey: '', model: STORYBOARD_AI_DEFAULT_MODEL };
+    }
+    function loadStoryboardAIConfig(){
+      const fallback = getDefaultStoryboardAIConfig();
+      try {
+        const raw = localStorage.getItem(STORYBOARD_AI_CONFIG_STORAGE_KEY);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        return {
+          apiKey: typeof parsed?.apiKey === 'string' ? parsed.apiKey : '',
+          model: typeof parsed?.model === 'string' && parsed.model ? parsed.model : STORYBOARD_AI_DEFAULT_MODEL
+        };
+      } catch (err){
+        return fallback;
+      }
+    }
+    function saveStoryboardAIConfig(){
+      try {
+        localStorage.setItem(STORYBOARD_AI_CONFIG_STORAGE_KEY, JSON.stringify(storyboardAIConfig));
+      } catch (err){}
+    }
 
     /* =========================
      * State & Config
@@ -1250,6 +1340,13 @@
     let saveSceneStatusTimer = null;
     let storyboardMode = false;
     let storyboardOverlaySceneId = null;
+    let storyboardAIConfig = loadStoryboardAIConfig();
+    const storyboardAIPrompts = new Map();
+    const storyboardAISelections = new Map();
+    const storyboardAIFrameCounts = new Map();
+    const storyboardCharacterTokenCache = new Map();
+    let storyboardAIActiveSceneId = null;
+    let storyboardAIGenerating = false;
     let timelineMode = false;
     let timelineInsertIndex = 0;
     let timelineDragSceneId = null;
@@ -2420,6 +2517,7 @@
      * =======================*/
     function render(){
       ensureProjectShape();
+      pruneStoryboardAIState();
       hideSelectionMenu();
       document.getElementById('title').textContent = project.title || 'Untitled Project';
       const dialogTitleInput = document.getElementById('scriptDialogCurrentTitle');
@@ -2906,6 +3004,7 @@
     function normalizeStoryboardUrl(raw){
       let value = (raw || '').trim();
       if (!value) return null;
+      if (/^data:image\/[a-z0-9.+-]+;base64,/i.test(value)){ return value; }
       if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)){
         value = `https://${value}`;
       }
@@ -3033,6 +3132,395 @@
       return Array.isArray(project?.scenes) ? project.scenes : [];
     }
 
+    function getStoryboardCharacters(){
+      return Array.isArray(project?.catalogs?.characters) ? project.catalogs.characters : [];
+    }
+
+    function getStoryboardCharacterById(characterId){
+      if (!characterId) return null;
+      return getStoryboardCharacters().find(character => character.id === characterId) || null;
+    }
+
+    function getStoryboardCharacterToken(character){
+      if (!character) return '';
+      if (storyboardCharacterTokenCache.has(character.id)){
+        return storyboardCharacterTokenCache.get(character.id);
+      }
+      const baseName = (character.name || 'character').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_') || 'CHARACTER';
+      const sanitizedId = (character.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase() || 'ID';
+      const token = `CHAR_${baseName}_${sanitizedId}`;
+      storyboardCharacterTokenCache.set(character.id, token);
+      return token;
+    }
+
+    function collectSceneCharacterIds(scene){
+      if (!scene || !Array.isArray(scene.elements)) return [];
+      const ids = new Set();
+      const characters = getStoryboardCharacters();
+      scene.elements.forEach(element => {
+        if (!element || typeof element !== 'object') return;
+        if (element.ownerId) ids.add(element.ownerId);
+        else if (element.t === 'character' && typeof element.txt === 'string'){
+          const name = element.txt.trim().toLowerCase();
+          const match = characters.find(char => (char.name || '').trim().toLowerCase() === name);
+          if (match) ids.add(match.id);
+        }
+      });
+      return Array.from(ids);
+    }
+
+    function buildDefaultStoryboardShotPrompt(scene){
+      if (!scene) return '';
+      const slug = scene.slug || 'this scene';
+      const snippet = getSceneSnippet(scene);
+      if (snippet) return `Depict ${slug} as described: ${snippet}`;
+      return `Depict ${slug} with cinematic lighting and clear staging.`;
+    }
+
+    function summarizeCharacterForPrompt(character){
+      if (!character) return '';
+      const details = [];
+      if (character.summary) details.push(character.summary);
+      if (character.ai?.prompt) details.push(character.ai.prompt);
+      if (Array.isArray(character.traits) && character.traits.length){
+        details.push(`Key traits: ${character.traits.join(', ')}`);
+      }
+      const lookUrls = [];
+      if (character.looks?.portrait) lookUrls.push(character.looks.portrait);
+      if (Array.isArray(character.looks?.turnarounds)) lookUrls.push(...character.looks.turnarounds.filter(Boolean));
+      if (Array.isArray(character.looks?.expressions)) lookUrls.push(...character.looks.expressions.filter(Boolean));
+      if (lookUrls.length) details.push(`Visual references: ${lookUrls.join(', ')}`);
+      if (character.ai?.notes) details.push(character.ai.notes);
+      return details.join(' • ');
+    }
+
+    function buildStoryboardPrompt(scene, shotPrompt, characters, frameCount){
+      const promptParts = [];
+      const projectTitle = project?.title ? `"${project.title}"` : 'this project';
+      promptParts.push(`You are Gemini 2.5 Image Preview generating cinematic storyboard imagery for ${projectTitle}.`);
+      promptParts.push('Use a 16:9 storyboard frame with clear silhouettes and bold lighting.');
+      promptParts.push('Maintain absolute character consistency by referencing the provided handles verbatim.');
+      if (Array.isArray(characters) && characters.length){
+        promptParts.push('Character bible:');
+        characters.forEach(character => {
+          const token = getStoryboardCharacterToken(character);
+          const descriptor = summarizeCharacterForPrompt(character) || 'Preserve face shape, hairstyle, outfit, and palette.';
+          promptParts.push(`${token} (${character.name || 'Unnamed character'}): ${descriptor}`);
+        });
+      } else {
+        promptParts.push('No specific characters were selected, but preserve continuity with established looks.');
+      }
+      if (scene?.slug) promptParts.push(`Scene heading: ${scene.slug}`);
+      const snippet = getSceneSnippet(scene);
+      if (snippet) promptParts.push(`Script context: ${snippet}`);
+      const frameLabel = frameCount > 1 ? `${frameCount} sequential storyboard frames` : 'a single storyboard frame';
+      promptParts.push(`Generate ${frameLabel} that visualize: ${shotPrompt}`);
+      promptParts.push('Keep poses dynamic yet readable and ensure all referenced handles match across every frame.');
+      if (frameCount > 1){
+        promptParts.push('Each frame should feel like the next beat of the same moment while keeping costumes and faces identical.');
+      }
+      return promptParts.join('\n\n');
+    }
+
+    function getStoryboardAISelection(scene){
+      if (!scene) return new Set();
+      let selection = storyboardAISelections.get(scene.id);
+      const availableIds = new Set(getStoryboardCharacters().map(char => char.id));
+      if (selection instanceof Set){
+        selection = new Set(Array.from(selection).filter(id => availableIds.has(id)));
+      }
+      if (!selection || selection.size === 0){
+        const defaults = collectSceneCharacterIds(scene).filter(id => availableIds.has(id));
+        selection = new Set(defaults);
+      }
+      storyboardAISelections.set(scene.id, selection);
+      return selection;
+    }
+
+    function applyStoryboardAIInputState(){
+      const hasScene = !!storyboardAIActiveSceneId;
+      const promptEl = document.getElementById('storyboardAIPrompt');
+      const frameEl = document.getElementById('storyboardAIFrameCount');
+      if (promptEl) promptEl.disabled = !hasScene || storyboardAIGenerating;
+      if (frameEl) frameEl.disabled = !hasScene || storyboardAIGenerating;
+      document.querySelectorAll('#storyboardAICharacterList input[type="checkbox"]').forEach(box => {
+        box.disabled = !hasScene || storyboardAIGenerating;
+      });
+    }
+
+    function updateStoryboardAIGenerateButton(){
+      const btn = document.getElementById('storyboardAIGenerate');
+      if (!btn) return;
+      const promptEl = document.getElementById('storyboardAIPrompt');
+      const promptValue = promptEl ? promptEl.value.trim() : '';
+      const keyReady = !!(storyboardAIConfig?.apiKey && storyboardAIConfig.apiKey.trim());
+      const hasScene = !!storyboardAIActiveSceneId;
+      btn.disabled = storyboardAIGenerating || !hasScene || !keyReady || !promptValue;
+      btn.textContent = storyboardAIGenerating ? 'Generating…' : 'Generate storyboard';
+    }
+
+    function clampStoryboardAIFrameCount(value){
+      const num = parseInt(value, 10);
+      if (!Number.isFinite(num)) return 1;
+      return Math.max(1, Math.min(4, num));
+    }
+
+    function setStoryboardAIStatus(state, message){
+      const statusEl = document.getElementById('storyboardAIStatus');
+      if (!statusEl) return;
+      statusEl.dataset.state = state || '';
+      statusEl.textContent = message || '';
+    }
+
+    function handleStoryboardAICharacterToggle(sceneId, characterId, checked){
+      if (!sceneId || !characterId) return;
+      let selection = storyboardAISelections.get(sceneId);
+      if (!(selection instanceof Set)) selection = new Set();
+      if (checked) selection.add(characterId);
+      else selection.delete(characterId);
+      storyboardAISelections.set(sceneId, selection);
+      if (sceneId === storyboardAIActiveSceneId) updateStoryboardAIGenerateButton();
+    }
+
+    function renderStoryboardAIComposer(scene){
+      const promptEl = document.getElementById('storyboardAIPrompt');
+      const frameEl = document.getElementById('storyboardAIFrameCount');
+      const listEl = document.getElementById('storyboardAICharacterList');
+      if (!promptEl || !frameEl || !listEl){
+        storyboardAIActiveSceneId = null;
+        return;
+      }
+
+      storyboardAIActiveSceneId = scene?.id || null;
+
+      if (!scene){
+        promptEl.value = '';
+        frameEl.value = '1';
+        listEl.innerHTML = '<p class="storyboard-ai-character-empty">Add a scene to unlock AI storyboards.</p>';
+        applyStoryboardAIInputState();
+        updateStoryboardAIGenerateButton();
+        return;
+      }
+
+      let storedPrompt = storyboardAIPrompts.get(scene.id);
+      if (typeof storedPrompt !== 'string' || !storedPrompt.trim()){
+        storedPrompt = buildDefaultStoryboardShotPrompt(scene);
+      }
+      storyboardAIPrompts.set(scene.id, storedPrompt);
+      promptEl.value = storedPrompt;
+
+      let storedCount = storyboardAIFrameCounts.get(scene.id);
+      if (!Number.isFinite(storedCount)) storedCount = 1;
+      storedCount = clampStoryboardAIFrameCount(storedCount);
+      storyboardAIFrameCounts.set(scene.id, storedCount);
+      frameEl.value = String(storedCount);
+
+      const characters = getStoryboardCharacters();
+      const selection = getStoryboardAISelection(scene);
+      listEl.innerHTML = '';
+      if (!characters.length){
+        const empty = document.createElement('p');
+        empty.className = 'storyboard-ai-character-empty';
+        empty.textContent = 'Add characters in the Cast tab to keep designs consistent.';
+        listEl.appendChild(empty);
+      } else {
+        characters.forEach(character => {
+          const label = document.createElement('label');
+          label.className = 'storyboard-ai-character';
+          const box = document.createElement('input');
+          box.type = 'checkbox';
+          box.value = character.id;
+          box.checked = selection.has(character.id);
+          box.disabled = storyboardAIGenerating;
+          box.addEventListener('change', e => handleStoryboardAICharacterToggle(scene.id, character.id, e.target.checked));
+          const details = document.createElement('div');
+          details.className = 'storyboard-ai-character-details';
+          const name = document.createElement('strong');
+          name.textContent = character.name || 'Unnamed character';
+          const token = document.createElement('span');
+          token.className = 'storyboard-ai-character-token';
+          token.textContent = getStoryboardCharacterToken(character);
+          const notes = document.createElement('span');
+          notes.className = 'storyboard-ai-character-notes';
+          notes.textContent = summarizeCharacterForPrompt(character) || 'Maintain this character\'s established look.';
+          details.appendChild(name);
+          details.appendChild(token);
+          details.appendChild(notes);
+          label.appendChild(box);
+          label.appendChild(details);
+          listEl.appendChild(label);
+        });
+      }
+
+      applyStoryboardAIInputState();
+      updateStoryboardAIGenerateButton();
+    }
+
+    function handleStoryboardAIPromptChange(){
+      const promptEl = document.getElementById('storyboardAIPrompt');
+      if (storyboardAIActiveSceneId && promptEl){
+        storyboardAIPrompts.set(storyboardAIActiveSceneId, promptEl.value);
+      }
+      updateStoryboardAIGenerateButton();
+    }
+
+    function handleStoryboardAIFrameCountChange(){
+      const frameEl = document.getElementById('storyboardAIFrameCount');
+      if (!frameEl) return;
+      const value = clampStoryboardAIFrameCount(frameEl.value);
+      frameEl.value = String(value);
+      if (storyboardAIActiveSceneId){
+        storyboardAIFrameCounts.set(storyboardAIActiveSceneId, value);
+      }
+    }
+
+    function setStoryboardAIGenerating(value){
+      storyboardAIGenerating = !!value;
+      applyStoryboardAIInputState();
+      updateStoryboardAIGenerateButton();
+    }
+
+    async function requestStoryboardImages(apiKey, model, prompt, frameCount){
+      const payload = {
+        model: model || STORYBOARD_AI_DEFAULT_MODEL,
+        prompt,
+        n: clampStoryboardAIFrameCount(frameCount),
+        size: '1024x576',
+        response_format: 'b64_json'
+      };
+      let response;
+      try {
+        response = await fetch('https://openrouter.ai/api/v1/images', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'StudioOrganize Storyboard Assistant'
+          },
+          body: JSON.stringify(payload)
+        });
+      } catch (networkError){
+        throw new Error('Network error contacting OpenRouter. Check your connection and try again.');
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError){
+        throw new Error(`Invalid response from OpenRouter (HTTP ${response.status}).`);
+      }
+
+      if (!response.ok){
+        const message = data?.error?.message || data?.message || `OpenRouter request failed (HTTP ${response.status}).`;
+        throw new Error(message);
+      }
+
+      const items = Array.isArray(data?.data) ? data.data : [];
+      const urls = [];
+      items.forEach(item => {
+        if (!item) return;
+        if (typeof item.url === 'string' && item.url.trim()) urls.push(item.url.trim());
+        else if (typeof item.b64_json === 'string' && item.b64_json.trim()) urls.push(`data:image/png;base64,${item.b64_json.trim()}`);
+        else if (typeof item.b64 === 'string' && item.b64.trim()) urls.push(`data:image/png;base64,${item.b64.trim()}`);
+        else if (typeof item.image_base64 === 'string' && item.image_base64.trim()) urls.push(`data:image/png;base64,${item.image_base64.trim()}`);
+      });
+
+      if (!urls.length){
+        if (data?.error?.message) throw new Error(data.error.message);
+        throw new Error('OpenRouter did not return any images for this prompt. Try refining your description.');
+      }
+
+      return urls;
+    }
+
+    async function handleStoryboardAIGenerate(){
+      const apiKey = (storyboardAIConfig?.apiKey || '').trim();
+      if (!apiKey){
+        setStoryboardAIStatus('error', 'Enter your OpenRouter API key above to generate frames.');
+        const keyInput = document.getElementById('storyboardApiKey');
+        if (keyInput) keyInput.focus();
+        return;
+      }
+
+      const promptEl = document.getElementById('storyboardAIPrompt');
+      const frameEl = document.getElementById('storyboardAIFrameCount');
+      if (!promptEl || !frameEl){
+        setStoryboardAIStatus('error', 'Storyboard inputs unavailable.');
+        return;
+      }
+
+      const shotPrompt = promptEl.value.trim();
+      if (!shotPrompt){
+        setStoryboardAIStatus('error', 'Describe the shot you want to visualize.');
+        promptEl.focus();
+        return;
+      }
+
+      const scenes = getStoryboardScenes();
+      if (!scenes.length){
+        setStoryboardAIStatus('error', 'Add a scene before generating a storyboard.');
+        return;
+      }
+
+      const targetScene = scenes.find(scene => scene.id === storyboardOverlaySceneId)
+        || scenes.find(scene => scene.id === activeSceneId)
+        || scenes[0];
+      if (!targetScene){
+        setStoryboardAIStatus('error', 'Select a scene to continue.');
+        return;
+      }
+
+      const frameCount = clampStoryboardAIFrameCount(frameEl.value);
+      const selection = getStoryboardAISelection(targetScene);
+      storyboardAISelections.set(targetScene.id, selection);
+      const characters = Array.from(selection).map(id => getStoryboardCharacterById(id)).filter(Boolean);
+      const fullPrompt = buildStoryboardPrompt(targetScene, shotPrompt, characters, frameCount);
+
+      setStoryboardAIStatus('pending', 'Requesting Gemini 2.5 Image Preview…');
+      setStoryboardAIGenerating(true);
+
+      try {
+        const images = await requestStoryboardImages(apiKey, storyboardAIConfig?.model || STORYBOARD_AI_DEFAULT_MODEL, fullPrompt, frameCount);
+        const added = [];
+        images.forEach(url => {
+          if (addStoryboardEntry(targetScene, url)) added.push(url);
+        });
+        if (added.length){
+          storyboardIndexState.set(targetScene.id, Math.max(0, getSceneStoryboards(targetScene).length - added.length));
+          storyboardOverlaySceneId = targetScene.id;
+          activeSceneId = targetScene.id;
+          render();
+          setStoryboardAIStatus('success', added.length === 1 ? 'Added 1 storyboard frame.' : `Added ${added.length} storyboard frames.`);
+        } else {
+          setStoryboardAIStatus('error', 'Images were generated but could not be added to the scene.');
+        }
+      } catch (err){
+        console.error('Storyboard AI generation failed:', err);
+        setStoryboardAIStatus('error', err?.message ? String(err.message) : 'Generation failed. Please try again.');
+      } finally {
+        setStoryboardAIGenerating(false);
+      }
+    }
+
+    function pruneStoryboardAIState(){
+      const scenes = getStoryboardScenes();
+      const validSceneIds = new Set(scenes.map(scene => scene.id));
+      Array.from(storyboardAIPrompts.keys()).forEach(id => {
+        if (!validSceneIds.has(id)) storyboardAIPrompts.delete(id);
+      });
+      Array.from(storyboardAISelections.keys()).forEach(id => {
+        if (!validSceneIds.has(id)) storyboardAISelections.delete(id);
+      });
+      Array.from(storyboardAIFrameCounts.keys()).forEach(id => {
+        if (!validSceneIds.has(id)) storyboardAIFrameCounts.delete(id);
+      });
+      const validCharacterIds = new Set(getStoryboardCharacters().map(char => char.id));
+      Array.from(storyboardCharacterTokenCache.keys()).forEach(id => {
+        if (!validCharacterIds.has(id)) storyboardCharacterTokenCache.delete(id);
+      });
+    }
+
     function renderStoryboardGallery(){
       const listEl = document.getElementById('storyboardSceneList');
       const gridEl = document.getElementById('storyboardGalleryGrid');
@@ -3064,6 +3552,8 @@
         addBtn.disabled = true;
         openBtn.disabled = true;
         openBtn.textContent = 'Open in Writer';
+        renderStoryboardAIComposer(null);
+        setStoryboardAIStatus('', '');
         return;
       }
 
@@ -3160,6 +3650,8 @@
           gridEl.appendChild(card);
         });
       }
+
+      renderStoryboardAIComposer(selectedScene);
 
       openBtn.onclick = ()=>{
         if (activeSceneId !== selectedScene.id){
@@ -4803,6 +5295,38 @@
         }
       });
     }
+    const storyboardApiKeyInput = document.getElementById('storyboardApiKey');
+    if (storyboardApiKeyInput){
+      storyboardApiKeyInput.value = storyboardAIConfig?.apiKey || '';
+      storyboardApiKeyInput.addEventListener('input', e=>{
+        storyboardAIConfig.apiKey = e.target.value;
+        saveStoryboardAIConfig();
+        updateStoryboardAIGenerateButton();
+      });
+    }
+    const storyboardModelSelect = document.getElementById('storyboardModel');
+    if (storyboardModelSelect){
+      storyboardModelSelect.value = storyboardAIConfig?.model || STORYBOARD_AI_DEFAULT_MODEL;
+      storyboardModelSelect.addEventListener('change', e=>{
+        storyboardAIConfig.model = e.target.value || STORYBOARD_AI_DEFAULT_MODEL;
+        saveStoryboardAIConfig();
+      });
+    }
+    const storyboardAIPromptInput = document.getElementById('storyboardAIPrompt');
+    if (storyboardAIPromptInput){
+      storyboardAIPromptInput.addEventListener('input', ()=> handleStoryboardAIPromptChange());
+    }
+    const storyboardAIFrameInput = document.getElementById('storyboardAIFrameCount');
+    if (storyboardAIFrameInput){
+      storyboardAIFrameInput.addEventListener('input', ()=> handleStoryboardAIFrameCountChange());
+      storyboardAIFrameInput.addEventListener('change', ()=> handleStoryboardAIFrameCountChange());
+    }
+    const storyboardAIGenerateBtn = document.getElementById('storyboardAIGenerate');
+    if (storyboardAIGenerateBtn){
+      storyboardAIGenerateBtn.addEventListener('click', ()=> handleStoryboardAIGenerate());
+    }
+    applyStoryboardAIInputState();
+    updateStoryboardAIGenerateButton();
     const timelineBtn = document.getElementById('timelineModeBtn');
     if (timelineBtn){
       updateTimelineButton();
