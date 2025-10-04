@@ -121,6 +121,103 @@
       .timeline-meta{font-size:11px; color:var(--muted)}
       .timeline-item.active .timeline-meta{color:var(--active-tab-text)}
       .timeline-empty{font-size:12px; color:var(--muted)}
+      body.storyboard-mode{overflow:hidden;}
+      #storyboardOverlay{
+        position:fixed; left:0; right:0; bottom:0; top:var(--nav-height, 72px);
+        background:rgba(10,12,18,0.78);
+        backdrop-filter:blur(16px);
+        display:none; align-items:flex-start; justify-content:center;
+        padding:24px clamp(16px, 4vw, 48px) 32px; z-index:400;
+      }
+      body.storyboard-mode #storyboardOverlay{display:flex;}
+      .storyboard-window{
+        position:relative; width:100%; max-width:1200px; min-height:0;
+        background:var(--panel); border:1px solid var(--ring);
+        border-radius:20px; box-shadow:0 28px 90px rgba(0,0,0,0.45);
+        display:flex; flex-direction:column; overflow:hidden;
+      }
+      .storyboard-overlay-header{
+        display:flex; align-items:center; justify-content:space-between;
+        padding:18px 22px; border-bottom:1px solid var(--ring);
+        gap:12px; background:var(--chip);
+      }
+      .storyboard-overlay-header h2{margin:0; font-size:18px; font-weight:600;}
+      .storyboard-close-btn{
+        background:var(--chip); border:1px solid var(--ring); border-radius:999px;
+        padding:6px 12px; cursor:pointer; color:var(--ink);
+      }
+      .storyboard-overlay-body{
+        display:grid; grid-template-columns:280px minmax(0, 1fr);
+        min-height:0; max-height:calc(100vh - var(--nav-height, 72px) - 160px);
+      }
+      .storyboard-sidebar{
+        border-right:1px solid var(--ring);
+        padding:18px 20px; display:flex; flex-direction:column; gap:16px;
+        background:var(--panel);
+      }
+      .storyboard-sidebar-header h3{margin:0; font-size:13px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
+      .storyboard-sidebar-header p{margin:4px 0 0; font-size:12px; color:var(--muted);}
+      .storyboard-scene-list{
+        flex:1; overflow:auto; display:flex; flex-direction:column; gap:8px;
+      }
+      .storyboard-scene-btn{
+        display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+        border:1px solid var(--ring); background:var(--chip); border-radius:12px;
+        padding:10px 12px; cursor:pointer; color:var(--ink); text-align:left;
+        transition:border-color .2s ease, background .2s ease;
+      }
+      .storyboard-scene-btn:hover{border-color:var(--acc);}
+      .storyboard-scene-btn.active{
+        background:var(--acc); border-color:var(--acc); color:var(--active-tab-text);
+      }
+      .storyboard-scene-btn-title{font-weight:600;}
+      .storyboard-scene-btn-meta{font-size:11px; color:var(--muted);}
+      .storyboard-scene-btn.active .storyboard-scene-btn-meta{color:var(--active-tab-text);}
+      .storyboard-sidebar-empty{font-size:12px; color:var(--muted);}
+      .storyboard-gallery{
+        padding:20px 24px; display:flex; flex-direction:column; gap:18px;
+        overflow:auto; background:var(--card);
+      }
+      .storyboard-gallery-header{
+        display:flex; align-items:flex-start; justify-content:space-between;
+        gap:12px; flex-wrap:wrap;
+      }
+      .storyboard-gallery-heading h3{margin:0; font-size:18px;}
+      .storyboard-gallery-heading p{margin:4px 0 0; font-size:13px;}
+      .storyboard-gallery-input{display:flex; gap:10px; flex-wrap:wrap;}
+      .storyboard-gallery-input input{flex:1 1 240px;}
+      .storyboard-gallery-grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));}
+      .storyboard-gallery-card{
+        border:1px solid var(--ring); border-radius:16px; overflow:hidden;
+        background:var(--panel); display:flex; flex-direction:column;
+        cursor:pointer; transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .storyboard-gallery-card:hover{
+        border-color:var(--acc); box-shadow:0 16px 40px rgba(0,0,0,0.28); transform:translateY(-2px);
+      }
+      .storyboard-gallery-card.active{
+        border-color:var(--acc); box-shadow:0 16px 48px rgba(47,110,255,0.32);
+      }
+      .storyboard-gallery-thumb{aspect-ratio:16 / 9; background:var(--field); overflow:hidden;}
+      .storyboard-gallery-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+      .storyboard-gallery-card-footer{
+        display:flex; align-items:center; justify-content:space-between;
+        padding:12px 14px; gap:10px;
+      }
+      .storyboard-gallery-card-footer span{font-weight:600; font-size:13px;}
+      .storyboard-gallery-card-actions{display:flex; gap:8px;}
+      .storyboard-gallery-card-actions button{
+        background:none; border:none; color:var(--muted); cursor:pointer;
+        font-size:12px; text-decoration:underline; padding:0;
+      }
+      .storyboard-gallery-card-actions button:hover{color:var(--ink);}
+      .storyboard-gallery-empty{font-size:13px; color:var(--muted);}
+      .storyboard-gallery-empty[hidden]{display:none;}
+      .storyboard-open-btn[disabled]{opacity:0.6; cursor:not-allowed;}
+      @media (max-width: 900px){
+        .storyboard-overlay-body{grid-template-columns:1fr; max-height:none;}
+        .storyboard-sidebar{border-right:none; border-bottom:1px solid var(--ring);}
+      }
       body.timeline-mode{overflow:hidden;}
       #timelineOverlay{
         position:fixed; left:0; right:0; bottom:0; top:var(--nav-height, 72px);
@@ -523,6 +620,7 @@
             </div>
           </div>
           <span class="save-status" id="saveSceneStatus" role="status" aria-live="polite" hidden></span>
+          <button class="btn" type="button" id="storyboardModeBtn" aria-haspopup="dialog" aria-pressed="false">Storyboard</button>
           <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
 
@@ -749,6 +847,42 @@
       </div>
     </div>
 
+    <div id="storyboardOverlay" aria-hidden="true">
+      <div class="storyboard-window" role="dialog" aria-modal="true" aria-labelledby="storyboardOverlayTitle">
+        <div class="storyboard-overlay-header">
+          <div>
+            <h2 id="storyboardOverlayTitle">Storyboard</h2>
+            <p class="muted-text">Map out every beat with scene-linked frames you can update in seconds.</p>
+          </div>
+          <button class="storyboard-close-btn" type="button" id="storyboardOverlayClose">Close ✕</button>
+        </div>
+        <div class="storyboard-overlay-body">
+          <aside class="storyboard-sidebar">
+            <div class="storyboard-sidebar-header">
+              <h3>Scenes</h3>
+              <p class="muted-text">Jump between scenes and keep their key frames in sync.</p>
+            </div>
+            <div class="storyboard-scene-list" id="storyboardSceneList"></div>
+          </aside>
+          <section class="storyboard-gallery">
+            <div class="storyboard-gallery-header">
+              <div class="storyboard-gallery-heading">
+                <h3 id="storyboardGalleryTitle">No scene selected</h3>
+                <p class="muted-text" id="storyboardGalleryMeta"></p>
+              </div>
+              <button class="btn storyboard-open-btn" type="button" id="storyboardOpenSceneBtn" disabled>Open in Writer</button>
+            </div>
+            <div class="storyboard-gallery-input">
+              <input id="storyboardQuickUrl" placeholder="Paste storyboard image URL" inputmode="url" autocomplete="off" disabled />
+              <button class="btn" type="button" id="storyboardQuickAdd" disabled>Add storyboard</button>
+            </div>
+            <div class="storyboard-gallery-grid" id="storyboardGalleryGrid"></div>
+            <div class="storyboard-gallery-empty" id="storyboardGalleryEmpty">Select a scene to start building a storyboard.</div>
+          </section>
+        </div>
+      </div>
+    </div>
+
     <div id="timelineOverlay" aria-hidden="true">
       <div class="timeline-window" role="dialog" aria-modal="true" aria-labelledby="timelineOverlayTitle">
         <div class="timeline-overlay-header">
@@ -899,6 +1033,8 @@
     let activeSceneId = null;
     let saveTimer = null;
     let saveSceneStatusTimer = null;
+    let storyboardMode = false;
+    let storyboardOverlaySceneId = null;
     let timelineMode = false;
     let timelineInsertIndex = 0;
     let timelineDragSceneId = null;
@@ -1633,6 +1769,7 @@
       setLastProjectId(project.projectId);
       ensurePomodoroSettings();
       closeTimelineMode();
+      closeStoryboardMode();
       timelineInsertIndex = project.scenes.length;
       lastSerializedMetaHash = metaSignature(project);
       render();
@@ -1973,16 +2110,18 @@
         applyTheme();
         renderStoryboard();
         renderCatalogs();
-      renderSoundList();
-      renderTimeline();
-      updateDeleteSceneButton();
-      applyActiveTabUI();
-      if (timelineMode) renderTimelineBoard();
-      else updateTimelineInsertLabel();
-      updateTimelineButton();
-      if (characterStudioState.open) renderCharacterStudio();
-      return;
-    }
+        renderSoundList();
+        renderTimeline();
+        updateDeleteSceneButton();
+        applyActiveTabUI();
+        if (timelineMode) renderTimelineBoard();
+        else updateTimelineInsertLabel();
+        updateTimelineButton();
+        if (storyboardMode) renderStoryboardGallery();
+        updateStoryboardButton();
+        if (characterStudioState.open) renderCharacterStudio();
+        return;
+      }
       if (!Array.isArray(scene.sounds)) scene.sounds = [];
       document.getElementById('sceneSlug').value = scene.slug || '';
       document.getElementById('sceneColor').value = scene.color || '#5FA8FF';
@@ -2007,6 +2146,8 @@
       if (timelineMode) renderTimelineBoard();
       else updateTimelineInsertLabel();
       updateTimelineButton();
+      if (storyboardMode) renderStoryboardGallery();
+      updateStoryboardButton();
       if (characterStudioState.open) renderCharacterStudio();
     }
 
@@ -2224,6 +2365,46 @@
       }
     }
 
+    function normalizeStoryboardUrl(raw){
+      let value = (raw || '').trim();
+      if (!value) return null;
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)){
+        value = `https://${value}`;
+      }
+      try {
+        const parsed = new URL(value);
+        if (!/^https?:$/i.test(parsed.protocol)) return null;
+        return parsed.href;
+      } catch (err){
+        return null;
+      }
+    }
+
+    function addStoryboardEntry(scene, url){
+      if (!scene || !url) return false;
+      if (!Array.isArray(scene.storyboards)) scene.storyboards = [];
+      scene.storyboards.push({ id: randomId(), url });
+      refreshStoryboardPositions(scene);
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      return true;
+    }
+
+    function removeStoryboardEntry(scene, storyboardId){
+      if (!scene || !storyboardId || !Array.isArray(scene.storyboards)) return false;
+      const idx = scene.storyboards.findIndex(entry => entry.id === storyboardId);
+      if (idx < 0) return false;
+      scene.storyboards.splice(idx, 1);
+      refreshStoryboardPositions(scene);
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      return true;
+    }
+
     function stepStoryboard(delta){
       const scene = getActiveScene();
       if (!scene) return;
@@ -2240,53 +2421,243 @@
       const input = document.getElementById('newStoryboardUrl');
       const scene = getActiveScene();
       if (!input || !scene) return;
-      let value = (input.value || '').trim();
-      if (!value){
+      const normalizedUrl = normalizeStoryboardUrl(input.value);
+      if (!normalizedUrl){
         input.focus();
-        return;
-      }
-      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)){
-        value = `https://${value}`;
-      }
-      let parsed;
-      try {
-        parsed = new URL(value);
-      } catch (err){
         alert('Enter a valid storyboard URL (including http:// or https://).');
-        input.focus();
         return;
       }
-      if (!/^https?:$/i.test(parsed.protocol)){
-        alert('Storyboard images must use http or https URLs.');
-        input.focus();
-        return;
-      }
-      const normalizedUrl = parsed.href;
-      if (!Array.isArray(scene.storyboards)) scene.storyboards = [];
-      scene.storyboards.push({ id: randomId(), url: normalizedUrl });
-      refreshStoryboardPositions(scene);
-      storyboardIndexState.set(scene.id, Math.max(0, scene.storyboards.length - 1));
+      if (!addStoryboardEntry(scene, normalizedUrl)) return;
+      const storyboards = getSceneStoryboards(scene);
+      storyboardIndexState.set(scene.id, Math.max(0, storyboards.length - 1));
       input.value = '';
-      updateSceneHash(scene);
-      bumpVersion();
-      scheduleSave();
-      scheduleBackup();
       renderStoryboard();
+      if (storyboardMode) renderStoryboardGallery();
     }
 
     function handleRemoveStoryboard(){
       const scene = getActiveScene();
       if (!scene || !Array.isArray(scene.storyboards) || !scene.storyboards.length) return;
       const current = storyboardIndexState.get(scene.id) ?? 0;
-      scene.storyboards.splice(current, 1);
-      refreshStoryboardPositions(scene);
+      const storyboards = getSceneStoryboards(scene);
+      const target = storyboards[current];
+      if (!target) return;
+      if (!removeStoryboardEntry(scene, target.id)) return;
       const max = Math.max(0, (scene.storyboards.length || 1) - 1);
       storyboardIndexState.set(scene.id, Math.min(current, max));
-      updateSceneHash(scene);
-      bumpVersion();
-      scheduleSave();
-      scheduleBackup();
       renderStoryboard();
+      if (storyboardMode) renderStoryboardGallery();
+    }
+
+    function getStoryboardScenes(){
+      return Array.isArray(project?.scenes) ? project.scenes : [];
+    }
+
+    function renderStoryboardGallery(){
+      const listEl = document.getElementById('storyboardSceneList');
+      const gridEl = document.getElementById('storyboardGalleryGrid');
+      const emptyEl = document.getElementById('storyboardGalleryEmpty');
+      const titleEl = document.getElementById('storyboardGalleryTitle');
+      const metaEl = document.getElementById('storyboardGalleryMeta');
+      const inputEl = document.getElementById('storyboardQuickUrl');
+      const addBtn = document.getElementById('storyboardQuickAdd');
+      const openBtn = document.getElementById('storyboardOpenSceneBtn');
+      if (!listEl || !gridEl || !emptyEl || !titleEl || !metaEl || !inputEl || !addBtn || !openBtn){
+        return;
+      }
+
+      const scenes = getStoryboardScenes();
+      listEl.innerHTML = '';
+      gridEl.innerHTML = '';
+
+      if (!scenes.length){
+        storyboardOverlaySceneId = null;
+        const empty = document.createElement('p');
+        empty.className = 'storyboard-sidebar-empty';
+        empty.textContent = 'Add scenes to start storyboarding.';
+        listEl.appendChild(empty);
+        titleEl.textContent = 'No scenes yet';
+        metaEl.textContent = 'Add a scene to start storyboarding.';
+        emptyEl.textContent = 'Create a scene to begin crafting your storyboard.';
+        emptyEl.hidden = false;
+        inputEl.disabled = true;
+        addBtn.disabled = true;
+        openBtn.disabled = true;
+        openBtn.textContent = 'Open in Writer';
+        return;
+      }
+
+      if (activeSceneId && scenes.some(scene => scene.id === activeSceneId)){
+        storyboardOverlaySceneId = activeSceneId;
+      } else if (!storyboardOverlaySceneId || !scenes.some(scene => scene.id === storyboardOverlaySceneId)){
+        storyboardOverlaySceneId = scenes[0].id;
+      }
+
+      const selectedScene = scenes.find(scene => scene.id === storyboardOverlaySceneId) || scenes[0];
+      const selectedIndex = scenes.indexOf(selectedScene);
+
+      scenes.forEach((scene, idx)=>{
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'storyboard-scene-btn' + (scene.id === selectedScene.id ? ' active' : '');
+        const count = Array.isArray(scene.storyboards) ? scene.storyboards.length : 0;
+        btn.innerHTML = `
+          <span class="storyboard-scene-btn-title">${escapeHtml(scene.slug || `Scene ${idx + 1}`)}</span>
+          <span class="storyboard-scene-btn-meta">${count ? `${count} frame${count === 1 ? '' : 's'}` : 'No frames yet'}</span>
+        `;
+        btn.addEventListener('click', ()=>{
+          storyboardOverlaySceneId = scene.id;
+          if (activeSceneId !== scene.id){
+            activeSceneId = scene.id;
+            render();
+          } else {
+            renderStoryboardGallery();
+          }
+        });
+        listEl.appendChild(btn);
+      });
+
+      const storyboards = getSceneStoryboards(selectedScene);
+      const maxIndex = Math.max(0, storyboards.length - 1);
+      const activeIndex = Math.max(0, Math.min(storyboardIndexState.get(selectedScene.id) ?? 0, maxIndex));
+      storyboardIndexState.set(selectedScene.id, activeIndex);
+
+      titleEl.textContent = selectedScene.slug || `Scene ${selectedIndex + 1}`;
+      const frameLabel = storyboards.length ? `${storyboards.length} storyboard frame${storyboards.length === 1 ? '' : 's'}` : 'No storyboard frames yet';
+      metaEl.textContent = `Scene ${selectedIndex + 1} • ${frameLabel}`;
+
+      inputEl.disabled = false;
+      addBtn.disabled = false;
+
+      const viewingActive = activeSceneId === selectedScene.id;
+      openBtn.disabled = viewingActive;
+      openBtn.textContent = viewingActive ? 'Viewing in Writer' : 'Open in Writer';
+      if (viewingActive) openBtn.setAttribute('aria-disabled', 'true');
+      else openBtn.removeAttribute('aria-disabled');
+
+      if (!storyboards.length){
+        emptyEl.textContent = 'Drop in your first frame to visualize this scene.';
+        emptyEl.hidden = false;
+      } else {
+        emptyEl.hidden = true;
+        storyboards.forEach((frame, idx)=>{
+          const card = document.createElement('article');
+          card.className = 'storyboard-gallery-card' + (idx === activeIndex ? ' active' : '');
+          card.innerHTML = `
+            <div class="storyboard-gallery-thumb">
+              <img src="${escapeHtml(frame.url)}" alt="${escapeHtml(`Storyboard frame ${idx + 1} for ${selectedScene.slug || `Scene ${selectedIndex + 1}`}`)}" loading="lazy" />
+            </div>
+            <div class="storyboard-gallery-card-footer">
+              <span>Frame ${idx + 1}</span>
+              <div class="storyboard-gallery-card-actions">
+                <button type="button" data-action="remove">Remove</button>
+              </div>
+            </div>
+          `;
+          card.addEventListener('click', ()=>{
+            storyboardIndexState.set(selectedScene.id, idx);
+            if (activeSceneId !== selectedScene.id){
+              activeSceneId = selectedScene.id;
+              render();
+            } else {
+              renderStoryboard();
+              renderStoryboardGallery();
+            }
+          });
+          const removeBtn = card.querySelector('[data-action="remove"]');
+          if (removeBtn){
+            removeBtn.addEventListener('click', e=>{
+              e.stopPropagation();
+              if (!removeStoryboardEntry(selectedScene, frame.id)) return;
+              const nextStoryboards = getSceneStoryboards(selectedScene);
+              const nextMax = Math.max(0, nextStoryboards.length - 1);
+              const currentIdx = Math.max(0, Math.min(storyboardIndexState.get(selectedScene.id) ?? 0, nextMax));
+              storyboardIndexState.set(selectedScene.id, currentIdx);
+              if (selectedScene.id === activeSceneId) renderStoryboard();
+              renderStoryboardGallery();
+            });
+          }
+          gridEl.appendChild(card);
+        });
+      }
+
+      openBtn.onclick = ()=>{
+        if (activeSceneId !== selectedScene.id){
+          activeSceneId = selectedScene.id;
+          render();
+        }
+        setRightTab('write');
+        closeStoryboardMode();
+      };
+    }
+
+    function handleStoryboardQuickAdd(){
+      const input = document.getElementById('storyboardQuickUrl');
+      if (!input) return;
+      const scenes = getStoryboardScenes();
+      if (!scenes.length){
+        alert('Add a scene to start building a storyboard.');
+        return;
+      }
+      const selectedScene = scenes.find(scene => scene.id === storyboardOverlaySceneId)
+        || scenes.find(scene => scene.id === activeSceneId)
+        || scenes[0];
+      const normalizedUrl = normalizeStoryboardUrl(input.value);
+      if (!normalizedUrl){
+        input.focus();
+        alert('Enter a valid storyboard URL (including http:// or https://).');
+        return;
+      }
+      if (!addStoryboardEntry(selectedScene, normalizedUrl)) return;
+      const storyboards = getSceneStoryboards(selectedScene);
+      storyboardIndexState.set(selectedScene.id, Math.max(0, storyboards.length - 1));
+      input.value = '';
+      storyboardOverlaySceneId = selectedScene.id;
+      activeSceneId = selectedScene.id;
+      render();
+    }
+
+    function updateStoryboardButton(){
+      const btn = document.getElementById('storyboardModeBtn');
+      if (!btn) return;
+      btn.textContent = storyboardMode ? 'Exit Storyboard' : 'Storyboard';
+      btn.setAttribute('aria-pressed', storyboardMode ? 'true' : 'false');
+    }
+
+    function openStoryboardMode(sceneId = null){
+      if (timelineMode) closeTimelineMode();
+      storyboardMode = true;
+      document.body.classList.add('storyboard-mode');
+      const overlay = document.getElementById('storyboardOverlay');
+      if (overlay) overlay.setAttribute('aria-hidden', 'false');
+      syncNavHeight();
+      const scenes = getStoryboardScenes();
+      let nextActiveId = activeSceneId;
+      if (sceneId && scenes.some(scene => scene.id === sceneId)){
+        nextActiveId = sceneId;
+      } else if (!nextActiveId && scenes.length){
+        nextActiveId = scenes[0].id;
+      }
+      const changed = nextActiveId && nextActiveId !== activeSceneId;
+      if (nextActiveId) activeSceneId = nextActiveId;
+      storyboardOverlaySceneId = activeSceneId || scenes[0]?.id || null;
+      updateStoryboardButton();
+      if (changed) render();
+      else renderStoryboardGallery();
+    }
+
+    function closeStoryboardMode(){
+      storyboardMode = false;
+      document.body.classList.remove('storyboard-mode');
+      const overlay = document.getElementById('storyboardOverlay');
+      if (overlay) overlay.setAttribute('aria-hidden', 'true');
+      storyboardOverlaySceneId = activeSceneId || storyboardOverlaySceneId || null;
+      updateStoryboardButton();
+    }
+
+    function toggleStoryboardMode(){
+      if (storyboardMode) closeStoryboardMode();
+      else openStoryboardMode();
     }
 
     function renderTimeline(){
@@ -2577,6 +2948,7 @@
     }
 
     function openTimelineMode(sceneId = null){
+      if (storyboardMode) closeStoryboardMode();
       timelineMode = true;
       document.body.classList.add('timeline-mode');
       const overlay = document.getElementById('timelineOverlay');
@@ -3586,6 +3958,34 @@
         if (fresh){ fresh.value = ''; fresh.focus(); }
       });
     }
+    const storyboardBtn = document.getElementById('storyboardModeBtn');
+    if (storyboardBtn){
+      updateStoryboardButton();
+      storyboardBtn.addEventListener('click', ()=> toggleStoryboardMode());
+    }
+    const storyboardOverlayEl = document.getElementById('storyboardOverlay');
+    if (storyboardOverlayEl){
+      storyboardOverlayEl.addEventListener('click', e=>{
+        if (e.target === storyboardOverlayEl) closeStoryboardMode();
+      });
+    }
+    const storyboardOverlayClose = document.getElementById('storyboardOverlayClose');
+    if (storyboardOverlayClose){
+      storyboardOverlayClose.addEventListener('click', ()=> closeStoryboardMode());
+    }
+    const storyboardQuickAddBtn = document.getElementById('storyboardQuickAdd');
+    if (storyboardQuickAddBtn){
+      storyboardQuickAddBtn.addEventListener('click', ()=> handleStoryboardQuickAdd());
+    }
+    const storyboardQuickInput = document.getElementById('storyboardQuickUrl');
+    if (storyboardQuickInput){
+      storyboardQuickInput.addEventListener('keydown', e=>{
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          handleStoryboardQuickAdd();
+        }
+      });
+    }
     const timelineBtn = document.getElementById('timelineModeBtn');
     if (timelineBtn){
       updateTimelineButton();
@@ -3628,8 +4028,15 @@
     }
 
     document.addEventListener('keydown', e=>{
-      if (e.key === 'Escape' && characterStudioState.open){
-        closeCharacterStudio();
+      if (e.key === 'Escape'){
+        if (characterStudioState.open){
+          closeCharacterStudio();
+          return;
+        }
+        if (storyboardMode){
+          closeStoryboardMode();
+          return;
+        }
       }
     });
 
@@ -4477,6 +4884,11 @@
         if (dialog && dialog.classList.contains('open')){
           e.preventDefault();
           closeScriptDialog();
+          return;
+        }
+        if (storyboardMode){
+          e.preventDefault();
+          closeStoryboardMode();
           return;
         }
       }
