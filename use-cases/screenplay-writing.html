@@ -766,6 +766,7 @@
             <button class="btn" type="button" id="saveSceneBtn" aria-haspopup="true" aria-expanded="false">Save ▾</button>
             <div class="btn-menu-list" id="saveMenuList" role="menu">
               <button type="button" id="saveSceneMenuAction" data-save-action="save" role="menuitem">Save</button>
+              <button type="button" id="saveSceneCloseAction" data-save-action="save-close" role="menuitem">Save &amp; Close</button>
               <button type="button" data-save-action="backup" role="menuitem">Backup Now</button>
               <button type="button" data-save-action="restore" role="menuitem">Restore…</button>
             </div>
@@ -2426,32 +2427,56 @@
         setOpen(!menu.classList.contains('open'));
       });
 
+      const setSaveButtonsDisabled = (disabled)=>{
+        ['saveSceneMenuAction', 'saveSceneCloseAction'].forEach(id=>{
+          const button = document.getElementById(id);
+          if (button) button.disabled = !!disabled;
+        });
+      };
+
+      const setSaveFailureStatus = (reason)=>{
+        if (reason === 'supabase_unavailable') setSaveSceneStatus('error', 'Supabase unavailable');
+        else if (reason === 'no_project') setSaveSceneStatus('error', 'Nothing to save');
+        else if (reason === 'auth_required') setSaveSceneStatus('error', 'Sign in required');
+        else setSaveSceneStatus('error', 'Save failed. Please try again.');
+      };
+
+      const runSaveFlow = async (onSuccess)=>{
+        setSaveButtonsDisabled(true);
+        setSaveSceneStatus('saving', 'Saving…');
+        try {
+          const result = await handleScriptDialogSave();
+          if (result && result.success){
+            if (typeof onSuccess === 'function'){
+              await onSuccess(result);
+            } else {
+              setSaveSceneStatus('success', 'Saved!');
+            }
+            return result;
+          }
+          setSaveFailureStatus(result ? result.reason : 'error');
+          return result || { success: false, reason: 'error' };
+        } catch (saveError){
+          console.error('Save menu action failed:', saveError);
+          setSaveSceneStatus('error', 'Save failed. Please try again.');
+          return { success: false, reason: 'error' };
+        } finally {
+          setSaveButtonsDisabled(false);
+        }
+      };
+
       menu.querySelectorAll('[data-save-action]').forEach(btn=>{
         btn.addEventListener('click', async e=>{
           e.stopPropagation();
           const action = btn.dataset.saveAction;
           setOpen(false);
           if (action === 'save'){
-            const saveMenuButton = document.getElementById('saveSceneMenuAction');
-            if (saveMenuButton) saveMenuButton.disabled = true;
-            setSaveSceneStatus('saving', 'Saving…');
-            try {
-              const result = await handleScriptDialogSave();
-              if (result && result.success){
-                setSaveSceneStatus('success', 'Saved!');
-              } else {
-                const reason = result ? result.reason : 'error';
-                if (reason === 'supabase_unavailable') setSaveSceneStatus('error', 'Supabase unavailable');
-                else if (reason === 'no_project') setSaveSceneStatus('error', 'Nothing to save');
-                else if (reason === 'auth_required') setSaveSceneStatus('error', 'Sign in required');
-                else setSaveSceneStatus('error', 'Save failed. Please try again.');
-              }
-            } catch (saveError){
-              console.error('Save menu action failed:', saveError);
-              setSaveSceneStatus('error', 'Save failed. Please try again.');
-            } finally {
-              if (saveMenuButton) saveMenuButton.disabled = false;
-            }
+            await runSaveFlow();
+          } else if (action === 'save-close'){
+            await runSaveFlow(()=>{
+              setSaveSceneStatus('success', 'Saved! Redirecting…');
+              window.location.href = '/account.html';
+            });
           } else if (action === 'backup') backupNow();
           else if (action === 'restore') openRestore();
         });
