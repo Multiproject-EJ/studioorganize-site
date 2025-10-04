@@ -21,3 +21,7 @@ SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 SQL migrations and schema documentation for Supabase live in the [`supabase/`](supabase/) directory.
 
+## Character Studio overview
+
+The screenplay writer now includes a Character Studio workspace that launches from the **Characters** tab. Writers can review their cast, update profiles, manage look references, track stats, plan arcs, and queue AI prompts from the dedicated overlay view. Character data is saved locally inside the writer experience and can be synchronized with Supabase using the `public.characters` table described in [`SUPABASE.md`](SUPABASE.md).
+

@@ -91,6 +91,19 @@ You can adapt this snippet to your build setup. The key steps are to:
 
 Refer to the schema file for exact column names and policies.
 
+### Character Studio catalog
+
+Run the Character Studio block inside [`supabase/schema.sql`](supabase/schema.sql) to provision the `public.characters` table. Each row stores the extended character profile that the writer UI manages—biographical metadata, stats, look references, arc notes, and AI prompt fields. Ownership mirrors other resources by tying `owner_id` back to `public.profiles.id`, and Row Level Security policies limit reads and writes to the signed-in owner. Once the table exists, sync Character Studio updates from the client by inserting or upserting one row per character and including `project_id` when you want to group casts by project.
+
+Key columns:
+
+- `name`, `role`, `archetype`, `pronouns`, `age` – identity basics surfaced in the cast list.
+- `summary`, `background`, `family_tree`, `traits[]` – narrative context and quick-reference traits.
+- `stats_scenes`, `stats_screen_time`, `stats_dialogue` – analytics the UI maintains to show character involvement.
+- `look_portrait_url`, `look_turnaround_urls[]`, `look_expression_urls[]` – references for artwork and expressions.
+- `arc_setup`, `arc_development`, `arc_resolution` – notes that power the Character Arc panel.
+- `ai_prompt`, `ai_notes` – prompt history for the AI image integration.
+
 ### Scenes & connected data
 
 Run the latest [`supabase/schema.sql`](supabase/schema.sql) file to create the new scene tables. The script is additive—it only provisions the scene-related tables, indexes, policies, and triggers, and safely skips objects (like `public.profiles`) that are already in your project. Because trigger creation is wrapped in guards, you can run it multiple times without conflicting with existing infrastructure.
