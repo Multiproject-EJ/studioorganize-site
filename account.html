@@ -69,6 +69,155 @@
       <span class="app-card__label">Editing Suite</span>
     </div>
   </div>
+
+  <section class="creator-dashboard" aria-label="Creator progress dashboard">
+    <div class="creator-dashboard__intro">
+      <h2>Keep Your Creative Momentum</h2>
+      <p class="muted">
+        Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
+      </p>
+    </div>
+
+    <div class="creator-dashboard__grid">
+      <div class="insight-card">
+        <div class="insight-card__header">
+          <h3>Snapshot</h3>
+          <span class="insight-card__tag">Last 30 days</span>
+        </div>
+        <dl class="insight-card__stats">
+          <div>
+            <dt>Total Focus Hours</dt>
+            <dd>42</dd>
+          </div>
+          <div>
+            <dt>Creative Sessions</dt>
+            <dd>18</dd>
+          </div>
+          <div>
+            <dt>Completed Assets</dt>
+            <dd>7</dd>
+          </div>
+        </dl>
+        <p class="muted">You are on track to surpass last month by <strong>12%</strong>. Keep the streak alive!</p>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-card__header">
+          <h3>Annual Commitment Grid</h3>
+          <span class="insight-card__tag">2024</span>
+        </div>
+        <div class="commitment-grid" role="img" aria-label="Annual creative commitment grid">
+          <div class="commitment-grid__row commitment-grid__legend">
+            <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+          </div>
+          <div class="commitment-grid__matrix">
+            <span data-level="1"></span>
+            <span data-level="2"></span>
+            <span data-level="3"></span>
+            <span data-level="0"></span>
+            <span data-level="4"></span>
+            <span data-level="1"></span>
+            <span data-level="3"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="4"></span>
+            <span data-level="2"></span>
+            <span data-level="3"></span>
+            <span data-level="0"></span>
+            <span data-level="1"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="3"></span>
+            <span data-level="4"></span>
+            <span data-level="3"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="0"></span>
+            <span data-level="2"></span>
+            <span data-level="3"></span>
+            <span data-level="1"></span>
+            <span data-level="4"></span>
+            <span data-level="3"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="0"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="4"></span>
+            <span data-level="3"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="4"></span>
+            <span data-level="3"></span>
+            <span data-level="1"></span>
+            <span data-level="2"></span>
+            <span data-level="3"></span>
+            <span data-level="0"></span>
+            <span data-level="1"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="4"></span>
+            <span data-level="3"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+            <span data-level="0"></span>
+            <span data-level="2"></span>
+            <span data-level="3"></span>
+            <span data-level="4"></span>
+            <span data-level="3"></span>
+            <span data-level="2"></span>
+            <span data-level="1"></span>
+          </div>
+          <div class="commitment-grid__legend commitment-grid__legend--scale" aria-hidden="true">
+            <span>Less</span>
+            <div class="commitment-grid__scale">
+              <span data-level="0"></span>
+              <span data-level="1"></span>
+              <span data-level="2"></span>
+              <span data-level="3"></span>
+              <span data-level="4"></span>
+            </div>
+            <span>More</span>
+          </div>
+        </div>
+        <p class="muted">Each square celebrates a session. Darker tiles mean deeper focus days.</p>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-card__header">
+          <h3>Milestones &amp; Reminders</h3>
+          <span class="insight-card__tag">Stay accountable</span>
+        </div>
+        <form class="goal-form">
+          <label class="goal-form__field">
+            <span>Goal title</span>
+            <input type="text" name="goal" placeholder="Finish storyboard draft" />
+          </label>
+          <label class="goal-form__field">
+            <span>Target date</span>
+            <input type="date" name="deadline" />
+          </label>
+          <label class="goal-form__field">
+            <span>Email reminders</span>
+            <select name="reminder">
+              <option value="weekly">Weekly digest</option>
+              <option value="three-days">3 days before</option>
+              <option value="day-before">Day before deadline</option>
+              <option value="off">No reminders</option>
+            </select>
+          </label>
+          <label class="goal-form__field">
+            <span>Add a note (optional)</span>
+            <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
+          </label>
+          <button class="goal-form__submit" type="submit">Save goal</button>
+        </form>
+        <p class="muted goal-form__footnote">
+          Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any time.
+        </p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="footer">
