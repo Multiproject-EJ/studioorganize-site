@@ -485,6 +485,8 @@
       .script-dialog__preview p{margin:0;}
       .script-dialog__section{border-top:1px solid var(--ring); margin-top:12px; padding-top:12px; display:flex; flex-direction:column; gap:12px;}
       .script-dialog__new-actions{display:flex; justify-content:flex-end; gap:8px;}
+      .script-dialog__actions{display:flex; justify-content:flex-end; gap:8px;}
+      .script-dialog__hint{margin:0; font-size:12px; color:var(--muted);}
       .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px;}
       @media (max-width: 600px){
         .script-dialog{padding:16px;}
@@ -1030,6 +1032,15 @@
               <p class="muted-text" id="scriptPreviewDescription"></p>
             </div>
           </div>
+          <label class="script-dialog__field" for="scriptDialogCoverUrl">
+            <span>Title image URL</span>
+            <input id="scriptDialogCoverUrl" type="url" placeholder="https://example.com/cover.jpg" autocomplete="off" inputmode="url" />
+          </label>
+          <p class="muted-text script-dialog__hint">Shown when scenes have no storyboard frames.</p>
+          <div class="script-dialog__actions">
+            <button type="button" class="btn non-essential" id="scriptDialogClearCover">Clear</button>
+            <button type="button" class="btn" id="scriptDialogApplyCover">Apply</button>
+          </div>
           <div class="script-dialog__section">
             <div class="script-dialog__field">
               <strong>New script</strong>
@@ -1405,12 +1416,35 @@
     const DEFAULT_SCRIPT_IMAGE = 'https://placehold.co/240x160?text=Script';
     const DEFAULT_STORYBOARD_IMAGE = 'https://placehold.co/480x270?text=Storyboard';
 
+    function getCoverImageUrl(){
+      if (!project || !project.settings) return '';
+      const raw = project.settings.coverImageUrl;
+      return typeof raw === 'string' ? raw.trim() : '';
+    }
+
+    function getStoryboardPlaceholderImage(){
+      const cover = getCoverImageUrl();
+      return cover || DEFAULT_STORYBOARD_IMAGE;
+    }
+
     let scriptOptionsCache = null;
     let scriptOptionsStatus = '';
     let scriptDialogSelectedId = null;
     let scriptDialogLoading = false;
     let scriptDialogSaving = false;
     let scriptDialogCreating = false;
+
+    function updateCachedCoverImage(url){
+      if (!Array.isArray(scriptOptionsCache) || !project) return;
+      const normalized = url ? url : DEFAULT_SCRIPT_IMAGE;
+      const ids = new Set([project.libraryEntryId, project.projectId].filter(Boolean));
+      scriptOptionsCache = scriptOptionsCache.map(entry => {
+        if (!entry) return entry;
+        const matches = ids.has(entry.id) || ids.has(entry.project_id) || ids.has(entry.script_id);
+        if (!matches) return entry;
+        return Object.assign({}, entry, { image_url: normalized });
+      });
+    }
 
     async function getScriptOptions(force = false){
       if (scriptOptionsCache && !force){
@@ -1507,6 +1541,9 @@
       const saveBtn = document.getElementById('scriptDialogSave');
       const createBtn = document.getElementById('scriptDialogCreate');
       const newTitleInput = document.getElementById('scriptDialogNewTitle');
+      const coverInput = document.getElementById('scriptDialogCoverUrl');
+      const coverApplyBtn = document.getElementById('scriptDialogApplyCover');
+      const coverClearBtn = document.getElementById('scriptDialogClearCover');
       const busy = scriptDialogLoading || scriptDialogSaving || scriptDialogCreating;
       if (loadBtn){
         const disable = !scriptDialogSelectedId || (project && scriptDialogSelectedId === project.projectId);
@@ -1530,10 +1567,19 @@
       if (newTitleInput){
         newTitleInput.disabled = scriptDialogLoading || scriptDialogSaving || scriptDialogCreating;
       }
+      if (coverInput){
+        coverInput.disabled = scriptDialogLoading;
+      }
       if (createBtn){
         const hasTitle = Boolean(newTitleInput && newTitleInput.value.trim());
         createBtn.disabled = busy || !hasTitle;
         createBtn.textContent = scriptDialogCreating ? 'Creating…' : 'Create';
+      }
+      if (coverApplyBtn){
+        coverApplyBtn.disabled = busy;
+      }
+      if (coverClearBtn){
+        coverClearBtn.disabled = busy;
       }
     }
 
@@ -1544,14 +1590,23 @@
       const titleEl = document.getElementById('scriptPreviewName');
       const descEl = document.getElementById('scriptPreviewDescription');
       const imgEl = document.getElementById('scriptPreviewImage');
+      const coverUrl = getCoverImageUrl();
+      const defaultImage = coverUrl || DEFAULT_SCRIPT_IMAGE;
       if (meta){
         if (titleEl) titleEl.textContent = meta.name || 'Untitled Script';
         if (descEl) descEl.textContent = meta.description || 'Ready when you are.';
-        if (imgEl) imgEl.src = meta.image_url || DEFAULT_SCRIPT_IMAGE;
+        const isCurrentScript = Boolean(project) && (
+          meta.id === project.projectId ||
+          meta.project_id === project.projectId ||
+          meta.script_id === project.projectId ||
+          (project.libraryEntryId && meta.id === project.libraryEntryId)
+        );
+        const previewImage = (isCurrentScript && coverUrl) ? coverUrl : (meta.image_url || defaultImage);
+        if (imgEl) imgEl.src = previewImage || DEFAULT_SCRIPT_IMAGE;
       } else {
         if (titleEl) titleEl.textContent = 'Select a script';
         if (descEl) descEl.textContent = '';
-        if (imgEl) imgEl.src = DEFAULT_SCRIPT_IMAGE;
+        if (imgEl) imgEl.src = defaultImage;
       }
       updateScriptDialogLoadState();
     }
@@ -1566,6 +1621,8 @@
       if (currentNameEl) currentNameEl.textContent = project?.title || 'Untitled Script';
       const currentTitleInput = document.getElementById('scriptDialogCurrentTitle');
       if (currentTitleInput) currentTitleInput.value = project?.title || '';
+      const coverInput = document.getElementById('scriptDialogCoverUrl');
+      if (coverInput) coverInput.value = getCoverImageUrl();
       const select = document.getElementById('scriptSelect');
       const status = document.getElementById('scriptDialogStatus');
       if (status) status.textContent = 'Loading scripts…';
@@ -1579,6 +1636,8 @@
       if (newTitleInput){
         newTitleInput.value = '';
       }
+      scriptDialogSelectedId = null;
+      updateScriptPreview('');
       scriptDialogLoading = true;
       updateScriptDialogLoadState();
       try {
@@ -1695,6 +1754,7 @@
       if (!payload) throw new Error('Nothing to save');
       const scriptName = (project.title || '').trim() || 'Untitled Script';
       const description = typeof project.notes === 'string' ? project.notes : '';
+      const coverUrl = getCoverImageUrl();
       const record = {
         owner_id: ownerId,
         project_id: project.projectId,
@@ -1707,6 +1767,13 @@
         project_json: payload,
         updated_at: new Date().toISOString()
       };
+      if (coverUrl){
+        record.image_url = coverUrl;
+        record.thumbnail_url = coverUrl;
+      } else {
+        record.image_url = null;
+        record.thumbnail_url = null;
+      }
       if (project.libraryEntryId){
         record.id = project.libraryEntryId;
       }
@@ -1718,11 +1785,12 @@
       if (error) throw error;
       const savedId = data?.id || record.id || project.libraryEntryId || project.projectId;
       project.libraryEntryId = savedId;
+      const libraryImage = coverUrl || data?.image_url || data?.thumbnail_url || DEFAULT_SCRIPT_IMAGE;
       const entry = {
         id: savedId,
         name: record.script_name || 'Untitled Script',
         description: data?.description ?? record.description ?? '',
-        image_url: data?.image_url || data?.thumbnail_url || DEFAULT_SCRIPT_IMAGE
+        image_url: libraryImage
       };
       if (Array.isArray(scriptOptionsCache)){
         const next = scriptOptionsCache.slice();
@@ -1855,6 +1923,12 @@
       }
       project = loaded;
       ensureProjectShape();
+      if (!project.settings.coverImageUrl){
+        const metaCover = typeof meta.image_url === 'string' ? meta.image_url : (typeof meta.thumbnail_url === 'string' ? meta.thumbnail_url : '');
+        const normalizedMetaCover = metaCover ? normalizeStoryboardUrl(metaCover) : null;
+        if (normalizedMetaCover) project.settings.coverImageUrl = normalizedMetaCover;
+      }
+      updateCachedCoverImage(project.settings.coverImageUrl);
       project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
       project.scenes.forEach(scene => {
         if (!scene.id) scene.id = randomId();
@@ -1969,6 +2043,8 @@
 
     function ensureProjectShape(){
       project.settings = project.settings || {};
+      if (typeof project.settings.coverImageUrl !== 'string') project.settings.coverImageUrl = '';
+      else project.settings.coverImageUrl = project.settings.coverImageUrl.trim();
       if (typeof project.libraryEntryId === 'undefined') project.libraryEntryId = null;
       if (!project.settings.theme){
         const globalTheme = (typeof window.getSiteTheme === 'function') ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark');
@@ -2151,6 +2227,7 @@
         settings: {
           theme: (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark')),
           smartFormat: true,
+          coverImageUrl: '',
           pageWidth: 60,
           focus: false,
           pomodoro: { workMin: 25, breakMin: 5, autoStartBreak: true, autoStartWork: false }
@@ -2488,7 +2565,7 @@
       const hasStoryboard = !!currentStoryboard;
 
       viewer.dataset.empty = hasStoryboard ? 'false' : 'true';
-      image.src = hasStoryboard ? currentStoryboard.url : DEFAULT_STORYBOARD_IMAGE;
+      image.src = hasStoryboard ? currentStoryboard.url : getStoryboardPlaceholderImage();
       image.alt = hasStoryboard ? `Storyboard ${index + 1} of ${storyboards.length}` : 'Storyboard placeholder';
       counter.textContent = hasStoryboard ? `Storyboard ${index + 1} of ${storyboards.length}` : 'No storyboard yet';
       emptyState.textContent = hasStoryboard ? '' : 'No storyboard yet';
@@ -2519,6 +2596,48 @@
       } catch (err){
         return null;
       }
+    }
+
+    function setProjectCoverImage(url){
+      if (!project) return;
+      project.settings = project.settings || {};
+      const normalized = (url || '').trim();
+      if (project.settings.coverImageUrl === normalized) return;
+      project.settings.coverImageUrl = normalized;
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      renderStoryboard();
+      if (storyboardMode) renderStoryboardGallery();
+      updateCachedCoverImage(normalized);
+      updateScriptPreview(scriptDialogSelectedId || '');
+    }
+
+    function handleApplyScriptCoverImage(){
+      if (!project) return;
+      const input = document.getElementById('scriptDialogCoverUrl');
+      if (!input) return;
+      const raw = input.value || '';
+      const trimmed = raw.trim();
+      if (!trimmed){
+        input.value = '';
+        setProjectCoverImage('');
+        return;
+      }
+      const normalized = normalizeStoryboardUrl(trimmed);
+      if (!normalized){
+        alert('Enter a valid image URL (including http:// or https://).');
+        input.focus();
+        return;
+      }
+      input.value = normalized;
+      setProjectCoverImage(normalized);
+    }
+
+    function handleClearScriptCoverImage(){
+      const input = document.getElementById('scriptDialogCoverUrl');
+      if (input) input.value = '';
+      setProjectCoverImage('');
     }
 
     function addStoryboardEntry(scene, url){
@@ -4461,6 +4580,24 @@
         if (e.key === 'Enter'){
           e.preventDefault();
           handleScriptDialogCreate();
+        }
+      });
+    }
+
+    const scriptDialogCoverApply = document.getElementById('scriptDialogApplyCover');
+    if (scriptDialogCoverApply){
+      scriptDialogCoverApply.addEventListener('click', ()=> handleApplyScriptCoverImage());
+    }
+    const scriptDialogCoverClear = document.getElementById('scriptDialogClearCover');
+    if (scriptDialogCoverClear){
+      scriptDialogCoverClear.addEventListener('click', ()=> handleClearScriptCoverImage());
+    }
+    const scriptDialogCoverInput = document.getElementById('scriptDialogCoverUrl');
+    if (scriptDialogCoverInput){
+      scriptDialogCoverInput.addEventListener('keydown', e=>{
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          handleApplyScriptCoverImage();
         }
       });
     }
