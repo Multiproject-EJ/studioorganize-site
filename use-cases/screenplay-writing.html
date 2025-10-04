@@ -5001,7 +5001,284 @@
       a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
     }
-    function printPDF(){ window.print(); }
+    const SCRIPT_LINES_PER_PAGE = 55;
+
+    function sanitizePrintableUrl(url){
+      const raw = typeof url === 'string' ? url.trim() : '';
+      if (!raw) return '';
+      try {
+        const parsed = new URL(raw, window.location.origin);
+        if (!/^https?:$/i.test(parsed.protocol)) return '';
+        return parsed.href;
+      } catch (err){
+        return '';
+      }
+    }
+
+    function estimateScenePageCount(scene){
+      if (!scene || !Array.isArray(scene.elements)) return 1;
+      const lineCount = scene.elements.length || 0;
+      return Math.max(1, Math.ceil(lineCount / SCRIPT_LINES_PER_PAGE));
+    }
+
+    function buildPrintableSceneToc(scenes){
+      const entries = [];
+      let pageCounter = 1;
+      scenes.forEach((scene, index) => {
+        const pages = estimateScenePageCount(scene);
+        const start = pageCounter;
+        const end = start + pages - 1;
+        entries.push({
+          number: index + 1,
+          heading: scene.slug || `Scene ${index + 1}`,
+          pageStart: start,
+          pageEnd: end
+        });
+        pageCounter = end + 1;
+      });
+      return entries;
+    }
+
+    function printableScriptLine(element){
+      const normalized = normalizeSceneElement(element);
+      const type = (normalized.t || 'action').toLowerCase();
+      let text = normalized.txt || '';
+      if (!text){
+        return '<div class="print-script-line spacer">&nbsp;</div>';
+      }
+      if (type === 'slug' || type === 'transition' || type === 'character'){
+        text = text.toUpperCase();
+      }
+      const safeText = escapeHtml(text);
+      const className = `print-script-line ${escapeHtml(type)}`;
+      return `<div class="${className}">${safeText}</div>`;
+    }
+
+    function buildPrintableScript(scenes){
+      if (!scenes.length){
+        return '<p class="print-empty">No scenes yet.</p>';
+      }
+      return scenes.map(scene => {
+        const lines = Array.isArray(scene.elements) ? scene.elements.map(printableScriptLine).join('') : '';
+        return `<section class="print-script-scene">${lines}</section>`;
+      }).join('<div class="print-scene-separator"></div>');
+    }
+
+    function buildPrintableCharacters(characters){
+      if (!characters.length){
+        return '<p class="print-empty">No characters documented.</p>';
+      }
+      return characters.map(character => {
+        const metaParts = [];
+        if (character.role) metaParts.push(character.role);
+        if (character.pronouns) metaParts.push(character.pronouns);
+        if (character.age) metaParts.push(`Age ${character.age}`);
+        if (character.archetype) metaParts.push(character.archetype);
+        const meta = metaParts.length ? `<p class="print-character-meta">${escapeHtml(metaParts.join(' • '))}</p>` : '';
+        const summary = character.summary ? `<p class="print-character-summary">${escapeHtml(character.summary)}</p>` : '';
+        const traits = Array.isArray(character.traits) && character.traits.length
+          ? `<ul class="print-character-traits">${character.traits.map(trait => `<li>${escapeHtml(trait)}</li>`).join('')}</ul>`
+          : '';
+        const stats = character.stats || {};
+        const statsItems = [];
+        if (Number.isFinite(Number(stats.scenes)) && Number(stats.scenes) > 0) statsItems.push(`<span>Scenes: ${escapeHtml(String(stats.scenes))}</span>`);
+        if (Number.isFinite(Number(stats.dialogue)) && Number(stats.dialogue) > 0) statsItems.push(`<span>Dialogue lines: ${escapeHtml(String(stats.dialogue))}</span>`);
+        if (Number.isFinite(Number(stats.screenTime)) && Number(stats.screenTime) > 0) statsItems.push(`<span>Screen time: ${escapeHtml(String(stats.screenTime))} min</span>`);
+        const statsMarkup = statsItems.length ? `<p class="print-character-stats">${statsItems.join(' • ')}</p>` : '';
+        const turnaroundUrl = Array.isArray(character.looks?.turnarounds) && character.looks.turnarounds.length
+          ? sanitizePrintableUrl(character.looks.turnarounds[0])
+          : '';
+        const turnaround = turnaroundUrl
+          ? `<div class="print-character-turnaround"><img src="${escapeHtml(turnaroundUrl)}" alt="${escapeHtml(character.name ? `${character.name} turnaround` : 'Character turnaround')}" loading="lazy" /></div>`
+          : '';
+        return `
+          <article class="print-character-card">
+            <div class="print-character-body">
+              <h3>${escapeHtml(character.name || 'Untitled Character')}</h3>
+              ${meta}
+              ${summary}
+              ${statsMarkup}
+              ${traits}
+            </div>
+            ${turnaround}
+          </article>`;
+      }).join('');
+    }
+
+    function buildPrintableStoryboard(entries){
+      if (!entries.length){
+        return '<p class="print-empty">No storyboard frames yet.</p>';
+      }
+      return `<div class="print-storyboard-grid">${entries.map(entry => {
+        const caption = entry.sceneNumber
+          ? `Scene ${entry.sceneNumber}${entry.sceneSlug ? ` • ${entry.sceneSlug}` : ''}`
+          : (entry.sceneSlug || 'Storyboard');
+        const reference = entry.index ? `${caption} • Shot ${entry.index}` : caption;
+        return `
+          <figure class="print-storyboard-card">
+            <img src="${escapeHtml(entry.url)}" alt="${escapeHtml(reference)}" loading="lazy" />
+            <figcaption>${escapeHtml(reference)}</figcaption>
+          </figure>`;
+      }).join('')}</div>`;
+    }
+
+    function buildPrintableDocument(){
+      const title = project?.title?.trim() || 'Untitled Project';
+      const coverImage = sanitizePrintableUrl(project?.settings?.coverImageUrl);
+      const scenes = Array.isArray(project?.scenes) ? project.scenes.map(scene => ({
+        ...scene,
+        elements: Array.isArray(scene.elements) ? scene.elements.map(normalizeSceneElement) : []
+      })) : [];
+      const tocEntries = buildPrintableSceneToc(scenes);
+      const characters = Array.isArray(project?.catalogs?.characters)
+        ? project.catalogs.characters.map(normalizeCharacter)
+        : [];
+      const storyboardEntries = scenes.flatMap((scene, index) => {
+        const storyboards = getSceneStoryboards(scene);
+        return storyboards.map((entry, storyboardIndex) => {
+          const url = sanitizePrintableUrl(entry.url);
+          if (!url) return null;
+          return {
+            url,
+            sceneNumber: index + 1,
+            sceneSlug: scene.slug || `Scene ${index + 1}`,
+            index: storyboardIndex + 1
+          };
+        }).filter(Boolean);
+      });
+
+      const tocMarkup = tocEntries.length
+        ? `<table class="print-toc-table">
+            <thead>
+              <tr>
+                <th scope="col">Scene</th>
+                <th scope="col">Heading</th>
+                <th scope="col">Pages</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tocEntries.map(entry => {
+                const pageLabel = entry.pageStart === entry.pageEnd
+                  ? String(entry.pageStart)
+                  : `${entry.pageStart}–${entry.pageEnd}`;
+                return `<tr>
+                  <td>${escapeHtml(String(entry.number))}</td>
+                  <td>${escapeHtml(entry.heading)}</td>
+                  <td>${escapeHtml(pageLabel)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>`
+        : '<p class="print-empty">No scenes available for table of contents.</p>';
+
+      const scriptMarkup = buildPrintableScript(scenes);
+      const characterMarkup = buildPrintableCharacters(characters);
+      const storyboardMarkup = buildPrintableStoryboard(storyboardEntries);
+
+      return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(title)} — Export</title>
+    <style>
+      @page { size: 8.5in 11in; margin: 1in; }
+      body { margin: 0; font-family: 'Courier Prime', 'Courier New', Courier, monospace; color: #111; background: #fff; }
+      .print-document { margin: 0; padding: 0; }
+      .print-section { page-break-after: always; padding: 0; box-sizing: border-box; }
+      .print-section:last-child { page-break-after: auto; }
+      .print-title-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 24px; }
+      .print-title-page h1 { font-size: 36px; letter-spacing: 1px; margin: 0; text-transform: uppercase; }
+      .print-title-page img { max-width: 60%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px; }
+      .print-toc { padding: 48px; }
+      .print-toc h2 { font-size: 20px; margin: 0 0 24px; text-transform: uppercase; letter-spacing: 1px; }
+      .print-toc-table { width: 100%; border-collapse: collapse; font-size: 12pt; }
+      .print-toc-table th, .print-toc-table td { padding: 8px 10px; border-bottom: 1px solid #d0d0d0; text-align: left; }
+      .print-toc-table th { text-transform: uppercase; font-size: 11pt; letter-spacing: .8px; }
+      .print-empty { font-size: 12pt; color: #777; }
+      .print-script { padding: 48px 54px; }
+      .print-script-line { font-size: 12pt; margin: 0 0 12pt; white-space: pre-wrap; }
+      .print-script-line.slug { margin-left: 0; font-weight: 600; }
+      .print-script-line.action, .print-script-line.exposition { margin-left: 0; margin-right: 0; }
+      .print-script-line.character { margin-left: 3in; margin-right: 1.5in; font-weight: 600; }
+      .print-script-line.parenthetical { margin-left: 2.5in; margin-right: 2in; font-style: italic; }
+      .print-script-line.dialogue { margin-left: 2in; margin-right: 2in; }
+      .print-script-line.transition { text-align: right; margin-right: 0; font-weight: 600; }
+      .print-script-line.note { margin-left: 1in; margin-right: 1in; font-style: italic; }
+      .print-script-line.spacer { min-height: 12pt; }
+      .print-script-scene { margin-bottom: 24pt; }
+      .print-scene-separator { height: 24pt; }
+      .print-blank-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #c0c0c0; font-style: italic; }
+      .print-characters { padding: 48px; display: flex; flex-direction: column; gap: 24px; }
+      .print-characters h2 { font-size: 20px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+      .print-character-card { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border: 1px solid #d8d8d8; border-radius: 12px; padding: 20px; }
+      .print-character-card h3 { margin: 0 0 8px; font-size: 16pt; text-transform: uppercase; }
+      .print-character-meta { margin: 0 0 12px; font-size: 11pt; color: #444; }
+      .print-character-summary { margin: 0 0 12px; font-size: 12pt; line-height: 1.5; }
+      .print-character-stats { margin: 0 0 12px; font-size: 11pt; color: #444; }
+      .print-character-traits { margin: 0; padding-left: 18px; font-size: 11pt; line-height: 1.4; }
+      .print-character-turnaround { display: flex; align-items: center; justify-content: center; }
+      .print-character-turnaround img { max-width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px; }
+      .print-storyboard { padding: 48px; }
+      .print-storyboard h2 { font-size: 20px; margin: 0 0 24px; text-transform: uppercase; letter-spacing: 1px; }
+      .print-storyboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+      .print-storyboard-card { margin: 0; }
+      .print-storyboard-card img { width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px; }
+      .print-storyboard-card figcaption { margin-top: 8px; font-size: 10pt; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="print-document">
+      <section class="print-section print-title-page">
+        <h1>${escapeHtml(title)}</h1>
+        ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)} cover" />` : ''}
+      </section>
+      <section class="print-section print-toc">
+        <h2>Table of Contents</h2>
+        ${tocMarkup}
+      </section>
+      <section class="print-section print-script">
+        ${scriptMarkup}
+      </section>
+      <section class="print-section print-blank-page">
+        <span>This page intentionally left blank.</span>
+      </section>
+      <section class="print-section print-characters">
+        <h2>Characters</h2>
+        ${characterMarkup}
+      </section>
+      <section class="print-section print-storyboard">
+        <h2>Storyboard</h2>
+        ${storyboardMarkup}
+      </section>
+    </div>
+  </body>
+</html>`;
+    }
+
+    function printPDF(){
+      const html = buildPrintableDocument();
+      const printWindow = window.open('', '_blank', 'noopener');
+      if (!printWindow){
+        alert('Allow pop-ups to export your PDF.');
+        return;
+      }
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      const triggerPrint = ()=>{
+        try {
+          printWindow.focus();
+          printWindow.print();
+        } catch (err){
+          console.error('Print failed', err);
+        }
+      };
+      if (printWindow.document.readyState === 'complete'){
+        setTimeout(triggerPrint, 250);
+      } else {
+        printWindow.addEventListener('load', ()=> setTimeout(triggerPrint, 250));
+      }
+    }
 
     /* =========================
      * Smart backup (delta/full)
