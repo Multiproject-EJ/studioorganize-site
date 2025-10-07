@@ -178,7 +178,11 @@
       .tab-panel.active{display:flex}
       .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
       .panel-footer{padding:12px; border-top:1px solid var(--ring); display:flex; flex-direction:column; gap:10px; background:var(--panel)}
-      .storyboard-field{display:flex; flex-direction:column; gap:10px;}
+      .storyboard-field{display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); align-items:start;}
+      .storyboard-field-primary{display:flex; flex-direction:column; gap:12px;}
+      .storyboard-field-create{display:flex; flex-direction:column; gap:14px; background:var(--panel); border:1px solid var(--ring); border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(15,23,42,0.12);}
+      .storyboard-field-create h3{margin:0; font-size:14px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
+      .storyboard-field-create p{margin:0; font-size:13px; color:var(--muted); line-height:1.5;}
       .storyboard-viewer{position:relative; border:1px solid var(--ring); border-radius:12px; overflow:hidden; background:var(--card); aspect-ratio:16 / 9; display:flex; align-items:center; justify-content:center;}
       .storyboard-viewer img{width:100%; height:100%; object-fit:cover; transition:opacity .2s ease;}
       .storyboard-viewer video{width:100%; height:100%; object-fit:cover; display:none; background:var(--card); border:none; border-radius:0;}
@@ -827,24 +831,30 @@
           <div class="tab-panels">
             <div class="tab-panel" data-tab="write" id="tabWrite">
               <div class="storyboard-field">
-                <div class="storyboard-viewer" id="storyboardViewer" data-empty="true" data-mode="image">
-                  <button class="storyboard-nav prev" type="button" id="storyboardPrev" aria-label="Previous storyboard image">&#x2039;</button>
-                  <img id="storyboardImage" src="https://placehold.co/480x270?text=Storyboard" alt="Storyboard preview" loading="lazy" />
-                  <video id="storyboardVideo" preload="metadata" playsinline controls hidden></video>
-                  <div class="storyboard-empty" id="storyboardEmpty">No storyboard yet</div>
-                  <button class="storyboard-nav next" type="button" id="storyboardNext" aria-label="Next storyboard image">&#x203A;</button>
+                <div class="storyboard-field-create">
+                  <h3>AI storyboard assistant</h3>
+                  <p>Generate picture frames with AI or drop in your own storyboard image or clip.</p>
+                  <div class="storyboard-mode-switch" role="group" aria-label="Storyboard media mode">
+                    <button class="storyboard-mode-btn active" type="button" data-storyboard-mode-btn="image" aria-pressed="true">Picture frames</button>
+                    <button class="storyboard-mode-btn" type="button" data-storyboard-mode-btn="video" aria-pressed="false">Video clips</button>
+                  </div>
+                  <div class="storyboard-input">
+                    <input id="newStoryboardUrl" placeholder="Storyboard image URL" inputmode="url" autocomplete="off" />
+                    <button class="btn" type="button" id="addStoryboardBtn">Add storyboard</button>
+                  </div>
                 </div>
-                <div class="storyboard-meta">
-                  <span id="storyboardCounter" class="muted-text">No storyboard yet</span>
-                  <button class="storyboard-remove" type="button" id="removeStoryboardBtn" disabled>Remove current</button>
-                </div>
-                <div class="storyboard-mode-switch" role="group" aria-label="Storyboard media mode">
-                  <button class="storyboard-mode-btn active" type="button" data-storyboard-mode-btn="image" aria-pressed="true">Picture frames</button>
-                  <button class="storyboard-mode-btn" type="button" data-storyboard-mode-btn="video" aria-pressed="false">Video clips</button>
-                </div>
-                <div class="storyboard-input">
-                  <input id="newStoryboardUrl" placeholder="Storyboard image URL" inputmode="url" autocomplete="off" />
-                  <button class="btn" type="button" id="addStoryboardBtn">Add storyboard</button>
+                <div class="storyboard-field-primary">
+                  <div class="storyboard-viewer" id="storyboardViewer" data-empty="true" data-mode="image">
+                    <button class="storyboard-nav prev" type="button" id="storyboardPrev" aria-label="Previous storyboard image">&#x2039;</button>
+                    <img id="storyboardImage" src="https://placehold.co/480x270?text=Storyboard" alt="Storyboard preview" loading="lazy" />
+                    <video id="storyboardVideo" preload="metadata" playsinline controls hidden></video>
+                    <div class="storyboard-empty" id="storyboardEmpty">No storyboard yet</div>
+                    <button class="storyboard-nav next" type="button" id="storyboardNext" aria-label="Next storyboard image">&#x203A;</button>
+                  </div>
+                  <div class="storyboard-meta">
+                    <span id="storyboardCounter" class="muted-text">No storyboard yet</span>
+                    <button class="storyboard-remove" type="button" id="removeStoryboardBtn" disabled>Remove current</button>
+                  </div>
                 </div>
               </div>
               <div class="tab-divider"></div>
