@@ -181,6 +181,10 @@
       .storyboard-field{display:flex; flex-direction:column; gap:10px;}
       .storyboard-viewer{position:relative; border:1px solid var(--ring); border-radius:12px; overflow:hidden; background:var(--card); aspect-ratio:16 / 9; display:flex; align-items:center; justify-content:center;}
       .storyboard-viewer img{width:100%; height:100%; object-fit:cover; transition:opacity .2s ease;}
+      .storyboard-viewer video{width:100%; height:100%; object-fit:cover; display:none; background:var(--card); border:none; border-radius:0;}
+      .storyboard-viewer video::-webkit-media-controls-panel{background:rgba(17,25,40,0.65);}
+      .storyboard-viewer[data-mode="video"] img{display:none;}
+      .storyboard-viewer[data-mode="video"] video{display:block;}
       .storyboard-viewer[data-empty="true"] img{opacity:0.3; filter:saturate(0.1);}
       .storyboard-empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:0 16px; font-size:0.95rem; color:var(--muted); pointer-events:none;}
       .storyboard-viewer[data-empty="false"] .storyboard-empty{display:none;}
@@ -189,6 +193,10 @@
       .storyboard-nav.next{right:12px;}
       .storyboard-nav[disabled]{opacity:0.45; cursor:not-allowed; background:rgba(0,0,0,0.25);}
       .storyboard-meta{display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:0.9rem;}
+      .storyboard-mode-switch{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+      .storyboard-mode-btn{border:1px solid var(--ring); background:var(--chip); color:var(--ink); border-radius:999px; font-size:11px; padding:6px 12px; cursor:pointer; letter-spacing:.3px; text-transform:uppercase;}
+      .storyboard-mode-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600;}
+      .storyboard-mode-btn[disabled]{opacity:0.6; cursor:not-allowed;}
       .storyboard-input{display:flex; gap:8px; flex-wrap:wrap;}
       .storyboard-input input{flex:1 1 220px;}
       .storyboard-remove{background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.85rem; text-decoration:underline; padding:4px 0;}
@@ -315,8 +323,10 @@
       .storyboard-gallery-card.active{
         border-color:var(--acc); box-shadow:0 16px 48px rgba(47,110,255,0.32);
       }
-      .storyboard-gallery-thumb{aspect-ratio:16 / 9; background:var(--field); overflow:hidden;}
-      .storyboard-gallery-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+      .storyboard-gallery-thumb{aspect-ratio:16 / 9; background:var(--field); overflow:hidden; display:flex; align-items:center; justify-content:center;}
+      .storyboard-gallery-thumb img,
+      .storyboard-gallery-thumb video{width:100%; height:100%; object-fit:cover; display:block;}
+      .storyboard-gallery-thumb video{background:var(--field);}
       .storyboard-gallery-card-footer{
         display:flex; align-items:center; justify-content:space-between;
         padding:12px 14px; gap:10px;
@@ -817,15 +827,20 @@
           <div class="tab-panels">
             <div class="tab-panel" data-tab="write" id="tabWrite">
               <div class="storyboard-field">
-                <div class="storyboard-viewer" id="storyboardViewer" data-empty="true">
+                <div class="storyboard-viewer" id="storyboardViewer" data-empty="true" data-mode="image">
                   <button class="storyboard-nav prev" type="button" id="storyboardPrev" aria-label="Previous storyboard image">&#x2039;</button>
                   <img id="storyboardImage" src="https://placehold.co/480x270?text=Storyboard" alt="Storyboard preview" loading="lazy" />
+                  <video id="storyboardVideo" preload="metadata" playsinline controls hidden></video>
                   <div class="storyboard-empty" id="storyboardEmpty">No storyboard yet</div>
                   <button class="storyboard-nav next" type="button" id="storyboardNext" aria-label="Next storyboard image">&#x203A;</button>
                 </div>
                 <div class="storyboard-meta">
                   <span id="storyboardCounter" class="muted-text">No storyboard yet</span>
                   <button class="storyboard-remove" type="button" id="removeStoryboardBtn" disabled>Remove current</button>
+                </div>
+                <div class="storyboard-mode-switch" role="group" aria-label="Storyboard media mode">
+                  <button class="storyboard-mode-btn active" type="button" data-storyboard-mode-btn="image" aria-pressed="true">Picture frames</button>
+                  <button class="storyboard-mode-btn" type="button" data-storyboard-mode-btn="video" aria-pressed="false">Video clips</button>
                 </div>
                 <div class="storyboard-input">
                   <input id="newStoryboardUrl" placeholder="Storyboard image URL" inputmode="url" autocomplete="off" />
@@ -1081,6 +1096,10 @@
                 <h3 id="storyboardGalleryTitle">No scene selected</h3>
                 <p class="muted-text" id="storyboardGalleryMeta"></p>
               </div>
+              <div class="storyboard-mode-switch storyboard-mode-switch--overlay" role="group" aria-label="Storyboard media mode">
+                <button class="storyboard-mode-btn active" type="button" data-storyboard-mode-btn="image" aria-pressed="true">Picture frames</button>
+                <button class="storyboard-mode-btn" type="button" data-storyboard-mode-btn="video" aria-pressed="false">Video clips</button>
+              </div>
               <button class="btn storyboard-open-btn" type="button" id="storyboardOpenSceneBtn" disabled>Open in Writer</button>
             </div>
             <div class="storyboard-gallery-input">
@@ -1331,6 +1350,38 @@
     };
     const STORYBOARD_AI_CONFIG_STORAGE_KEY = 'SW_STORYBOARD_AI_CONFIG_V1';
     const STORYBOARD_AI_DEFAULT_MODEL = 'google/gemini-2.5-flash-image-preview';
+    const STORYBOARD_MODE_STORAGE_KEY = 'SW_STORYBOARD_MEDIA_MODE_V1';
+    const STORYBOARD_MEDIA_IMAGE = 'image';
+    const STORYBOARD_MEDIA_VIDEO = 'video';
+    const STORYBOARD_MEDIA_MODES = [STORYBOARD_MEDIA_IMAGE, STORYBOARD_MEDIA_VIDEO];
+    const STORYBOARD_MODE_CONFIG = {
+      [STORYBOARD_MEDIA_IMAGE]: {
+        label: 'Picture frames',
+        singular: 'frame',
+        plural: 'frames',
+        addAction: 'Add frame',
+        removeAction: 'Remove frame',
+        placeholder: 'Storyboard image URL',
+        quickPlaceholder: 'Paste storyboard image URL',
+        empty: 'No storyboard frames yet',
+        counterEmpty: 'No storyboard frames yet',
+        counterPrefix: 'Storyboard frame',
+        aiAvailable: true
+      },
+      [STORYBOARD_MEDIA_VIDEO]: {
+        label: 'Video clips',
+        singular: 'clip',
+        plural: 'clips',
+        addAction: 'Add clip',
+        removeAction: 'Remove clip',
+        placeholder: 'Storyboard clip URL',
+        quickPlaceholder: 'Paste storyboard clip URL',
+        empty: 'No storyboard clips yet',
+        counterEmpty: 'No storyboard clips yet',
+        counterPrefix: 'Storyboard clip',
+        aiAvailable: false
+      }
+    };
     function getDefaultStoryboardAIConfig(){
       return { apiKey: '', model: STORYBOARD_AI_DEFAULT_MODEL };
     }
@@ -1354,6 +1405,26 @@
       } catch (err){}
     }
 
+    function loadStoryboardMediaMode(){
+      try {
+        const raw = localStorage.getItem(STORYBOARD_MODE_STORAGE_KEY);
+        if (!raw) return STORYBOARD_MEDIA_IMAGE;
+        return STORYBOARD_MEDIA_MODES.includes(raw) ? raw : STORYBOARD_MEDIA_IMAGE;
+      } catch (err){
+        return STORYBOARD_MEDIA_IMAGE;
+      }
+    }
+
+    function saveStoryboardMediaMode(mode){
+      try {
+        localStorage.setItem(STORYBOARD_MODE_STORAGE_KEY, mode);
+      } catch (err){}
+    }
+
+    function getStoryboardModeConfig(mode){
+      return STORYBOARD_MODE_CONFIG[mode] || STORYBOARD_MODE_CONFIG[STORYBOARD_MEDIA_IMAGE];
+    }
+
     /* =========================
      * State & Config
      * =======================*/
@@ -1362,6 +1433,7 @@
     let saveTimer = null;
     let saveSceneStatusTimer = null;
     let storyboardMode = false;
+    let storyboardMediaMode = loadStoryboardMediaMode();
     let storyboardOverlaySceneId = null;
     let storyboardAIConfig = loadStoryboardAIConfig();
     const storyboardAIPrompts = new Map();
@@ -1493,6 +1565,35 @@
     let supabaseSession = null;
     let supabaseSessionBound = false;
     const storyboardIndexState = new Map();
+    const STORYBOARD_INDEX_DELIMITER = '::';
+
+    function storyboardIndexKey(sceneId, mode = storyboardMediaMode){
+      const safeSceneId = sceneId || 'scene';
+      const safeMode = STORYBOARD_MEDIA_MODES.includes(mode) ? mode : STORYBOARD_MEDIA_IMAGE;
+      return `${safeSceneId}${STORYBOARD_INDEX_DELIMITER}${safeMode}`;
+    }
+
+    function getStoryboardIndex(sceneId, mode = storyboardMediaMode){
+      return storyboardIndexState.get(storyboardIndexKey(sceneId, mode)) ?? 0;
+    }
+
+    function setStoryboardIndex(sceneId, value, mode = storyboardMediaMode){
+      storyboardIndexState.set(storyboardIndexKey(sceneId, mode), value);
+    }
+
+    function deleteStoryboardIndex(sceneId, mode){
+      storyboardIndexState.delete(storyboardIndexKey(sceneId, mode));
+    }
+
+    function clampStoryboardIndex(scene, mode = storyboardMediaMode){
+      if (!scene) return 0;
+      const storyboards = getSceneStoryboards(scene, mode);
+      const max = Math.max(0, storyboards.length - 1);
+      const current = getStoryboardIndex(scene.id, mode);
+      const next = Math.max(0, Math.min(current, max));
+      setStoryboardIndex(scene.id, next, mode);
+      return next;
+    }
 
     function bindSupabaseSessionClient(client){
       if (!client || supabaseSessionBound) return;
@@ -1576,11 +1677,13 @@
           const rawUrl = typeof row.image_url === 'string' ? row.image_url : row.url;
           const url = typeof rawUrl === 'string' ? rawUrl.trim() : '';
           const position = Number.isFinite(row.position) ? row.position : 0;
-          return { id: row.id ?? null, url, position };
+          const rawType = typeof row.media_type === 'string' ? row.media_type : row.type;
+          const type = rawType === STORYBOARD_MEDIA_VIDEO ? STORYBOARD_MEDIA_VIDEO : STORYBOARD_MEDIA_IMAGE;
+          return { id: row.id ?? null, url, position, type };
         })
         .filter(entry => !!entry.url)
         .sort((a, b) => (a.position || 0) - (b.position || 0))
-        .map((entry, idx) => ({ id: entry.id, url: entry.url, position: idx }));
+        .map((entry, idx) => ({ id: entry.id, url: entry.url, position: idx, type: entry.type }));
     }
 
     function ensureSceneStoryboardStructure(scene){
@@ -1594,19 +1697,22 @@
       source.forEach(item => {
         let url = '';
         let id = '';
+        let type = STORYBOARD_MEDIA_IMAGE;
         if (typeof item === 'string'){
           url = item.trim();
         } else if (item && typeof item === 'object'){
           const rawUrl = typeof item.url === 'string' ? item.url : item.image_url;
           url = typeof rawUrl === 'string' ? rawUrl.trim() : '';
           id = item.id;
+          const rawType = typeof item.type === 'string' ? item.type : item.media_type;
+          if (rawType === STORYBOARD_MEDIA_VIDEO) type = STORYBOARD_MEDIA_VIDEO;
         }
         if (!url) return;
         if (!id || seen.has(id)){
           id = randomId();
         }
         seen.add(id);
-        sanitized.push({ id, url });
+        sanitized.push({ id, url, type });
       });
       sanitized.forEach((entry, idx) => { entry.position = idx; });
       scene.storyboards = sanitized;
@@ -1621,6 +1727,7 @@
         if (!trimmed) return;
         if (!entry.id) entry.id = randomId();
         entry.url = trimmed;
+        entry.type = entry.type === STORYBOARD_MEDIA_VIDEO ? STORYBOARD_MEDIA_VIDEO : STORYBOARD_MEDIA_IMAGE;
         filtered.push(entry);
       });
       filtered.forEach((entry, idx) => { entry.position = idx; });
@@ -1629,14 +1736,21 @@
       }
     }
 
-    function getSceneStoryboards(scene){
+    function getSceneStoryboards(scene, mediaType = null){
       if (!scene || !Array.isArray(scene.storyboards)) return [];
       refreshStoryboardPositions(scene);
-      return scene.storyboards.map(entry => ({ id: entry.id, url: entry.url, position: entry.position }));
+      const entries = scene.storyboards.map(entry => ({
+        id: entry.id,
+        url: entry.url,
+        position: entry.position,
+        type: entry.type === STORYBOARD_MEDIA_VIDEO ? STORYBOARD_MEDIA_VIDEO : STORYBOARD_MEDIA_IMAGE
+      }));
+      if (!mediaType || !STORYBOARD_MEDIA_MODES.includes(mediaType)) return entries;
+      return entries.filter(entry => entry.type === mediaType);
     }
 
     function sanitizeStoryboardStateForComparison(scene){
-      return getSceneStoryboards(scene).map(entry => ({ id: entry.id, url: entry.url, position: entry.position }));
+      return getSceneStoryboards(scene).map(entry => ({ id: entry.id, url: entry.url, position: entry.position, type: entry.type }));
     }
 
     function sanitizeStoryboardRowForComparison(rows){
@@ -2217,7 +2331,7 @@
       });
       storyboardIndexState.clear();
       project.scenes.forEach(scene => {
-        storyboardIndexState.set(scene.id, 0);
+        STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(scene.id, 0, mode));
       });
       project._hashes = { scene: {} };
       project.scenes.forEach(scene => {
@@ -2379,13 +2493,16 @@
         return scene;
       });
       project.scenes.forEach(scene => {
-        const max = Math.max(0, (scene.storyboards?.length || 1) - 1);
-        const current = storyboardIndexState.get(scene.id) ?? 0;
-        storyboardIndexState.set(scene.id, Math.max(0, Math.min(current, max)));
+        STORYBOARD_MEDIA_MODES.forEach(mode => {
+          clampStoryboardIndex(scene, mode);
+        });
       });
       const validIds = new Set(project.scenes.map(scene => scene.id));
-      Array.from(storyboardIndexState.keys()).forEach(id => {
-        if (!validIds.has(id)) storyboardIndexState.delete(id);
+      Array.from(storyboardIndexState.keys()).forEach(key => {
+        const [sceneId, mode] = key.split(STORYBOARD_INDEX_DELIMITER);
+        if (!validIds.has(sceneId) || (mode && !STORYBOARD_MEDIA_MODES.includes(mode))){
+          storyboardIndexState.delete(key);
+        }
       });
     }
 
@@ -2573,7 +2690,9 @@
       project.scenes.forEach(s => { project._hashes.scene[s.id] = hashString(stableSceneString(s)); });
       activeSceneId = project.scenes[0].id;
       storyboardIndexState.clear();
-      storyboardIndexState.set(activeSceneId, 0);
+      if (activeSceneId){
+        STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(activeSceneId, 0, mode));
+      }
       setLastProjectId(pid);
     }
 
@@ -2583,6 +2702,7 @@
     function render(){
       ensureProjectShape();
       pruneStoryboardAIState();
+      updateStoryboardModeUI();
       hideSelectionMenu();
       document.getElementById('title').textContent = project.title || 'Untitled Project';
       const dialogTitleInput = document.getElementById('scriptDialogCurrentTitle');
@@ -3081,6 +3201,7 @@
       const scene = getActiveScene();
       const viewer = document.getElementById('storyboardViewer');
       const image = document.getElementById('storyboardImage');
+      const video = document.getElementById('storyboardVideo');
       const counter = document.getElementById('storyboardCounter');
       const prevBtn = document.getElementById('storyboardPrev');
       const nextBtn = document.getElementById('storyboardNext');
@@ -3089,27 +3210,60 @@
       if (!viewer || !image || !counter || !prevBtn || !nextBtn || !removeBtn || !emptyState){
         return;
       }
-      const storyboards = scene ? getSceneStoryboards(scene) : [];
+
+      const config = getStoryboardModeConfig(storyboardMediaMode);
+      const storyboards = scene ? getSceneStoryboards(scene, storyboardMediaMode) : [];
       let index = 0;
       if (scene){
-        const current = storyboardIndexState.get(scene.id) ?? 0;
-        const max = Math.max(0, storyboards.length - 1);
-        index = Math.max(0, Math.min(current, max));
-        storyboardIndexState.set(scene.id, index);
+        index = clampStoryboardIndex(scene, storyboardMediaMode);
       }
       const currentStoryboard = storyboards.length ? storyboards[index] : null;
       const hasStoryboard = !!currentStoryboard;
 
       viewer.dataset.empty = hasStoryboard ? 'false' : 'true';
-      image.src = hasStoryboard ? currentStoryboard.url : getStoryboardPlaceholderImage();
-      image.alt = hasStoryboard ? `Storyboard ${index + 1} of ${storyboards.length}` : 'Storyboard placeholder';
-      counter.textContent = hasStoryboard ? `Storyboard ${index + 1} of ${storyboards.length}` : 'No storyboard yet';
-      emptyState.textContent = hasStoryboard ? '' : 'No storyboard yet';
+      viewer.dataset.mode = storyboardMediaMode;
+
+      const label = hasStoryboard ? `${config.counterPrefix} ${index + 1} of ${storyboards.length}` : config.counterEmpty;
+      if (image){
+        if (hasStoryboard && currentStoryboard.type === STORYBOARD_MEDIA_IMAGE){
+          image.src = currentStoryboard.url;
+          image.alt = label;
+          image.hidden = false;
+        } else {
+          image.src = getStoryboardPlaceholderImage();
+          image.alt = hasStoryboard ? label : 'Storyboard placeholder';
+          image.hidden = hasStoryboard && currentStoryboard?.type === STORYBOARD_MEDIA_VIDEO;
+        }
+      }
+
+      if (video){
+        if (hasStoryboard && currentStoryboard.type === STORYBOARD_MEDIA_VIDEO){
+          if (video.src !== currentStoryboard.url){
+            try { video.pause(); } catch (err){}
+            video.src = currentStoryboard.url;
+            try { video.load(); } catch (err){}
+          }
+          video.hidden = false;
+        } else {
+          if (video.src){
+            try { video.pause(); } catch (err){}
+            video.removeAttribute('src');
+            try { video.load(); } catch (err){}
+          }
+          video.hidden = true;
+        }
+      }
+
+      counter.textContent = label;
+      emptyState.textContent = hasStoryboard ? '' : config.empty;
 
       prevBtn.disabled = !hasStoryboard || index <= 0;
       nextBtn.disabled = !hasStoryboard || index >= storyboards.length - 1;
+      prevBtn.setAttribute('aria-label', `Previous ${config.singular}`);
+      nextBtn.setAttribute('aria-label', `Next ${config.singular}`);
       removeBtn.disabled = !hasStoryboard;
       removeBtn.hidden = !hasStoryboard;
+      removeBtn.textContent = config.removeAction;
 
       if (!scene){
         prevBtn.disabled = true;
@@ -3177,10 +3331,11 @@
       setProjectCoverImage('');
     }
 
-    function addStoryboardEntry(scene, url){
+    function addStoryboardEntry(scene, url, type = STORYBOARD_MEDIA_IMAGE){
       if (!scene || !url) return false;
       if (!Array.isArray(scene.storyboards)) scene.storyboards = [];
-      scene.storyboards.push({ id: randomId(), url });
+      const normalizedType = STORYBOARD_MEDIA_MODES.includes(type) ? type : STORYBOARD_MEDIA_IMAGE;
+      scene.storyboards.push({ id: randomId(), url, type: normalizedType });
       refreshStoryboardPositions(scene);
       updateSceneHash(scene);
       bumpVersion();
@@ -3205,12 +3360,12 @@
     function stepStoryboard(delta){
       const scene = getActiveScene();
       if (!scene) return;
-      const storyboards = getSceneStoryboards(scene);
+      const storyboards = getSceneStoryboards(scene, storyboardMediaMode);
       if (!storyboards.length) return;
-      const current = storyboardIndexState.get(scene.id) ?? 0;
+      const current = getStoryboardIndex(scene.id, storyboardMediaMode);
       const next = Math.max(0, Math.min(current + delta, storyboards.length - 1));
       if (next === current) return;
-      storyboardIndexState.set(scene.id, next);
+      setStoryboardIndex(scene.id, next, storyboardMediaMode);
       renderStoryboard();
     }
 
@@ -3218,15 +3373,16 @@
       const input = document.getElementById('newStoryboardUrl');
       const scene = getActiveScene();
       if (!input || !scene) return;
+      const config = getStoryboardModeConfig(storyboardMediaMode);
       const normalizedUrl = normalizeStoryboardUrl(input.value);
       if (!normalizedUrl){
         input.focus();
-        alert('Enter a valid storyboard URL (including http:// or https://).');
+        alert(`Enter a valid ${config.singular} URL (including http:// or https://).`);
         return;
       }
-      if (!addStoryboardEntry(scene, normalizedUrl)) return;
-      const storyboards = getSceneStoryboards(scene);
-      storyboardIndexState.set(scene.id, Math.max(0, storyboards.length - 1));
+      if (!addStoryboardEntry(scene, normalizedUrl, storyboardMediaMode)) return;
+      const storyboards = getSceneStoryboards(scene, storyboardMediaMode);
+      setStoryboardIndex(scene.id, Math.max(0, storyboards.length - 1), storyboardMediaMode);
       input.value = '';
       renderStoryboard();
       if (storyboardMode) renderStoryboardGallery();
@@ -3235,13 +3391,14 @@
     function handleRemoveStoryboard(){
       const scene = getActiveScene();
       if (!scene || !Array.isArray(scene.storyboards) || !scene.storyboards.length) return;
-      const current = storyboardIndexState.get(scene.id) ?? 0;
-      const storyboards = getSceneStoryboards(scene);
+      const current = getStoryboardIndex(scene.id, storyboardMediaMode);
+      const storyboards = getSceneStoryboards(scene, storyboardMediaMode);
       const target = storyboards[current];
       if (!target) return;
       if (!removeStoryboardEntry(scene, target.id)) return;
-      const max = Math.max(0, (scene.storyboards.length || 1) - 1);
-      storyboardIndexState.set(scene.id, Math.min(current, max));
+      const nextStoryboards = getSceneStoryboards(scene, storyboardMediaMode);
+      const max = Math.max(0, (nextStoryboards.length || 1) - 1);
+      setStoryboardIndex(scene.id, Math.min(current, max), storyboardMediaMode);
       renderStoryboard();
       if (storyboardMode) renderStoryboardGallery();
     }
@@ -3356,7 +3513,8 @@
     }
 
     function applyStoryboardAIInputState(){
-      const hasScene = !!storyboardAIActiveSceneId;
+      const aiAvailable = getStoryboardModeConfig(storyboardMediaMode).aiAvailable;
+      const hasScene = !!storyboardAIActiveSceneId && aiAvailable;
       const promptEl = document.getElementById('storyboardAIPrompt');
       const frameEl = document.getElementById('storyboardAIFrameCount');
       if (promptEl) promptEl.disabled = !hasScene || storyboardAIGenerating;
@@ -3372,9 +3530,12 @@
       const promptEl = document.getElementById('storyboardAIPrompt');
       const promptValue = promptEl ? promptEl.value.trim() : '';
       const keyReady = !!(storyboardAIConfig?.apiKey && storyboardAIConfig.apiKey.trim());
-      const hasScene = !!storyboardAIActiveSceneId;
+      const aiAvailable = getStoryboardModeConfig(storyboardMediaMode).aiAvailable;
+      const hasScene = !!storyboardAIActiveSceneId && aiAvailable;
       btn.disabled = storyboardAIGenerating || !hasScene || !keyReady || !promptValue;
-      btn.textContent = storyboardAIGenerating ? 'Generating…' : 'Generate storyboard';
+      btn.textContent = aiAvailable
+        ? (storyboardAIGenerating ? 'Generating…' : 'Generate storyboard')
+        : 'Generate storyboard';
     }
 
     function clampStoryboardAIFrameCount(value){
@@ -3406,6 +3567,17 @@
       const listEl = document.getElementById('storyboardAICharacterList');
       if (!promptEl || !frameEl || !listEl){
         storyboardAIActiveSceneId = null;
+        return;
+      }
+
+      const aiAvailable = getStoryboardModeConfig(storyboardMediaMode).aiAvailable;
+      if (!aiAvailable){
+        storyboardAIActiveSceneId = null;
+        promptEl.value = '';
+        frameEl.value = '1';
+        listEl.innerHTML = '<p class="storyboard-ai-character-empty">Switch to Picture frames to generate AI images.</p>';
+        applyStoryboardAIInputState();
+        updateStoryboardAIGenerateButton();
         return;
       }
 
@@ -3553,6 +3725,10 @@
     }
 
     async function handleStoryboardAIGenerate(){
+      if (!getStoryboardModeConfig(storyboardMediaMode).aiAvailable){
+        setStoryboardAIStatus('error', 'AI generation is only available for picture frames.');
+        return;
+      }
       const apiKey = (storyboardAIConfig?.apiKey || '').trim();
       if (!apiKey){
         setStoryboardAIStatus('error', 'Enter your OpenRouter API key above to generate frames.');
@@ -3602,10 +3778,11 @@
         const images = await requestStoryboardImages(apiKey, storyboardAIConfig?.model || STORYBOARD_AI_DEFAULT_MODEL, fullPrompt, frameCount);
         const added = [];
         images.forEach(url => {
-          if (addStoryboardEntry(targetScene, url)) added.push(url);
+          if (addStoryboardEntry(targetScene, url, STORYBOARD_MEDIA_IMAGE)) added.push(url);
         });
         if (added.length){
-          storyboardIndexState.set(targetScene.id, Math.max(0, getSceneStoryboards(targetScene).length - added.length));
+          const storyboards = getSceneStoryboards(targetScene, STORYBOARD_MEDIA_IMAGE);
+          setStoryboardIndex(targetScene.id, Math.max(0, storyboards.length - added.length), STORYBOARD_MEDIA_IMAGE);
           storyboardOverlaySceneId = targetScene.id;
           activeSceneId = targetScene.id;
           render();
@@ -3652,9 +3829,14 @@
         return;
       }
 
+      const config = getStoryboardModeConfig(storyboardMediaMode);
       const scenes = getStoryboardScenes();
       listEl.innerHTML = '';
       gridEl.innerHTML = '';
+      emptyEl.textContent = `Select a scene to start building ${config.plural}.`;
+
+      inputEl.placeholder = config.quickPlaceholder;
+      addBtn.textContent = config.addAction;
 
       if (!scenes.length){
         storyboardOverlaySceneId = null;
@@ -3663,8 +3845,8 @@
         empty.textContent = 'Add scenes to start storyboarding.';
         listEl.appendChild(empty);
         titleEl.textContent = 'No scenes yet';
-        metaEl.textContent = 'Add a scene to start storyboarding.';
-        emptyEl.textContent = 'Create a scene to begin crafting your storyboard.';
+        metaEl.textContent = `Add a scene to start building ${config.plural}.`;
+        emptyEl.textContent = `Create a scene to begin crafting your ${config.plural}.`;
         emptyEl.hidden = false;
         inputEl.disabled = true;
         addBtn.disabled = true;
@@ -3688,10 +3870,13 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'storyboard-scene-btn' + (scene.id === selectedScene.id ? ' active' : '');
-        const count = Array.isArray(scene.storyboards) ? scene.storyboards.length : 0;
+        const count = getSceneStoryboards(scene, storyboardMediaMode).length;
+        const countLabel = count
+          ? `${count} ${config.singular}${count === 1 ? '' : 's'}`
+          : `No ${config.plural} yet`;
         btn.innerHTML = `
           <span class="storyboard-scene-btn-title">${escapeHtml(scene.slug || `Scene ${idx + 1}`)}</span>
-          <span class="storyboard-scene-btn-meta">${count ? `${count} frame${count === 1 ? '' : 's'}` : 'No frames yet'}</span>
+          <span class="storyboard-scene-btn-meta">${escapeHtml(countLabel)}</span>
         `;
         btn.addEventListener('click', ()=>{
           storyboardOverlaySceneId = scene.id;
@@ -3705,13 +3890,13 @@
         listEl.appendChild(btn);
       });
 
-      const storyboards = getSceneStoryboards(selectedScene);
-      const maxIndex = Math.max(0, storyboards.length - 1);
-      const activeIndex = Math.max(0, Math.min(storyboardIndexState.get(selectedScene.id) ?? 0, maxIndex));
-      storyboardIndexState.set(selectedScene.id, activeIndex);
+      const storyboards = getSceneStoryboards(selectedScene, storyboardMediaMode);
+      const activeIndex = clampStoryboardIndex(selectedScene, storyboardMediaMode);
 
       titleEl.textContent = selectedScene.slug || `Scene ${selectedIndex + 1}`;
-      const frameLabel = storyboards.length ? `${storyboards.length} storyboard frame${storyboards.length === 1 ? '' : 's'}` : 'No storyboard frames yet';
+      const frameLabel = storyboards.length
+        ? `${storyboards.length} storyboard ${storyboards.length === 1 ? config.singular : config.plural}`
+        : `No storyboard ${config.plural} yet`;
       metaEl.textContent = `Scene ${selectedIndex + 1} • ${frameLabel}`;
 
       inputEl.disabled = false;
@@ -3724,26 +3909,29 @@
       else openBtn.removeAttribute('aria-disabled');
 
       if (!storyboards.length){
-        emptyEl.textContent = 'Drop in your first frame to visualize this scene.';
+        emptyEl.textContent = `Drop in your first ${config.singular} to visualize this scene.`;
         emptyEl.hidden = false;
       } else {
         emptyEl.hidden = true;
         storyboards.forEach((frame, idx)=>{
           const card = document.createElement('article');
           card.className = 'storyboard-gallery-card' + (idx === activeIndex ? ' active' : '');
+          const mediaThumb = frame.type === STORYBOARD_MEDIA_VIDEO
+            ? `<video src="${escapeHtml(frame.url)}" muted playsinline loop preload="metadata"></video>`
+            : `<img src="${escapeHtml(frame.url)}" alt="${escapeHtml(`Storyboard ${config.singular} ${idx + 1} for ${selectedScene.slug || `Scene ${selectedIndex + 1}`}`)}" loading="lazy" />`;
           card.innerHTML = `
             <div class="storyboard-gallery-thumb">
-              <img src="${escapeHtml(frame.url)}" alt="${escapeHtml(`Storyboard frame ${idx + 1} for ${selectedScene.slug || `Scene ${selectedIndex + 1}`}`)}" loading="lazy" />
+              ${mediaThumb}
             </div>
             <div class="storyboard-gallery-card-footer">
-              <span>Frame ${idx + 1}</span>
+              <span>${escapeHtml(config.singular.charAt(0).toUpperCase() + config.singular.slice(1))} ${idx + 1}</span>
               <div class="storyboard-gallery-card-actions">
                 <button type="button" data-action="remove">Remove</button>
               </div>
             </div>
           `;
           card.addEventListener('click', ()=>{
-            storyboardIndexState.set(selectedScene.id, idx);
+            setStoryboardIndex(selectedScene.id, idx, storyboardMediaMode);
             if (activeSceneId !== selectedScene.id){
               activeSceneId = selectedScene.id;
               render();
@@ -3757,10 +3945,10 @@
             removeBtn.addEventListener('click', e=>{
               e.stopPropagation();
               if (!removeStoryboardEntry(selectedScene, frame.id)) return;
-              const nextStoryboards = getSceneStoryboards(selectedScene);
+              const nextStoryboards = getSceneStoryboards(selectedScene, storyboardMediaMode);
               const nextMax = Math.max(0, nextStoryboards.length - 1);
-              const currentIdx = Math.max(0, Math.min(storyboardIndexState.get(selectedScene.id) ?? 0, nextMax));
-              storyboardIndexState.set(selectedScene.id, currentIdx);
+              const currentIdx = Math.max(0, Math.min(getStoryboardIndex(selectedScene.id, storyboardMediaMode), nextMax));
+              setStoryboardIndex(selectedScene.id, currentIdx, storyboardMediaMode);
               if (selectedScene.id === activeSceneId) renderStoryboard();
               renderStoryboardGallery();
             });
@@ -3770,6 +3958,9 @@
       }
 
       renderStoryboardAIComposer(selectedScene);
+      if (!config.aiAvailable){
+        setStoryboardAIStatus('info', 'Switch to Picture frames to generate AI images.');
+      }
 
       openBtn.onclick = ()=>{
         if (activeSceneId !== selectedScene.id){
@@ -3784,9 +3975,10 @@
     function handleStoryboardQuickAdd(){
       const input = document.getElementById('storyboardQuickUrl');
       if (!input) return;
+      const config = getStoryboardModeConfig(storyboardMediaMode);
       const scenes = getStoryboardScenes();
       if (!scenes.length){
-        alert('Add a scene to start building a storyboard.');
+        alert(`Add a scene to start building ${config.plural}.`);
         return;
       }
       const selectedScene = scenes.find(scene => scene.id === storyboardOverlaySceneId)
@@ -3795,16 +3987,54 @@
       const normalizedUrl = normalizeStoryboardUrl(input.value);
       if (!normalizedUrl){
         input.focus();
-        alert('Enter a valid storyboard URL (including http:// or https://).');
+        alert(`Enter a valid ${config.singular} URL (including http:// or https://).`);
         return;
       }
-      if (!addStoryboardEntry(selectedScene, normalizedUrl)) return;
-      const storyboards = getSceneStoryboards(selectedScene);
-      storyboardIndexState.set(selectedScene.id, Math.max(0, storyboards.length - 1));
+      if (!addStoryboardEntry(selectedScene, normalizedUrl, storyboardMediaMode)) return;
+      const storyboards = getSceneStoryboards(selectedScene, storyboardMediaMode);
+      setStoryboardIndex(selectedScene.id, Math.max(0, storyboards.length - 1), storyboardMediaMode);
       input.value = '';
       storyboardOverlaySceneId = selectedScene.id;
       activeSceneId = selectedScene.id;
       render();
+    }
+
+    function updateStoryboardModeUI(){
+      const config = getStoryboardModeConfig(storyboardMediaMode);
+      document.querySelectorAll('[data-storyboard-mode-btn]').forEach(btn => {
+        const mode = btn.dataset.storyboardModeBtn;
+        const active = mode === storyboardMediaMode;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      const input = document.getElementById('newStoryboardUrl');
+      if (input) input.placeholder = config.placeholder;
+      const addBtn = document.getElementById('addStoryboardBtn');
+      if (addBtn) addBtn.textContent = config.addAction;
+      const removeBtn = document.getElementById('removeStoryboardBtn');
+      if (removeBtn) removeBtn.textContent = config.removeAction;
+      const quickInput = document.getElementById('storyboardQuickUrl');
+      if (quickInput) quickInput.placeholder = config.quickPlaceholder;
+      const quickAdd = document.getElementById('storyboardQuickAdd');
+      if (quickAdd) quickAdd.textContent = config.addAction;
+      const viewer = document.getElementById('storyboardViewer');
+      if (viewer) viewer.dataset.mode = storyboardMediaMode;
+    }
+
+    function setStoryboardMediaMode(mode){
+      const normalized = STORYBOARD_MEDIA_MODES.includes(mode) ? mode : STORYBOARD_MEDIA_IMAGE;
+      if (normalized === storyboardMediaMode) return;
+      storyboardMediaMode = normalized;
+      saveStoryboardMediaMode(storyboardMediaMode);
+      updateStoryboardModeUI();
+      renderStoryboard();
+      if (storyboardMode) renderStoryboardGallery();
+      else renderStoryboardAIComposer(getActiveScene());
+      if (!getStoryboardModeConfig(storyboardMediaMode).aiAvailable){
+        setStoryboardAIStatus('info', 'Switch to Picture frames to generate AI images.');
+      } else {
+        setStoryboardAIStatus('', '');
+      }
     }
 
     function updateStoryboardButton(){
@@ -4908,7 +5138,7 @@
       const clamped = Math.max(0, Math.min(index, project.scenes.length));
       project.scenes.splice(clamped, 0, scene);
       project._hashes.scene[scene.id] = hashString(stableSceneString(scene));
-      storyboardIndexState.set(scene.id, 0);
+      STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(scene.id, 0, mode));
       activeSceneId = scene.id;
       bumpVersion();
       render();
@@ -4923,7 +5153,7 @@
       if (idx >= 0) {
         project.scenes.splice(idx,1);
         delete project._hashes.scene[id];
-        storyboardIndexState.delete(id);
+        STORYBOARD_MEDIA_MODES.forEach(mode => deleteStoryboardIndex(id, mode));
         if (!project.scenes.length){
           addScene();
           return;
@@ -5419,6 +5649,9 @@
         }
       });
     }
+    document.querySelectorAll('[data-storyboard-mode-btn]').forEach(btn => {
+      btn.addEventListener('click', ()=> setStoryboardMediaMode(btn.dataset.storyboardModeBtn));
+    });
     const storyboardApiKeyInput = document.getElementById('storyboardApiKey');
     if (storyboardApiKeyInput){
       storyboardApiKeyInput.value = storyboardAIConfig?.apiKey || '';
@@ -5781,6 +6014,14 @@
           ? `Scene ${entry.sceneNumber}${entry.sceneSlug ? ` • ${entry.sceneSlug}` : ''}`
           : (entry.sceneSlug || 'Storyboard');
         const reference = entry.index ? `${caption} • Shot ${entry.index}` : caption;
+        if (entry.type === STORYBOARD_MEDIA_VIDEO){
+          const urlText = entry.displayUrl ? `<span>${escapeHtml(entry.displayUrl)}</span>` : '<span>Clip URL unavailable</span>';
+          return `
+            <figure class="print-storyboard-card">
+              <div class="print-storyboard-video">Video clip reference<br />${urlText}</div>
+              <figcaption>${escapeHtml(reference)}</figcaption>
+            </figure>`;
+        }
         return `
           <figure class="print-storyboard-card">
             <img src="${escapeHtml(entry.url)}" alt="${escapeHtml(reference)}" loading="lazy" />
@@ -5803,10 +6044,15 @@
       const storyboardEntries = scenes.flatMap((scene, index) => {
         const storyboards = getSceneStoryboards(scene);
         return storyboards.map((entry, storyboardIndex) => {
-          const url = sanitizePrintableUrl(entry.url);
-          if (!url) return null;
+          const sanitizedUrl = sanitizePrintableUrl(entry.url);
+          const isVideo = entry.type === STORYBOARD_MEDIA_VIDEO;
+          if (!isVideo && !sanitizedUrl) return null;
+          const displayUrl = sanitizedUrl || entry.url || '';
+          if (!displayUrl) return null;
           return {
-            url,
+            url: sanitizedUrl || displayUrl,
+            displayUrl,
+            type: entry.type,
             sceneNumber: index + 1,
             sceneSlug: scene.slug || `Scene ${index + 1}`,
             index: storyboardIndex + 1
@@ -5890,6 +6136,8 @@
       .print-storyboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
       .print-storyboard-card { margin: 0; }
       .print-storyboard-card img { width: 100%; height: auto; border: 1px solid #d0d0d0; border-radius: 8px; }
+      .print-storyboard-video { width: 100%; min-height: 140px; border: 1px dashed #d0d0d0; border-radius: 8px; background: #f8f8f8; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11pt; padding: 12px; }
+      .print-storyboard-video span { display: block; margin-top: 6px; font-size: 9pt; word-break: break-all; color: #555; }
       .print-storyboard-card figcaption { margin-top: 8px; font-size: 10pt; text-align: center; }
     </style>
   </head>
@@ -6648,7 +6896,7 @@
           ensureProjectShape();
           storyboardIndexState.clear();
           (project.scenes || []).forEach(scene => {
-            storyboardIndexState.set(scene.id, 0);
+            STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(scene.id, 0, mode));
           });
           project._hashes = { scene: {} };
           project.scenes.forEach(s => project._hashes.scene[s.id] = hashString(stableSceneString(s)));
@@ -7012,7 +7260,7 @@
           ensureProjectShape();
           storyboardIndexState.clear();
           (project.scenes || []).forEach(scene => {
-            storyboardIndexState.set(scene.id, 0);
+            STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(scene.id, 0, mode));
           });
           activeSceneId = project.scenes?.[0]?.id || null;
         } else {
