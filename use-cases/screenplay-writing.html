@@ -129,13 +129,13 @@
       .line.dialogue{margin-left:30px; max-width:60ch}
       .line.transition{text-align:right; letter-spacing:.2px}
       .line.exposition{margin-left:30px; font-style:italic; color:var(--muted)}
-      .line[data-tag-label]{padding-bottom:20px}
+      .line[data-tag-label]{padding-top:20px}
       .line[data-tag-label]::after{
         content: attr(data-tag-label);
         position:absolute;
         left:0;
-        bottom:-4px;
-        transform:translateY(100%);
+        top:-4px;
+        transform:translateY(-100%);
         font-size:11px;
         letter-spacing:.3px;
         color:var(--muted);
