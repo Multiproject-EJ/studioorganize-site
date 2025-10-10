@@ -203,6 +203,85 @@ if (supabaseClient && navHasAuthControls){
   refreshAccountSession();
 }
 
+function initDropdownMenus(){
+  const dropdowns = Array.from(document.querySelectorAll('.dropdown'));
+  if (!dropdowns.length) return;
+
+  const getParts = dropdown => {
+    const trigger = dropdown.querySelector('button');
+    const panel = dropdown.querySelector('.dropdown-content');
+    if (!trigger || !panel) return null;
+    return { trigger, panel };
+  };
+
+  const closeDropdown = dropdown => {
+    const parts = getParts(dropdown);
+    if (!parts) return;
+    dropdown.classList.remove('is-open');
+    parts.trigger.setAttribute('aria-expanded', 'false');
+    parts.panel.setAttribute('aria-hidden', 'true');
+  };
+
+  const openDropdown = dropdown => {
+    const parts = getParts(dropdown);
+    if (!parts) return;
+    dropdown.classList.add('is-open');
+    parts.trigger.setAttribute('aria-expanded', 'true');
+    parts.panel.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeAll = except => {
+    dropdowns.forEach(dropdown => {
+      if (dropdown === except) return;
+      closeDropdown(dropdown);
+    });
+  };
+
+  dropdowns.forEach(dropdown => {
+    const parts = getParts(dropdown);
+    if (!parts) return;
+    const { trigger, panel } = parts;
+
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('aria-hidden', 'true');
+
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const isOpen = dropdown.classList.contains('is-open');
+      if (isOpen){
+        closeDropdown(dropdown);
+      } else {
+        closeAll(dropdown);
+        openDropdown(dropdown);
+      }
+    });
+
+    panel.addEventListener('click', event => {
+      const link = event.target instanceof HTMLElement ? event.target.closest('a') : null;
+      if (link){
+        closeAll();
+        return;
+      }
+      event.stopPropagation();
+    });
+  });
+
+  document.addEventListener('click', event => {
+    if (dropdowns.some(dropdown => dropdown.contains(event.target))){
+      return;
+    }
+    closeAll();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape'){
+      closeAll();
+    }
+  });
+}
+
 const GOALS_STORAGE_KEY = 'SO_ACCOUNT_GOALS';
 
 function parseStoredGoals(value){
@@ -379,7 +458,11 @@ function initGoalPlanner(){
 }
 
 if (document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', initGoalPlanner, { once: true });
+  document.addEventListener('DOMContentLoaded', () => {
+    initDropdownMenus();
+    initGoalPlanner();
+  }, { once: true });
 } else {
+  initDropdownMenus();
   initGoalPlanner();
 }
