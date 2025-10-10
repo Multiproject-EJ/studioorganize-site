@@ -762,12 +762,28 @@
 
       .selection-menu{position:fixed; z-index:1400; background:var(--panel); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,0.35); padding:14px 16px; display:flex; flex-direction:column; gap:12px; min-width:220px; max-width:280px}
       .selection-menu[hidden]{display:none !important;}
+      .selection-menu__quick{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px}
+      .selection-menu__quick-btn{flex:1; min-width:0; display:flex; align-items:center; justify-content:center}
+      .selection-menu__quick-btn[data-selection-type-trigger]{position:relative; padding-right:22px}
+      .selection-menu__quick-btn[data-selection-type-trigger]::after{content:'▸'; position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:10px; opacity:0.7}
+      .selection-menu__quick-btn[data-selection-type-trigger][aria-expanded="true"]::after{content:'▾'}
+      .selection-menu__advanced-toggle{background:none; border:none; color:var(--muted); font-size:11px; letter-spacing:.35px; text-transform:uppercase; display:inline-flex; align-items:center; gap:6px; padding:0; cursor:pointer; align-self:flex-start}
+      .selection-menu__advanced-toggle::after{content:'▸'; font-size:10px; opacity:0.7}
+      .selection-menu__advanced-toggle[aria-expanded="true"]::after{content:'▾'}
+      .selection-menu__advanced{display:flex; flex-direction:column; gap:12px}
+      .selection-menu__advanced[hidden]{display:none !important}
       .selection-menu__section{display:flex; flex-direction:column; gap:6px}
       .selection-menu__label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.35px}
       .selection-menu__actions{display:flex; flex-wrap:wrap; gap:6px}
       .selection-menu button{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; font-size:12px; color:var(--ink); cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease}
       .selection-menu button:hover, .selection-menu button:focus{border-color:var(--acc); outline:none}
       .selection-menu button.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .selection-type-menu button{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; font-size:12px; color:var(--ink); cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease}
+      .selection-type-menu button:hover, .selection-type-menu button:focus{border-color:var(--acc); outline:none}
+      .selection-type-menu button.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .selection-type-menu{position:fixed; z-index:1450; background:var(--panel); border:1px solid var(--ring); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.35); padding:12px 14px; min-width:220px; display:flex; flex-direction:column; gap:12px}
+      .selection-type-menu[hidden]{display:none !important}
+      [data-theme="dark"] .selection-menu, [data-theme="dark"] .selection-type-menu{box-shadow:0 30px 70px rgba(8,15,28,0.72), 0 0 0 1px rgba(79,123,255,0.35), 0 0 22px rgba(79,123,255,0.3)}
     </style>
     <div class="app">
       <div class="topbar">
@@ -978,40 +994,61 @@
   </div>
 
     <div id="selectionMenu" class="selection-menu" hidden>
-      <div class="selection-menu__section">
-        <span class="selection-menu__label">Format</span>
-        <div class="selection-menu__actions">
-          <button type="button" data-menu-line-type="slug">Scene Slug</button>
-          <button type="button" data-menu-line-type="action">Action</button>
-          <button type="button" data-menu-line-type="dialogue">Dialogue</button>
-          <button type="button" data-menu-line-type="character">Character</button>
-          <button type="button" data-menu-line-type="parenthetical">Parenthetical</button>
-          <button type="button" data-menu-line-type="transition">Transition</button>
-          <button type="button" data-menu-line-type="exposition">Exposition</button>
+      <div class="selection-menu__quick">
+        <button type="button" class="selection-menu__quick-btn" data-selection-type-trigger aria-haspopup="true" aria-expanded="false">Type</button>
+        <button type="button" class="selection-menu__quick-btn" data-quick-action="fix">Help Fix</button>
+        <button type="button" class="selection-menu__quick-btn" data-quick-action="brainstorm">Help Brainstorm</button>
+      </div>
+      <button type="button" class="selection-menu__advanced-toggle" data-selection-advanced-toggle aria-expanded="false">Advanced</button>
+      <div class="selection-menu__advanced" data-selection-advanced hidden>
+        <div class="selection-menu__section">
+          <span class="selection-menu__label">Format</span>
+          <div class="selection-menu__actions">
+            <button type="button" data-menu-line-type="slug">Scene Slug</button>
+            <button type="button" data-menu-line-type="action">Action</button>
+            <button type="button" data-menu-line-type="dialogue">Dialogue</button>
+            <button type="button" data-menu-line-type="character">Character</button>
+            <button type="button" data-menu-line-type="parenthetical">Parenthetical</button>
+            <button type="button" data-menu-line-type="transition">Transition</button>
+            <button type="button" data-menu-line-type="exposition">Exposition</button>
+          </div>
+        </div>
+        <div class="selection-menu__section">
+          <span class="selection-menu__label">Story Part</span>
+          <div class="selection-menu__actions">
+            <button type="button" data-menu-story-part="intro">Intro</button>
+            <button type="button" data-menu-story-part="beginning">Beginning</button>
+            <button type="button" data-menu-story-part="middle">Middle</button>
+            <button type="button" data-menu-story-part="end">End</button>
+            <button type="button" data-menu-story-part="">Clear</button>
+          </div>
+        </div>
+        <div class="selection-menu__section">
+          <span class="selection-menu__label">Three-Act Beat</span>
+          <div class="selection-menu__actions">
+            <button type="button" data-menu-act="setup">Setup</button>
+            <button type="button" data-menu-act="confrontation">Confrontation</button>
+            <button type="button" data-menu-act="resolution">Resolution</button>
+            <button type="button" data-menu-act="">Clear</button>
+          </div>
+        </div>
+        <div class="selection-menu__section" data-selection-characters-section hidden>
+          <span class="selection-menu__label">Character</span>
+          <div class="selection-menu__actions" data-selection-characters></div>
         </div>
       </div>
-      <div class="selection-menu__section">
-        <span class="selection-menu__label">Story Part</span>
-        <div class="selection-menu__actions">
-          <button type="button" data-menu-story-part="intro">Intro</button>
-          <button type="button" data-menu-story-part="beginning">Beginning</button>
-          <button type="button" data-menu-story-part="middle">Middle</button>
-          <button type="button" data-menu-story-part="end">End</button>
-          <button type="button" data-menu-story-part="">Clear</button>
-        </div>
+    </div>
+    <div id="selectionTypeMenu" class="selection-type-menu" hidden>
+      <div class="selection-menu__section" data-type-characters-section hidden>
+        <span class="selection-menu__label">Characters</span>
+        <div class="selection-menu__actions" data-type-characters></div>
       </div>
       <div class="selection-menu__section">
-        <span class="selection-menu__label">Three-Act Beat</span>
-        <div class="selection-menu__actions">
-          <button type="button" data-menu-act="setup">Setup</button>
-          <button type="button" data-menu-act="confrontation">Confrontation</button>
-          <button type="button" data-menu-act="resolution">Resolution</button>
-          <button type="button" data-menu-act="">Clear</button>
+        <span class="selection-menu__label">Category</span>
+        <div class="selection-menu__actions" data-type-note-actions>
+          <button type="button" data-type-note>Note</button>
+          <button type="button" data-type-character="">Clear Character</button>
         </div>
-      </div>
-      <div class="selection-menu__section" data-selection-characters-section hidden>
-        <span class="selection-menu__label">Character</span>
-        <div class="selection-menu__actions" data-selection-characters></div>
       </div>
     </div>
 
@@ -5219,9 +5256,16 @@
     const selectionMenuEl = document.getElementById('selectionMenu');
     const selectionMenuCharactersSection = selectionMenuEl?.querySelector('[data-selection-characters-section]') || null;
     const selectionMenuCharactersList = selectionMenuEl?.querySelector('[data-selection-characters]') || null;
+    const selectionMenuAdvancedToggle = selectionMenuEl?.querySelector('[data-selection-advanced-toggle]') || null;
+    const selectionMenuAdvanced = selectionMenuEl?.querySelector('[data-selection-advanced]') || null;
+    const selectionMenuTypeTrigger = selectionMenuEl?.querySelector('[data-selection-type-trigger]') || null;
+    const selectionTypeMenuEl = document.getElementById('selectionTypeMenu');
+    const selectionTypeCharactersSection = selectionTypeMenuEl?.querySelector('[data-type-characters-section]') || null;
+    const selectionTypeCharactersList = selectionTypeMenuEl?.querySelector('[data-type-characters]') || null;
     const LINE_TYPE_CLASSES = ['slug','action','dialogue','character','parenthetical','transition','exposition'];
     let selectionMenuTargetLine = null;
     let selectionMenuFrame = null;
+    let selectionTypeMenuFrame = null;
 
     function getCharacterNameById(id){
       if (!id || !project || !project.catalogs) return '';
@@ -5282,28 +5326,44 @@
     }
 
     function updateSelectionMenuCharacters(){
-      if (!selectionMenuEl || !selectionMenuCharactersSection || !selectionMenuCharactersList) return;
+      if (!selectionMenuEl && !selectionTypeMenuEl) return;
       const characters = Array.isArray(project?.catalogs?.characters) ? project.catalogs.characters : [];
-      selectionMenuCharactersList.innerHTML = '';
+      if (selectionMenuCharactersList) selectionMenuCharactersList.innerHTML = '';
+      if (selectionTypeCharactersList) selectionTypeCharactersList.innerHTML = '';
       if (!characters.length){
-        selectionMenuCharactersSection.hidden = true;
+        if (selectionMenuCharactersSection) selectionMenuCharactersSection.hidden = true;
+        if (selectionTypeCharactersSection) selectionTypeCharactersSection.hidden = true;
         refreshSelectionMenuState();
+        refreshSelectionTypeMenuState();
         return;
       }
       characters.forEach(char => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.dataset.menuOwner = char.id || '';
-        btn.textContent = char.name || 'Unnamed';
-        selectionMenuCharactersList.appendChild(btn);
+        if (selectionMenuCharactersList){
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.dataset.menuOwner = char.id || '';
+          btn.textContent = char.name || 'Unnamed';
+          selectionMenuCharactersList.appendChild(btn);
+        }
+        if (selectionTypeCharactersList){
+          const typeBtn = document.createElement('button');
+          typeBtn.type = 'button';
+          typeBtn.dataset.typeCharacter = char.id || '';
+          typeBtn.textContent = char.name || 'Unnamed';
+          selectionTypeCharactersList.appendChild(typeBtn);
+        }
       });
-      const clearBtn = document.createElement('button');
-      clearBtn.type = 'button';
-      clearBtn.dataset.menuOwner = '';
-      clearBtn.textContent = 'Clear';
-      selectionMenuCharactersList.appendChild(clearBtn);
-      selectionMenuCharactersSection.hidden = false;
+      if (selectionMenuCharactersList){
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.dataset.menuOwner = '';
+        clearBtn.textContent = 'Clear';
+        selectionMenuCharactersList.appendChild(clearBtn);
+      }
+      if (selectionMenuCharactersSection) selectionMenuCharactersSection.hidden = false;
+      if (selectionTypeCharactersSection) selectionTypeCharactersSection.hidden = false;
       refreshSelectionMenuState();
+      refreshSelectionTypeMenuState();
     }
 
     function refreshSelectionMenuState(){
@@ -5330,12 +5390,40 @@
       });
       if (selectionMenuCharactersList){
         const owner = selectionMenuTargetLine.dataset.owner || '';
+        const isNote = selectionMenuTargetLine.dataset.t === 'exposition';
         selectionMenuCharactersList.querySelectorAll('button[data-menu-owner]').forEach(btn => {
           const value = btn.dataset.menuOwner || '';
-          const isActive = value ? value === owner : !owner;
+          const isActive = value ? value === owner : (!owner && !isNote);
           btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
           btn.classList.toggle('active', isActive);
         });
+      }
+      refreshSelectionTypeMenuState();
+    }
+
+    function refreshSelectionTypeMenuState(){
+      if (!selectionTypeMenuEl) return;
+      const owner = selectionMenuTargetLine?.dataset?.owner || '';
+      const isNote = selectionMenuTargetLine?.dataset?.t === 'exposition';
+      if (selectionTypeCharactersList){
+        selectionTypeCharactersList.querySelectorAll('button[data-type-character]').forEach(btn => {
+          const value = btn.dataset.typeCharacter || '';
+          const isActive = !!selectionMenuTargetLine && value ? value === owner : (!owner && !isNote && !!selectionMenuTargetLine);
+          btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          btn.classList.toggle('active', isActive);
+        });
+      }
+      const clearBtn = selectionTypeMenuEl.querySelector('button[data-type-character=""]');
+      if (clearBtn){
+        const clearActive = !!selectionMenuTargetLine && !owner && !isNote;
+        clearBtn.setAttribute('aria-pressed', clearActive ? 'true' : 'false');
+        clearBtn.classList.toggle('active', clearActive);
+      }
+      const noteBtn = selectionTypeMenuEl.querySelector('button[data-type-note]');
+      if (noteBtn){
+        const noteActive = !!selectionMenuTargetLine && isNote;
+        noteBtn.setAttribute('aria-pressed', noteActive ? 'true' : 'false');
+        noteBtn.classList.toggle('active', noteActive);
       }
     }
 
@@ -5347,6 +5435,7 @@
       selectionMenuEl.style.opacity = '';
       selectionMenuEl.style.visibility = '';
       selectionMenuTargetLine = null;
+      hideSelectionTypeMenu();
     }
 
     function positionSelectionMenu(rect){
@@ -5366,7 +5455,50 @@
         selectionMenuEl.style.left = `${Math.round(left)}px`;
         selectionMenuEl.style.visibility = 'visible';
         selectionMenuEl.style.opacity = '1';
+        repositionSelectionTypeMenu();
       });
+    }
+
+    function hideSelectionTypeMenu(){
+      if (!selectionTypeMenuEl || !selectionMenuTypeTrigger) return;
+      if (selectionTypeMenuFrame) cancelAnimationFrame(selectionTypeMenuFrame);
+      selectionTypeMenuFrame = null;
+      selectionMenuTypeTrigger.setAttribute('aria-expanded', 'false');
+      selectionTypeMenuEl.setAttribute('hidden', '');
+      selectionTypeMenuEl.style.top = '';
+      selectionTypeMenuEl.style.left = '';
+      selectionTypeMenuEl.style.opacity = '';
+      selectionTypeMenuEl.style.visibility = '';
+    }
+
+    function positionSelectionTypeMenu(rect){
+      if (!selectionTypeMenuEl || !selectionMenuTypeTrigger) return;
+      if (selectionTypeMenuFrame) cancelAnimationFrame(selectionTypeMenuFrame);
+      selectionTypeMenuEl.removeAttribute('hidden');
+      selectionTypeMenuEl.style.visibility = 'hidden';
+      selectionTypeMenuEl.style.opacity = '0';
+      selectionTypeMenuFrame = requestAnimationFrame(()=>{
+        selectionTypeMenuFrame = null;
+        const menuRect = selectionTypeMenuEl.getBoundingClientRect();
+        let top = rect.bottom + 8;
+        if (top + menuRect.height > window.innerHeight - 16){
+          top = rect.top - menuRect.height - 8;
+        }
+        if (top < 16) top = 16;
+        let left = rect.left + (rect.width / 2) - (menuRect.width / 2);
+        left = Math.max(16, Math.min(left, window.innerWidth - menuRect.width - 16));
+        selectionTypeMenuEl.style.top = `${Math.round(top)}px`;
+        selectionTypeMenuEl.style.left = `${Math.round(left)}px`;
+        selectionTypeMenuEl.style.visibility = 'visible';
+        selectionTypeMenuEl.style.opacity = '1';
+      });
+    }
+
+    function repositionSelectionTypeMenu(){
+      if (!selectionTypeMenuEl || !selectionMenuTypeTrigger) return;
+      if (selectionMenuTypeTrigger.getAttribute('aria-expanded') !== 'true') return;
+      const rect = selectionMenuTypeTrigger.getBoundingClientRect();
+      positionSelectionTypeMenu(rect);
     }
 
     function handleSelectionChange(){
@@ -5430,11 +5562,72 @@
         const rect = sel.getRangeAt(0).getBoundingClientRect();
         positionSelectionMenu(rect);
       }
+      repositionSelectionTypeMenu();
+    }
+
+    function handleSelectionTypeMenuClick(event){
+      if (!selectionMenuTargetLine) return;
+      const button = event.target.closest('button');
+      if (!button) return;
+      event.preventDefault();
+      const isNoteActive = selectionMenuTargetLine.dataset.t === 'exposition';
+      if (button.hasAttribute('data-type-character')){
+        const value = button.dataset.typeCharacter || '';
+        if (value) selectionMenuTargetLine.dataset.owner = value;
+        else delete selectionMenuTargetLine.dataset.owner;
+        if (isNoteActive){
+          selectionMenuTargetLine.dataset.t = 'action';
+          applyLineTypeClass(selectionMenuTargetLine);
+        }
+      }
+      if (button.hasAttribute('data-type-note')){
+        if (isNoteActive){
+          selectionMenuTargetLine.dataset.t = 'action';
+        } else {
+          selectionMenuTargetLine.dataset.t = 'exposition';
+          delete selectionMenuTargetLine.dataset.owner;
+        }
+        applyLineTypeClass(selectionMenuTargetLine);
+      }
+      updateLineTagLabel(selectionMenuTargetLine);
+      refreshSelectionMenuState();
+      syncActiveScene(false);
+      repositionSelectionTypeMenu();
     }
 
     if (selectionMenuEl){
       selectionMenuEl.addEventListener('pointerdown', e => e.preventDefault());
       selectionMenuEl.addEventListener('click', handleSelectionMenuClick);
+    }
+    if (selectionMenuAdvancedToggle && selectionMenuAdvanced){
+      selectionMenuAdvancedToggle.addEventListener('click', ()=>{
+        const expanded = selectionMenuAdvancedToggle.getAttribute('aria-expanded') === 'true';
+        const next = !expanded;
+        selectionMenuAdvancedToggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+        if (next) selectionMenuAdvanced.removeAttribute('hidden');
+        else selectionMenuAdvanced.setAttribute('hidden', '');
+      });
+    }
+    if (selectionMenuTypeTrigger){
+      selectionMenuTypeTrigger.addEventListener('click', event => {
+        event.preventDefault();
+        if (!selectionTypeMenuEl) return;
+        const isOpen = selectionMenuTypeTrigger.getAttribute('aria-expanded') === 'true';
+        if (isOpen){
+          hideSelectionTypeMenu();
+          return;
+        }
+        if (selectionTypeCharactersList && !selectionTypeCharactersList.children.length){
+          updateSelectionMenuCharacters();
+        }
+        selectionMenuTypeTrigger.setAttribute('aria-expanded', 'true');
+        refreshSelectionTypeMenuState();
+        positionSelectionTypeMenu(selectionMenuTypeTrigger.getBoundingClientRect());
+      });
+    }
+    if (selectionTypeMenuEl){
+      selectionTypeMenuEl.addEventListener('pointerdown', e => e.preventDefault());
+      selectionTypeMenuEl.addEventListener('click', handleSelectionTypeMenuClick);
     }
     document.addEventListener('selectionchange', ()=>{
       if (selectionMenuFrame) cancelAnimationFrame(selectionMenuFrame);
@@ -5443,6 +5636,8 @@
     document.addEventListener('pointerdown', e => {
       if (!selectionMenuEl) return;
       if (selectionMenuEl.contains(e.target)) return;
+      if (selectionTypeMenuEl && selectionTypeMenuEl.contains(e.target)) return;
+      if (selectionMenuTypeTrigger && selectionMenuTypeTrigger.contains(e.target)) return;
       if (editorEl && editorEl.contains(e.target)) return;
       hideSelectionMenu();
     });
