@@ -617,6 +617,450 @@ create policy "Scene storyboards are deletable by owners"
         )
     );
 
+-- ---------------------------------------------------------------------------
+-- Storyboard Supabase integration (frames, tags, acts)
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.storyboard_acts (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    project_id uuid,
+    name text not null,
+    position integer not null,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists storyboard_acts_owner_idx on public.storyboard_acts (owner_id);
+create index if not exists storyboard_acts_project_idx on public.storyboard_acts (project_id);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'storyboard_acts_set_timestamp'
+          and tgrelid = 'public.storyboard_acts'::regclass
+    ) then
+        create trigger storyboard_acts_set_timestamp
+            before update on public.storyboard_acts
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.storyboard_acts enable row level security;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_acts'
+          and policyname = 'Storyboard acts are viewable by owners'
+    ) then
+        create policy "Storyboard acts are viewable by owners"
+            on public.storyboard_acts
+            for select
+            to authenticated
+            using (auth.uid() = owner_id);
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_acts'
+          and policyname = 'Storyboard acts can be inserted by owners'
+    ) then
+        create policy "Storyboard acts can be inserted by owners"
+            on public.storyboard_acts
+            for insert
+            to authenticated
+            with check (auth.uid() = owner_id);
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_acts'
+          and policyname = 'Storyboard acts are editable by owners'
+    ) then
+        create policy "Storyboard acts are editable by owners"
+            on public.storyboard_acts
+            for update
+            to authenticated
+            using (auth.uid() = owner_id)
+            with check (auth.uid() = owner_id);
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_acts'
+          and policyname = 'Storyboard acts are deletable by owners'
+    ) then
+        create policy "Storyboard acts are deletable by owners"
+            on public.storyboard_acts
+            for delete
+            to authenticated
+            using (auth.uid() = owner_id);
+    end if;
+end;
+$$;
+
+alter table public.scenes add column if not exists act_id uuid;
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_constraint
+        where conname = 'scenes_act_id_fkey'
+    ) then
+        alter table public.scenes
+            add constraint scenes_act_id_fkey
+            foreign key (act_id)
+            references public.storyboard_acts (id)
+            on delete set null;
+    end if;
+end;
+$$;
+
+create index if not exists scenes_act_idx on public.scenes (act_id);
+
+create table if not exists public.storyboard_frames (
+    id uuid primary key default gen_random_uuid(),
+    scene_id uuid not null references public.scenes (id) on delete cascade,
+    caption text default '',
+    position integer not null,
+    duration_ms integer default 1500,
+    media_type text not null check (media_type in ('image', 'video')),
+    storage_path text not null,
+    thumb_path text,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists storyboard_frames_scene_idx on public.storyboard_frames (scene_id);
+create index if not exists storyboard_frames_scene_position_idx on public.storyboard_frames (scene_id, position);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'storyboard_frames_set_timestamp'
+          and tgrelid = 'public.storyboard_frames'::regclass
+    ) then
+        create trigger storyboard_frames_set_timestamp
+            before update on public.storyboard_frames
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.storyboard_frames enable row level security;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_frames'
+          and policyname = 'Storyboard frames are viewable by scene owners'
+    ) then
+        create policy "Storyboard frames are viewable by scene owners"
+            on public.storyboard_frames
+            for select
+            to authenticated
+            using (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_frames'
+          and policyname = 'Storyboard frames can be inserted by scene owners'
+    ) then
+        create policy "Storyboard frames can be inserted by scene owners"
+            on public.storyboard_frames
+            for insert
+            to authenticated
+            with check (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_frames'
+          and policyname = 'Storyboard frames are editable by scene owners'
+    ) then
+        create policy "Storyboard frames are editable by scene owners"
+            on public.storyboard_frames
+            for update
+            to authenticated
+            using (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            )
+            with check (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_frames'
+          and policyname = 'Storyboard frames are deletable by scene owners'
+    ) then
+        create policy "Storyboard frames are deletable by scene owners"
+            on public.storyboard_frames
+            for delete
+            to authenticated
+            using (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+create table if not exists public.storyboard_scene_tags (
+    id uuid primary key default gen_random_uuid(),
+    scene_id uuid not null references public.scenes (id) on delete cascade,
+    tag text not null,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists storyboard_scene_tags_scene_idx on public.storyboard_scene_tags (scene_id);
+create index if not exists storyboard_scene_tags_tag_idx on public.storyboard_scene_tags (tag);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'storyboard_scene_tags_set_timestamp'
+          and tgrelid = 'public.storyboard_scene_tags'::regclass
+    ) then
+        create trigger storyboard_scene_tags_set_timestamp
+            before update on public.storyboard_scene_tags
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.storyboard_scene_tags enable row level security;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_scene_tags'
+          and policyname = 'Storyboard scene tags are viewable by scene owners'
+    ) then
+        create policy "Storyboard scene tags are viewable by scene owners"
+            on public.storyboard_scene_tags
+            for select
+            to authenticated
+            using (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_scene_tags'
+          and policyname = 'Storyboard scene tags can be inserted by scene owners'
+    ) then
+        create policy "Storyboard scene tags can be inserted by scene owners"
+            on public.storyboard_scene_tags
+            for insert
+            to authenticated
+            with check (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_scene_tags'
+          and policyname = 'Storyboard scene tags are editable by scene owners'
+    ) then
+        create policy "Storyboard scene tags are editable by scene owners"
+            on public.storyboard_scene_tags
+            for update
+            to authenticated
+            using (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            )
+            with check (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'storyboard_scene_tags'
+          and policyname = 'Storyboard scene tags are deletable by scene owners'
+    ) then
+        create policy "Storyboard scene tags are deletable by scene owners"
+            on public.storyboard_scene_tags
+            for delete
+            to authenticated
+            using (
+                exists (
+                    select 1
+                    from public.scenes s
+                    where s.id = scene_id
+                      and s.owner_id = auth.uid()
+                )
+            );
+    end if;
+end;
+$$;
+
+insert into storage.buckets (id, name, public)
+values ('storyboard', 'storyboard', false)
+on conflict (id) do update set public = excluded.public;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'storage'
+          and tablename = 'objects'
+          and policyname = 'storyboard_select_auth'
+    ) then
+        create policy "storyboard_select_auth"
+            on storage.objects for select
+            to authenticated
+            using (bucket_id = 'storyboard');
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'storage'
+          and tablename = 'objects'
+          and policyname = 'storyboard_insert_auth'
+    ) then
+        create policy "storyboard_insert_auth"
+            on storage.objects for insert
+            to authenticated
+            with check (bucket_id = 'storyboard');
+    end if;
+end;
+$$;
+
+do $$
+begin
+    if not exists (
+        select 1 from pg_policies
+        where schemaname = 'storage'
+          and tablename = 'objects'
+          and policyname = 'storyboard_delete_auth'
+    ) then
+        create policy "storyboard_delete_auth"
+            on storage.objects for delete
+            to authenticated
+            using (bucket_id = 'storyboard');
+    end if;
+end;
+$$;
+
 create table if not exists public.scene_links (
     id uuid primary key default gen_random_uuid(),
     scene_id uuid not null references public.scenes (id) on delete cascade,
