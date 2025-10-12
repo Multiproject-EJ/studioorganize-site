@@ -87,9 +87,14 @@
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
       .scenes{overflow:auto; padding:8px}
-      .scene-card{background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer}
+      .scene-card{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; display:flex; flex-direction:column; gap:8px; overflow:visible}
       .scene-card.active{outline:2px solid var(--acc)}
       .scene-card small{color:var(--muted)}
+      .scene-card-body{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
+      .scene-card-title{display:flex; flex-direction:column; gap:2px}
+      .scene-card-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:2px}
+      .scene-card-tag{display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.3px; padding:4px 8px; border-radius:999px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-weight:600}
+      .scene-card-tag--empty{font-weight:500; color:var(--muted); border-style:dashed; background:transparent}
       .scene-card.dragging{opacity:0.55}
       .scene-card.drag-over{position:relative}
       .scene-card.drag-over::before{
@@ -106,6 +111,25 @@
         top:auto;
         bottom:-6px;
       }
+      .scene-card-popover{position:absolute; top:8px; right:8px; width:240px; max-width:75vw; background:var(--panel); border:1px solid var(--ring); border-radius:12px; box-shadow:0 18px 40px rgba(15,23,42,0.35); padding:12px; opacity:0; transform:translate(6px,-10px) scale(0.96); pointer-events:none; z-index:25; transition:opacity .18s ease, transform .18s ease;}
+      .scene-card-popover::before{content:''; position:absolute; top:-6px; right:24px; width:12px; height:12px; background:var(--panel); border-left:1px solid var(--ring); border-top:1px solid var(--ring); transform:rotate(45deg);}
+      .scene-card-popover-section{display:flex; flex-direction:column; gap:6px; margin-bottom:10px}
+      .scene-card-popover-section:last-child{margin-bottom:0}
+      .scene-card-popover-title{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); margin:0}
+      .scene-card-chip-row{display:flex; flex-wrap:wrap; gap:6px}
+      .scene-card-chip{border:1px solid var(--ring); background:var(--chip); color:var(--ink); border-radius:999px; font-size:11px; letter-spacing:.3px; padding:6px 10px; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease;}
+      .scene-card-chip[aria-pressed="true"], .scene-card-chip.active{background:var(--acc); color:var(--active-tab-text); border-color:var(--acc); font-weight:600}
+      .scene-card-chip[data-role="remove"]{display:inline-flex; align-items:center; gap:4px; padding:6px 12px}
+      .scene-card-chip[data-role="remove"] span{display:inline-flex; align-items:center}
+      .scene-card-popover input[data-scene-custom-input]{flex:1}
+      .scene-card-popover-actions{display:flex; gap:6px; align-items:center}
+      .scene-card-popover-actions button{flex:0 0 auto; font-size:11px; letter-spacing:.3px; padding:6px 10px; border-radius:999px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); cursor:pointer}
+      .scene-card-popover-actions button:disabled{opacity:0.6; cursor:not-allowed}
+      .scene-card[data-popover-open="true"] .scene-card-popover{opacity:1; pointer-events:auto; transform:translate(0,0) scale(1); animation:sceneCardPopoverIn .18s ease;}
+      @keyframes sceneCardPopoverIn{from{opacity:0; transform:translate(6px,-10px) scale(0.92);} to{opacity:1; transform:translate(0,0) scale(1);} }
+      .scene-card[data-popover-open="true"]{z-index:30}
+      .scene-card-chip[data-empty="true"]{background:transparent; border-style:dashed; color:var(--muted); cursor:default}
+      .scene-card-chip[data-empty="true"]:hover{border-style:dashed}
       .scenes.drag-over-end{position:relative}
       .scenes.drag-over-end::after{
         content:'';
@@ -1467,6 +1491,20 @@
         aiAvailable: false
       }
     };
+    const SCENE_LOCATION_TYPES = [
+      { value: 'INT.', label: 'Interior' },
+      { value: 'EXT.', label: 'Exterior' },
+      { value: 'INT./EXT.', label: 'Int./Ext.' },
+      { value: 'EXT./INT.', label: 'Ext./Int.' }
+    ];
+    const SCENE_TIME_OF_DAY_OPTIONS = [
+      { value: 'DAY', label: 'Day' },
+      { value: 'NIGHT', label: 'Night' },
+      { value: 'MORNING', label: 'Morning' },
+      { value: 'EVENING', label: 'Evening' },
+      { value: 'LATER', label: 'Later' }
+    ];
+    const SCENE_TAG_MAX_CUSTOM = 4;
     function getDefaultStoryboardAIConfig(){
       return { apiKey: '', model: STORYBOARD_AI_DEFAULT_MODEL };
     }
@@ -1533,6 +1571,8 @@
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
     let sceneDragSceneId = null;
+    let scenePopoverOpenId = null;
+    let scenePopoverDismissBound = false;
     const characterStudioState = {
       open: false,
       activeId: null
@@ -2518,7 +2558,8 @@
         colorSource: s.colorSource || SCENE_COLOR_SOURCE_AUTO,
         notes: s.notes,
         sounds: s.sounds,
-        storyboards: s.storyboards
+        storyboards: s.storyboards,
+        tags: getSceneTagState(s)
       });
     }
     function metaSignature(p){
@@ -2770,7 +2811,7 @@
           notes: '',
           sounds: [],
           storyboards: [],
-          metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO }
+          metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO, sceneTagState: { locationType: '', timeOfDay: '', custom: [] } }
         }],
         notes: '',
         _hashes: { scene: {} },
@@ -2780,6 +2821,7 @@
       };
       project.scenes.forEach(s => { project._hashes.scene[s.id] = hashString(stableSceneString(s)); });
       activeSceneId = project.scenes[0].id;
+      scenePopoverOpenId = null;
       storyboardIndexState.clear();
       if (activeSceneId){
         STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(activeSceneId, 0, mode));
@@ -2815,6 +2857,10 @@
         list.addEventListener('dragleave', handleSceneListDragLeave);
         list.dataset.sceneDragBound = 'true';
       }
+      if (scenePopoverOpenId && !project.scenes.some(scene => scene.id === scenePopoverOpenId)){
+        scenePopoverOpenId = null;
+      }
+      ensureScenePopoverDismissBound();
       project.scenes.forEach((s, idx)=>{
         const div = document.createElement('div');
         div.className = 'scene-card' + (s.id===activeSceneId ? ' active':'');
@@ -2822,27 +2868,48 @@
         div.dataset.index = String(idx);
         const colorMeta = getSceneColorMeta(s);
         div.dataset.colorSource = colorMeta.source;
+        div.dataset.popoverOpen = scenePopoverOpenId === s.id ? 'true' : 'false';
         div.draggable = true;
         div.addEventListener('dragstart', handleSceneCardDragStart);
         div.addEventListener('dragend', handleSceneCardDragEnd);
         div.addEventListener('dragover', handleSceneCardDragOver);
         div.addEventListener('dragleave', handleSceneCardDragLeave);
         div.addEventListener('drop', handleSceneCardDrop);
-        div.onclick = ()=>{
+        div.addEventListener('click', (event)=>{
+          event.stopPropagation();
           if (sceneDragSceneId) return;
+          const alreadyActive = activeSceneId === s.id;
           activeSceneId = s.id;
+          if (alreadyActive && scenePopoverOpenId === s.id){
+            scenePopoverOpenId = null;
+          } else {
+            scenePopoverOpenId = s.id;
+          }
           render();
-        };
+        });
         const colorTitle = colorMeta.tooltip || colorMeta.description || 'Scene color';
         const colorBorder = hexToRgba(colorMeta.textColor, 0.35);
+        const tags = getSceneNameTags(s);
+        const tagsHtml = tags.length
+          ? tags.map(tag => `<span class="scene-card-tag">${escapeHtml(tag)}</span>`).join('')
+          : '<span class="scene-card-tag scene-card-tag--empty">Add scene tags</span>';
         div.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-            <div>
-              <strong>${escapeHtml(s.slug || '(no slug)')}</strong><br/>
+          <div class="scene-card-body">
+            <div class="scene-card-title">
+              <strong>${escapeHtml(s.slug || '(no slug)')}</strong>
               <small>Scene ${idx+1}</small>
             </div>
             <span class="scene-card-color" title="${escapeHtml(colorTitle)}" style="background:${colorMeta.color};border-color:${colorBorder}"></span>
-          </div>`;
+          </div>
+          <div class="scene-card-tags" data-scene-tags>${tagsHtml}</div>`;
+        const popover = document.createElement('div');
+        popover.className = 'scene-card-popover';
+        popover.setAttribute('role', 'dialog');
+        popover.setAttribute('aria-label', 'Scene tags');
+        popover.innerHTML = buildSceneCardPopoverHtml(s);
+        popover.addEventListener('click', event => event.stopPropagation());
+        div.appendChild(popover);
+        setupSceneCardPopover(popover, s);
         list.appendChild(div);
       });
 
@@ -2999,6 +3066,11 @@
 
     function handleSceneCardDragStart(event){
       const card = event.currentTarget;
+      if (scenePopoverOpenId){
+        const openCard = document.querySelector('#sceneList .scene-card[data-popover-open="true"]');
+        if (openCard) openCard.dataset.popoverOpen = 'false';
+        scenePopoverOpenId = null;
+      }
       sceneDragSceneId = card?.dataset?.sceneId || null;
       if (card) card.classList.add('dragging');
       clearSceneListDropIndicators();
@@ -5211,7 +5283,7 @@
         notes: '',
         sounds: [],
         storyboards: [],
-        metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO }
+        metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO, sceneTagState: { locationType: '', timeOfDay: '', custom: [] } }
       };
       if (trimmedSummary){
         scene.elements = trimmedSummary
@@ -5224,6 +5296,206 @@
         scene.elements = [createSceneElement('action', '...')];
       }
       return scene;
+    }
+    function sanitizeSceneCustomTags(tags){
+      const list = Array.isArray(tags) ? tags : [];
+      const seen = new Set();
+      const normalized = [];
+      for (const tag of list){
+        const trimmed = typeof tag === 'string' ? tag.trim() : '';
+        if (!trimmed) continue;
+        const upper = trimmed.toUpperCase();
+        if (seen.has(upper)) continue;
+        seen.add(upper);
+        normalized.push(upper);
+        if (normalized.length >= SCENE_TAG_MAX_CUSTOM) break;
+      }
+      return normalized;
+    }
+    function getSceneTagState(scene){
+      if (!scene || typeof scene !== 'object') return { locationType: '', timeOfDay: '', custom: [] };
+      if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+      const raw = scene.metadata.sceneTagState && typeof scene.metadata.sceneTagState === 'object' ? scene.metadata.sceneTagState : {};
+      const locationType = typeof raw.locationType === 'string' ? raw.locationType : '';
+      const timeOfDay = typeof raw.timeOfDay === 'string' ? raw.timeOfDay : '';
+      const custom = sanitizeSceneCustomTags(raw.custom);
+      scene.metadata.sceneTagState = { locationType, timeOfDay, custom: [...custom] };
+      return { locationType, timeOfDay, custom: [...custom] };
+    }
+    function getSceneNameTags(scene){
+      const state = getSceneTagState(scene);
+      const tags = [];
+      if (state.locationType) tags.push(state.locationType);
+      if (state.timeOfDay) tags.push(state.timeOfDay);
+      state.custom.forEach(tag => tags.push(tag));
+      return tags;
+    }
+    function arraysEqual(a, b){
+      if (a === b) return true;
+      if (!Array.isArray(a) || !Array.isArray(b)) return false;
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++){
+        if (a[i] !== b[i]) return false;
+      }
+      return true;
+    }
+    function updateSceneTagState(scene, updates){
+      if (!scene) return;
+      const current = getSceneTagState(scene);
+      const next = {
+        locationType: updates && Object.prototype.hasOwnProperty.call(updates, 'locationType') ? (updates.locationType || '') : current.locationType,
+        timeOfDay: updates && Object.prototype.hasOwnProperty.call(updates, 'timeOfDay') ? (updates.timeOfDay || '') : current.timeOfDay,
+        custom: updates && Object.prototype.hasOwnProperty.call(updates, 'custom') ? sanitizeSceneCustomTags(updates.custom) : current.custom
+      };
+      if (next.locationType === current.locationType && next.timeOfDay === current.timeOfDay && arraysEqual(next.custom, current.custom)){
+        return;
+      }
+      if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+      scene.metadata.sceneTagState = { locationType: next.locationType, timeOfDay: next.timeOfDay, custom: [...next.custom] };
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
+      render();
+    }
+    function addSceneCustomTag(scene, value){
+      if (!scene) return;
+      const trimmed = typeof value === 'string' ? value.trim() : '';
+      if (!trimmed) return;
+      const upper = trimmed.toUpperCase();
+      const state = getSceneTagState(scene);
+      if (state.custom.length >= SCENE_TAG_MAX_CUSTOM) return;
+      if (state.custom.includes(upper)) return;
+      const next = [...state.custom, upper];
+      updateSceneTagState(scene, { custom: next });
+    }
+    function removeSceneCustomTag(scene, value){
+      if (!scene) return;
+      const trimmed = typeof value === 'string' ? value.trim() : '';
+      if (!trimmed) return;
+      const upper = trimmed.toUpperCase();
+      const state = getSceneTagState(scene);
+      const next = state.custom.filter(tag => tag !== upper);
+      updateSceneTagState(scene, { custom: next });
+    }
+    function buildSceneCardPopoverHtml(scene){
+      const state = getSceneTagState(scene);
+      const locationButtons = SCENE_LOCATION_TYPES.map(option => {
+        const value = option.value;
+        const pressed = state.locationType === value ? 'true' : 'false';
+        const title = option.label || option.value;
+        return `<button type="button" class="scene-card-chip" data-scene-location-option="${escapeHtml(value)}" aria-pressed="${pressed}" title="${escapeHtml(title)}">${escapeHtml(option.value)}</button>`;
+      }).join('');
+      const timeButtons = SCENE_TIME_OF_DAY_OPTIONS.map(option => {
+        const value = option.value;
+        const pressed = state.timeOfDay === value ? 'true' : 'false';
+        return `<button type="button" class="scene-card-chip" data-scene-time-option="${escapeHtml(value)}" aria-pressed="${pressed}">${escapeHtml(option.label)}</button>`;
+      }).join('');
+      const customTags = state.custom.length
+        ? state.custom.map(tag => `<button type="button" class="scene-card-chip" data-role="remove" data-scene-remove-custom="${escapeHtml(tag)}" aria-label="Remove tag ${escapeHtml(tag)}"><span>${escapeHtml(tag)}</span><span aria-hidden="true">×</span></button>`).join('')
+        : '<span class="scene-card-chip" data-empty="true">No custom tags yet</span>';
+      const inputId = `scene-custom-tag-${scene.id}`;
+      const disableAdd = state.custom.length >= SCENE_TAG_MAX_CUSTOM;
+      const customPlaceholder = disableAdd ? 'Tag limit reached' : 'e.g. FLASHBACK';
+      return `
+        <div class="scene-card-popover-section">
+          <p class="scene-card-popover-title">Scene type</p>
+          <div class="scene-card-chip-row" data-scene-location-row>${locationButtons}</div>
+        </div>
+        <div class="scene-card-popover-section">
+          <p class="scene-card-popover-title">Time of day</p>
+          <div class="scene-card-chip-row" data-scene-time-row>${timeButtons}</div>
+        </div>
+        <div class="scene-card-popover-section">
+          <p class="scene-card-popover-title">Custom tags</p>
+          <div class="scene-card-popover-actions">
+            <input type="text" id="${escapeHtml(inputId)}" data-scene-custom-input placeholder="${escapeHtml(customPlaceholder)}" maxlength="24" autocomplete="off" />
+            <button type="button" data-scene-add-custom ${disableAdd ? 'disabled' : ''} title="${escapeHtml(disableAdd ? 'Maximum of four custom tags saved per scene' : 'Add custom tag')}">Add</button>
+          </div>
+          <div class="scene-card-chip-row" data-scene-custom-row>${customTags}</div>
+        </div>`;
+    }
+    function setupSceneCardPopover(popover, scene){
+      if (!popover || !scene) return;
+      const state = getSceneTagState(scene);
+      const handleLocationToggle = (value)=>{
+        const current = getSceneTagState(scene);
+        const nextValue = current.locationType === value ? '' : value;
+        updateSceneTagState(scene, { locationType: nextValue });
+      };
+      popover.querySelectorAll('[data-scene-location-option]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          event.preventDefault();
+          handleLocationToggle(btn.dataset.sceneLocationOption || '');
+        });
+      });
+      const handleTimeToggle = (value)=>{
+        const current = getSceneTagState(scene);
+        const nextValue = current.timeOfDay === value ? '' : value;
+        updateSceneTagState(scene, { timeOfDay: nextValue });
+      };
+      popover.querySelectorAll('[data-scene-time-option]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          event.preventDefault();
+          handleTimeToggle(btn.dataset.sceneTimeOption || '');
+        });
+      });
+      popover.querySelectorAll('[data-scene-remove-custom]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.stopPropagation();
+          event.preventDefault();
+          removeSceneCustomTag(scene, btn.dataset.sceneRemoveCustom || '');
+        });
+      });
+      const input = popover.querySelector('[data-scene-custom-input]');
+      const addBtn = popover.querySelector('[data-scene-add-custom]');
+      const submitInput = ()=>{
+        if (!input) return;
+        addSceneCustomTag(scene, input.value || '');
+        input.value = '';
+      };
+      if (addBtn){
+        addBtn.disabled = state.custom.length >= SCENE_TAG_MAX_CUSTOM;
+        addBtn.addEventListener('click', event => {
+          event.stopPropagation();
+          event.preventDefault();
+          submitInput();
+        });
+      }
+      if (input){
+        input.disabled = state.custom.length >= SCENE_TAG_MAX_CUSTOM;
+        input.addEventListener('click', event => event.stopPropagation());
+        input.addEventListener('keydown', event => {
+          if (event.key === 'Enter'){
+            event.preventDefault();
+            submitInput();
+            return;
+          }
+          if (event.key === 'Escape'){
+            event.preventDefault();
+            event.stopPropagation();
+            scenePopoverOpenId = null;
+            render();
+            return;
+          }
+          event.stopPropagation();
+        });
+      }
+    }
+    function ensureScenePopoverDismissBound(){
+      if (scenePopoverDismissBound) return;
+      document.addEventListener('click', event => {
+        if (!scenePopoverOpenId) return;
+        const target = event.target instanceof Element ? event.target : null;
+        if (target && (target.closest('.scene-card-popover') || (target.closest('.scene-card') && target.closest('.scene-card').dataset.sceneId === scenePopoverOpenId))){
+          return;
+        }
+        scenePopoverOpenId = null;
+        render();
+      });
+      scenePopoverDismissBound = true;
     }
     function insertSceneAt(index, scene){
       project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
@@ -6219,6 +6491,11 @@
 
     document.addEventListener('keydown', e=>{
       if (e.key === 'Escape'){
+        if (scenePopoverOpenId){
+          scenePopoverOpenId = null;
+          render();
+          return;
+        }
         if (characterStudioState.open){
           closeCharacterStudio();
           return;
