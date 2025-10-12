@@ -91,7 +91,15 @@
       .scene-card.active{outline:2px solid var(--acc)}
       .scene-card small{color:var(--muted)}
       .scene-card-body{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
-      .scene-card-title{display:flex; flex-direction:column; gap:2px}
+      .scene-card-title{display:flex; flex-direction:column; gap:2px; width:100%}
+      .scene-card-display{display:flex; flex-direction:column; gap:2px; min-width:0}
+      .scene-card-input-wrapper{display:none; width:100%; align-items:center}
+      .scene-card-input{flex:1; border-radius:8px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); padding:6px 8px; font-size:13px; font-weight:500}
+      .scene-card.editing{cursor:text}
+      .scene-card.editing .scene-card-display{display:none}
+      .scene-card.editing .scene-card-input-wrapper{display:flex}
+      .scene-card.editing .scene-card-input{background:var(--panel); border-color:var(--acc); box-shadow:0 0 0 2px rgba(79,123,255,0.2)}
+      .scene-card-sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
       .scene-card-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:2px}
       .scene-card-tag{display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.3px; padding:4px 8px; border-radius:999px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-weight:600}
       .scene-card-tag--empty{font-weight:500; color:var(--muted); border-style:dashed; background:transparent}
@@ -1573,6 +1581,9 @@
     let sceneDragSceneId = null;
     let scenePopoverOpenId = null;
     let scenePopoverDismissBound = false;
+    let sceneInlineRenameId = null;
+    let sceneInlineRenameDraft = '';
+    let pendingSceneRenameFocusId = null;
     const characterStudioState = {
       open: false,
       activeId: null
@@ -2861,15 +2872,25 @@
         scenePopoverOpenId = null;
       }
       ensureScenePopoverDismissBound();
+      const renameFocusTargets = [];
       project.scenes.forEach((s, idx)=>{
         const div = document.createElement('div');
-        div.className = 'scene-card' + (s.id===activeSceneId ? ' active':'');
+        const isActive = s.id === activeSceneId;
+        const isEditing = sceneInlineRenameId === s.id;
+        div.className = 'scene-card' + (isActive ? ' active' : '') + (isEditing ? ' editing' : '');
         div.dataset.sceneId = s.id;
         div.dataset.index = String(idx);
         const colorMeta = getSceneColorMeta(s);
         div.dataset.colorSource = colorMeta.source;
         div.dataset.popoverOpen = scenePopoverOpenId === s.id ? 'true' : 'false';
-        div.draggable = true;
+        const rawSlug = typeof s.slug === 'string' ? s.slug : '';
+        const slugDisplay = rawSlug.trim() ? rawSlug.trim() : '(no slug)';
+        const sceneNumberLabel = `Scene ${idx+1}`;
+        const accessibleLabel = rawSlug.trim() ? `${sceneNumberLabel} • ${slugDisplay}` : sceneNumberLabel;
+        div.setAttribute('role', 'button');
+        div.setAttribute('aria-label', accessibleLabel);
+        div.tabIndex = 0;
+        div.draggable = !isEditing;
         div.addEventListener('dragstart', handleSceneCardDragStart);
         div.addEventListener('dragend', handleSceneCardDragEnd);
         div.addEventListener('dragover', handleSceneCardDragOver);
@@ -2878,6 +2899,7 @@
         div.addEventListener('click', (event)=>{
           event.stopPropagation();
           if (sceneDragSceneId) return;
+          if (sceneInlineRenameId === s.id) return;
           const alreadyActive = activeSceneId === s.id;
           activeSceneId = s.id;
           if (alreadyActive && scenePopoverOpenId === s.id){
@@ -2887,6 +2909,27 @@
           }
           render();
         });
+        div.addEventListener('keydown', event => {
+          if (event.target !== div) return;
+          if (event.key === 'F2'){
+            event.preventDefault();
+            beginSceneInlineRename(s.id);
+            return;
+          }
+          if (sceneInlineRenameId === s.id) return;
+          if (event.key === 'Enter' || event.key === ' '){
+            event.preventDefault();
+            if (sceneDragSceneId) return;
+            const alreadyActive = activeSceneId === s.id;
+            activeSceneId = s.id;
+            if (alreadyActive && scenePopoverOpenId === s.id){
+              scenePopoverOpenId = null;
+            } else {
+              scenePopoverOpenId = s.id;
+            }
+            render();
+          }
+        });
         const colorTitle = colorMeta.tooltip || colorMeta.description || 'Scene color';
         const colorBorder = hexToRgba(colorMeta.textColor, 0.35);
         const tags = getSceneNameTags(s);
@@ -2895,13 +2938,59 @@
           : '<span class="scene-card-tag scene-card-tag--empty">Add scene tags</span>';
         div.innerHTML = `
           <div class="scene-card-body">
-            <div class="scene-card-title">
-              <strong>${escapeHtml(s.slug || '(no slug)')}</strong>
-              <small>Scene ${idx+1}</small>
+            <div class="scene-card-title" data-scene-edit-root>
+              <div class="scene-card-display" data-scene-card-display>
+                <strong data-scene-card-slug>${escapeHtml(slugDisplay)}</strong>
+                <small>${escapeHtml(sceneNumberLabel)}</small>
+              </div>
+              <label class="scene-card-input-wrapper">
+                <span class="scene-card-sr-only">Rename ${escapeHtml(sceneNumberLabel)}</span>
+                <input type="text" class="scene-card-input" data-scene-input value="${escapeHtml(rawSlug)}" autocomplete="off" maxlength="140" />
+              </label>
             </div>
             <span class="scene-card-color" title="${escapeHtml(colorTitle)}" style="background:${colorMeta.color};border-color:${colorBorder}"></span>
           </div>
           <div class="scene-card-tags" data-scene-tags>${tagsHtml}</div>`;
+        const editRoot = div.querySelector('[data-scene-edit-root]');
+        if (editRoot){
+          editRoot.addEventListener('dblclick', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            beginSceneInlineRename(s.id);
+          });
+        }
+        const input = div.querySelector('[data-scene-input]');
+        if (input){
+          input.dataset.sceneId = s.id;
+          if (isEditing){
+            input.value = sceneInlineRenameDraft;
+            renameFocusTargets.push({ input, select: pendingSceneRenameFocusId === s.id });
+          } else {
+            input.value = rawSlug;
+          }
+          input.addEventListener('input', event => {
+            if (sceneInlineRenameId === s.id){
+              sceneInlineRenameDraft = event.target.value;
+            }
+          });
+          input.addEventListener('keydown', event => {
+            if (event.key === 'Enter'){
+              event.preventDefault();
+              finishSceneInlineRename(s.id, event.target.value);
+            } else if (event.key === 'Escape'){
+              event.preventDefault();
+              event.stopPropagation();
+              cancelSceneInlineRename(s.id);
+            }
+          });
+          input.addEventListener('blur', event => {
+            if (sceneInlineRenameId === s.id){
+              finishSceneInlineRename(s.id, event.target.value);
+            }
+          });
+          input.addEventListener('click', event => event.stopPropagation());
+          input.addEventListener('mousedown', event => event.stopPropagation());
+        }
         const popover = document.createElement('div');
         popover.className = 'scene-card-popover';
         popover.setAttribute('role', 'dialog');
@@ -2912,6 +3001,21 @@
         setupSceneCardPopover(popover, s);
         list.appendChild(div);
       });
+      if (renameFocusTargets.length){
+        requestAnimationFrame(()=>{
+          renameFocusTargets.forEach(({ input, select })=>{
+            if (!input) return;
+            input.focus({ preventScroll: true });
+            if (select){
+              input.select();
+            } else {
+              const len = input.value.length;
+              try { input.setSelectionRange(len, len); } catch (err) {}
+            }
+          });
+          pendingSceneRenameFocusId = null;
+        });
+      }
 
       // right-side bindings
       const scene = getActiveScene();
@@ -2980,6 +3084,42 @@
       if (storyboardMode) renderStoryboardGallery();
       updateStoryboardButton();
       if (characterStudioState.open) renderCharacterStudio();
+    }
+
+    function beginSceneInlineRename(sceneId){
+      if (!sceneId || !Array.isArray(project?.scenes)) return;
+      if (sceneInlineRenameId === sceneId) return;
+      const scene = project.scenes.find(s=>s.id===sceneId);
+      if (!scene) return;
+      sceneInlineRenameId = sceneId;
+      sceneInlineRenameDraft = typeof scene.slug === 'string' ? scene.slug : '';
+      pendingSceneRenameFocusId = sceneId;
+      scenePopoverOpenId = null;
+      render();
+    }
+
+    function finishSceneInlineRename(sceneId, nextValue, commit = true){
+      const scene = Array.isArray(project?.scenes) ? project.scenes.find(s=>s.id===sceneId) : null;
+      const nextSlug = typeof nextValue === 'string' ? nextValue : '';
+      const currentSlug = typeof scene?.slug === 'string' ? scene.slug : '';
+      const shouldUpdate = Boolean(scene) && commit && nextSlug !== currentSlug;
+      sceneInlineRenameId = null;
+      sceneInlineRenameDraft = '';
+      pendingSceneRenameFocusId = null;
+      if (shouldUpdate){
+        scene.slug = nextSlug;
+        bumpVersion();
+        updateSceneHash(scene);
+      }
+      render();
+      if (shouldUpdate){
+        scheduleSave();
+        scheduleBackup();
+      }
+    }
+
+    function cancelSceneInlineRename(sceneId){
+      finishSceneInlineRename(sceneId, undefined, false);
     }
 
     function updateSceneColorUI(scene){
@@ -6491,6 +6631,10 @@
 
     document.addEventListener('keydown', e=>{
       if (e.key === 'Escape'){
+        if (sceneInlineRenameId){
+          cancelSceneInlineRename(sceneInlineRenameId);
+          return;
+        }
         if (scenePopoverOpenId){
           scenePopoverOpenId = null;
           render();

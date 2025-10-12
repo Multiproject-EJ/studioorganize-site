@@ -67,11 +67,19 @@
       .panel h2 { font-size: 13px; font-weight: 600; letter-spacing: .4px; color: var(--muted); margin: 12px 16px 8px; text-transform: uppercase; }
       .panel-body { flex: 1; padding: 0 16px 16px; overflow: auto; }
       .scene-list { display: flex; flex-direction: column; gap: 10px; }
-      .scene-card { background: var(--card); border: 1px solid var(--ring); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: border-color .2s ease, transform .2s ease; outline: none; }
+      .scene-card { background: var(--card); border: 1px solid var(--ring); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: border-color .2s ease, transform .2s ease; outline: none; position: relative; }
       .scene-card.active { border-color: var(--acc); box-shadow: 0 0 0 2px rgba(79,123,255,0.25); transform: translateY(-1px); }
       .scene-card small { color: var(--muted); font-size: 12px; }
-      .scene-card-label { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .2px; }
-      .scene-card-label span { display: inline-flex; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, #4f7bff, #22d3ee); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55); }
+      .scene-card-label { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .2px; width: 100%; }
+      .scene-card-label span.scene-card-color { display: inline-flex; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, #4f7bff, #22d3ee); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55); }
+      .scene-card-label-display { display: inline-flex; align-items: baseline; gap: 4px; flex: 1; min-width: 0; }
+      .scene-card-label-display strong { font-size: 13px; font-weight: 600; }
+      .scene-card-label-display span[data-scene-card-name] { font-weight: 600; }
+      .scene-card-label-display span.scene-card-separator { opacity: 0.5; margin: 0 2px; }
+      .scene-card-input { display: none; flex: 1; min-width: 0; border-radius: 8px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); padding: 6px 8px; font-size: 13px; font-weight: 500; }
+      .scene-card.editing { cursor: text; }
+      .scene-card.editing .scene-card-label-display { display: none; }
+      .scene-card.editing .scene-card-input { display: inline-flex; }
       .timeline-panel { padding: 0; }
       .timeline-stage { flex: 1; display: flex; flex-direction: column; min-height: 0; }
       .timeline-stage header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--ring); gap: 16px; }
@@ -155,23 +163,55 @@
           <h2>Scenes</h2>
           <div class="panel-body">
             <div class="scene-list">
-              <div class="scene-card" data-scene="1" role="button" tabindex="0">
-                <div class="scene-card-label"><span></span>Scene 12A · Alley showdown</div>
+              <div class="scene-card" data-scene="1" role="button" tabindex="0" aria-label="Scene 12A · Alley showdown">
+                <div class="scene-card-label" data-scene-edit-root>
+                  <span class="scene-card-color" aria-hidden="true"></span>
+                  <div class="scene-card-label-display">
+                    <strong data-scene-card-number>Scene 12A</strong>
+                    <span aria-hidden="true" class="scene-card-separator">·</span>
+                    <span data-scene-card-name>Alley showdown</span>
+                  </div>
+                  <input class="scene-card-input" type="text" value="Alley showdown" data-scene-input aria-label="Scene name" />
+                </div>
                 <small>Storyboard locked · 12 frames</small>
                 <p class="muted">Lighting cues synced to script beats.</p>
               </div>
-              <div class="scene-card active" data-scene="2" role="button" tabindex="0">
-                <div class="scene-card-label"><span></span>Scene 13 · Rooftop chase</div>
+              <div class="scene-card active" data-scene="2" role="button" tabindex="0" aria-label="Scene 13 · Rooftop chase">
+                <div class="scene-card-label" data-scene-edit-root>
+                  <span class="scene-card-color" aria-hidden="true"></span>
+                  <div class="scene-card-label-display">
+                    <strong data-scene-card-number>Scene 13</strong>
+                    <span aria-hidden="true" class="scene-card-separator">·</span>
+                    <span data-scene-card-name>Rooftop chase</span>
+                  </div>
+                  <input class="scene-card-input" type="text" value="Rooftop chase" data-scene-input aria-label="Scene name" />
+                </div>
                 <small>In progress · 8 frames</small>
                 <p class="muted">Share draft with second unit.</p>
               </div>
-              <div class="scene-card" data-scene="3" role="button" tabindex="0">
-                <div class="scene-card-label"><span></span>Scene 18 · Safehouse briefing</div>
+              <div class="scene-card" data-scene="3" role="button" tabindex="0" aria-label="Scene 18 · Safehouse briefing">
+                <div class="scene-card-label" data-scene-edit-root>
+                  <span class="scene-card-color" aria-hidden="true"></span>
+                  <div class="scene-card-label-display">
+                    <strong data-scene-card-number>Scene 18</strong>
+                    <span aria-hidden="true" class="scene-card-separator">·</span>
+                    <span data-scene-card-name>Safehouse briefing</span>
+                  </div>
+                  <input class="scene-card-input" type="text" value="Safehouse briefing" data-scene-input aria-label="Scene name" />
+                </div>
                 <small>Needs review · 5 frames</small>
                 <p class="muted">Director comments pending.</p>
               </div>
-              <div class="scene-card" data-scene="4" role="button" tabindex="0">
-                <div class="scene-card-label"><span></span>Scene 21 · Finale</div>
+              <div class="scene-card" data-scene="4" role="button" tabindex="0" aria-label="Scene 21 · Finale">
+                <div class="scene-card-label" data-scene-edit-root>
+                  <span class="scene-card-color" aria-hidden="true"></span>
+                  <div class="scene-card-label-display">
+                    <strong data-scene-card-number>Scene 21</strong>
+                    <span aria-hidden="true" class="scene-card-separator">·</span>
+                    <span data-scene-card-name>Finale</span>
+                  </div>
+                  <input class="scene-card-input" type="text" value="Finale" data-scene-input aria-label="Scene name" />
+                </div>
                 <small>Storyboard AI ready</small>
                 <p class="muted">Generate new hero shots.</p>
               </div>
@@ -509,14 +549,107 @@
       });
     }
 
+    function updateSceneName(card, newName) {
+      if (!card) return;
+      const numberEl = card.querySelector('[data-scene-card-number]');
+      const nameEl = card.querySelector('[data-scene-card-name]');
+      if (!numberEl || !nameEl) return;
+      const sceneNumber = numberEl.textContent.trim();
+      const trimmedName = newName.trim() || nameEl.textContent.trim();
+      if (!trimmedName) return;
+      nameEl.textContent = trimmedName;
+      const combinedLabel = sceneNumber ? `${sceneNumber} · ${trimmedName}` : trimmedName;
+      card.setAttribute('aria-label', combinedLabel);
+
+      const sceneId = card.dataset.scene;
+      const matchingRow = document.querySelector(`[data-scene-row="${sceneId}"]`);
+      if (matchingRow) {
+        matchingRow.dataset.sceneName = combinedLabel;
+        const timelineName = matchingRow.querySelector('.timeline-scene__label span');
+        if (timelineName) {
+          timelineName.textContent = trimmedName;
+        }
+        if (matchingRow.classList.contains('active') && sceneTitle) {
+          sceneTitle.textContent = combinedLabel;
+        }
+      }
+    }
+
+    function startSceneRename(card) {
+      if (!card || card.classList.contains('editing')) return;
+      const input = card.querySelector('[data-scene-input]');
+      const nameEl = card.querySelector('[data-scene-card-name]');
+      if (!input || !nameEl) return;
+      card.classList.add('editing');
+      input.value = nameEl.textContent.trim();
+      requestAnimationFrame(() => {
+        input.focus();
+        input.select();
+      });
+    }
+
+    function finishSceneRename(card, commit = true) {
+      if (!card) return;
+      const input = card.querySelector('[data-scene-input]');
+      const nameEl = card.querySelector('[data-scene-card-name]');
+      if (!input || !nameEl) {
+        card.classList.remove('editing');
+        return;
+      }
+      const originalName = nameEl.textContent.trim();
+      const desiredName = commit ? input.value.trim() : originalName;
+      if (!desiredName) {
+        input.value = originalName;
+        card.classList.remove('editing');
+        return;
+      }
+      input.value = desiredName;
+      updateSceneName(card, desiredName);
+      card.classList.remove('editing');
+    }
+
     sceneCards.forEach(card => {
-      card.addEventListener('click', () => activateScene(card.dataset.scene));
+      card.addEventListener('click', () => {
+        if (card.classList.contains('editing')) return;
+        activateScene(card.dataset.scene);
+      });
       card.addEventListener('keydown', event => {
+        if (event.key === 'F2') {
+          event.preventDefault();
+          startSceneRename(card);
+          return;
+        }
+        if (card.classList.contains('editing')) {
+          return;
+        }
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           activateScene(card.dataset.scene);
         }
       });
+
+      const label = card.querySelector('[data-scene-edit-root]');
+      const input = card.querySelector('[data-scene-input]');
+      if (label) {
+        label.addEventListener('dblclick', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          startSceneRename(card);
+        });
+      }
+      if (input) {
+        input.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            finishSceneRename(card, true);
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            finishSceneRename(card, false);
+          }
+        });
+        input.addEventListener('blur', () => finishSceneRename(card, true));
+        input.addEventListener('click', event => event.stopPropagation());
+      }
     });
 
     activateScene('2', { scroll: false });
