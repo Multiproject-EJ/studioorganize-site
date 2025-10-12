@@ -119,8 +119,10 @@
         top:auto;
         bottom:-6px;
       }
-      .scene-card-popover{position:absolute; top:8px; right:8px; width:240px; max-width:75vw; background:var(--panel); border:1px solid var(--ring); border-radius:12px; box-shadow:0 18px 40px rgba(15,23,42,0.35); padding:12px; opacity:0; transform:translate(6px,-10px) scale(0.96); pointer-events:none; z-index:25; transition:opacity .18s ease, transform .18s ease;}
-      .scene-card-popover::before{content:''; position:absolute; top:-6px; right:24px; width:12px; height:12px; background:var(--panel); border-left:1px solid var(--ring); border-top:1px solid var(--ring); transform:rotate(45deg);}
+      .scene-card-popover{position:relative; margin-top:12px; width:100%; max-width:none; background:var(--panel); border:1px solid var(--ring); border-radius:12px; box-shadow:0 18px 40px rgba(15,23,42,0.35); padding:12px; opacity:0; transform:translateY(-6px) scale(0.98); pointer-events:none; z-index:1; transition:opacity .18s ease, transform .18s ease; display:none;}
+      .scene-card-popover::before{content:''; position:absolute; top:-6px; left:32px; width:12px; height:12px; background:var(--panel); border-left:1px solid var(--ring); border-top:1px solid var(--ring); transform:rotate(45deg);}
+      [data-theme="dark"] .scene-card-popover{border-color:rgba(79,123,255,0.45); box-shadow:0 22px 60px rgba(8,15,28,0.7), 0 0 0 1px rgba(79,123,255,0.28), 0 0 26px rgba(79,123,255,0.35);}
+      [data-theme="dark"] .scene-card-popover::before{border-left-color:rgba(79,123,255,0.45); border-top-color:rgba(79,123,255,0.45); box-shadow:-2px -2px 6px rgba(79,123,255,0.25);}
       .scene-card-popover-section{display:flex; flex-direction:column; gap:6px; margin-bottom:10px}
       .scene-card-popover-section:last-child{margin-bottom:0}
       .scene-card-popover-title{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); margin:0}
@@ -133,8 +135,8 @@
       .scene-card-popover-actions{display:flex; gap:6px; align-items:center}
       .scene-card-popover-actions button{flex:0 0 auto; font-size:11px; letter-spacing:.3px; padding:6px 10px; border-radius:999px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); cursor:pointer}
       .scene-card-popover-actions button:disabled{opacity:0.6; cursor:not-allowed}
-      .scene-card[data-popover-open="true"] .scene-card-popover{opacity:1; pointer-events:auto; transform:translate(0,0) scale(1); animation:sceneCardPopoverIn .18s ease;}
-      @keyframes sceneCardPopoverIn{from{opacity:0; transform:translate(6px,-10px) scale(0.92);} to{opacity:1; transform:translate(0,0) scale(1);} }
+      .scene-card[data-popover-open="true"] .scene-card-popover{display:block; opacity:1; pointer-events:auto; transform:translateY(0) scale(1); animation:sceneCardPopoverIn .18s ease;}
+      @keyframes sceneCardPopoverIn{from{opacity:0; transform:translateY(-6px) scale(0.96);} to{opacity:1; transform:translateY(0) scale(1);} }
       .scene-card[data-popover-open="true"]{z-index:30}
       .scene-card-chip[data-empty="true"]{background:transparent; border-style:dashed; color:var(--muted); cursor:default}
       .scene-card-chip[data-empty="true"]:hover{border-style:dashed}
@@ -1580,10 +1582,12 @@
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
     let sceneDragSceneId = null;
+    const SCENE_CARD_CLICK_DELAY = 220;
     let scenePopoverOpenId = null;
     let scenePopoverDismissBound = false;
     let sceneInlineRenameId = null;
     let sceneInlineRenameDraft = '';
+    let scenePopoverClickTimer = null;
     let pendingSceneRenameFocusId = null;
     const characterStudioState = {
       open: false,
@@ -2870,6 +2874,7 @@
         list.dataset.sceneDragBound = 'true';
       }
       if (scenePopoverOpenId && !project.scenes.some(scene => scene.id === scenePopoverOpenId)){
+        cancelScenePopoverClickTimer();
         scenePopoverOpenId = null;
       }
       ensureScenePopoverDismissBound();
@@ -2897,18 +2902,28 @@
         div.addEventListener('dragover', handleSceneCardDragOver);
         div.addEventListener('dragleave', handleSceneCardDragLeave);
         div.addEventListener('drop', handleSceneCardDrop);
-        div.addEventListener('click', (event)=>{
+        div.addEventListener('click', event => {
           event.stopPropagation();
           if (sceneDragSceneId) return;
           if (sceneInlineRenameId === s.id) return;
-          const alreadyActive = activeSceneId === s.id;
-          activeSceneId = s.id;
-          if (alreadyActive && scenePopoverOpenId === s.id){
-            scenePopoverOpenId = null;
-          } else {
-            scenePopoverOpenId = s.id;
+          if (event.detail > 1){
+            cancelScenePopoverClickTimer();
+            return;
           }
-          render();
+          cancelScenePopoverClickTimer();
+          const targetSceneId = s.id;
+          scenePopoverClickTimer = setTimeout(()=>{
+            scenePopoverClickTimer = null;
+            if (sceneInlineRenameId === targetSceneId) return;
+            const alreadyActive = activeSceneId === targetSceneId;
+            activeSceneId = targetSceneId;
+            if (alreadyActive && scenePopoverOpenId === targetSceneId){
+              scenePopoverOpenId = null;
+            } else {
+              scenePopoverOpenId = targetSceneId;
+            }
+            render();
+          }, SCENE_CARD_CLICK_DELAY);
         });
         div.addEventListener('keydown', event => {
           if (event.target !== div) return;
@@ -2921,6 +2936,7 @@
           if (event.key === 'Enter' || event.key === ' '){
             event.preventDefault();
             if (sceneDragSceneId) return;
+            cancelScenePopoverClickTimer();
             const alreadyActive = activeSceneId === s.id;
             activeSceneId = s.id;
             if (alreadyActive && scenePopoverOpenId === s.id){
@@ -3092,6 +3108,7 @@
       if (sceneInlineRenameId === sceneId) return;
       const scene = project.scenes.find(s=>s.id===sceneId);
       if (!scene) return;
+      cancelScenePopoverClickTimer();
       sceneInlineRenameId = sceneId;
       sceneInlineRenameDraft = typeof scene.slug === 'string' ? scene.slug : '';
       pendingSceneRenameFocusId = sceneId;
@@ -3210,6 +3227,7 @@
       if (scenePopoverOpenId){
         const openCard = document.querySelector('#sceneList .scene-card[data-popover-open="true"]');
         if (openCard) openCard.dataset.popoverOpen = 'false';
+        cancelScenePopoverClickTimer();
         scenePopoverOpenId = null;
       }
       sceneDragSceneId = card?.dataset?.sceneId || null;
@@ -5633,10 +5651,18 @@
         if (target && (target.closest('.scene-card-popover') || (target.closest('.scene-card') && target.closest('.scene-card').dataset.sceneId === scenePopoverOpenId))){
           return;
         }
+        cancelScenePopoverClickTimer();
         scenePopoverOpenId = null;
         render();
       });
       scenePopoverDismissBound = true;
+    }
+
+    function cancelScenePopoverClickTimer(){
+      if (scenePopoverClickTimer){
+        clearTimeout(scenePopoverClickTimer);
+        scenePopoverClickTimer = null;
+      }
     }
     function insertSceneAt(index, scene){
       project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
