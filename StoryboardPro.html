@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Storyboard Pro — StudioOrganize</title>
+  <meta
+    name="description"
+    content="Storyboard Pro timelines keep scenes, shots, and production teams aligned with the StudioOrganize writer."
+  />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand-with-logo">
+      <a class="brand" href="/">StudioOrganize</a>
+      <span class="brand-with-logo__badge brand-with-logo__badge--storyboard" aria-hidden="true">SB</span>
+    </div>
+    <nav class="menu">
+      <a class="menu__link" href="/">Home</a>
+      <div class="dropdown">
+        <button class="dropbtn" type="button">Use Cases</button>
+        <div class="dropdown-content">
+          <a href="/use-cases/">All Use Cases</a>
+          <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+          <a href="/use-cases/screenplay.html">Screenplay Script</a>
+          <a href="/use-cases/character-design.html">Character Design</a>
+          <a href="/use-cases/set-design.html">Set / Production Design</a>
+        </div>
+      </div>
+      <a class="menu__link" href="/about.html">About</a>
+      <a class="menu__link" href="/faq.html">FAQ</a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
+      <div class="dropdown" data-account-menu hidden>
+        <button class="menu__cta" type="button" data-account-button>Account</button>
+        <div class="dropdown-content">
+          <a href="/account.html">My Creator Page</a>
+          <a href="/product/personal.html">My Subscription</a>
+          <a href="#" data-account-logout>Log out</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="section">
+    <style>
+      html, body { height: 100%; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial; }
+      body {
+        color: var(--ink);
+        background: radial-gradient(circle at top right, rgba(79,123,255,0.08), transparent 35%), var(--surface);
+        --nav-height: 72px;
+      }
+      main.section { flex: 1; display: flex; flex-direction: column; width: 100%; max-width: none; padding: 0; margin: 0; }
+      .app { display: grid; grid-template-rows: 56px 1fr; flex: 1; min-height: 0; transition: transform .35s ease; }
+      .topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--ring); }
+      .topbar h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.1px; }
+      .topbar .badge { font-size: 11px; letter-spacing: .3px; text-transform: uppercase; background: rgba(79,123,255,0.12); color: var(--acc); border: 1px solid rgba(79,123,255,0.4); border-radius: 999px; padding: 3px 8px; }
+      .spacer { flex: 1; }
+      .btn { background: var(--chip); color: var(--ink); border: 1px solid var(--ring); border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 13px; transition: background .2s ease, color .2s ease, border .2s ease; }
+      .btn.active { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
+      .btn.btn-primary { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
+      .topbar-group { display: flex; gap: 6px; align-items: center; }
+      .layout { display: grid; grid-template-columns: 280px 1fr 320px; gap: 12px; padding: 16px; min-height: 0; }
+      .panel { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+      .panel h2 { font-size: 13px; font-weight: 600; letter-spacing: .4px; color: var(--muted); margin: 12px 16px 8px; text-transform: uppercase; }
+      .panel-body { flex: 1; padding: 0 16px 16px; overflow: auto; }
+      .scene-list { display: flex; flex-direction: column; gap: 10px; }
+      .scene-card { background: var(--card); border: 1px solid var(--ring); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: border-color .2s ease, transform .2s ease; outline: none; }
+      .scene-card.active { border-color: var(--acc); box-shadow: 0 0 0 2px rgba(79,123,255,0.25); transform: translateY(-1px); }
+      .scene-card small { color: var(--muted); font-size: 12px; }
+      .scene-card-label { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .2px; }
+      .scene-card-label span { display: inline-flex; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(135deg, #4f7bff, #22d3ee); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55); }
+      .timeline-panel { padding: 0; }
+      .timeline-stage { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+      .timeline-stage header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--ring); gap: 16px; }
+      .timeline-stage header h2 { margin: 0; font-size: 15px; font-weight: 600; }
+      .timeline-stage header span { font-size: 12px; color: var(--muted); }
+      .timeline-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .timeline-wrapper { flex: 1; overflow: auto; padding-bottom: 16px; }
+      .timeline-grid { display: grid; grid-template-columns: 200px 1fr; min-width: 680px; }
+      .timeline-scale { grid-column: 1 / -1; padding: 12px 24px; border-bottom: 1px solid var(--ring); background: linear-gradient(135deg, rgba(79,123,255,0.12), rgba(79,123,255,0)); position: sticky; top: 0; z-index: 2; }
+      .timeline-scale__header { font-size: 12px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: space-between; }
+      .timeline-scale__ruler { position: relative; height: 28px; border-bottom: 1px dashed rgba(79,123,255,0.35); }
+      .timeline-scale__ruler span { position: absolute; top: 8px; font-size: 11px; color: var(--muted); transform: translateX(-50%); }
+      .timeline-scene { display: contents; }
+      .timeline-scene__label { padding: 20px 16px; border-right: 1px solid var(--ring); background: var(--panel); display: flex; flex-direction: column; gap: 6px; position: sticky; left: 0; z-index: 1; }
+      .timeline-scene__label strong { font-size: 14px; letter-spacing: .2px; }
+      .timeline-scene__label span { font-size: 13px; }
+      .timeline-scene__label small { font-size: 12px; color: var(--muted); }
+      .timeline-scene.active .timeline-scene__label { box-shadow: inset 3px 0 0 var(--acc); }
+      .timeline-scene__tracks { padding: 16px 24px; display: flex; flex-direction: column; gap: 14px; background: var(--card); border-bottom: 1px solid var(--ring); }
+      .timeline-track { display: flex; flex-direction: column; gap: 6px; }
+      .timeline-track__header { font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
+      .timeline-track__lane { position: relative; background: var(--panel); border: 1px solid var(--ring); border-radius: 10px; height: 48px; overflow: hidden; }
+      .timeline-track__lane::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(to right, transparent, transparent calc(12.5% - 1px), rgba(79,123,255,0.12) calc(12.5% - 1px), rgba(79,123,255,0.12) calc(12.5%)); pointer-events: none; }
+      .timeline-block { position: absolute; top: 6px; bottom: 6px; border-radius: 8px; padding: 6px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; color: rgba(15,23,42,0.9); font-weight: 500; }
+      .timeline-block::before { content: attr(data-icon); font-size: 14px; }
+      .timeline-block--shots { background: rgba(79,123,255,0.18); border: 1px solid rgba(79,123,255,0.35); }
+      .timeline-block--audio { background: rgba(220,38,38,0.14); border: 1px solid rgba(220,38,38,0.3); }
+      .timeline-block--lighting { background: rgba(14,165,233,0.18); border: 1px solid rgba(14,165,233,0.3); }
+      .timeline-block--notes { background: rgba(126,58,242,0.16); border: 1px solid rgba(126,58,242,0.28); }
+      .timeline-block--beats { background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.3); }
+      .timeline-track--hidden { display: none; }
+      .brand-with-logo__badge--storyboard { width: 36px; height: 36px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; letter-spacing: .6px; background: linear-gradient(135deg, #1d4ed8, #22d3ee); color: white; box-shadow: 0 8px 24px rgba(30,64,175,0.35); }
+      .panel.ai-panel { background: linear-gradient(135deg, rgba(79,123,255,0.08), rgba(34,211,238,0.08)), var(--panel); border-color: rgba(79,123,255,0.45); }
+      .ai-panel header { padding: 16px; border-bottom: 1px solid rgba(79,123,255,0.25); }
+      .ai-panel header h2 { margin: 0; font-size: 15px; font-weight: 600; }
+      .ai-panel header p { margin: 6px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+      .ai-form { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+      .ai-form label { font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); }
+      .ai-form textarea, .ai-form input { width: 100%; border-radius: 12px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); padding: 10px 12px; font-size: 14px; resize: vertical; min-height: 96px; }
+      .ai-form input { min-height: auto; }
+      .ai-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+      .ai-status { font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: var(--acc); }
+      .ai-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+      .feature-section { padding: 36px 48px 72px; display: grid; gap: 24px; }
+      .feature-section h2 { font-size: 26px; margin: 0; }
+      .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+      .feature-card { background: var(--panel); border: 1px solid var(--ring); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+      .feature-card h3 { margin: 0; font-size: 16px; }
+      .feature-card p { margin: 0; color: var(--muted); line-height: 1.5; }
+      @media (max-width: 1280px) {
+        .layout { grid-template-columns: 1fr; grid-template-rows: repeat(3, minmax(0, auto)); }
+        .timeline-wrapper { max-height: 520px; }
+        .panel.ai-panel { order: 3; }
+      }
+      @media (max-width: 720px) {
+        .topbar { flex-wrap: wrap; }
+        .layout { padding: 12px; }
+        .timeline-grid { min-width: 560px; }
+        .timeline-stage header { flex-direction: column; align-items: flex-start; }
+        .timeline-controls { width: 100%; justify-content: space-between; }
+      }
+    </style>
+
+    <div class="app">
+      <div class="topbar">
+        <h1>Storyboard Pro</h1>
+        <span class="badge">Scene-synced timelines</span>
+        <div class="spacer"></div>
+        <div class="topbar-group" role="group" aria-label="Timeline track visibility">
+          <button class="btn active" type="button" data-track-toggle="beats" aria-pressed="true">Beat grid</button>
+          <button class="btn active" type="button" data-track-toggle="shots" aria-pressed="true">Shots</button>
+          <button class="btn active" type="button" data-track-toggle="audio" aria-pressed="true">Audio</button>
+          <button class="btn active" type="button" data-track-toggle="lighting" aria-pressed="true">Lighting</button>
+          <button class="btn active" type="button" data-track-toggle="notes" aria-pressed="true">Notes</button>
+        </div>
+        <button class="btn btn-primary" type="button" onclick="window.location.href='/use-cases/screenplay-writing.html#storyboardOverlay'">Open writer workspace</button>
+      </div>
+
+      <div class="layout">
+        <aside class="panel">
+          <h2>Scenes</h2>
+          <div class="panel-body">
+            <div class="scene-list">
+              <div class="scene-card" data-scene="1" role="button" tabindex="0">
+                <div class="scene-card-label"><span></span>Scene 12A · Alley showdown</div>
+                <small>Storyboard locked · 12 frames</small>
+                <p class="muted">Lighting cues synced to script beats.</p>
+              </div>
+              <div class="scene-card active" data-scene="2" role="button" tabindex="0">
+                <div class="scene-card-label"><span></span>Scene 13 · Rooftop chase</div>
+                <small>In progress · 8 frames</small>
+                <p class="muted">Share draft with second unit.</p>
+              </div>
+              <div class="scene-card" data-scene="3" role="button" tabindex="0">
+                <div class="scene-card-label"><span></span>Scene 18 · Safehouse briefing</div>
+                <small>Needs review · 5 frames</small>
+                <p class="muted">Director comments pending.</p>
+              </div>
+              <div class="scene-card" data-scene="4" role="button" tabindex="0">
+                <div class="scene-card-label"><span></span>Scene 21 · Finale</div>
+                <small>Storyboard AI ready</small>
+                <p class="muted">Generate new hero shots.</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="panel timeline-panel">
+          <div class="timeline-stage">
+            <header>
+              <div>
+                <h2 data-scene-title>Scene 13 · Rooftop chase</h2>
+                <span data-scene-meta>Linked to draft v4 · 00:45 runtime · 8 frames</span>
+              </div>
+              <div class="timeline-controls">
+                <span class="muted">Timeline synced to script page 47</span>
+              </div>
+            </header>
+            <div class="timeline-wrapper">
+              <div class="timeline-grid">
+                <div class="timeline-scale" aria-hidden="true">
+                  <div class="timeline-scale__header">
+                    <span>Scene timeline (minutes)</span>
+                    <span>Drag & drop clips to re-time</span>
+                  </div>
+                  <div class="timeline-scale__ruler">
+                    <span style="left:0%">0:00</span>
+                    <span style="left:12.5%">0:05</span>
+                    <span style="left:25%">0:10</span>
+                    <span style="left:37.5%">0:15</span>
+                    <span style="left:50%">0:20</span>
+                    <span style="left:62.5%">0:25</span>
+                    <span style="left:75%">0:30</span>
+                    <span style="left:87.5%">0:35</span>
+                    <span style="left:100%">0:40</span>
+                  </div>
+                </div>
+
+                <div class="timeline-scene" data-scene-row="1" data-scene-name="Scene 12A · Alley showdown" data-scene-meta="Storyboard locked · 01:10 runtime · 12 frames">
+                  <div class="timeline-scene__label">
+                    <strong>Scene 12A</strong>
+                    <span>Alley showdown</span>
+                    <small>Storyboard locked · 12 frames</small>
+                  </div>
+                  <div class="timeline-scene__tracks">
+                    <div class="timeline-track" data-track="beats">
+                      <div class="timeline-track__header">Beat grid</div>
+                      <div class="timeline-track__lane"></div>
+                    </div>
+                    <div class="timeline-track" data-track="shots">
+                      <div class="timeline-track__header">Shots</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:2%; width:16%;">Establish threat</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:20%; width:28%;">Knife reversal</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:52%; width:24%;">Slow mo impact</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:78%; width:18%;">Escape alley</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="audio">
+                      <div class="timeline-track__header">Audio</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:6%; width:30%;">SFX: rain layers</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:44%; width:34%;">Score: tension swell</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="lighting">
+                      <div class="timeline-track__header">Lighting</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:12%; width:32%;">Practical neon boost</div>
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:58%; width:24%;">Backlight strobe</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="notes">
+                      <div class="timeline-track__header">Notes</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:4%; width:24%;">Director: stay wide</div>
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:64%; width:28%;">Producer: add rain plates</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-scene active" data-scene-row="2" data-scene-name="Scene 13 · Rooftop chase" data-scene-meta="Linked to draft v4 · 00:45 runtime · 8 frames">
+                  <div class="timeline-scene__label">
+                    <strong>Scene 13</strong>
+                    <span>Rooftop chase</span>
+                    <small>In progress · 8 frames</small>
+                  </div>
+                  <div class="timeline-scene__tracks">
+                    <div class="timeline-track" data-track="beats">
+                      <div class="timeline-track__header">Beat grid</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:0%; width:12%;">Beat 1</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:18%; width:12%;">Beat 2</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:36%; width:14%;">Beat 3</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:58%; width:14%;">Beat 4</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:78%; width:14%;">Beat 5</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="shots">
+                      <div class="timeline-track__header">Shots</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:4%; width:18%;">Drone reveal</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:26%; width:22%;">Leap across gap</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:54%; width:20%;">Handheld scramble</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:78%; width:16%;">Edge save</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="audio">
+                      <div class="timeline-track__header">Audio</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:10%; width:18%;">Drone whir</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:34%; width:28%;">Percussive chase bed</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:70%; width:18%;">Wind gusts</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="lighting">
+                      <div class="timeline-track__header">Lighting</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:6%; width:22%;">Practical neon spill</div>
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:38%; width:26%;">Helipad strobes</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="notes">
+                      <div class="timeline-track__header">Notes</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:14%; width:20%;">FX: add rain pass</div>
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:48%; width:26%;">Director: add wide landing</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-scene" data-scene-row="3" data-scene-name="Scene 18 · Safehouse briefing" data-scene-meta="Needs review · 00:32 runtime · 5 frames">
+                  <div class="timeline-scene__label">
+                    <strong>Scene 18</strong>
+                    <span>Safehouse briefing</span>
+                    <small>Needs review · 5 frames</small>
+                  </div>
+                  <div class="timeline-scene__tracks">
+                    <div class="timeline-track" data-track="beats">
+                      <div class="timeline-track__header">Beat grid</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:0%; width:20%;">Beat 1</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:30%; width:22%;">Beat 2</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:60%; width:26%;">Beat 3</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="shots">
+                      <div class="timeline-track__header">Shots</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:8%; width:24%;">Briefing table</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:38%; width:20%;">Insert dossier</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:64%; width:24%;">Reaction close</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="audio">
+                      <div class="timeline-track__header">Audio</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:10%; width:34%;">Ambient pads</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:56%; width:18%;">Paper shuffle</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="lighting">
+                      <div class="timeline-track__header">Lighting</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:16%; width:28%;">Desk practicals</div>
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:52%; width:20%;">Window bounce</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="notes">
+                      <div class="timeline-track__header">Notes</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:6%; width:26%;">Production: schedule pickups</div>
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:48%; width:28%;">Writer: add VO alt</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="timeline-scene" data-scene-row="4" data-scene-name="Scene 21 · Finale" data-scene-meta="Storyboard AI ready · 01:24 runtime · AI assisted">
+                  <div class="timeline-scene__label">
+                    <strong>Scene 21</strong>
+                    <span>Finale</span>
+                    <small>Storyboard AI ready</small>
+                  </div>
+                  <div class="timeline-scene__tracks">
+                    <div class="timeline-track" data-track="beats">
+                      <div class="timeline-track__header">Beat grid</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:0%; width:18%;">Beat 1</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:22%; width:18%;">Beat 2</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:46%; width:18%;">Beat 3</div>
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:70%; width:20%;">Beat 4</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="shots">
+                      <div class="timeline-track__header">Shots</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:6%; width:20%;">Hero entry</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:32%; width:26%;">Clash montage</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:62%; width:24%;">Final push</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="audio">
+                      <div class="timeline-track__header">Audio</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:10%; width:30%;">Choir motif</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:54%; width:26%;">Explosion design</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="lighting">
+                      <div class="timeline-track__header">Lighting</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:16%; width:32%;">Pyro flares</div>
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:56%; width:28%;">Hero key ramp</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track" data-track="notes">
+                      <div class="timeline-track__header">Notes</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:6%; width:28%;">Stunts: rehearse wire rigs</div>
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:52%; width:30%;">Editor: prep temp VFX</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel ai-panel">
+          <header>
+            <h2>Storyboard AI Companion</h2>
+            <p>Feed scene context and characters to draft new frames that stay aligned with your script timing.</p>
+          </header>
+          <form class="ai-form">
+            <div>
+              <label for="aiShotPrompt">Shot prompt</label>
+              <textarea id="aiShotPrompt" placeholder="Wide aerial reveals the neon skyline before pushing into the rooftop chase."></textarea>
+            </div>
+            <div>
+              <label for="aiFrameCount">Frame count</label>
+              <input id="aiFrameCount" type="number" min="1" max="12" value="4" />
+            </div>
+            <p class="ai-hint">Character tokens and lighting notes auto-sync from the writer so your frames stay on model.</p>
+            <div class="ai-actions">
+              <span class="ai-status" data-ai-status>Ready</span>
+              <button class="btn" type="button">Generate preview</button>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </div>
+
+    <section class="feature-section">
+      <h2>Storyboard Pro keeps every department locked to the same scene timeline.</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>Scene-aware continuity</h3>
+          <p>Every block tracks back to a script beat, automatically inheriting dialogue, props, and camera notes from the writer.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Unified stacked timelines</h3>
+          <p>Shots, audio cues, lighting rigs, and production notes live in parallel so teams can iterate without losing sync.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Realtime collaboration</h3>
+          <p>Invite directors, storyboard artists, and producers with role-based access and threaded feedback.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Production-ready pipeline</h3>
+          <p>Sync cues with lighting, VFX, and edit teams using integrations for Notion, Frame.io, and timeline apps.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__grid">
+      <div>
+        <strong>StudioOrganize</strong>
+        <p class="muted">Tools for storytellers &amp; focused work.</p>
+      </div>
+      <div>
+        <a href="/about.html">About</a><br />
+        <a href="/faq.html">FAQ</a>
+      </div>
+      <div>
+        <a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br />
+        <span class="muted">© <span id="y"></span> StudioOrganize</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const trackToggles = document.querySelectorAll('[data-track-toggle]');
+    const sceneCards = document.querySelectorAll('.scene-card');
+    const sceneRows = document.querySelectorAll('[data-scene-row]');
+    const sceneTitle = document.querySelector('[data-scene-title]');
+    const sceneMeta = document.querySelector('[data-scene-meta]');
+
+    function setTrackVisibility(track, visible) {
+      document.querySelectorAll(`[data-track="${track}"]`).forEach(trackRow => {
+        trackRow.classList.toggle('timeline-track--hidden', !visible);
+      });
+    }
+
+    trackToggles.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        const nowActive = btn.classList.contains('active');
+        btn.setAttribute('aria-pressed', String(nowActive));
+        setTrackVisibility(btn.dataset.trackToggle, nowActive);
+      });
+    });
+
+    function activateScene(id, opts = { scroll: true }) {
+      sceneCards.forEach(card => {
+        const isActive = card.dataset.scene === id;
+        card.classList.toggle('active', isActive);
+      });
+      sceneRows.forEach(row => {
+        const isActive = row.dataset.sceneRow === id;
+        row.classList.toggle('active', isActive);
+        if (isActive) {
+          sceneTitle.textContent = row.dataset.sceneName;
+          sceneMeta.textContent = row.dataset.sceneMeta;
+          if (opts.scroll) {
+            row.querySelector('.timeline-scene__label').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      });
+    }
+
+    sceneCards.forEach(card => {
+      card.addEventListener('click', () => activateScene(card.dataset.scene));
+      card.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          activateScene(card.dataset.scene);
+        }
+      });
+    });
+
+    activateScene('2', { scroll: false });
+  </script>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+  <script type="module" src="/assets/main.js"></script>
+</body>
+</html>
