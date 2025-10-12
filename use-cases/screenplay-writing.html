@@ -163,14 +163,13 @@
       .editor-stage[data-view-mode="pages"] .editor-scroll{height:calc(var(--page-height) + 40px); overflow-y:auto; padding:0; scrollbar-width:none}
       .editor-stage[data-view-mode="pages"] .editor-scroll::-webkit-scrollbar{display:none}
       .editor-stage[data-view-mode="pages"] .editor-area{max-width:var(--page-width); width:var(--page-width); margin:0; box-shadow:0 18px 48px rgba(15,23,42,0.35)}
-      .script-controls{display:flex; flex:1 1 auto; flex-direction:column; align-items:flex-end; gap:6px; transition:opacity .3s ease, transform .3s ease; will-change:opacity, transform}
-      .script-controls[data-visible="false"]{opacity:0; pointer-events:none; transform:translateY(-8px)}
-      .script-controls .editor-view-toggle{align-self:flex-end}
+      .editor-footer{padding:12px; border-top:1px solid var(--ring); background:var(--panel); display:flex; justify-content:center}
+      .script-controls{display:flex; justify-content:center; transition:opacity .3s ease, transform .3s ease; will-change:opacity, transform}
+      .script-controls[data-visible="false"]{opacity:0; pointer-events:none; transform:translateY(8px)}
       .editor-view-toggle{display:inline-flex; border:1px solid var(--ring); border-radius:999px; padding:2px; background:var(--chip); gap:2px}
       .editor-view-toggle button{border:none; background:transparent; color:var(--muted); font-size:11px; letter-spacing:.3px; text-transform:uppercase; padding:4px 10px; border-radius:999px; cursor:pointer; transition:background .2s ease, color .2s ease}
       .editor-view-toggle button.active{background:var(--acc); color:var(--active-tab-text); font-weight:600}
-      .page-view-nav{display:flex; align-items:center; gap:6px; padding:0 12px 8px 12px; justify-content:flex-end}
-      .script-controls .page-view-nav{align-self:stretch}
+      .page-view-nav{display:flex; align-items:center; gap:6px; justify-content:center}
       .page-view-nav button{border:1px solid var(--ring); background:var(--chip); color:var(--ink); border-radius:8px; padding:4px 8px; font-size:12px; cursor:pointer}
       .page-view-nav button:disabled{opacity:0.5; cursor:not-allowed}
       .page-view-label{font-size:12px; color:var(--muted)}
@@ -886,21 +885,23 @@
         <div class="panel editor">
           <div class="editor-heading">
             <h2>Script</h2>
-            <div class="script-controls" id="scriptControls" data-visible="true">
-              <div class="editor-view-toggle" role="group" aria-label="Script view mode">
-                <button type="button" class="active" data-script-view-mode="scroll" aria-pressed="true">Scroll</button>
-                <button type="button" data-script-view-mode="pages" aria-pressed="false">Pages</button>
-              </div>
-              <div class="page-view-nav" id="pageViewNav" hidden>
-                <button type="button" id="pageViewPrev" aria-label="Previous page">◂</button>
-                <span class="page-view-label" id="pageViewLabel">Page 1 of 1</span>
-                <button type="button" id="pageViewNext" aria-label="Next page">▸</button>
-              </div>
+            <div class="editor-view-toggle" role="group" aria-label="Script view mode">
+              <button type="button" class="active" data-script-view-mode="scroll" aria-pressed="true">Scroll</button>
+              <button type="button" data-script-view-mode="pages" aria-pressed="false">Pages</button>
             </div>
           </div>
           <div class="editor-stage" id="editorStage" data-view-mode="scroll">
             <div class="editor-scroll" id="editorScroll">
               <div id="editor" class="editor-area" contenteditable="true"></div>
+            </div>
+          </div>
+          <div class="editor-footer">
+            <div class="script-controls" id="scriptControls" data-visible="true">
+              <div class="page-view-nav" id="pageViewNav" hidden>
+                <button type="button" id="pageViewPrev" aria-label="Previous page">◂</button>
+                <span class="page-view-label" id="pageViewLabel">Page 1 of 1</span>
+                <button type="button" id="pageViewNext" aria-label="Next page">▸</button>
+              </div>
             </div>
           </div>
         </div>
