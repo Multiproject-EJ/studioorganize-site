@@ -70,9 +70,19 @@
       .story-arc-scenes__container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:6px 12px;}
       .story-arc-scenes__track{display:flex; align-items:stretch; gap:8px; margin:0; padding:0; list-style:none;}
       .story-arc-scenes__step{flex:1 1 0; min-width:0; display:flex;}
-      .story-arc-scenes__slot{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:6px 6px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); text-align:center;}
-      .story-arc-scenes__scene-number{font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
-      .story-arc-scenes__scene-label{font-size:12px; font-weight:600; color:var(--ink); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+      .story-arc-scenes__slot{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:6px 6px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); text-align:center; position:relative; transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;}
+      .story-arc-scenes__slot:hover,
+      .story-arc-scenes__slot:focus-visible{border-color:var(--acc); box-shadow:0 10px 24px rgba(79,123,255,0.22); background:linear-gradient(135deg, rgba(122,167,255,0.12), rgba(122,167,255,0.04)); outline:none;}
+      .story-arc-scenes__slot::after{content:attr(data-tooltip); position:absolute; left:50%; bottom:calc(100% + 10px); transform:translate(-50%, 0); background:var(--panel); color:var(--ink); border:1px solid var(--ring); border-radius:8px; padding:6px 10px; font-size:11px; font-weight:500; box-shadow:0 12px 24px rgba(8,15,28,0.25); opacity:0; pointer-events:none; white-space:nowrap; max-width:260px; text-overflow:ellipsis; overflow:hidden; transition:opacity .15s ease, transform .15s ease; z-index:20;}
+      .story-arc-scenes__slot::before{content:''; position:absolute; left:50%; bottom:calc(100% + 2px); transform:translate(-50%, 0) rotate(45deg); width:10px; height:10px; background:var(--panel); border:1px solid var(--ring); border-top:none; border-left:none; opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:19; box-shadow:0 8px 16px rgba(8,15,28,0.2);}
+      .story-arc-scenes__slot:hover::after,
+      .story-arc-scenes__slot:hover::before,
+      .story-arc-scenes__slot:focus-visible::after,
+      .story-arc-scenes__slot:focus-visible::before{opacity:1; transform:translate(-50%, -4px);}
+      .story-arc-scenes__scene-number{font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); transition:color .15s ease;}
+      .story-arc-scenes__scene-label{font-size:12px; font-weight:600; color:var(--ink); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition:color .15s ease;}
+      .story-arc-scenes__slot--compact .story-arc-scenes__scene-number{text-transform:none; font-size:13px; letter-spacing:0;}
+      .story-arc-scenes__slot--compact .story-arc-scenes__scene-label{display:none;}
       .story-arc-scenes__step--active .story-arc-scenes__slot{background:linear-gradient(135deg, var(--acc), rgba(122,167,255,0.95)); border-color:var(--acc); box-shadow:0 8px 20px rgba(79,123,255,0.18);}
       .story-arc-scenes__step--active .story-arc-scenes__scene-number{color:var(--active-tab-text);}
       .story-arc-scenes__step--active .story-arc-scenes__scene-label{color:var(--active-tab-text);}
@@ -2975,22 +2985,58 @@
         storyArcSceneTrack.innerHTML = '';
         const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
         if (scenes.length){
+          const collapseSceneLabels = scenes.length > 8;
           scenes.forEach((scene, index)=>{
             const li = document.createElement('li');
             li.className = 'story-arc-scenes__step' + (scene.id === activeSceneId ? ' story-arc-scenes__step--active' : '');
             li.setAttribute('role', 'listitem');
             const slot = document.createElement('div');
-            slot.className = 'story-arc-scenes__slot';
+            slot.className = 'story-arc-scenes__slot' + (collapseSceneLabels ? ' story-arc-scenes__slot--compact' : '');
+            slot.tabIndex = 0;
+            slot.setAttribute('role', 'button');
+            slot.setAttribute('aria-pressed', scene.id === activeSceneId ? 'true' : 'false');
             const numberSpan = document.createElement('span');
             numberSpan.className = 'story-arc-scenes__scene-number';
-            numberSpan.textContent = `Scene ${index + 1}`;
+            const sceneNumberLabel = `Scene ${index + 1}`;
+            numberSpan.textContent = collapseSceneLabels ? String(index + 1) : sceneNumberLabel;
             const labelSpan = document.createElement('span');
             labelSpan.className = 'story-arc-scenes__scene-label';
             const rawSlug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
             const fallbackTitle = typeof scene?.title === 'string' ? scene.title.trim() : '';
             const displayLabel = rawSlug || fallbackTitle || `Scene ${index + 1}`;
-            labelSpan.textContent = displayLabel;
+            if (collapseSceneLabels){
+              labelSpan.textContent = '';
+              labelSpan.hidden = true;
+            } else {
+              labelSpan.textContent = displayLabel;
+            }
             labelSpan.title = displayLabel;
+            const tooltipLabel = displayLabel && displayLabel !== sceneNumberLabel ? `${sceneNumberLabel} • ${displayLabel}` : sceneNumberLabel;
+            slot.dataset.tooltip = tooltipLabel;
+            slot.setAttribute('aria-label', tooltipLabel);
+            slot.addEventListener('click', event => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (sceneDragSceneId) return;
+              if (sceneInlineRenameId) return;
+              let shouldRender = false;
+              if (scenePopoverOpenId){
+                scenePopoverOpenId = null;
+                shouldRender = true;
+              }
+              if (activeSceneId !== scene.id){
+                activeSceneId = scene.id;
+                shouldRender = true;
+              }
+              if (shouldRender) render();
+            });
+            slot.addEventListener('keydown', event => {
+              if (event.target !== slot) return;
+              if (event.key === 'Enter' || event.key === ' '){
+                event.preventDefault();
+                slot.click();
+              }
+            });
             slot.appendChild(numberSpan);
             slot.appendChild(labelSpan);
             li.appendChild(slot);
