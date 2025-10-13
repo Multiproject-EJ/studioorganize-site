@@ -50,12 +50,33 @@
       html,body{height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
       body{color:var(--ink); --nav-height:72px;}
       main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
-      .app{display:grid; grid-template-rows:56px 1fr; flex:1; min-height:0; transition:transform .35s ease}
+      .app{display:grid; grid-template-rows:56px auto 1fr; flex:1; min-height:0; transition:transform .35s ease}
       .topbar{display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--ring)}
       .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
       .spacer{flex:1}
       .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
       .btn[data-tab-btn].active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .story-arc-timeline{padding:8px 16px 0;}
+      .story-arc-container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:16px 22px;}
+      .story-arc-track{display:flex; align-items:stretch; justify-content:space-between; gap:14px; margin:0; padding:0; list-style:none;}
+      .story-arc-step{flex:1; display:flex; min-width:0;}
+      .story-arc-pill{position:relative; display:flex; flex-direction:column; gap:6px; align-items:flex-start; justify-content:center; width:100%; padding:14px 20px; border-radius:999px; border:1px solid var(--ring); background:linear-gradient(135deg, rgba(79,123,255,0.14), rgba(79,123,255,0.06)); box-shadow:inset 0 0 0 1px rgba(79,123,255,0.08); transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;}
+      .story-arc-label{font-size:12px; font-weight:600; letter-spacing:.35px; text-transform:uppercase; color:var(--muted);}
+      .story-arc-subtitle{font-size:11px; color:var(--muted); letter-spacing:.3px;}
+      .story-arc-step--active .story-arc-pill{background:linear-gradient(135deg, var(--acc), #7aa7ff); border-color:var(--acc); box-shadow:0 12px 24px rgba(79,123,255,0.22);}
+      .story-arc-step--active .story-arc-label{color:var(--active-tab-text);}
+      .story-arc-step--active .story-arc-subtitle{color:rgba(255,255,255,0.85);}
+      .story-arc-scenes{padding:8px 16px 16px;}
+      .story-arc-scenes__container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:12px 16px;}
+      .story-arc-scenes__track{display:flex; align-items:stretch; gap:8px; margin:0; padding:0; list-style:none;}
+      .story-arc-scenes__step{flex:1 1 0; min-width:0; display:flex;}
+      .story-arc-scenes__slot{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:10px 8px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); text-align:center;}
+      .story-arc-scenes__scene-number{font-size:10px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; color:var(--muted);}
+      .story-arc-scenes__scene-label{font-size:12px; font-weight:600; color:var(--ink); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+      .story-arc-scenes__step--active .story-arc-scenes__slot{background:linear-gradient(135deg, var(--acc), rgba(122,167,255,0.95)); border-color:var(--acc); box-shadow:0 8px 20px rgba(79,123,255,0.18);}
+      .story-arc-scenes__step--active .story-arc-scenes__scene-number{color:var(--active-tab-text);}
+      .story-arc-scenes__step--active .story-arc-scenes__scene-label{color:var(--active-tab-text);}
+      .story-arc-scenes__empty{flex:1; display:flex; align-items:center; justify-content:center; min-height:48px; border-radius:10px; border:1px dashed var(--ring); color:var(--muted); font-size:12px; background:var(--chip);}
       #openCharacterStudioBtn{
         position:relative;
         background:linear-gradient(var(--panel), var(--panel)) padding-box,
@@ -877,6 +898,33 @@
 
         <!-- Focus toggle -->
         <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
+      </div>
+      <div class="story-arc-timeline" aria-label="Story arc timeline">
+        <div class="story-arc-container">
+          <ol class="story-arc-track" role="list">
+            <li class="story-arc-step" role="listitem">
+              <div class="story-arc-pill">
+                <span class="story-arc-label">Opening</span>
+              </div>
+            </li>
+            <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+              <div class="story-arc-pill">
+                <span class="story-arc-label">Middle</span>
+                <span class="story-arc-subtitle">Scene title</span>
+              </div>
+            </li>
+            <li class="story-arc-step" role="listitem">
+              <div class="story-arc-pill">
+                <span class="story-arc-label">End</span>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+      <div class="story-arc-scenes" aria-label="Scene timeline">
+        <div class="story-arc-scenes__container">
+          <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+        </div>
       </div>
 
       <div class="layout">
@@ -2866,6 +2914,41 @@
       const smartSel = document.getElementById('smartFormat');
       if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
       project.settings.theme = project.settings.theme || (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark'));
+
+      const storyArcSceneTrack = document.getElementById('storyArcSceneSlots');
+      if (storyArcSceneTrack){
+        storyArcSceneTrack.innerHTML = '';
+        const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+        if (scenes.length){
+          scenes.forEach((scene, index)=>{
+            const li = document.createElement('li');
+            li.className = 'story-arc-scenes__step' + (scene.id === activeSceneId ? ' story-arc-scenes__step--active' : '');
+            li.setAttribute('role', 'listitem');
+            const slot = document.createElement('div');
+            slot.className = 'story-arc-scenes__slot';
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'story-arc-scenes__scene-number';
+            numberSpan.textContent = `Scene ${index + 1}`;
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'story-arc-scenes__scene-label';
+            const rawSlug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
+            const fallbackTitle = typeof scene?.title === 'string' ? scene.title.trim() : '';
+            const displayLabel = rawSlug || fallbackTitle || `Scene ${index + 1}`;
+            labelSpan.textContent = displayLabel;
+            labelSpan.title = displayLabel;
+            slot.appendChild(numberSpan);
+            slot.appendChild(labelSpan);
+            li.appendChild(slot);
+            storyArcSceneTrack.appendChild(li);
+          });
+        } else {
+          const emptyState = document.createElement('li');
+          emptyState.className = 'story-arc-scenes__empty';
+          emptyState.setAttribute('role', 'listitem');
+          emptyState.textContent = 'Add scenes to build your timeline.';
+          storyArcSceneTrack.appendChild(emptyState);
+        }
+      }
 
       // scenes list
       const list = document.getElementById('sceneList');
