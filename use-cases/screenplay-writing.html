@@ -59,7 +59,18 @@
       .spacer{flex:1}
       .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
       .btn[data-tab-btn].active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
-      .story-arc-timeline{padding:2px 14px 0;}
+      .timeline-dock{position:sticky; top:0; z-index:1200; display:flex; flex-direction:column; align-items:center; gap:12px; padding:14px 20px 6px; background:linear-gradient(180deg, var(--bg) 0%, transparent 90%);}
+      .timeline-dock__handle{order:2; width:clamp(64px, 18vw, 110px); height:10px; border-radius:999px; border:none; padding:0; background:var(--ring); cursor:pointer; transition:background .3s ease, box-shadow .3s ease, opacity .2s ease; box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+      .timeline-dock__handle:hover{background:var(--acc);}
+      .timeline-dock__handle:focus-visible{outline:2px solid var(--acc); outline-offset:3px;}
+      .timeline-dock.pinned .timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35);}
+      .timeline-dock.floating-hidden .timeline-dock__handle{opacity:0.85;}
+      .timeline-dock__shell{order:1; width:min(1080px, 100%); background:var(--hud); border:1px solid var(--ring); border-radius:18px; box-shadow:0 14px 34px rgba(8,15,28,0.32); overflow:hidden; transition:max-height .35s ease, box-shadow .35s ease, border-color .3s ease; max-height:560px; margin:0 auto;}
+      .timeline-dock.floating-hidden .timeline-dock__shell{max-height:0; border-color:transparent; box-shadow:none;}
+      .timeline-dock__content{display:flex; flex-direction:column; gap:12px; padding:12px 16px 18px; opacity:1; transform:translateY(0); transition:transform .35s ease, opacity .25s ease;}
+      .timeline-dock.floating-hidden .timeline-dock__content{opacity:0; transform:translateY(-18px); pointer-events:none;}
+      .timeline-dock.floating-hidden{flex-direction:column-reverse; padding-top:6px; padding-bottom:0; gap:6px;}
+      .story-arc-timeline{padding:0;}
       .story-arc-container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:3px 10px;}
       .story-arc-track{display:flex; align-items:stretch; justify-content:space-between; gap:8px; margin:0; padding:0; list-style:none;}
       .story-arc-step{flex:1; display:flex; min-width:0;}
@@ -69,7 +80,7 @@
       .story-arc-step--active .story-arc-pill{background:linear-gradient(135deg, var(--acc), #7aa7ff); border-color:var(--acc); box-shadow:0 10px 20px rgba(79,123,255,0.2);}
       .story-arc-step--active .story-arc-label{color:var(--active-tab-text);}
       .story-arc-step--active .story-arc-subtitle{color:rgba(255,255,255,0.85);}
-      .story-arc-scenes{padding:8px 16px 16px;}
+      .story-arc-scenes{padding:0;}
       .story-arc-scenes__container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:6px 12px;}
       .story-arc-scenes__track{display:flex; align-items:stretch; gap:8px; margin:0; padding:0; list-style:none;}
       .story-arc-scenes__step{flex:1 1 0; min-width:0; display:flex;}
@@ -719,6 +730,15 @@
         .script-dialog__body{grid-template-columns:1fr;}
         .script-dialog__preview{flex-direction:column; align-items:center; text-align:center;}
       }
+      @media (max-width: 900px){
+        .timeline-dock{padding:12px 14px 6px;}
+        .timeline-dock__content{padding:12px 12px 16px;}
+      }
+      @media (max-width: 600px){
+        .timeline-dock{padding:10px 10px 4px;}
+        .timeline-dock__shell{border-radius:14px;}
+        .timeline-dock__content{padding:10px 10px 14px; gap:10px;}
+      }
 
       /* ==== Focus Mode ==== */
       body.focus-mode .layout{ grid-template-columns: 1fr; }
@@ -924,31 +944,38 @@
         <!-- Focus toggle -->
         <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
       </div>
-      <div class="story-arc-timeline" aria-label="Story arc timeline">
-        <div class="story-arc-container">
-          <ol class="story-arc-track" role="list">
-            <li class="story-arc-step" role="listitem">
-              <div class="story-arc-pill">
-                <span class="story-arc-label">Opening</span>
+      <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
+        <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
+        <div class="timeline-dock__shell">
+          <div class="timeline-dock__content">
+            <div class="story-arc-timeline" aria-label="Story arc timeline">
+              <div class="story-arc-container">
+                <ol class="story-arc-track" role="list">
+                  <li class="story-arc-step" role="listitem">
+                    <div class="story-arc-pill">
+                      <span class="story-arc-label">Opening</span>
+                    </div>
+                  </li>
+                  <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                    <div class="story-arc-pill">
+                      <span class="story-arc-label">Middle</span>
+                      <span class="story-arc-subtitle">Scene title</span>
+                    </div>
+                  </li>
+                  <li class="story-arc-step" role="listitem">
+                    <div class="story-arc-pill">
+                      <span class="story-arc-label">End</span>
+                    </div>
+                  </li>
+                </ol>
               </div>
-            </li>
-            <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
-              <div class="story-arc-pill">
-                <span class="story-arc-label">Middle</span>
-                <span class="story-arc-subtitle">Scene title</span>
+            </div>
+            <div class="story-arc-scenes" aria-label="Scene timeline">
+              <div class="story-arc-scenes__container">
+                <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
               </div>
-            </li>
-            <li class="story-arc-step" role="listitem">
-              <div class="story-arc-pill">
-                <span class="story-arc-label">End</span>
-              </div>
-            </li>
-          </ol>
-        </div>
-      </div>
-      <div class="story-arc-scenes" aria-label="Scene timeline">
-        <div class="story-arc-scenes__container">
-          <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1658,6 +1685,11 @@
     let timelineDragSceneId = null;
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
+    const TIMELINE_HIDE_DELAY = 3500;
+    let timelinePinned = true;
+    let timelineHideTimer = null;
+    let timelineHovering = false;
+    let lastTimelinePinned = null;
     let sceneDragSceneId = null;
     const SCENE_CARD_CLICK_DELAY = 220;
     let scenePopoverOpenId = null;
@@ -2674,6 +2706,9 @@
       if (typeof project.settings.scriptViewPage !== 'number' || !isFinite(project.settings.scriptViewPage)){
         project.settings.scriptViewPage = 0;
       }
+      if (typeof project.settings.timelineDockPinned !== 'boolean'){
+        project.settings.timelineDockPinned = true;
+      }
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = (project.catalogs.characters || []).map(item => {
         if (typeof item === 'string') return normalizeCharacter({ id: randomId(), name: item });
@@ -2934,6 +2969,7 @@
           coverImageUrl: '',
           pageWidth: 60,
           focus: false,
+          timelineDockPinned: true,
           pomodoro: { workMin: 25, breakMin: 5, autoStartBreak: true, autoStartWork: false }
         },
         catalogs: { characters:[], locations:[] },
@@ -2963,6 +2999,7 @@
         STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(activeSceneId, 0, mode));
       }
       setLastProjectId(pid);
+      lastTimelinePinned = null;
     }
 
     /* =========================
@@ -2982,6 +3019,10 @@
       const smartSel = document.getElementById('smartFormat');
       if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
       project.settings.theme = project.settings.theme || (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark'));
+      const pinnedSetting = !!project.settings.timelineDockPinned;
+      if (pinnedSetting !== lastTimelinePinned){
+        syncTimelineDockState(true);
+      }
 
       const storyArcSceneTrack = document.getElementById('storyArcSceneSlots');
       if (storyArcSceneTrack){
@@ -6882,6 +6923,7 @@
       }
     });
 
+    setupTimelineDockInteractions();
     setupFocusHudInteractions();
 
     const scriptDialogCancel = document.getElementById('scriptDialogCancel');
@@ -8070,6 +8112,83 @@
     }
 
     /* =========================
+     * Timeline Dock
+     * =======================*/
+    function setupTimelineDockInteractions(){
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (!dock || !handle) return;
+      handle.addEventListener('click', ()=>{
+        if (!project) return;
+        project.settings = project.settings || {};
+        project.settings.timelineDockPinned = !project.settings.timelineDockPinned;
+        saveLocal(project);
+        syncTimelineDockState(true);
+      });
+      dock.addEventListener('pointerenter', ()=>{
+        timelineHovering = true;
+        showTimelineDock();
+      });
+      dock.addEventListener('pointerleave', ()=>{
+        timelineHovering = false;
+        scheduleTimelineHide();
+      });
+      dock.addEventListener('focusin', ()=>{
+        timelineHovering = true;
+        showTimelineDock();
+      });
+      dock.addEventListener('focusout', event => {
+        if (event.relatedTarget && dock.contains(event.relatedTarget)) return;
+        timelineHovering = false;
+        scheduleTimelineHide();
+      });
+    }
+
+    function showTimelineDock(){
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (!dock || !handle) return;
+      dock.classList.remove('floating-hidden');
+      handle.setAttribute('aria-expanded', 'true');
+      clearTimeout(timelineHideTimer);
+      timelineHideTimer = null;
+    }
+
+    function scheduleTimelineHide(){
+      if (timelinePinned) return;
+      clearTimeout(timelineHideTimer);
+      timelineHideTimer = setTimeout(()=>{
+        if (timelinePinned || timelineHovering) return;
+        const dock = document.getElementById('timelineDock');
+        const handle = document.getElementById('timelineDockHandle');
+        if (dock) dock.classList.add('floating-hidden');
+        if (handle) handle.setAttribute('aria-expanded', 'false');
+        timelineHideTimer = null;
+      }, TIMELINE_HIDE_DELAY);
+    }
+
+    function syncTimelineDockState(forceReveal){
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      timelinePinned = !!project?.settings?.timelineDockPinned;
+      lastTimelinePinned = timelinePinned;
+      if (handle){
+        handle.setAttribute('aria-pressed', timelinePinned ? 'true' : 'false');
+        handle.setAttribute('aria-label', timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines');
+        handle.title = timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines';
+      }
+      if (!dock) return;
+      dock.classList.toggle('pinned', timelinePinned);
+      dock.classList.toggle('floating', !timelinePinned);
+      if (timelinePinned){
+        showTimelineDock();
+      } else {
+        if (forceReveal) showTimelineDock();
+        if (!timelineHovering) scheduleTimelineHide();
+      }
+    }
+
+    /* =========================
      * Focus Mode
      * =======================*/
     const HUD_HIDE_DELAY = 5000;
@@ -8197,6 +8316,7 @@
       markActiveLine();
       if (focused) centerActiveLine();
       syncNavHeight();
+      syncTimelineDockState();
       syncFocusHudState();
     }
     function toggleFocus(){
@@ -8401,6 +8521,7 @@
         const loaded = await loadLocal(lastId);
         if (loaded) {
           project = loaded;
+          lastTimelinePinned = null;
           ensureProjectShape();
           storyboardIndexState.clear();
           (project.scenes || []).forEach(scene => {
@@ -8419,6 +8540,7 @@
       project.settings = project.settings || {};
       if (typeof project.settings.focus === 'undefined') project.settings.focus = false;
       if (typeof project.settings.focusHudPinned === 'undefined') project.settings.focusHudPinned = false;
+      if (typeof project.settings.timelineDockPinned === 'undefined') project.settings.timelineDockPinned = true;
 
       ensurePomodoroSettings();
       if (project._pomoState) {
