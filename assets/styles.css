@@ -80,7 +80,7 @@ img{max-width:100%;display:block}
 .dropdown{position:relative}
 .dropbtn{background:var(--panel)}
 .dropbtn:hover{color:var(--text)}
-.dropdown-content{--dropdown-fade-in:320ms;--dropdown-fade-out:180ms;--dropdown-transition:var(--dropdown-fade-out);opacity:0;visibility:hidden;pointer-events:none;position:absolute;right:0;min-width:230px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:6px;transform:translateY(6px);transition:opacity var(--dropdown-transition) ease,transform var(--dropdown-transition) ease,visibility 0s linear var(--dropdown-transition)}
+.dropdown-content{--dropdown-fade-in:320ms;--dropdown-fade-out:180ms;--dropdown-transition:var(--dropdown-fade-out);opacity:0;visibility:hidden;pointer-events:none;position:absolute;top:calc(100% + 8px);right:0;min-width:230px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:6px;transform:translateY(-6px);transition:opacity var(--dropdown-transition) ease,transform var(--dropdown-transition) ease,visibility 0s linear var(--dropdown-transition)}
 .dropdown-content a{display:block;padding:10px 12px;border-radius:8px;color:var(--text)}
 .dropdown-content a:hover{background:var(--chip)}
 .dropdown.is-open .dropdown-content{--dropdown-transition:var(--dropdown-fade-in);opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition-delay:0s,0s,0s}
