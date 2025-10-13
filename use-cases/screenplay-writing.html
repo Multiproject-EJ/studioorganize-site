@@ -281,14 +281,13 @@
       .scene-color-badge[data-source="custom"]{box-shadow:0 0 0 1px rgba(15,23,42,0.12)}
       .writer-theme-toggle{width:100%; justify-content:center}
       .counter{font-size:12px; color:var(--muted)}
-      .tab-header{display:flex; padding:8px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
-      .tab-btn{flex:1; background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; font-size:12px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
+      .tab-header{display:flex; padding:6px; gap:4px; background:var(--chip); border-bottom:1px solid var(--ring)}
+      .tab-btn{flex:1 1 0; min-width:0; background:var(--chip); border:1px solid var(--ring); border-radius:999px; padding:6px 8px; font-size:11px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
       .tab-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
       .tab-panels{flex:1; display:flex; flex-direction:column; min-height:0}
       .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
       .tab-panel.active{display:flex}
       .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
-      .panel-footer{padding:12px; border-top:1px solid var(--ring); display:flex; flex-direction:column; gap:10px; background:var(--panel)}
       .storyboard-field{display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); align-items:start;}
       .storyboard-field-primary{display:flex; flex-direction:column; gap:12px;}
       .storyboard-field-create{display:flex; flex-direction:column; gap:14px; background:var(--panel); border:1px solid var(--ring); border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(15,23,42,0.12);}
@@ -316,7 +315,6 @@
       .storyboard-input input{flex:1 1 220px;}
       .storyboard-remove{background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.85rem; text-decoration:underline; padding:4px 0;}
       .storyboard-remove[disabled]{cursor:not-allowed; opacity:0.5; text-decoration:none;}
-      .panel-footer h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
       .panel-footer-actions{display:flex; flex-direction:column; gap:8px; padding:10px; border:1px solid var(--ring); border-radius:12px; background:var(--chip)}
       .panel-footer-actions .danger-btn{width:100%; text-align:center}
       .timeline-list{display:flex; flex-direction:column; gap:10px}
@@ -1020,8 +1018,7 @@
             <button class="tab-btn" data-tab-btn="characters">Characters</button>
             <button class="tab-btn" data-tab-btn="set">Set</button>
             <button class="tab-btn" data-tab-btn="sound">Sound</button>
-            <button class="tab-btn" data-tab-btn="timeline">Timeline</button>
-            <button class="tab-btn" data-tab-btn="stats">Stats</button>
+            <button class="tab-btn" data-tab-btn="notes">Notes</button>
           </div>
           <div class="tab-panels">
             <div class="tab-panel" data-tab="write" id="tabWrite">
@@ -1114,58 +1111,54 @@
                 <button class="btn" id="addSoundBtn">Add</button>
               </div>
             </div>
-            <div class="tab-panel" data-tab="timeline" id="tabTimeline">
-              <h3>Timeline</h3>
-              <p class="muted-text" style="margin:0 0 8px">Open timeline mode for a card view of your scenes.</p>
-              <div class="timeline-list" id="timelineList"></div>
-            </div>
-            <div class="tab-panel" data-tab="stats" id="tabStats">
-              <h3>Stats</h3>
-              <div class="stats-grid">
-                <div class="stat-card">
-                  <span class="stat-value" id="statSceneCount">0</span>
-                  <span class="stat-label">Scenes</span>
+            <div class="tab-panel" data-tab="notes" id="tabNotes">
+              <h3>Notes &amp; Meta</h3>
+              <div class="notes">
+                <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
+                <div class="row">
+                  <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
+                  <div class="scene-color-control">
+                    <input id="sceneColor" type="color" aria-describedby="sceneColorDescription" />
+                    <button id="sceneColorAutoBtn" class="btn scene-color-auto-btn" type="button">Auto from slug</button>
+                  </div>
                 </div>
-                <div class="stat-card">
-                  <span class="stat-value" id="statPageCount">0</span>
-                  <span class="stat-label">Pages</span>
+                <div class="scene-color-meta" id="sceneColorMeta" aria-live="polite">
+                  <span class="scene-color-badge" id="sceneColorBadge" data-source="auto">Auto</span>
+                  <span id="sceneColorDescription">Stripboard palette ready.</span>
                 </div>
-                <div class="stat-card">
-                  <span class="stat-value" id="statWordCount">0</span>
-                  <span class="stat-label">Words</span>
-                </div>
-                <div class="stat-card">
-                  <span class="stat-value" id="statLineCount">0</span>
-                  <span class="stat-label">Lines</span>
+                <div class="row">
+                  <select id="smartFormat">
+                    <option value="true">Smart format: ON</option>
+                    <option value="false">Smart format: OFF</option>
+                  </select>
+                  <button id="writerThemeToggle" class="theme-toggle writer-theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
                 </div>
               </div>
-            </div>
-          </div>
-          <div class="panel-footer">
-            <h2>Notes &amp; Meta</h2>
-            <div class="notes">
-              <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
-              <div class="row">
-                <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
-                <div class="scene-color-control">
-                  <input id="sceneColor" type="color" aria-describedby="sceneColorDescription" />
-                  <button id="sceneColorAutoBtn" class="btn scene-color-auto-btn" type="button">Auto from slug</button>
+              <div class="tab-divider"></div>
+              <div>
+                <h3>Stats</h3>
+                <div class="stats-grid">
+                  <div class="stat-card">
+                    <span class="stat-value" id="statSceneCount">0</span>
+                    <span class="stat-label">Scenes</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-value" id="statPageCount">0</span>
+                    <span class="stat-label">Pages</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-value" id="statWordCount">0</span>
+                    <span class="stat-label">Words</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-value" id="statLineCount">0</span>
+                    <span class="stat-label">Lines</span>
+                  </div>
                 </div>
               </div>
-              <div class="scene-color-meta" id="sceneColorMeta" aria-live="polite">
-                <span class="scene-color-badge" id="sceneColorBadge" data-source="auto">Auto</span>
-                <span id="sceneColorDescription">Stripboard palette ready.</span>
+              <div class="panel-footer-actions">
+                <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
               </div>
-              <div class="row">
-                <select id="smartFormat">
-                  <option value="true">Smart format: ON</option>
-                  <option value="false">Smart format: OFF</option>
-                </select>
-                <button id="writerThemeToggle" class="theme-toggle writer-theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-              </div>
-            </div>
-            <div class="panel-footer-actions">
-              <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
             </div>
           </div>
       </div>
