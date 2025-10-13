@@ -8145,6 +8145,17 @@
         timelineHovering = false;
         scheduleTimelineHide();
       });
+      const topbar = document.querySelector('.topbar');
+      if (topbar){
+        topbar.addEventListener('pointerenter', ()=> hideTimelineDockImmediately());
+        topbar.addEventListener('focusin', ()=> hideTimelineDockImmediately());
+      }
+      const editor = document.getElementById('editor');
+      if (editor){
+        const hideForScriptInteraction = ()=> hideTimelineDockImmediately();
+        editor.addEventListener('pointerdown', hideForScriptInteraction);
+        editor.addEventListener('focus', hideForScriptInteraction);
+      }
     }
 
     function showTimelineDock(){
@@ -8157,16 +8168,22 @@
       timelineHideTimer = null;
     }
 
+    function hideTimelineDockImmediately(){
+      if (timelinePinned) return;
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (dock) dock.classList.add('floating-hidden');
+      if (handle) handle.setAttribute('aria-expanded', 'false');
+      clearTimeout(timelineHideTimer);
+      timelineHideTimer = null;
+    }
+
     function scheduleTimelineHide(){
       if (timelinePinned) return;
       clearTimeout(timelineHideTimer);
       timelineHideTimer = setTimeout(()=>{
         if (timelinePinned || timelineHovering) return;
-        const dock = document.getElementById('timelineDock');
-        const handle = document.getElementById('timelineDockHandle');
-        if (dock) dock.classList.add('floating-hidden');
-        if (handle) handle.setAttribute('aria-expanded', 'false');
-        timelineHideTimer = null;
+        hideTimelineDockImmediately();
       }, TIMELINE_HIDE_DELAY);
     }
 
