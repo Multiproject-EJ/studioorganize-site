@@ -106,8 +106,10 @@
       .btn-menu{position:relative}
       .btn-menu-list{display:none; position:absolute; right:0; top:calc(100% + 6px); min-width:180px; background:var(--panel); border:1px solid var(--ring); border-radius:12px; box-shadow:0 18px 40px rgba(0,0,0,0.4); padding:6px; z-index:30; flex-direction:column; gap:6px}
       .btn-menu.open .btn-menu-list{display:flex}
-      .btn-menu-list button{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; text-align:left; color:var(--ink); cursor:pointer}
-      .btn-menu-list button:hover{border-color:var(--acc)}
+      .btn-menu-list button,
+      .btn-menu-list a{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; text-align:left; color:var(--ink); cursor:pointer; text-decoration:none; display:block}
+      .btn-menu-list button:hover,
+      .btn-menu-list a:hover{border-color:var(--acc)}
       .layout{display:grid; grid-template-columns:280px 1fr 320px; gap:10px; padding:10px; min-height:0}
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
@@ -886,8 +888,13 @@
             </div>
           </div>
           <span class="save-status" id="saveSceneStatus" role="status" aria-live="polite" hidden></span>
-          <button class="btn" type="button" id="storyboardModeBtn" aria-haspopup="dialog" aria-pressed="false">Storyboard</button>
-          <button class="btn" type="button" id="storyboardProBtn" onclick="window.location.href='/StoryboardPro.html'">Storyboard Pro</button>
+          <div class="btn-menu non-essential" id="storyboardMenu">
+            <button class="btn" type="button" id="storyboardMenuButton" aria-haspopup="true" aria-expanded="false">Storyboard ▾</button>
+            <div class="btn-menu-list" id="storyboardMenuList" role="menu">
+              <button class="btn-menu-item" type="button" id="storyboardModeBtn" aria-haspopup="dialog" aria-pressed="false" role="menuitem">Storyboard Lite</button>
+              <a class="btn-menu-item" id="storyboardProLink" href="/StoryboardPro.html" role="menuitem">Storyboard Pro</a>
+            </div>
+          </div>
           <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
 
@@ -2849,6 +2856,49 @@
       });
     }
 
+    function setStoryboardMenuOpen(open){
+      const menu = document.getElementById('storyboardMenu');
+      const toggle = document.getElementById('storyboardMenuButton');
+      if (!menu || !toggle) return;
+      menu.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function setupStoryboardMenu(){
+      const menu = document.getElementById('storyboardMenu');
+      const toggle = document.getElementById('storyboardMenuButton');
+      if (!menu || !toggle) return;
+      const list = document.getElementById('storyboardMenuList');
+      if (!list) return;
+
+      list.addEventListener('click', e=>{
+        e.stopPropagation();
+      });
+
+      toggle.addEventListener('click', e=>{
+        e.stopPropagation();
+        setStoryboardMenuOpen(!menu.classList.contains('open'));
+      });
+
+      const liteBtn = document.getElementById('storyboardModeBtn');
+      if (liteBtn){
+        liteBtn.addEventListener('click', ()=> setStoryboardMenuOpen(false));
+      }
+
+      const proLink = document.getElementById('storyboardProLink');
+      if (proLink){
+        proLink.addEventListener('click', ()=> setStoryboardMenuOpen(false));
+      }
+
+      document.addEventListener('click', e=>{
+        if (!menu.contains(e.target)) setStoryboardMenuOpen(false);
+      });
+
+      document.addEventListener('keydown', e=>{
+        if (e.key === 'Escape') setStoryboardMenuOpen(false);
+      });
+    }
+
     /* =========================
      * Project creation / load
      * =======================*/
@@ -4465,7 +4515,7 @@
     function updateStoryboardButton(){
       const btn = document.getElementById('storyboardModeBtn');
       if (!btn) return;
-      btn.textContent = storyboardMode ? 'Exit Storyboard' : 'Storyboard';
+      btn.textContent = storyboardMode ? 'Exit Storyboard Lite' : 'Storyboard Lite';
       btn.setAttribute('aria-pressed', storyboardMode ? 'true' : 'false');
     }
 
@@ -6575,6 +6625,7 @@
     });
     setupSaveMenu();
     setupExportMenu();
+    setupStoryboardMenu();
     document.querySelectorAll('[data-slug-prefix]').forEach(btn=>{
       btn.addEventListener('click', ()=> setSceneSlugPart('prefix', btn.dataset.slugPrefix));
     });
@@ -6656,7 +6707,10 @@
     const storyboardBtn = document.getElementById('storyboardModeBtn');
     if (storyboardBtn){
       updateStoryboardButton();
-      storyboardBtn.addEventListener('click', ()=> toggleStoryboardMode());
+      storyboardBtn.addEventListener('click', ()=>{
+        toggleStoryboardMode();
+        setStoryboardMenuOpen(false);
+      });
     }
     const storyboardOverlayEl = document.getElementById('storyboardOverlay');
     if (storyboardOverlayEl){
