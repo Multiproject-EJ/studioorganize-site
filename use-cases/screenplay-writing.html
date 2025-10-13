@@ -138,12 +138,12 @@
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
       .scenes{overflow:auto; padding:8px}
-      .scene-card{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; display:flex; flex-direction:column; gap:8px; overflow:visible}
+      .scene-card{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; display:flex; flex-direction:column; gap:6px; overflow:visible}
       .scene-card.active{outline:2px solid var(--acc)}
       .scene-card small{color:var(--muted)}
-      .scene-card-body{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
+      .scene-card-body{display:flex; justify-content:space-between; align-items:center; gap:6px}
       .scene-card-title{display:flex; flex-direction:column; gap:2px; width:100%}
-      .scene-card-display{display:flex; flex-direction:column; gap:2px; min-width:0}
+      .scene-card-display{display:flex; align-items:center; gap:6px; min-width:0}
       .scene-card-input-wrapper{display:none; width:100%; align-items:center}
       .scene-card-input{flex:1; border-radius:8px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); padding:6px 8px; font-size:13px; font-weight:500}
       .scene-card.editing{cursor:text}
@@ -151,8 +151,10 @@
       .scene-card.editing .scene-card-input-wrapper{display:flex}
       .scene-card.editing .scene-card-input{background:var(--panel); border-color:var(--acc); box-shadow:0 0 0 2px rgba(79,123,255,0.2)}
       .scene-card-sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
-      .scene-card-tags{display:flex; align-items:center; gap:8px; margin-top:2px}
+      .scene-card-meta{display:flex; align-items:center; gap:8px}
+      .scene-card-tags{display:flex; align-items:center; gap:8px; flex:1; margin-top:0}
       .scene-card-tags-list{display:flex; flex-wrap:wrap; gap:6px; min-width:0; flex:1}
+      .scene-card-number{margin-left:12px; color:var(--muted); font-size:12px; font-weight:600; white-space:nowrap}
       .scene-card-tags-button{flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px; font-weight:700; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease}
       .scene-card-tags-button:hover{border-color:var(--acc); color:var(--acc)}
       .scene-card-tags-button:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
@@ -3183,7 +3185,6 @@
             <div class="scene-card-title" data-scene-edit-root>
               <div class="scene-card-display" data-scene-card-display>
                 <strong data-scene-card-slug>${escapeHtml(slugDisplay)}</strong>
-                <small>${escapeHtml(sceneNumberLabel)}</small>
               </div>
               <label class="scene-card-input-wrapper">
                 <span class="scene-card-sr-only">Rename ${escapeHtml(sceneNumberLabel)}</span>
@@ -3192,9 +3193,12 @@
             </div>
             <span class="scene-card-color" title="${escapeHtml(colorTitle)}" style="background:${colorMeta.color};border-color:${colorBorder}"></span>
           </div>
-          <div class="scene-card-tags">
-            <button type="button" class="scene-card-tags-button" data-scene-tags-trigger aria-label="Edit scene tags"><span aria-hidden="true">#</span></button>
-            <div class="scene-card-tags-list" data-scene-tags>${tagsHtml}</div>
+          <div class="scene-card-meta">
+            <div class="scene-card-tags">
+              <button type="button" class="scene-card-tags-button" data-scene-tags-trigger aria-label="Edit scene tags"><span aria-hidden="true">#</span></button>
+              <div class="scene-card-tags-list" data-scene-tags>${tagsHtml}</div>
+            </div>
+            <span class="scene-card-number">${escapeHtml(sceneNumberLabel)}</span>
           </div>`;
         const editRoot = div.querySelector('[data-scene-edit-root]');
         if (editRoot){
