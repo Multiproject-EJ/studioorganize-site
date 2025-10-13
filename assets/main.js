@@ -27,9 +27,14 @@ function themeSelects(){
 function updateToggleLabels(theme){
   const next = theme === 'dark' ? 'Light' : 'Dark';
   themeToggles().forEach(btn => {
-    btn.textContent = `${next} mode`;
-    btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
-    btn.setAttribute('aria-label', `Activate ${next.toLowerCase()} mode`);
+    const icon = btn.querySelector('[data-theme-icon]');
+    if (icon){
+      icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+    } else {
+      btn.textContent = `${next} mode`;
+    }
+    btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    btn.setAttribute('aria-label', `Switch to ${next.toLowerCase()} mode`);
     btn.setAttribute('title', `Switch to ${next.toLowerCase()} mode`);
   });
 }
