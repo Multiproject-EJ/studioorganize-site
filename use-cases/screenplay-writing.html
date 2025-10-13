@@ -1019,8 +1019,6 @@
             <button class="tab-btn" data-tab-btn="set">Set</button>
             <button class="tab-btn" data-tab-btn="sound">Sound</button>
             <button class="tab-btn" data-tab-btn="notes">Notes</button>
-            <button class="tab-btn" data-tab-btn="timeline">Timeline</button>
-            <button class="tab-btn" data-tab-btn="stats">Stats</button>
           </div>
           <div class="tab-panels">
             <div class="tab-panel" data-tab="write" id="tabWrite">
@@ -1136,34 +1134,30 @@
                   <button id="writerThemeToggle" class="theme-toggle writer-theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
                 </div>
               </div>
+              <div class="tab-divider"></div>
+              <div>
+                <h3>Stats</h3>
+                <div class="stats-grid">
+                  <div class="stat-card">
+                    <span class="stat-value" id="statSceneCount">0</span>
+                    <span class="stat-label">Scenes</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-value" id="statPageCount">0</span>
+                    <span class="stat-label">Pages</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-value" id="statWordCount">0</span>
+                    <span class="stat-label">Words</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-value" id="statLineCount">0</span>
+                    <span class="stat-label">Lines</span>
+                  </div>
+                </div>
+              </div>
               <div class="panel-footer-actions">
                 <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
-              </div>
-            </div>
-            <div class="tab-panel" data-tab="timeline" id="tabTimeline">
-              <h3>Timeline</h3>
-              <p class="muted-text" style="margin:0 0 8px">Open timeline mode for a card view of your scenes.</p>
-              <div class="timeline-list" id="timelineList"></div>
-            </div>
-            <div class="tab-panel" data-tab="stats" id="tabStats">
-              <h3>Stats</h3>
-              <div class="stats-grid">
-                <div class="stat-card">
-                  <span class="stat-value" id="statSceneCount">0</span>
-                  <span class="stat-label">Scenes</span>
-                </div>
-                <div class="stat-card">
-                  <span class="stat-value" id="statPageCount">0</span>
-                  <span class="stat-label">Pages</span>
-                </div>
-                <div class="stat-card">
-                  <span class="stat-value" id="statWordCount">0</span>
-                  <span class="stat-label">Words</span>
-                </div>
-                <div class="stat-card">
-                  <span class="stat-value" id="statLineCount">0</span>
-                  <span class="stat-label">Lines</span>
-                </div>
               </div>
             </div>
           </div>
