@@ -8131,9 +8131,11 @@
         saveLocal(project);
         syncTimelineDockState(true);
       });
-      dock.addEventListener('pointerenter', ()=>{
+      dock.addEventListener('pointerenter', event=>{
         timelineHovering = true;
-        showTimelineDock();
+        if (handle.contains(event.target)){
+          showTimelineDock();
+        }
       });
       dock.addEventListener('pointerleave', ()=>{
         timelineHovering = false;
