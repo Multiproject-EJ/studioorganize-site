@@ -125,7 +125,12 @@
       .scene-card.editing .scene-card-input-wrapper{display:flex}
       .scene-card.editing .scene-card-input{background:var(--panel); border-color:var(--acc); box-shadow:0 0 0 2px rgba(79,123,255,0.2)}
       .scene-card-sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
-      .scene-card-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:2px}
+      .scene-card-tags{display:flex; align-items:center; gap:8px; margin-top:2px}
+      .scene-card-tags-list{display:flex; flex-wrap:wrap; gap:6px; min-width:0; flex:1}
+      .scene-card-tags-button{flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-size:14px; font-weight:700; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease}
+      .scene-card-tags-button:hover{border-color:var(--acc); color:var(--acc)}
+      .scene-card-tags-button:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
+      .scene-card-tags-button span{display:inline-flex; align-items:center; justify-content:center; line-height:1}
       .scene-card-tag{display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.3px; padding:4px 8px; border-radius:999px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-weight:600}
       .scene-card-tag--empty{font-weight:500; color:var(--muted); border-style:dashed; background:transparent}
       .scene-card.dragging{opacity:0.55}
@@ -2993,24 +2998,16 @@
           event.stopPropagation();
           if (sceneDragSceneId) return;
           if (sceneInlineRenameId === s.id) return;
-          if (event.detail > 1){
-            cancelScenePopoverClickTimer();
-            return;
+          let shouldRender = false;
+          if (scenePopoverOpenId){
+            scenePopoverOpenId = null;
+            shouldRender = true;
           }
-          cancelScenePopoverClickTimer();
-          const targetSceneId = s.id;
-          scenePopoverClickTimer = setTimeout(()=>{
-            scenePopoverClickTimer = null;
-            if (sceneInlineRenameId === targetSceneId) return;
-            const alreadyActive = activeSceneId === targetSceneId;
-            activeSceneId = targetSceneId;
-            if (alreadyActive && scenePopoverOpenId === targetSceneId){
-              scenePopoverOpenId = null;
-            } else {
-              scenePopoverOpenId = targetSceneId;
-            }
-            render();
-          }, SCENE_CARD_CLICK_DELAY);
+          if (activeSceneId !== s.id){
+            activeSceneId = s.id;
+            shouldRender = true;
+          }
+          if (shouldRender) render();
         });
         div.addEventListener('keydown', event => {
           if (event.target !== div) return;
@@ -3023,15 +3020,16 @@
           if (event.key === 'Enter' || event.key === ' '){
             event.preventDefault();
             if (sceneDragSceneId) return;
-            cancelScenePopoverClickTimer();
-            const alreadyActive = activeSceneId === s.id;
-            activeSceneId = s.id;
-            if (alreadyActive && scenePopoverOpenId === s.id){
+            let shouldRender = false;
+            if (scenePopoverOpenId){
               scenePopoverOpenId = null;
-            } else {
-              scenePopoverOpenId = s.id;
+              shouldRender = true;
             }
-            render();
+            if (activeSceneId !== s.id){
+              activeSceneId = s.id;
+              shouldRender = true;
+            }
+            if (shouldRender) render();
           }
         });
         const colorTitle = colorMeta.tooltip || colorMeta.description || 'Scene color';
@@ -3054,13 +3052,29 @@
             </div>
             <span class="scene-card-color" title="${escapeHtml(colorTitle)}" style="background:${colorMeta.color};border-color:${colorBorder}"></span>
           </div>
-          <div class="scene-card-tags" data-scene-tags>${tagsHtml}</div>`;
+          <div class="scene-card-tags">
+            <button type="button" class="scene-card-tags-button" data-scene-tags-trigger aria-label="Edit scene tags"><span aria-hidden="true">#</span></button>
+            <div class="scene-card-tags-list" data-scene-tags>${tagsHtml}</div>
+          </div>`;
         const editRoot = div.querySelector('[data-scene-edit-root]');
         if (editRoot){
           editRoot.addEventListener('dblclick', event => {
             event.preventDefault();
             event.stopPropagation();
             beginSceneInlineRename(s.id);
+          });
+        }
+        const tagsButton = div.querySelector('[data-scene-tags-trigger]');
+        if (tagsButton){
+          tagsButton.addEventListener('click', event => {
+            event.stopPropagation();
+            if (sceneDragSceneId) return;
+            if (sceneInlineRenameId === s.id) return;
+            cancelScenePopoverClickTimer();
+            const alreadyOpen = scenePopoverOpenId === s.id;
+            activeSceneId = s.id;
+            scenePopoverOpenId = alreadyOpen ? null : s.id;
+            render();
           });
         }
         const input = div.querySelector('[data-scene-input]');
