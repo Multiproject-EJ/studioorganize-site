@@ -2762,14 +2762,14 @@
     }
 
     function setRightTab(tab){
-      const allowed = ['write','characters','set','sound','timeline','stats'];
+      const allowed = ['write','characters','set','sound','notes'];
       activeRightTab = allowed.includes(tab) ? tab : 'write';
       try { localStorage.setItem(RIGHT_TAB_KEY, activeRightTab); } catch(e){}
       applyActiveTabUI();
     }
 
     function applyActiveTabUI(){
-      const allowed = ['write','characters','set','sound','timeline','stats'];
+      const allowed = ['write','characters','set','sound','notes'];
       if (!allowed.includes(activeRightTab)) activeRightTab = 'write';
       document.querySelectorAll('[data-tab-btn]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tabBtn === activeRightTab);
