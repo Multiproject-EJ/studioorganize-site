@@ -12,7 +12,6 @@
   <a class="brand" href="/">StudioOrganize</a>
   <nav class="menu">
     <a class="menu__link" href="/">Home</a>
-
     <div class="dropdown">
       <button class="dropbtn" type="button">Use Cases</button>
       <div class="dropdown-content">
@@ -23,15 +22,20 @@
         <a href="/use-cases/set-design.html">Set / Production Design</a>
       </div>
     </div>
-    <a class="menu__link" href="/faq.html">FAQ</a>
-    <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-    <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
-    <div class="dropdown" data-account-menu hidden>
-      <button class="menu__cta" type="button" data-account-button>Account</button>
-      <div class="dropdown-content">
-        <a href="/account.html">My Creator Page</a>
-        <a href="/product/personal.html">My Subscription</a>
-        <a href="#" data-account-logout>Log out</a>
+    <a class="menu__link" href="/about.html">FinishThatStory</a>
+    <div class="menu__actions">
+      <button class="theme-toggle theme-toggle--icon" type="button" data-theme-toggle aria-pressed="false">
+        <span class="sr-only">Toggle theme</span>
+        <span class="theme-toggle__icon" aria-hidden="true" data-theme-icon>☀️</span>
+      </button>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
+      <div class="dropdown" data-account-menu hidden>
+        <button class="menu__cta" type="button" data-account-button>Account</button>
+        <div class="dropdown-content">
+          <a href="/account.html">My Creator Page</a>
+          <a href="/product/personal.html">My Subscription</a>
+          <a href="#" data-account-logout>Log out</a>
+        </div>
       </div>
     </div>
   </nav>
@@ -109,7 +113,6 @@
 <footer class="footer">
   <div class="footer__grid">
     <div><strong>StudioOrganize</strong></div>
-    <div><a href="/faq.html">FAQ</a></div>
     <div>
       <a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br/>
       <span class="muted">© <span id="y"></span> StudioOrganize</span>
