@@ -926,9 +926,9 @@
             <div class="btn-menu-list" id="storyboardMenuList" role="menu">
               <button class="btn-menu-item" type="button" id="storyboardModeBtn" aria-haspopup="dialog" aria-pressed="false" role="menuitem">Storyboard Lite</button>
               <a class="btn-menu-item" id="storyboardProLink" href="/StoryboardPro.html" role="menuitem">Storyboard Pro</a>
+              <button class="btn-menu-item" type="button" id="timelineModeBtn" aria-pressed="false" role="menuitem">Timeline</button>
             </div>
           </div>
-          <button class="btn" type="button" id="timelineModeBtn">Timeline</button>
         </div>
 
         <div class="btn-menu non-essential" id="exportMenu">
@@ -6863,7 +6863,10 @@
     const timelineBtn = document.getElementById('timelineModeBtn');
     if (timelineBtn){
       updateTimelineButton();
-      timelineBtn.addEventListener('click', ()=> toggleTimelineMode());
+      timelineBtn.addEventListener('click', ()=>{
+        toggleTimelineMode();
+        setStoryboardMenuOpen(false);
+      });
     }
     const timelineOverlayEl = document.getElementById('timelineOverlay');
     if (timelineOverlayEl){
