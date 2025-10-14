@@ -60,7 +60,7 @@
       .btn{background:var(--chip); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px 12px; cursor:pointer}
       .btn[data-tab-btn].active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
       .timeline-dock{position:sticky; top:0; z-index:1200; display:flex; flex-direction:column; align-items:center; gap:12px; padding:14px 20px 6px; background:linear-gradient(180deg, var(--bg) 0%, transparent 90%);}
-      .timeline-dock__handle{order:2; width:clamp(64px, 18vw, 110px); height:10px; border-radius:999px; border:none; padding:0; background:var(--ring); cursor:pointer; transition:background .3s ease, box-shadow .3s ease, opacity .2s ease; box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+      .timeline-dock__handle{order:2; width:clamp(64px, 18vw, 110px); height:10px; border-radius:999px; border:none; padding:0; background:var(--ring); cursor:pointer; transition:width .35s ease, background .3s ease, box-shadow .3s ease, opacity .2s ease; box-shadow:0 2px 6px rgba(0,0,0,0.35);}
       .timeline-dock__handle:hover{background:var(--acc);}
       .timeline-dock__handle:focus-visible{outline:2px solid var(--acc); outline-offset:3px;}
       .timeline-dock.pinned .timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35);}
@@ -8155,6 +8155,12 @@
         editor.addEventListener('pointerdown', hideForScriptInteraction);
         editor.addEventListener('focus', hideForScriptInteraction);
       }
+      window.addEventListener('resize', ()=>{
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
+        else updateTimelineHandleWidth();
+      });
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
+      else updateTimelineHandleWidth();
     }
 
     function showTimelineDock(){
@@ -8165,6 +8171,8 @@
       handle.setAttribute('aria-expanded', 'true');
       clearTimeout(timelineHideTimer);
       timelineHideTimer = null;
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
+      else updateTimelineHandleWidth();
     }
 
     function hideTimelineDockImmediately(){
@@ -8186,6 +8194,19 @@
       }, TIMELINE_HIDE_DELAY);
     }
 
+    function updateTimelineHandleWidth(){
+      const handle = document.getElementById('timelineDockHandle');
+      if (!handle) return;
+      if (!timelinePinned){
+        handle.style.width = '';
+        return;
+      }
+      const dock = document.getElementById('timelineDock');
+      const shell = dock?.querySelector('.timeline-dock__shell');
+      const width = shell?.offsetWidth || 0;
+      handle.style.width = width > 0 ? width + 'px' : '';
+    }
+
     function syncTimelineDockState(forceReveal){
       const dock = document.getElementById('timelineDock');
       const handle = document.getElementById('timelineDockHandle');
@@ -8204,7 +8225,10 @@
       } else {
         if (forceReveal) showTimelineDock();
         if (!timelineHovering) scheduleTimelineHide();
+        if (handle) handle.style.width = '';
       }
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
+      else updateTimelineHandleWidth();
     }
 
     /* =========================
