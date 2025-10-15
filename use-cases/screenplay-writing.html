@@ -281,9 +281,11 @@
       .scene-color-badge[data-source="custom"]{box-shadow:0 0 0 1px rgba(15,23,42,0.12)}
       .writer-theme-toggle{width:100%; justify-content:center}
       .counter{font-size:12px; color:var(--muted)}
-      .tab-header{display:flex; padding:6px; gap:4px; background:var(--chip); border-bottom:1px solid var(--ring)}
-      .tab-btn{flex:1 1 0; min-width:0; background:var(--chip); border:1px solid var(--ring); border-radius:999px; padding:6px 8px; font-size:11px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
+      .tab-header{display:flex; padding:6px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
+      .tab-btn{flex:0 0 42px; width:42px; height:42px; background:var(--chip); border:1px solid var(--ring); border-radius:50%; padding:0; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; justify-content:center}
       .tab-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .tab-btn__icon{display:inline-flex; align-items:center; justify-content:center}
+      .tab-btn__icon svg{width:18px; height:18px; stroke:currentColor; stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
       .tab-panels{flex:1; display:flex; flex-direction:column; min-height:0}
       .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
       .tab-panel.active{display:flex}
