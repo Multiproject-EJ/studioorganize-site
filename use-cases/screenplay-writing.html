@@ -281,9 +281,11 @@
       .scene-color-badge[data-source="custom"]{box-shadow:0 0 0 1px rgba(15,23,42,0.12)}
       .writer-theme-toggle{width:100%; justify-content:center}
       .counter{font-size:12px; color:var(--muted)}
-      .tab-header{display:flex; padding:6px; gap:4px; background:var(--chip); border-bottom:1px solid var(--ring)}
-      .tab-btn{flex:1 1 0; min-width:0; background:var(--chip); border:1px solid var(--ring); border-radius:999px; padding:6px 8px; font-size:11px; color:var(--ink); cursor:pointer; letter-spacing:.3px; text-transform:uppercase}
+      .tab-header{display:flex; padding:6px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
+      .tab-btn{flex:0 0 42px; width:42px; height:42px; background:var(--chip); border:1px solid var(--ring); border-radius:50%; padding:0; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; justify-content:center}
       .tab-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .tab-btn__icon{display:inline-flex; align-items:center; justify-content:center}
+      .tab-btn__icon svg{width:18px; height:18px; stroke:currentColor; stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
       .tab-panels{flex:1; display:flex; flex-direction:column; min-height:0}
       .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
       .tab-panel.active{display:flex}
@@ -1014,11 +1016,60 @@
 
         <div class="panel">
           <div class="tab-header" id="rightTabBar">
-            <button class="tab-btn" data-tab-btn="write">Visual</button>
-            <button class="tab-btn" data-tab-btn="characters">Characters</button>
-            <button class="tab-btn" data-tab-btn="set">Set</button>
-            <button class="tab-btn" data-tab-btn="sound">Sound</button>
-            <button class="tab-btn" data-tab-btn="notes">Notes</button>
+            <button class="tab-btn" data-tab-btn="write" aria-label="Visual">
+              <span class="tab-btn__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3.5" y="5.5" width="17" height="13" rx="2"></rect>
+                  <path d="m7 14 3.1-3.6 3.9 5.1 3.1-3.6 3 4.4"></path>
+                  <circle cx="9.4" cy="10" r="1.1"></circle>
+                </svg>
+              </span>
+            </button>
+            <button class="tab-btn" data-tab-btn="characters" aria-label="Characters">
+              <span class="tab-btn__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M5.5 5.5h6v5.4c0 2.3-1.6 4.3-3 4.3s-3-2-3-4.3z"></path>
+                  <path d="M18.5 5.5h-6v5.4c0 2.3 1.6 4.3 3 4.3s3-2 3-4.3z"></path>
+                  <circle cx="7.6" cy="9" r="0.7"></circle>
+                  <circle cx="9.9" cy="9" r="0.7"></circle>
+                  <circle cx="14.1" cy="9" r="0.7"></circle>
+                  <circle cx="16.4" cy="9" r="0.7"></circle>
+                  <path d="M7.2 11.1c.5.7 1.1 1 1.8 1s1.3-.3 1.8-1"></path>
+                  <path d="M16.8 11.1c-.5.7-1.1 1-1.8 1s-1.3-.3-1.8-1"></path>
+                </svg>
+              </span>
+            </button>
+            <button class="tab-btn" data-tab-btn="set" aria-label="Set">
+              <span class="tab-btn__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 4 8.2 9.5h7.6z"></path>
+                  <path d="M12 9.5v6"></path>
+                  <path d="M9.5 19.5h5"></path>
+                  <path d="M6.2 6.2 8 7"></path>
+                  <path d="M17.8 6.2 16 7"></path>
+                </svg>
+              </span>
+            </button>
+            <button class="tab-btn" data-tab-btn="sound" aria-label="Sound">
+              <span class="tab-btn__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <polyline points="10 9 10 15 7.5 13 6 13 6 11 7.5 11 10 9"></polyline>
+                  <path d="M14 8v8"></path>
+                  <path d="M16 10a2 2 0 0 1 0 4"></path>
+                  <path d="M18 9a4 4 0 0 1 0 6"></path>
+                </svg>
+              </span>
+            </button>
+            <button class="tab-btn" data-tab-btn="notes" aria-label="Notes">
+              <span class="tab-btn__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="5.5" y="4.5" width="10" height="15" rx="1.5"></rect>
+                  <path d="M9 8h4"></path>
+                  <path d="M9 11h4"></path>
+                  <path d="M17 12.5 20.5 16 17 19.5h-4v-2.5z"></path>
+                </svg>
+              </span>
+            </button>
           </div>
           <div class="tab-panels">
             <div class="tab-panel" data-tab="write" id="tabWrite">
