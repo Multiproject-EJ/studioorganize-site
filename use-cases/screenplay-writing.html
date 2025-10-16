@@ -290,8 +290,8 @@
       .scene-color-badge[data-source="custom"]{box-shadow:0 0 0 1px rgba(15,23,42,0.12)}
       .writer-theme-toggle{width:100%; justify-content:center}
       .counter{font-size:12px; color:var(--muted)}
-      .tab-header{display:flex; flex-wrap:wrap; padding:6px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
-      .tab-btn{flex:0 0 auto; min-height:24px; padding:0 11px; background:var(--chip); border:1px solid var(--ring); border-radius:999px; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:500; transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease}
+      .tab-header{display:flex; flex-wrap:nowrap; padding:6px; gap:6px; background:var(--chip); border-bottom:1px solid var(--ring)}
+      .tab-btn{flex:1 1 0; min-width:0; min-height:24px; padding:0 11px; background:var(--chip); border:1px solid var(--ring); border-radius:999px; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:500; transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
       .tab-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
       .tab-btn__icon{display:inline-flex; align-items:center; justify-content:center}
       .tab-btn__icon svg{width:18px; height:18px; stroke:currentColor; stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
