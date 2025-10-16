@@ -65,7 +65,23 @@
       .topbar h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.1px; }
       .topbar .badge { font-size: 11px; letter-spacing: .3px; text-transform: uppercase; background: rgba(79,123,255,0.12); color: var(--acc); border: 1px solid rgba(79,123,255,0.4); border-radius: 999px; padding: 3px 8px; }
       .spacer { flex: 1; }
-      .btn { background: var(--chip); color: var(--ink); border: 1px solid var(--ring); border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 13px; transition: background .2s ease, color .2s ease, border .2s ease; }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--chip);
+        color: var(--ink);
+        border: 1px solid var(--ring);
+        border-radius: 10px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.2;
+        transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+      }
+      .btn:hover { border-color: var(--acc); }
+      .btn:focus-visible { outline: none; border-color: var(--acc); box-shadow: 0 0 0 2px rgba(79,123,255,0.18); }
       .btn.active { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
       .btn.btn-primary { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
       .topbar-group { display: flex; gap: 6px; align-items: center; }
@@ -186,7 +202,7 @@
           <button class="btn active" type="button" data-track-toggle="lighting" aria-pressed="true">Lighting</button>
           <button class="btn active" type="button" data-track-toggle="notes" aria-pressed="true">Notes</button>
         </div>
-        <button class="btn btn-primary" type="button" onclick="window.location.href='/use-cases/screenplay-writing.html#storyboardOverlay'">Open writer workspace</button>
+        <button class="btn" type="button" onclick="window.location.href='/use-cases/screenplay-writing.html#storyboardOverlay'">Open writer workspace</button>
       </div>
 
       <div class="layout">
