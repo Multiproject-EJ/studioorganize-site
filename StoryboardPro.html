@@ -129,7 +129,31 @@
       .ai-form input { min-height: auto; }
       .ai-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
       .ai-status { font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: var(--acc); }
-      .ai-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+      .ai-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+      .ai-actions [data-api-manager] { margin-right: auto; }
+      .ai-actions button[data-api-manager] { order: -1; }
+      .ai-result { margin-top: 12px; background: var(--card); border: 1px solid var(--ring); border-radius: 12px; padding: 16px; display: none; flex-direction: column; gap: 12px; }
+      .ai-result.active { display: flex; }
+      .ai-result__heading { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); margin: 0; }
+      .ai-result__image { width: 100%; border-radius: 10px; border: 1px solid var(--ring); background: var(--chip); object-fit: cover; max-height: 320px; }
+      .ai-result__meta { font-size: 12px; color: var(--muted); margin: 0; }
+      .ai-result pre { margin: 0; padding: 12px; background: var(--panel); border-radius: 10px; overflow: auto; font-size: 12px; line-height: 1.5; max-height: 260px; }
+      .ai-result__empty { font-size: 13px; color: var(--muted); }
+      .api-dialog { border: none; border-radius: 18px; padding: 0; width: min(480px, 90vw); background: var(--panel); color: var(--ink); box-shadow: 0 30px 70px rgba(15,23,42,0.28); }
+      .api-dialog[open] { display: block; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; }
+      .api-dialog::backdrop { background: rgba(15,23,42,0.55); }
+      .api-dialog__container { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+      .api-dialog__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .api-dialog__header h2 { margin: 0; font-size: 18px; }
+      .api-dialog__body { display: flex; flex-direction: column; gap: 16px; }
+      .api-dialog label { font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+      .api-dialog input { width: 100%; border-radius: 12px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); padding: 10px 12px; font-size: 14px; }
+      .api-dialog__hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+      .api-dialog__actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+      .api-dialog__feedback { font-size: 12px; color: var(--acc); margin-right: auto; min-height: 18px; }
+      .api-dialog__close { border: none; background: transparent; color: inherit; font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+      .api-dialog__close:hover { background: rgba(79,123,255,0.12); }
+      .ai-form select { width: 100%; border-radius: 12px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); padding: 10px 12px; font-size: 14px; }
       .feature-section { padding: 36px 48px 72px; display: grid; gap: 24px; }
       .feature-section h2 { font-size: 26px; margin: 0; }
       .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
@@ -463,18 +487,54 @@
               <textarea id="aiShotPrompt" placeholder="Wide aerial reveals the neon skyline before pushing into the rooftop chase."></textarea>
             </div>
             <div>
+              <label for="aiProvider">Image model</label>
+              <select id="aiProvider">
+                <option value="gemini">Gemini image</option>
+                <option value="soara">Soara images</option>
+              </select>
+            </div>
+            <div>
               <label for="aiFrameCount">Frame count</label>
               <input id="aiFrameCount" type="number" min="1" max="12" value="4" />
             </div>
-            <p class="ai-hint">Character tokens and lighting notes auto-sync from the writer so your frames stay on model.</p>
+            <p class="ai-hint">Character tokens and lighting notes auto-sync from the writer so your frames stay on model. Select a provider and store API keys to render previews.</p>
             <div class="ai-actions">
+              <button class="btn" type="button" data-api-manager>Manage API keys</button>
               <span class="ai-status" data-ai-status>Ready</span>
-              <button class="btn" type="button">Generate preview</button>
+              <button class="btn btn-primary" type="button" data-ai-generate>Generate preview</button>
             </div>
+            <div class="ai-result" data-ai-result aria-live="polite"></div>
           </form>
         </aside>
       </div>
     </div>
+
+    <dialog class="api-dialog" data-api-dialog aria-labelledby="apiDialogTitle">
+      <form class="api-dialog__container" method="dialog" data-api-form>
+        <div class="api-dialog__header">
+          <h2 id="apiDialogTitle">AI API manager</h2>
+          <button class="api-dialog__close" type="button" data-api-close aria-label="Close API manager">×</button>
+        </div>
+        <div class="api-dialog__body">
+          <p>Store your Gemini and Soara API keys locally to test storyboard image generation. Keys are saved to this browser only.</p>
+          <div>
+            <label for="apiGeminiKey">Gemini API key</label>
+            <input id="apiGeminiKey" type="password" placeholder="AIz..." autocomplete="off" data-api-gemini />
+            <p class="api-dialog__hint">Create a key in Google AI Studio and enable the Gemini image endpoint.</p>
+          </div>
+          <div>
+            <label for="apiSoaraKey">Soara API key</label>
+            <input id="apiSoaraKey" type="password" placeholder="soara_..." autocomplete="off" data-api-soara />
+            <p class="api-dialog__hint">Use your Soara developer dashboard to generate a token with image permissions.</p>
+          </div>
+        </div>
+        <div class="api-dialog__actions">
+          <span class="api-dialog__feedback" data-api-feedback role="status" aria-live="polite"></span>
+          <button class="btn" type="button" data-api-close>Cancel</button>
+          <button class="btn btn-primary" type="submit">Save keys</button>
+        </div>
+      </form>
+    </dialog>
 
     <section class="feature-section">
       <h2>Storyboard Pro keeps every department locked to the same scene timeline.</h2>
@@ -521,6 +581,31 @@
     const sceneRows = document.querySelectorAll('[data-scene-row]');
     const sceneTitle = document.querySelector('[data-scene-title]');
     const sceneMeta = document.querySelector('[data-scene-meta]');
+    const aiPromptInput = document.getElementById('aiShotPrompt');
+    const aiFrameInput = document.getElementById('aiFrameCount');
+    const aiProviderSelect = document.getElementById('aiProvider');
+    const aiStatusLabel = document.querySelector('[data-ai-status]');
+    const aiResultContainer = document.querySelector('[data-ai-result]');
+    const aiGenerateButton = document.querySelector('[data-ai-generate]');
+    const apiManagerButton = document.querySelector('[data-api-manager]');
+    const apiDialog = document.querySelector('[data-api-dialog]');
+    const apiForm = document.querySelector('[data-api-form]');
+    const apiCloseButtons = document.querySelectorAll('[data-api-close]');
+    const apiGeminiInput = apiDialog ? apiDialog.querySelector('[data-api-gemini]') : null;
+    const apiSoaraInput = apiDialog ? apiDialog.querySelector('[data-api-soara]') : null;
+    const apiFeedbackLabel = apiDialog ? apiDialog.querySelector('[data-api-feedback]') : null;
+
+    const API_STORAGE_KEYS = {
+      provider: 'ai.provider',
+      gemini: 'ai.geminiKey',
+      soara: 'ai.soaraKey',
+    };
+
+    const storage = createScopedStorage('storyboard');
+
+    initialiseAiProviderSelect();
+    setupApiDialog();
+    setupGenerationWorkflow();
 
     function setTrackVisibility(track, visible) {
       document.querySelectorAll(`[data-track="${track}"]`).forEach(trackRow => {
@@ -612,6 +697,379 @@
       input.value = desiredName;
       updateSceneName(card, desiredName);
       card.classList.remove('editing');
+    }
+
+    function createScopedStorage(namespace) {
+      const prefix = namespace ? `${namespace}.` : '';
+      let storageAvailable = true;
+      try {
+        const testKey = `${prefix}__test__`;
+        window.localStorage.setItem(testKey, '1');
+        window.localStorage.removeItem(testKey);
+      } catch (error) {
+        storageAvailable = false;
+        console.warn('Local storage unavailable for API keys:', error);
+      }
+
+      return {
+        get(key) {
+          if (!storageAvailable) return '';
+          try {
+            return window.localStorage.getItem(`${prefix}${key}`) || '';
+          } catch (error) {
+            console.warn('Unable to read from storage:', error);
+            return '';
+          }
+        },
+        set(key, value) {
+          if (!storageAvailable) return;
+          try {
+            if (value === undefined || value === null || value === '') {
+              window.localStorage.removeItem(`${prefix}${key}`);
+            } else {
+              window.localStorage.setItem(`${prefix}${key}`, value);
+            }
+          } catch (error) {
+            console.warn('Unable to write to storage:', error);
+          }
+        },
+      };
+    }
+
+    function initialiseAiProviderSelect() {
+      if (!aiProviderSelect) return;
+      const storedProvider = storage.get(API_STORAGE_KEYS.provider);
+      if (storedProvider) {
+        aiProviderSelect.value = storedProvider;
+      }
+      aiProviderSelect.addEventListener('change', () => {
+        storage.set(API_STORAGE_KEYS.provider, aiProviderSelect.value);
+      });
+    }
+
+    function setupApiDialog() {
+      if (!apiManagerButton || !apiDialog) return;
+
+      const isDialogElement = typeof HTMLDialogElement !== 'undefined' && apiDialog instanceof HTMLDialogElement;
+
+      function populateDialogFields() {
+        if (apiGeminiInput) {
+          apiGeminiInput.value = storage.get(API_STORAGE_KEYS.gemini);
+        }
+        if (apiSoaraInput) {
+          apiSoaraInput.value = storage.get(API_STORAGE_KEYS.soara);
+        }
+        if (apiFeedbackLabel) {
+          apiFeedbackLabel.textContent = '';
+        }
+      }
+
+      function openDialog() {
+        populateDialogFields();
+        if (isDialogElement && typeof apiDialog.showModal === 'function') {
+          apiDialog.showModal();
+        } else {
+          apiDialog.setAttribute('open', 'true');
+        }
+        if (apiGeminiInput) {
+          requestAnimationFrame(() => apiGeminiInput.focus());
+        }
+      }
+
+      function closeDialog() {
+        if (isDialogElement && typeof apiDialog.close === 'function') {
+          apiDialog.close();
+        } else {
+          apiDialog.removeAttribute('open');
+        }
+      }
+
+      apiManagerButton.addEventListener('click', event => {
+        event.preventDefault();
+        openDialog();
+      });
+
+      if (apiForm) {
+        apiForm.addEventListener('submit', event => {
+          event.preventDefault();
+          const geminiKey = apiGeminiInput ? apiGeminiInput.value.trim() : '';
+          const soaraKey = apiSoaraInput ? apiSoaraInput.value.trim() : '';
+          storage.set(API_STORAGE_KEYS.gemini, geminiKey);
+          storage.set(API_STORAGE_KEYS.soara, soaraKey);
+          if (apiFeedbackLabel) {
+            apiFeedbackLabel.textContent = 'Saved locally';
+            window.setTimeout(() => {
+              if (apiFeedbackLabel && apiFeedbackLabel.textContent === 'Saved locally') {
+                apiFeedbackLabel.textContent = '';
+              }
+            }, 3200);
+          }
+        });
+      }
+
+      apiCloseButtons.forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.preventDefault();
+          closeDialog();
+        });
+      });
+
+      apiDialog.addEventListener('cancel', () => {
+        if (apiFeedbackLabel) {
+          apiFeedbackLabel.textContent = '';
+        }
+      });
+
+      apiDialog.addEventListener('close', () => {
+        if (apiFeedbackLabel) {
+          apiFeedbackLabel.textContent = '';
+        }
+      });
+
+      apiDialog.addEventListener('click', event => {
+        if (event.target === apiDialog) {
+          closeDialog();
+        }
+      });
+    }
+
+    function setAiStatus(message) {
+      if (!aiStatusLabel) return;
+      aiStatusLabel.textContent = message;
+    }
+
+    function summariseJson(value) {
+      try {
+        const jsonString = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+        return jsonString.length > 2000 ? `${jsonString.slice(0, 2000)}\n…` : jsonString;
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function extractGeminiResult(data) {
+      const result = {
+        heading: 'Gemini response',
+        provider: 'gemini',
+        imageDataUrl: '',
+        altText: 'Gemini storyboard preview',
+        rawText: summariseJson(data),
+      };
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      for (const part of parts) {
+        if (part?.inlineData?.data) {
+          const mimeType = part.inlineData.mimeType || 'image/png';
+          result.imageDataUrl = `data:${mimeType};base64,${part.inlineData.data}`;
+          break;
+        }
+        if (part?.fileData?.fileUri) {
+          result.imageDataUrl = part.fileData.fileUri;
+          break;
+        }
+      }
+      const textParts = parts.map(part => part?.text).filter(Boolean);
+      if (textParts.length) {
+        result.rawText = textParts.join('\n');
+      }
+      return result;
+    }
+
+    function extractSoaraResult(data) {
+      const result = {
+        heading: 'Soara response',
+        provider: 'soara',
+        imageDataUrl: '',
+        altText: 'Soara storyboard preview',
+        rawText: summariseJson(data),
+      };
+      const images = Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.images)
+        ? data.images
+        : [];
+      const firstImage = images[0] || data;
+      if (firstImage?.b64_json) {
+        result.imageDataUrl = `data:image/png;base64,${firstImage.b64_json}`;
+      } else if (firstImage?.base64) {
+        result.imageDataUrl = `data:image/png;base64,${firstImage.base64}`;
+      } else if (firstImage?.url) {
+        result.imageDataUrl = firstImage.url;
+      }
+      return result;
+    }
+
+    function showAiResult(content) {
+      if (!aiResultContainer) return;
+      if (!content) {
+        aiResultContainer.classList.remove('active');
+        aiResultContainer.innerHTML = '';
+        return;
+      }
+      aiResultContainer.classList.add('active');
+      aiResultContainer.innerHTML = '';
+      const headingText = content.heading || 'API response';
+      const headingEl = document.createElement('p');
+      headingEl.className = 'ai-result__heading';
+      headingEl.textContent = headingText;
+      aiResultContainer.appendChild(headingEl);
+
+      const metaItems = Array.isArray(content.meta)
+        ? content.meta
+        : content.meta
+        ? [content.meta]
+        : [];
+      metaItems.forEach(text => {
+        const metaEl = document.createElement('p');
+        metaEl.className = 'ai-result__meta';
+        metaEl.textContent = text;
+        aiResultContainer.appendChild(metaEl);
+      });
+
+      if (content.imageDataUrl) {
+        const img = document.createElement('img');
+        img.className = 'ai-result__image';
+        img.src = content.imageDataUrl;
+        img.alt = content.altText || 'Storyboard frame preview';
+        aiResultContainer.appendChild(img);
+      }
+
+      if (content.rawText) {
+        const pre = document.createElement('pre');
+        pre.textContent = content.rawText;
+        aiResultContainer.appendChild(pre);
+      } else if (!content.imageDataUrl) {
+        const fallback = document.createElement('p');
+        fallback.className = 'ai-result__empty';
+        fallback.textContent = 'No response payload received. Check your API keys and try again.';
+        aiResultContainer.appendChild(fallback);
+      }
+    }
+
+    async function requestGeminiImage(apiKey, prompt, frameCount, signal) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const payload = {
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Generate ${frameCount} storyboard frame${frameCount > 1 ? 's' : ''} for an action sequence. Return base64 image data if available.\n${prompt}`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.9,
+        },
+      };
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data?.error?.message || `${response.status} ${response.statusText}`;
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    async function requestSoaraImage(apiKey, prompt, frameCount, signal) {
+      const response = await fetch('https://api.soara.ai/v1/images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          prompt,
+          frames: frameCount,
+          response_format: 'b64_json',
+        }),
+        signal,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data?.error?.message || `${response.status} ${response.statusText}`;
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    function setupGenerationWorkflow() {
+      setAiStatus('Ready');
+      showAiResult(null);
+      if (!aiGenerateButton || !aiPromptInput) return;
+
+      aiGenerateButton.addEventListener('click', async () => {
+        const prompt = aiPromptInput.value.trim();
+        const provider = aiProviderSelect ? aiProviderSelect.value : 'gemini';
+        const frameCount = Math.max(1, Math.min(12, Number(aiFrameInput ? aiFrameInput.value : 1) || 1));
+
+        if (!prompt) {
+          setAiStatus('Add a prompt first');
+          aiPromptInput.focus();
+          return;
+        }
+
+        const apiKey = provider === 'soara'
+          ? storage.get(API_STORAGE_KEYS.soara)
+          : storage.get(API_STORAGE_KEYS.gemini);
+
+        if (!apiKey) {
+          setAiStatus('Add your API key first');
+          showAiResult({
+            heading: 'Missing API key',
+            rawText: 'Open the API manager to save a key for this provider before generating.',
+          });
+          if (apiManagerButton) {
+            apiManagerButton.focus();
+          }
+          return;
+        }
+
+        storage.set(API_STORAGE_KEYS.provider, provider);
+        setAiStatus('Contacting provider…');
+        showAiResult(null);
+        aiGenerateButton.disabled = true;
+
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 45000);
+        const startedAt = performance.now();
+
+        try {
+          let data;
+          if (provider === 'soara') {
+            data = await requestSoaraImage(apiKey, prompt, frameCount, controller.signal);
+            const duration = ((performance.now() - startedAt) / 1000).toFixed(1);
+            const result = extractSoaraResult(data);
+            result.meta = [`Frames requested: ${frameCount}`, `Completed in ${duration}s`];
+            showAiResult(result);
+          } else {
+            data = await requestGeminiImage(apiKey, prompt, frameCount, controller.signal);
+            const duration = ((performance.now() - startedAt) / 1000).toFixed(1);
+            const result = extractGeminiResult(data);
+            result.meta = [`Frames requested: ${frameCount}`, `Completed in ${duration}s`];
+            showAiResult(result);
+          }
+          setAiStatus('Preview ready');
+        } catch (error) {
+          const message = error?.name === 'AbortError' ? 'Request timed out' : error?.message || 'Request failed';
+          setAiStatus(message);
+          showAiResult({
+            heading: 'Request error',
+            rawText: `${message}. Check the developer console for additional context.`,
+          });
+          console.error('Storyboard AI generation error:', error);
+        } finally {
+          window.clearTimeout(timeoutId);
+          aiGenerateButton.disabled = false;
+        }
+      });
     }
 
     sceneCards.forEach(card => {
