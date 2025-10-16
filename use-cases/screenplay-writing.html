@@ -609,6 +609,16 @@
       .sound-list{display:flex; flex-direction:column; gap:6px}
       .sound-item{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--ring); border-radius:10px; padding:8px 10px}
       .sound-item button{background:var(--chip); border:1px solid var(--ring); border-radius:8px; padding:4px 8px; font-size:11px; color:var(--ink); cursor:pointer}
+      .scene-emotion-module{display:flex; flex-direction:column; gap:10px}
+      .scene-emotion-header h3{margin:0; font-size:16px}
+      .scene-emotion-header .muted-text{margin:0; font-size:12px}
+      .scene-emotion-picker{display:flex; flex-wrap:wrap; gap:8px}
+      .scene-emotion-chip{position:relative; display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:6px 14px; font-size:13px; font-weight:500; background:var(--emotion-chip-bg, rgba(148,163,184,0.12)); border:1px solid var(--emotion-chip-border, rgba(148,163,184,0.3)); color:var(--emotion-chip-label, #CBD5F5); cursor:pointer; transition:background-color .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease}
+      .scene-emotion-chip::before{content:''; width:10px; height:10px; border-radius:50%; background:var(--emotion-color, currentColor); box-shadow:0 0 0 1px rgba(15,23,42,0.35)}
+      .scene-emotion-chip:hover{background:var(--emotion-chip-hover, rgba(148,163,184,0.2)); border-color:var(--emotion-color, rgba(148,163,184,0.45))}
+      .scene-emotion-chip:focus-visible{outline:none; box-shadow:0 0 0 2px rgba(15,23,42,0.75), 0 0 0 4px var(--emotion-chip-ring, rgba(148,163,184,0.45))}
+      .scene-emotion-chip.is-active{background:var(--emotion-chip-active, var(--emotion-color, rgba(148,163,184,0.45))); border-color:var(--emotion-color, rgba(148,163,184,0.55)); color:var(--emotion-chip-text, #0F172A); box-shadow:0 0 0 1px var(--emotion-chip-ring, rgba(148,163,184,0.45))}
+      .scene-emotion-summary{margin:0; font-size:12px}
 
       /* ==== Character Studio ==== */
       body.character-studio-mode{overflow:hidden;}
@@ -1151,6 +1161,15 @@
               </div>
             </div>
             <div class="tab-panel" data-tab="sound" id="tabSound">
+              <div class="scene-emotion-module">
+                <div class="scene-emotion-header">
+                  <h3>Emotional Palette</h3>
+                  <p class="muted-text">Tag the feelings this scene and soundtrack evoke.</p>
+                </div>
+                <div class="scene-emotion-picker" id="sceneEmotionPicker" role="listbox" aria-multiselectable="true"></div>
+                <p class="muted-text scene-emotion-summary" id="sceneEmotionSummary"></p>
+              </div>
+              <div class="tab-divider"></div>
               <div>
                 <h3>Sound Cues</h3>
                 <div class="sound-list" id="soundList"></div>
@@ -1669,6 +1688,17 @@
       { value: 'EVENING', label: 'Evening' },
       { value: 'LATER', label: 'Later' }
     ];
+    const SCENE_EMOTION_OPTIONS = [
+      { id: 'joyful', label: 'Joyful', description: 'Bright & uplifting energy', color: '#FACC15', textColor: '#0F172A' },
+      { id: 'tender', label: 'Tender', description: 'Soft, heartfelt warmth', color: '#F472B6', textColor: '#0F172A' },
+      { id: 'melancholy', label: 'Melancholy', description: 'Wistful and reflective', color: '#6366F1', textColor: '#F8FAFC' },
+      { id: 'tense', label: 'Tense', description: 'Edgy, suspenseful pulse', color: '#F97316', textColor: '#0F172A' },
+      { id: 'mysterious', label: 'Mysterious', description: 'Cool and enigmatic', color: '#0EA5E9', textColor: '#0F172A' },
+      { id: 'triumphant', label: 'Triumphant', description: 'Bold, victorious swell', color: '#22C55E', textColor: '#0F172A' }
+    ];
+    const SCENE_EMOTION_OPTION_MAP = new Map(
+      SCENE_EMOTION_OPTIONS.map(option => [option.id.toLowerCase(), option])
+    );
     const SCENE_TAG_MAX_CUSTOM = 4;
     function getDefaultStoryboardAIConfig(){
       return { apiKey: '', model: STORYBOARD_AI_DEFAULT_MODEL };
@@ -2628,6 +2658,7 @@
         if (!Array.isArray(scene.cards)) scene.cards = [];
         if (!Array.isArray(scene.elements)) scene.elements = [];
         if (!Array.isArray(scene.sounds)) scene.sounds = [];
+        if (!Array.isArray(scene.emotions)) scene.emotions = [];
       });
       storyboardIndexState.clear();
       project.scenes.forEach(scene => {
@@ -2733,6 +2764,7 @@
         colorSource: s.colorSource || SCENE_COLOR_SOURCE_AUTO,
         notes: s.notes,
         sounds: s.sounds,
+        emotions: Array.isArray(s.emotions) ? s.emotions : [],
         storyboards: s.storyboards,
         tags: getSceneTagState(s)
       });
@@ -2789,6 +2821,7 @@
           return sound;
         });
         if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+        syncSceneEmotionState(scene);
         const normalizedColor = normalizeSceneColor(scene.color);
         const rawSource = typeof scene.colorSource === 'string' ? scene.colorSource : scene.metadata.sceneColorSource;
         let source = (rawSource === SCENE_COLOR_SOURCE_CUSTOM || rawSource === SCENE_COLOR_SOURCE_AUTO) ? rawSource : null;
@@ -3032,8 +3065,9 @@
           colorSource: SCENE_COLOR_SOURCE_AUTO,
           notes: '',
           sounds: [],
+          emotions: [],
           storyboards: [],
-          metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO, sceneTagState: { locationType: '', timeOfDay: '', custom: [] } }
+          metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO, sceneTagState: { locationType: '', timeOfDay: '', custom: [] }, sceneEmotions: [] }
         }],
         notes: '',
         _hashes: { scene: {} },
@@ -3340,6 +3374,7 @@
         renderStoryboard();
         renderCatalogs();
         renderSoundList();
+        renderSceneEmotionPicker();
         renderTimeline();
         updateDeleteSceneButton();
         applyActiveTabUI();
@@ -3385,6 +3420,7 @@
       applyTheme();
       renderCatalogs();
       renderSoundList();
+      renderSceneEmotionPicker();
       renderTimeline();
       updateDeleteSceneButton();
       applyActiveTabUI();
@@ -3779,6 +3815,53 @@
       }
       updateSelectionMenuCharacters();
       updateAllLineTagLabels();
+    }
+
+    function renderSceneEmotionPicker(){
+      const container = document.getElementById('sceneEmotionPicker');
+      const summary = document.getElementById('sceneEmotionSummary');
+      if (!container){
+        if (summary) summary.textContent = '';
+        return;
+      }
+      const scene = getActiveScene();
+      container.innerHTML = '';
+      if (!scene){
+        container.setAttribute('aria-disabled', 'true');
+        if (summary) summary.textContent = 'Select a scene to tag its mood.';
+        return;
+      }
+      container.removeAttribute('aria-disabled');
+      const active = syncSceneEmotionState(scene);
+      SCENE_EMOTION_OPTIONS.forEach(option => {
+        const isActive = active.includes(option.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'scene-emotion-chip' + (isActive ? ' is-active' : '');
+        btn.dataset.sceneEmotion = option.id;
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        btn.textContent = option.label;
+        if (option.description) btn.title = option.description;
+        btn.style.setProperty('--emotion-color', option.color);
+        btn.style.setProperty('--emotion-chip-bg', hexToRgba(option.color, 0.16));
+        btn.style.setProperty('--emotion-chip-hover', hexToRgba(option.color, 0.28));
+        btn.style.setProperty('--emotion-chip-active', option.color);
+        btn.style.setProperty('--emotion-chip-ring', hexToRgba(option.color, 0.45));
+        btn.style.setProperty('--emotion-chip-text', option.textColor);
+        btn.style.setProperty('--emotion-chip-label', hexToRgba(option.color, 0.8));
+        btn.style.setProperty('--emotion-chip-border', hexToRgba(option.color, 0.45));
+        container.appendChild(btn);
+      });
+      if (summary){
+        if (active.length){
+          const labels = getSceneEmotionLabels(active);
+          summary.textContent = `Current palette: ${labels.join(', ')}`;
+        } else {
+          summary.textContent = 'No emotions selected yet. Tap a color to tag the scene.';
+        }
+      }
     }
 
     function renderSoundList(){
@@ -5734,8 +5817,9 @@
         colorSource: SCENE_COLOR_SOURCE_AUTO,
         notes: '',
         sounds: [],
+        emotions: [],
         storyboards: [],
-        metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO, sceneTagState: { locationType: '', timeOfDay: '', custom: [] } }
+        metadata: { sceneColorSource: SCENE_COLOR_SOURCE_AUTO, sceneTagState: { locationType: '', timeOfDay: '', custom: [] }, sceneEmotions: [] }
       };
       if (trimmedSummary){
         scene.elements = trimmedSummary
@@ -5763,6 +5847,70 @@
         if (normalized.length >= SCENE_TAG_MAX_CUSTOM) break;
       }
       return normalized;
+    }
+    function getSceneEmotionOption(id){
+      if (typeof id !== 'string') return null;
+      return SCENE_EMOTION_OPTION_MAP.get(id.trim().toLowerCase()) || null;
+    }
+    function normalizeSceneEmotions(values){
+      const list = Array.isArray(values) ? values : [];
+      const seen = new Set();
+      const normalized = [];
+      list.forEach(value => {
+        const option = getSceneEmotionOption(value);
+        if (!option) return;
+        const key = option.id;
+        if (seen.has(key)) return;
+        seen.add(key);
+        normalized.push(key);
+      });
+      return normalized;
+    }
+    function syncSceneEmotionState(scene){
+      if (!scene || typeof scene !== 'object') return [];
+      const meta = (scene.metadata && typeof scene.metadata === 'object') ? scene.metadata : {};
+      const raw = Array.isArray(scene.emotions)
+        ? scene.emotions
+        : (Array.isArray(meta.sceneEmotions) ? meta.sceneEmotions : []);
+      const normalized = normalizeSceneEmotions(raw);
+      if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+      scene.emotions = [...normalized];
+      scene.metadata.sceneEmotions = [...normalized];
+      return normalized;
+    }
+    function getSceneEmotionLabels(emotionIds){
+      if (!Array.isArray(emotionIds)) return [];
+      const labels = [];
+      emotionIds.forEach(id => {
+        const option = getSceneEmotionOption(id);
+        if (!option) return;
+        labels.push(option.label);
+      });
+      return labels;
+    }
+    function setSceneEmotions(scene, emotionIds, options = {}){
+      if (!scene || typeof scene !== 'object') return;
+      const normalized = normalizeSceneEmotions(emotionIds);
+      if (!scene.metadata || typeof scene.metadata !== 'object') scene.metadata = {};
+      scene.emotions = [...normalized];
+      scene.metadata.sceneEmotions = [...normalized];
+      updateSceneHash(scene);
+      bumpVersion();
+      scheduleSave(); scheduleBackup();
+      if (!options.silent) renderSceneEmotionPicker();
+    }
+    function toggleSceneEmotion(emotionId){
+      const scene = getActiveScene();
+      if (!scene) return;
+      const option = getSceneEmotionOption(emotionId);
+      if (!option) return;
+      const canonical = option.id;
+      const current = syncSceneEmotionState(scene);
+      const idx = current.indexOf(canonical);
+      if (idx >= 0) current.splice(idx, 1);
+      else current.push(canonical);
+      setSceneEmotions(scene, current, { silent: true });
+      renderSceneEmotionPicker();
     }
     function getSceneTagState(scene){
       if (!scene || typeof scene !== 'object') return { locationType: '', timeOfDay: '', custom: [] };
@@ -6846,6 +6994,14 @@
         if (fresh){ fresh.value = ''; fresh.focus(); }
       });
     }
+    const sceneEmotionPicker = document.getElementById('sceneEmotionPicker');
+    if (sceneEmotionPicker){
+      sceneEmotionPicker.addEventListener('click', event => {
+        const target = event.target.closest('[data-scene-emotion]');
+        if (!target) return;
+        toggleSceneEmotion(target.dataset.sceneEmotion);
+      });
+    }
     const storyboardBtn = document.getElementById('storyboardModeBtn');
     if (storyboardBtn){
       updateStoryboardButton();
@@ -7795,6 +7951,7 @@
       const safeCards = Array.isArray(scene.cards) ? structuredClone(scene.cards) : [];
       const safeElements = Array.isArray(scene.elements) ? structuredClone(scene.elements) : [];
       const safeSounds = Array.isArray(scene.sounds) ? structuredClone(scene.sounds) : [];
+      const safeEmotions = syncSceneEmotionState(scene);
       const safeStoryboards = getSceneStoryboards(scene);
       const characters = Array.isArray(project?.catalogs?.characters)
         ? project.catalogs.characters.map(char => ({ id: char.id || null, name: char.name || '' }))
@@ -7838,6 +7995,7 @@
             smartFormat: typeof project.settings?.smartFormat === 'boolean' ? project.settings.smartFormat : null
           },
           catalogs: { characters, locations },
+          sceneEmotions: safeEmotions,
           storyboards: safeStoryboards,
           sceneColorSource: scene.colorSource || SCENE_COLOR_SOURCE_AUTO,
           sceneAutoColorLabel: colorMeta.label,
