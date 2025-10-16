@@ -146,14 +146,14 @@ img{max-width:100%;display:block}
 
 /* account app grid */
 .app-grid{display:grid;grid-template-columns:repeat(3,minmax(0,200px));gap:20px;justify-content:center;justify-items:center}
-.app-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;display:grid;grid-template-rows:1fr auto;gap:12px;padding:16px;overflow:hidden;text-decoration:none;color:var(--text);transition:transform .12s ease,border-color .12s ease;aspect-ratio:1/1;align-items:center;justify-items:center;text-align:center;width:100%;max-width:200px}
+.app-card{position:relative;background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg,#4f7bff,#ff6b6b) border-box;border:2px solid transparent;border-radius:16px;display:grid;grid-template-rows:1fr auto;gap:12px;padding:16px;overflow:hidden;text-decoration:none;color:var(--text);transition:transform .2s ease,box-shadow .2s ease;aspect-ratio:1/1;align-items:center;justify-items:center;text-align:center;width:100%;max-width:200px;box-shadow:0 0 0 2px rgba(79,123,255,.18)}
 .app-card img{display:block;width:100%;height:100%;object-fit:cover;border-radius:12px}
 .app-card--fit img{object-fit:contain;background:var(--panel)}
 .app-card__label{font-weight:600;font-size:18px;align-self:stretch;padding:4px 8px}
-.app-card:hover{transform:translateY(-2px);border-color:#2b3140}
-.app-card:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.app-card:hover{transform:translateY(-2px);box-shadow:0 0 0 4px rgba(79,123,255,.25)}
+.app-card:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(79,123,255,.4)}
 .app-card--placeholder{cursor:default;opacity:.75}
-.app-card--placeholder:hover{transform:none;border-color:var(--line)}
+.app-card--placeholder:hover{transform:none;box-shadow:0 0 0 2px rgba(79,123,255,.18)}
 .app-card--placeholder img{filter:saturate(.7)}
 @media (max-width:900px){.app-grid{grid-template-columns:repeat(2,minmax(0,200px))}}
 @media (max-width:720px){.app-grid{gap:16px}}
