@@ -77,7 +77,6 @@
       .story-arc-step{flex:1; display:flex; min-width:0;}
       .story-arc-pill{position:relative; display:flex; flex-direction:column; gap:1px; align-items:flex-start; justify-content:center; width:100%; padding:3px 10px; border-radius:999px; border:1px solid var(--ring); background:linear-gradient(135deg, rgba(79,123,255,0.14), rgba(79,123,255,0.06)); box-shadow:inset 0 0 0 1px rgba(79,123,255,0.08); transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;}
       .story-arc-label{font-size:9px; font-weight:600; letter-spacing:.28px; text-transform:uppercase; color:var(--muted);}
-      .story-arc-subtitle{font-size:8px; color:var(--muted); letter-spacing:.22px;}
       .story-arc-step--active .story-arc-pill{
         border:2px solid transparent;
         background:
@@ -86,7 +85,6 @@
         box-shadow:0 0 0 3px rgba(79,123,255,0.28), 0 12px 28px rgba(79,123,255,0.18);
       }
       .story-arc-step--active .story-arc-label{color:var(--acc);}
-      .story-arc-step--active .story-arc-subtitle{color:rgba(79,123,255,0.72);}
       .story-arc-scenes{padding:0;}
       .story-arc-scenes__container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:6px 12px;}
       .story-arc-scenes__track{display:flex; align-items:stretch; gap:8px; margin:0; padding:0; list-style:none;}
@@ -968,7 +966,6 @@
                   <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
                     <div class="story-arc-pill">
                       <span class="story-arc-label">Middle</span>
-                      <span class="story-arc-subtitle">Scene title</span>
                     </div>
                   </li>
                   <li class="story-arc-step" role="listitem">
