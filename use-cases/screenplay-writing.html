@@ -75,6 +75,23 @@
       .timeline-dock__content{display:flex; flex-direction:column; gap:12px; padding:12px 16px 18px; opacity:1; transform:translateY(0); transition:transform .35s ease, opacity .25s ease;}
       .timeline-dock.floating-hidden .timeline-dock__content{opacity:0; transform:translateY(-18px); pointer-events:none;}
       .timeline-dock.floating-hidden{flex-direction:column-reverse; padding-top:6px; padding-bottom:0; gap:6px;}
+      .story-arc-layout{display:flex; flex-wrap:wrap; align-items:stretch; gap:16px;}
+      .story-arc-columns{flex:1 1 280px; display:flex; flex-direction:column; gap:12px; min-width:0;}
+      .story-arc-actions{display:flex; flex-direction:column; gap:12px; align-items:flex-end; justify-content:center; min-width:48px;}
+      .story-arc-action{position:relative;}
+      .story-arc-action-btn{width:38px; height:38px; border-radius:999px; border:1px solid var(--ring); background:var(--panel); color:var(--muted); display:inline-flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; cursor:pointer; transition:background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; box-shadow:0 10px 22px rgba(8,15,28,0.16);}
+      .story-arc-action-btn:hover{background:linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); border-color:var(--acc); color:var(--ink); transform:translateY(-1px);}
+      .story-arc-action-btn:focus-visible{outline:2px solid var(--acc); outline-offset:3px;}
+      .story-arc-action-btn:active{transform:translateY(0);}
+      .story-arc-action--menu:hover .story-arc-action-btn,
+      .story-arc-action--menu:focus-within .story-arc-action-btn{background:linear-gradient(135deg, rgba(79,123,255,0.24), rgba(79,123,255,0.12)); border-color:var(--acc); color:var(--ink);}
+      .story-arc-menu{position:absolute; top:calc(100% + 12px); right:0; display:flex; flex-direction:column; gap:6px; padding:12px; min-width:220px; border-radius:14px; border:1px solid var(--ring); background:var(--panel); box-shadow:0 24px 48px rgba(8,15,28,0.32); opacity:0; pointer-events:none; transform:translateY(8px); transition:opacity .2s ease, transform .2s ease; z-index:40;}
+      .story-arc-action--menu:hover .story-arc-menu,
+      .story-arc-action--menu:focus-within .story-arc-menu{opacity:1; pointer-events:auto; transform:translateY(0);}
+      .story-arc-menu__item{border:none; border-radius:10px; background:var(--chip); color:var(--ink); font-size:13px; font-weight:600; padding:10px 12px; text-align:left; cursor:pointer; transition:background .2s ease, color .2s ease, transform .2s ease;}
+      .story-arc-menu__item:hover,
+      .story-arc-menu__item:focus-visible{background:linear-gradient(135deg, rgba(79,123,255,0.16), rgba(79,123,255,0.06)); color:var(--ink); outline:none; transform:translateY(-1px);}
+      .story-arc-menu__item:active{transform:translateY(0);}
       .story-arc-timeline{padding:0;}
       .story-arc-container{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:3px 10px;}
       .story-arc-track{display:flex; align-items:stretch; justify-content:space-between; gap:8px; margin:0; padding:0; list-style:none;}
@@ -110,6 +127,10 @@
       .story-arc-scenes__step--active .story-arc-scenes__scene-number{color:var(--active-tab-text);}
       .story-arc-scenes__step--active .story-arc-scenes__scene-label{color:var(--active-tab-text);}
       .story-arc-scenes__empty{flex:1; display:flex; align-items:center; justify-content:center; min-height:48px; border-radius:10px; border:1px dashed var(--ring); color:var(--muted); font-size:12px; background:var(--chip);}
+      @media (max-width: 820px){
+        .story-arc-layout{flex-direction:column; align-items:stretch;}
+        .story-arc-actions{flex-direction:row; justify-content:flex-end; align-items:center;}
+      }
       #openCharacterStudioBtn{
         position:relative;
         background:linear-gradient(var(--panel), var(--panel)) padding-box,
@@ -959,30 +980,47 @@
         <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
         <div class="timeline-dock__shell">
           <div class="timeline-dock__content">
-            <div class="story-arc-timeline" aria-label="Story arc timeline">
-              <div class="story-arc-container">
-                <ol class="story-arc-track" role="list">
-                  <li class="story-arc-step" role="listitem">
-                    <div class="story-arc-pill">
-                      <span class="story-arc-label">Opening</span>
-                    </div>
-                  </li>
-                  <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
-                    <div class="story-arc-pill">
-                      <span class="story-arc-label">Middle</span>
-                    </div>
-                  </li>
-                  <li class="story-arc-step" role="listitem">
-                    <div class="story-arc-pill">
-                      <span class="story-arc-label">End</span>
-                    </div>
-                  </li>
-                </ol>
+            <div class="story-arc-layout">
+              <div class="story-arc-columns">
+                <div class="story-arc-timeline" aria-label="Story arc timeline">
+                  <div class="story-arc-container">
+                    <ol class="story-arc-track" role="list">
+                      <li class="story-arc-step" role="listitem">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">Opening</span>
+                        </div>
+                      </li>
+                      <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">Middle</span>
+                        </div>
+                      </li>
+                      <li class="story-arc-step" role="listitem">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">End</span>
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+                <div class="story-arc-scenes" aria-label="Scene timeline">
+                  <div class="story-arc-scenes__container">
+                    <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="story-arc-scenes" aria-label="Scene timeline">
-              <div class="story-arc-scenes__container">
-                <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+              <div class="story-arc-actions" aria-label="Story timeline actions">
+                <div class="story-arc-action story-arc-action--menu">
+                  <button class="story-arc-action-btn" type="button" aria-haspopup="true" aria-label="Choose story arc template" title="Choose story arc template">🏹</button>
+                  <div class="story-arc-menu" role="menu">
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Choose Story Arc · Opening, Middle, End</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Story Arc 2 · Build up</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Hero's Journey</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Conflict resolution</button>
+                  </div>
+                </div>
+                <button class="story-arc-action-btn" type="button" aria-label="Story timeline bookmarks" title="Story timeline bookmarks">🔖</button>
+                <button class="story-arc-action-btn" type="button" aria-label="Story timeline help" title="Story timeline help">?</button>
               </div>
             </div>
           </div>
