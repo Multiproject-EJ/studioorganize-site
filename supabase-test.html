@@ -7,11 +7,41 @@
   <link rel="stylesheet" href="/assets/styles.css" />
   <style>
     :root {
-      color-scheme: light dark;
+      --tester-surface: var(--panel);
+      --tester-surface-alt: var(--hud);
+      --tester-border: var(--line);
+      --tester-shadow: 0 32px 70px rgba(8, 15, 28, 0.6);
+      --tester-shadow-soft: 0 22px 45px rgba(8, 15, 28, 0.45);
+      --tester-input-bg: var(--field);
+      --tester-input-border: var(--line);
+      --tester-pill-bg: rgba(125, 211, 252, 0.18);
+      --tester-pill-text: var(--brand);
+      --tester-pill-error-bg: rgba(235, 87, 87, 0.22);
+      --tester-pill-error-text: #ffb8c2;
+      --tester-pill-success-bg: rgba(39, 174, 96, 0.26);
+      --tester-pill-success-text: #73ffd3;
+      --tester-log-bg: var(--dial);
+      --tester-log-border: rgba(79, 123, 255, 0.2);
+      --tester-log-color: var(--ink);
+      --tester-note: var(--muted);
+    }
+    [data-theme="light"] {
+      --tester-shadow: 0 24px 60px rgba(12, 20, 51, 0.16);
+      --tester-shadow-soft: 0 18px 40px rgba(12, 20, 51, 0.12);
+      --tester-pill-bg: rgba(37, 99, 235, 0.12);
+      --tester-pill-text: #1e3a8a;
+      --tester-pill-error-bg: rgba(235, 87, 87, 0.12);
+      --tester-pill-error-text: #d42a2a;
+      --tester-pill-success-bg: rgba(34, 197, 94, 0.14);
+      --tester-pill-success-text: #15803d;
+      --tester-log-bg: #0a1630;
+      --tester-log-border: rgba(12, 20, 51, 0.12);
+      --tester-log-color: #f4f7ff;
     }
     body {
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--color-page, #f8f9fb);
+      background: var(--bg);
+      color: var(--text);
     }
     .tester {
       max-width: 960px;
@@ -21,14 +51,19 @@
       gap: 2rem;
     }
     .tester__intro {
-      background: var(--color-surface, #fff);
-      border-radius: 16px;
-      padding: 1.5rem 1.75rem;
-      box-shadow: 0 20px 45px rgba(12, 20, 51, 0.15);
+      background: var(--tester-surface);
+      border: 1px solid var(--tester-border);
+      border-radius: 18px;
+      padding: 1.75rem 1.9rem;
+      box-shadow: var(--tester-shadow);
     }
     .tester__intro h1 {
       margin: 0 0 0.75rem;
       font-size: clamp(1.75rem, 2vw + 1rem, 2.5rem);
+    }
+    .tester__intro p {
+      color: var(--tester-note);
+      line-height: 1.6;
     }
     .tester__layout {
       display: grid;
@@ -40,10 +75,11 @@
       }
     }
     .card {
-      background: var(--color-surface, #fff);
-      border-radius: 16px;
+      background: var(--tester-surface);
+      border: 1px solid var(--tester-border);
+      border-radius: 18px;
       padding: 1.5rem;
-      box-shadow: 0 16px 32px rgba(12, 20, 51, 0.12);
+      box-shadow: var(--tester-shadow-soft);
       display: grid;
       gap: 1rem;
     }
@@ -56,9 +92,10 @@
       gap: 0.75rem;
     }
     fieldset {
-      border: 1px dashed rgba(99, 113, 174, 0.4);
-      border-radius: 12px;
+      border: 1px dashed var(--tester-border);
+      border-radius: 14px;
       padding: 1rem;
+      background: var(--tester-surface-alt);
       display: grid;
       gap: 0.75rem;
     }
@@ -75,32 +112,51 @@
       font: inherit;
       padding: 0.65rem 0.75rem;
       border-radius: 10px;
-      border: 1px solid rgba(99, 113, 174, 0.4);
-      background: transparent;
+      border: 1px solid var(--tester-input-border);
+      background: var(--tester-input-bg);
       color: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    input:focus-visible,
+    textarea:focus-visible {
+      border-color: var(--acc);
+      box-shadow: 0 0 0 2px rgba(95, 168, 255, 0.35);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--acc) 32%, transparent);
+      outline: none;
     }
     button {
       font: inherit;
       padding: 0.6rem 1rem;
       border-radius: 999px;
       border: none;
-      background: linear-gradient(135deg, #5fa8ff, #736dff);
-      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: var(--cta-text);
       font-weight: 600;
       cursor: pointer;
+      box-shadow: 0 10px 24px rgba(79, 123, 255, 0.28);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     button[disabled] {
       cursor: not-allowed;
       opacity: 0.6;
     }
+    button:not([disabled]):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(79, 123, 255, 0.32);
+    }
+    button:focus-visible {
+      outline: 2px solid var(--acc);
+      outline-offset: 3px;
+    }
     .btn-secondary {
       background: transparent;
       color: inherit;
-      border: 1px solid rgba(99, 113, 174, 0.6);
+      border: 1px solid var(--tester-input-border);
+      box-shadow: none;
     }
     .log {
-      background: #0a1630;
-      color: #f4f7ff;
+      background: var(--tester-log-bg);
+      color: var(--tester-log-color);
       border-radius: 16px;
       padding: 1.25rem;
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
@@ -108,6 +164,8 @@
       overflow: auto;
       white-space: pre-wrap;
       line-height: 1.4;
+      border: 1px solid var(--tester-log-border);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
     }
     .status-row {
       display: flex;
@@ -123,23 +181,49 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      background: rgba(115, 109, 255, 0.12);
+      background: var(--tester-pill-bg);
+      color: var(--tester-pill-text);
       border-radius: 999px;
       padding: 0.25rem 0.9rem;
       font-weight: 600;
+      border: 1px solid rgba(125, 211, 252, 0.3);
+      border: 1px solid color-mix(in srgb, var(--tester-pill-text) 35%, transparent);
     }
     .status-pill[data-state="signed-out"] {
-      background: rgba(235, 87, 87, 0.15);
-      color: #ffb3b3;
+      background: var(--tester-pill-error-bg);
+      color: var(--tester-pill-error-text);
+      border-color: rgba(235, 87, 87, 0.28);
+      border-color: color-mix(in srgb, var(--tester-pill-error-text) 30%, transparent);
     }
     .status-pill[data-state="signed-in"] {
-      background: rgba(39, 174, 96, 0.16);
-      color: #b4f5ce;
+      background: var(--tester-pill-success-bg);
+      color: var(--tester-pill-success-text);
+      border-color: rgba(115, 253, 208, 0.28);
+      border-color: color-mix(in srgb, var(--tester-pill-success-text) 35%, transparent);
     }
     .note {
-      font-size: 0.85rem;
-      line-height: 1.5;
-      opacity: 0.75;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--tester-note);
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      padding: 0.15rem 0.4rem;
+      border-radius: 6px;
+      background: rgba(79, 123, 255, 0.12);
+      background: color-mix(in srgb, var(--tester-border) 20%, transparent);
+      border: 1px solid rgba(79, 123, 255, 0.25);
+      border: 1px solid color-mix(in srgb, var(--tester-border) 45%, transparent);
+      color: inherit;
+    }
+    @media (max-width: 600px) {
+      .tester {
+        padding: 1.75rem 1.25rem 3rem;
+      }
+      .tester__intro,
+      .card {
+        border-radius: 16px;
+      }
     }
   </style>
 </head>
