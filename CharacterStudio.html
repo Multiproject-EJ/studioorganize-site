@@ -99,6 +99,34 @@
       .character-studio-header h2 { margin: 0; font-size: 24px; font-weight: 600; }
       .character-studio-header .muted-text { margin: 6px 0 0; max-width: 60ch; font-size: 14px; }
       .character-studio-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+      .character-studio-tabs { display: flex; flex-direction: column; gap: 18px; }
+      .character-studio-tablist { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border-radius: 14px; background: var(--card); border: 1px solid var(--ring); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); overflow-x: auto; }
+      .character-studio-tablist::-webkit-scrollbar { height: 6px; }
+      .character-studio-tab-button {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .character-studio-tab-button:hover { color: var(--ink); }
+      .character-studio-tab-button[aria-selected="true"] {
+        background: var(--acc);
+        color: var(--active-tab-text);
+        box-shadow: 0 14px 36px rgba(62, 114, 255, 0.28);
+        border-color: var(--acc);
+        transform: translateY(-1px);
+      }
+      .character-studio-tab-button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(79, 123, 255, 0.45);
+      }
+      .character-studio-tabpanels { position: relative; }
       .character-studio-header-badge {
         font-size: 11px;
         letter-spacing: .3px;
@@ -172,6 +200,7 @@
         flex-direction: column;
         gap: 14px;
       }
+      .character-studio-section[hidden] { display: none; }
       .character-studio-section h3 { margin: 0; font-size: 14px; font-weight: 600; }
       .character-studio-section p { margin: 0; }
       .character-studio-two-col { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
@@ -311,6 +340,16 @@
         expression: 'Expression Sheet'
       };
 
+      const CHARACTER_TAB_CONFIG = [
+        { id: 'profile', label: 'Profile' },
+        { id: 'stats', label: 'Stats & Spotlight' },
+        { id: 'traits', label: 'Traits & Personality' },
+        { id: 'background', label: 'Background & Family' },
+        { id: 'arc', label: 'Character Arc' },
+        { id: 'lookbook', label: 'Lookbook' },
+        { id: 'ai', label: 'AI Concepting' }
+      ];
+
       const initialCharacters = [
         {
           id: 'char-mr-mega',
@@ -343,7 +382,8 @@
 
       const state = {
         characters: initialCharacters.map(normalizeCharacter),
-        activeId: initialCharacters.length ? initialCharacters[0].id : null
+        activeId: initialCharacters.length ? initialCharacters[0].id : null,
+        activeTabId: 'profile'
       };
 
       function escapeHtml(value){
@@ -525,6 +565,20 @@
         const aiPrompt = active.ai?.prompt || '';
         const aiNotes = active.ai?.notes || '';
 
+        if (!CHARACTER_TAB_CONFIG.some(tab => tab.id === state.activeTabId)){
+          state.activeTabId = CHARACTER_TAB_CONFIG[0].id;
+        }
+
+        const tabButtonsMarkup = CHARACTER_TAB_CONFIG.map(tab => {
+          const isActive = tab.id === state.activeTabId;
+          return `<button type="button" class="character-studio-tab-button" role="tab" id="character-tab-${tab.id}" data-tab-id="${tab.id}" aria-controls="character-panel-${tab.id}" aria-selected="${isActive ? 'true' : 'false'}" tabindex="${isActive ? '0' : '-1'}">${escapeHtml(tab.label)}</button>`;
+        }).join('');
+
+        const panelAttributes = id => {
+          const isActive = state.activeTabId === id;
+          return `${isActive ? '' : ' hidden'} aria-hidden="${isActive ? 'false' : 'true'}"`;
+        };
+
         container.innerHTML = `
           <div class="character-studio-detail-header">
             <div>
@@ -535,164 +589,172 @@
               <button class="character-studio-tertiary" type="button" data-character-delete>Delete Character</button>
             </div>
           </div>
-          <section class="character-studio-section">
-            <h3>Profile</h3>
-            <p class="muted-text">Keep the essentials handy when writing.</p>
-            <div class="character-studio-two-col">
-              <label class="character-studio-field">
-                <span>Name</span>
-                <input type="text" value="${escapeHtml(active.name || '')}" data-character-field="name" placeholder="Character name" />
-              </label>
-              <label class="character-studio-field">
-                <span>Role</span>
-                <input type="text" value="${escapeHtml(active.role || '')}" data-character-field="role" placeholder="Protagonist, Antagonist..." />
-              </label>
-              <label class="character-studio-field">
-                <span>Archetype</span>
-                <input type="text" value="${escapeHtml(active.archetype || '')}" data-character-field="archetype" placeholder="e.g. Reluctant hero" />
-              </label>
-              <label class="character-studio-field">
-                <span>Pronouns</span>
-                <input type="text" value="${escapeHtml(active.pronouns || '')}" data-character-field="pronouns" placeholder="They/Them" />
-              </label>
-              <label class="character-studio-field">
-                <span>Age</span>
-                <input type="text" value="${escapeHtml(active.age || '')}" data-character-field="age" placeholder="32" />
-              </label>
+          <div class="character-studio-tabs">
+            <div class="character-studio-tablist" role="tablist" aria-label="Character sections" data-character-tablist>
+              ${tabButtonsMarkup}
             </div>
-            <label class="character-studio-field">
-              <span>Summary</span>
-              <textarea class="small" data-character-field="summary" placeholder="Logline summary">${escapeHtml(active.summary || '')}</textarea>
-            </label>
-          </section>
-          <section class="character-studio-section">
-            <h3>Stats &amp; Spotlight</h3>
-            <p class="muted-text">Track how often this character appears in the script.</p>
-            <div class="character-studio-stats-grid">
-              <div class="character-studio-stat">
-                <span class="character-studio-stat-value" data-character-stat="scenes">${escapeHtml(String(statsScenes))}</span>
-                <span class="character-studio-stat-label">Scenes</span>
-              </div>
-              <div class="character-studio-stat">
-                <span class="character-studio-stat-value" data-character-stat="dialogue">${escapeHtml(String(statsDialogue))}</span>
-                <span class="character-studio-stat-label">Dialogue Lines</span>
-              </div>
-              <div class="character-studio-stat">
-                <span class="character-studio-stat-value" data-character-stat="screenTime">${escapeHtml(String(statsScreenTime))}</span>
-                <span class="character-studio-stat-label">Estimated Minutes</span>
-              </div>
-            </div>
-            <div class="character-studio-two-col">
-              <label class="character-studio-field">
-                <span>Total scenes</span>
-                <input type="number" min="0" value="${escapeHtml(String(statsScenes))}" data-character-field="stats.scenes" />
-              </label>
-              <label class="character-studio-field">
-                <span>Dialogue lines</span>
-                <input type="number" min="0" value="${escapeHtml(String(statsDialogue))}" data-character-field="stats.dialogue" />
-              </label>
-              <label class="character-studio-field">
-                <span>Screen time (minutes)</span>
-                <input type="number" min="0" step="0.1" value="${escapeHtml(String(statsScreenTime))}" data-character-field="stats.screenTime" />
-              </label>
-            </div>
-          </section>
-          <section class="character-studio-section">
-            <h3>Traits &amp; Personality</h3>
-            <p class="muted-text">List defining qualities, habits, and secrets.</p>
-            <div class="character-studio-traits-preview" data-traits-preview>${traitsPreview}</div>
-            <label class="character-studio-field">
-              <span>Traits (one per line)</span>
-              <textarea data-character-field="traits" placeholder="Resilient&#10;Impulsive&#10;Secret romantic">${escapeHtml(traitsText)}</textarea>
-            </label>
-          </section>
-          <section class="character-studio-section">
-            <h3>Background &amp; Family</h3>
-            <div class="character-studio-two-col">
-              <label class="character-studio-field">
-                <span>Background story</span>
-                <textarea data-character-field="background" placeholder="Origin story, formative experiences">${escapeHtml(active.background || '')}</textarea>
-              </label>
-              <label class="character-studio-field">
-                <span>Family tree / relationships</span>
-                <textarea data-character-field="familyTree" placeholder="Parents, siblings, key relationships">${escapeHtml(active.familyTree || '')}</textarea>
-              </label>
-            </div>
-          </section>
-          <section class="character-studio-section">
-            <h3>Character Arc</h3>
-            <p class="muted-text">Map how the character transforms across the story.</p>
-            <div class="character-studio-two-col">
-              <label class="character-studio-field">
-                <span>Setup</span>
-                <textarea data-character-field="arc.setup" placeholder="Who are they at the beginning?">${escapeHtml(active.arc?.setup || '')}</textarea>
-              </label>
-              <label class="character-studio-field">
-                <span>Development</span>
-                <textarea data-character-field="arc.development" placeholder="Challenges, midpoint, reversals">${escapeHtml(active.arc?.development || '')}</textarea>
-              </label>
-              <label class="character-studio-field">
-                <span>Resolution</span>
-                <textarea data-character-field="arc.resolution" placeholder="Where do they end up?">${escapeHtml(active.arc?.resolution || '')}</textarea>
-              </label>
-            </div>
-          </section>
-          <section class="character-studio-section">
-            <h3>Lookbook</h3>
-            <p class="muted-text">Collect portrait, turnaround, and expression references.</p>
-            <div class="character-studio-two-col">
-              <label class="character-studio-field">
-                <span>Portrait URL</span>
-                <input type="url" data-character-field="looks.portrait" value="${escapeHtml(portraitUrl)}" placeholder="https://..." />
-              </label>
-              <label class="character-studio-field">
-                <span>Turnarounds (one per line)</span>
-                <textarea data-character-field="looks.turnarounds" class="small" placeholder="Link to turnaround sheets">${escapeHtml(turnaroundsText)}</textarea>
-              </label>
-              <label class="character-studio-field">
-                <span>Expression sheets (one per line)</span>
-                <textarea data-character-field="looks.expressions" class="small" placeholder="Link to expressions">${escapeHtml(expressionsText)}</textarea>
-              </label>
-            </div>
-            <div class="character-studio-look-grid">
-              <div class="character-studio-look-card" data-look-preview="portrait">
-                <span class="character-studio-look-label">Portrait</span>
-                <div data-look-content>
-                  ${characterLookPreviewMarkup('portrait', portraitUrl, active)}
+            <div class="character-studio-tabpanels">
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-profile" aria-labelledby="character-tab-profile" data-tab-panel="profile"${panelAttributes('profile')}>
+                <h3>Profile</h3>
+                <p class="muted-text">Keep the essentials handy when writing.</p>
+                <div class="character-studio-two-col">
+                  <label class="character-studio-field">
+                    <span>Name</span>
+                    <input type="text" value="${escapeHtml(active.name || '')}" data-character-field="name" placeholder="Character name" />
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Role</span>
+                    <input type="text" value="${escapeHtml(active.role || '')}" data-character-field="role" placeholder="Protagonist, Antagonist..." />
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Archetype</span>
+                    <input type="text" value="${escapeHtml(active.archetype || '')}" data-character-field="archetype" placeholder="e.g. Reluctant hero" />
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Pronouns</span>
+                    <input type="text" value="${escapeHtml(active.pronouns || '')}" data-character-field="pronouns" placeholder="They/Them" />
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Age</span>
+                    <input type="text" value="${escapeHtml(active.age || '')}" data-character-field="age" placeholder="32" />
+                  </label>
                 </div>
-              </div>
-              <div class="character-studio-look-card" data-look-preview="turnaround">
-                <span class="character-studio-look-label">Turnaround</span>
-                <div data-look-content>
-                  ${characterLookPreviewMarkup('turnaround', turnaroundPreview, active)}
+                <label class="character-studio-field">
+                  <span>Summary</span>
+                  <textarea class="small" data-character-field="summary" placeholder="Logline summary">${escapeHtml(active.summary || '')}</textarea>
+                </label>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-stats" aria-labelledby="character-tab-stats" data-tab-panel="stats"${panelAttributes('stats')}>
+                <h3>Stats &amp; Spotlight</h3>
+                <p class="muted-text">Track how often this character appears in the script.</p>
+                <div class="character-studio-stats-grid">
+                  <div class="character-studio-stat">
+                    <span class="character-studio-stat-value" data-character-stat="scenes">${escapeHtml(String(statsScenes))}</span>
+                    <span class="character-studio-stat-label">Scenes</span>
+                  </div>
+                  <div class="character-studio-stat">
+                    <span class="character-studio-stat-value" data-character-stat="dialogue">${escapeHtml(String(statsDialogue))}</span>
+                    <span class="character-studio-stat-label">Dialogue Lines</span>
+                  </div>
+                  <div class="character-studio-stat">
+                    <span class="character-studio-stat-value" data-character-stat="screenTime">${escapeHtml(String(statsScreenTime))}</span>
+                    <span class="character-studio-stat-label">Estimated Minutes</span>
+                  </div>
                 </div>
-              </div>
-              <div class="character-studio-look-card" data-look-preview="expression">
-                <span class="character-studio-look-label">Expressions</span>
-                <div data-look-content>
-                  ${characterLookPreviewMarkup('expression', expressionPreview, active)}
+                <div class="character-studio-two-col">
+                  <label class="character-studio-field">
+                    <span>Total scenes</span>
+                    <input type="number" min="0" value="${escapeHtml(String(statsScenes))}" data-character-field="stats.scenes" />
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Dialogue lines</span>
+                    <input type="number" min="0" value="${escapeHtml(String(statsDialogue))}" data-character-field="stats.dialogue"/>
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Screen time (minutes)</span>
+                    <input type="number" min="0" step="0.1" value="${escapeHtml(String(statsScreenTime))}" data-character-field="stats.screenTime" />
+                  </label>
                 </div>
-              </div>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-traits" aria-labelledby="character-tab-traits" data-tab-panel="traits"${panelAttributes('traits')}>
+                <h3>Traits &amp; Personality</h3>
+                <p class="muted-text">List defining qualities, habits, and secrets.</p>
+                <div class="character-studio-traits-preview" data-traits-preview>${traitsPreview}</div>
+                <label class="character-studio-field">
+                  <span>Traits (one per line)</span>
+                  <textarea data-character-field="traits" placeholder="Resilient&#10;Impulsive&#10;Secret romantic">${escapeHtml(traitsText)}</textarea>
+                </label>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-background" aria-labelledby="character-tab-background" data-tab-panel="background"${panelAttributes('background')}>
+                <h3>Background &amp; Family</h3>
+                <div class="character-studio-two-col">
+                  <label class="character-studio-field">
+                    <span>Background story</span>
+                    <textarea data-character-field="background" placeholder="Origin story, formative experiences">${escapeHtml(active.background || '')}</textarea>
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Family tree / relationships</span>
+                    <textarea data-character-field="familyTree" placeholder="Parents, siblings, key relationships">${escapeHtml(active.familyTree || '')}</textarea>
+                  </label>
+                </div>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-arc" aria-labelledby="character-tab-arc" data-tab-panel="arc"${panelAttributes('arc')}>
+                <h3>Character Arc</h3>
+                <p class="muted-text">Map how the character transforms across the story.</p>
+                <div class="character-studio-two-col">
+                  <label class="character-studio-field">
+                    <span>Setup</span>
+                    <textarea data-character-field="arc.setup" placeholder="Who are they at the beginning?">${escapeHtml(active.arc?.setup || '')}</textarea>
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Development</span>
+                    <textarea data-character-field="arc.development" placeholder="Challenges, midpoint, reversals">${escapeHtml(active.arc?.development || '')}</textarea>
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Resolution</span>
+                    <textarea data-character-field="arc.resolution" placeholder="Where do they end up?">${escapeHtml(active.arc?.resolution || '')}</textarea>
+                  </label>
+                </div>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-lookbook" aria-labelledby="character-tab-lookbook" data-tab-panel="lookbook"${panelAttributes('lookbook')}>
+                <h3>Lookbook</h3>
+                <p class="muted-text">Collect portrait, turnaround, and expression references.</p>
+                <div class="character-studio-two-col">
+                  <label class="character-studio-field">
+                    <span>Portrait URL</span>
+                    <input type="url" data-character-field="looks.portrait" value="${escapeHtml(portraitUrl)}" placeholder="https://..." />
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Turnarounds (one per line)</span>
+                    <textarea data-character-field="looks.turnarounds" class="small" placeholder="Link to turnaround sheets">${escapeHtml(turnaroundsText)}</textarea>
+                  </label>
+                  <label class="character-studio-field">
+                    <span>Expression sheets (one per line)</span>
+                    <textarea data-character-field="looks.expressions" class="small" placeholder="Link to expressions">${escapeHtml(expressionsText)}</textarea>
+                  </label>
+                </div>
+                <div class="character-studio-look-grid">
+                  <div class="character-studio-look-card" data-look-preview="portrait">
+                    <span class="character-studio-look-label">Portrait</span>
+                    <div data-look-content>
+                      ${characterLookPreviewMarkup('portrait', portraitUrl, active)}
+                    </div>
+                  </div>
+                  <div class="character-studio-look-card" data-look-preview="turnaround">
+                    <span class="character-studio-look-label">Turnaround</span>
+                    <div data-look-content>
+                      ${characterLookPreviewMarkup('turnaround', turnaroundPreview, active)}
+                    </div>
+                  </div>
+                  <div class="character-studio-look-card" data-look-preview="expression">
+                    <span class="character-studio-look-label">Expressions</span>
+                    <div data-look-content>
+                      ${characterLookPreviewMarkup('expression', expressionPreview, active)}
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-ai" aria-labelledby="character-tab-ai" data-tab-panel="ai"${panelAttributes('ai')}>
+                <h3>AI Concepting</h3>
+                <p class="muted-text">Draft prompts for StudioOrganize AI or export for other tools.</p>
+                <label class="character-studio-field">
+                  <span>AI prompt</span>
+                  <textarea data-character-field="ai.prompt" placeholder="Describe the character's look, vibe, and scene">${escapeHtml(aiPrompt)}</textarea>
+                </label>
+                <label class="character-studio-field">
+                  <span>Notes / references</span>
+                  <textarea data-character-field="ai.notes" class="small" placeholder="Shot list, wardrobe callouts, artist references">${escapeHtml(aiNotes)}</textarea>
+                </label>
+                <div class="character-studio-ai-actions">
+                  <button type="button" data-character-ai-generate>Save prompt &amp; prep AI render</button>
+                  <span class="character-studio-status" data-ai-status></span>
+                </div>
+              </section>
             </div>
-          </section>
-          <section class="character-studio-section">
-            <h3>AI Concepting</h3>
-            <p class="muted-text">Draft prompts for StudioOrganize AI or export for other tools.</p>
-            <label class="character-studio-field">
-              <span>AI prompt</span>
-              <textarea data-character-field="ai.prompt" placeholder="Describe the character's look, vibe, and scene">${escapeHtml(aiPrompt)}</textarea>
-            </label>
-            <label class="character-studio-field">
-              <span>Notes / references</span>
-              <textarea data-character-field="ai.notes" class="small" placeholder="Shot list, wardrobe callouts, artist references">${escapeHtml(aiNotes)}</textarea>
-            </label>
-            <div class="character-studio-ai-actions">
-              <button type="button" data-character-ai-generate>Save prompt &amp; prep AI render</button>
-              <span class="character-studio-status" data-ai-status></span>
-            </div>
-          </section>
+          </div>
         `;
 
+        setupCharacterTabs(container);
         bindCharacterStudioFields(container, active);
         updateTimelineCharacterMeta();
         updateTimelineHighlights();
@@ -724,6 +786,60 @@
         else if (kind === 'expression') url = Array.isArray(character?.looks?.expressions) ? character.looks.expressions[0] || '' : '';
         const content = slot.querySelector('[data-look-content]');
         if (content) content.innerHTML = characterLookPreviewMarkup(kind, url, character);
+      }
+
+      function setupCharacterTabs(container){
+        if (!container) return;
+        const tablist = container.querySelector('[data-character-tablist]');
+        if (!tablist) return;
+        const buttons = Array.from(tablist.querySelectorAll('[data-tab-id]'));
+        const panels = Array.from(container.querySelectorAll('[data-tab-panel]'));
+        if (!buttons.length || !panels.length) return;
+
+        const tabIds = buttons.map(btn => btn.getAttribute('data-tab-id'));
+        if (!tabIds.includes(state.activeTabId)){
+          state.activeTabId = tabIds[0];
+        }
+
+        const activate = (id, { focus } = { focus: true }) => {
+          if (!tabIds.includes(id)) id = tabIds[0];
+          state.activeTabId = id;
+          buttons.forEach(btn => {
+            const tabId = btn.getAttribute('data-tab-id');
+            const isActive = tabId === id;
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            btn.tabIndex = isActive ? 0 : -1;
+            if (isActive && focus) btn.focus();
+          });
+          panels.forEach(panel => {
+            const panelId = panel.getAttribute('data-tab-panel');
+            const isActive = panelId === id;
+            panel.hidden = !isActive;
+            panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+          });
+        };
+
+        buttons.forEach((btn, index) => {
+          const tabId = btn.getAttribute('data-tab-id');
+          btn.addEventListener('click', () => activate(tabId, { focus: false }));
+          btn.addEventListener('keydown', event => {
+            if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            let targetIndex = index;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown'){
+              targetIndex = (index + 1) % buttons.length;
+            } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp'){
+              targetIndex = (index - 1 + buttons.length) % buttons.length;
+            } else if (event.key === 'Home'){
+              targetIndex = 0;
+            } else if (event.key === 'End'){
+              targetIndex = buttons.length - 1;
+            }
+            activate(buttons[targetIndex].getAttribute('data-tab-id'));
+          });
+        });
+
+        activate(state.activeTabId, { focus: false });
       }
 
       function bindCharacterStudioFields(container, active){
