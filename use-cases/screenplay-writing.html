@@ -8360,6 +8360,11 @@
         if (!project) return;
         project.settings = project.settings || {};
         project.settings.timelineDockPinned = !project.settings.timelineDockPinned;
+        if (document.body.classList.contains('focus-mode')){
+          project.settings.timelineDockPinnedBeforeFocus = project.settings.timelineDockPinned;
+        } else if (typeof project.settings.timelineDockPinnedBeforeFocus !== 'undefined'){
+          delete project.settings.timelineDockPinnedBeforeFocus;
+        }
         saveLocal(project);
         syncTimelineDockState(true);
       });
@@ -8448,6 +8453,7 @@
     function syncTimelineDockState(forceReveal){
       const dock = document.getElementById('timelineDock');
       const handle = document.getElementById('timelineDockHandle');
+      const inFocusMode = document.body.classList.contains('focus-mode');
       timelinePinned = !!project?.settings?.timelineDockPinned;
       lastTimelinePinned = timelinePinned;
       if (handle){
@@ -8461,8 +8467,12 @@
       if (timelinePinned){
         showTimelineDock();
       } else {
-        if (forceReveal) showTimelineDock();
-        if (!timelineHovering) scheduleTimelineHide();
+        if (!inFocusMode){
+          if (forceReveal) showTimelineDock();
+          if (!timelineHovering) scheduleTimelineHide();
+        } else {
+          hideTimelineDockImmediately();
+        }
         if (handle) handle.style.width = '';
       }
       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
@@ -8591,6 +8601,16 @@
     function applyFocusModeUI(){
       const focused = !!project?.settings?.focus;
       document.body.classList.toggle('focus-mode', focused);
+      project.settings = project.settings || {};
+      if (focused){
+        if (typeof project.settings.timelineDockPinnedBeforeFocus === 'undefined'){
+          project.settings.timelineDockPinnedBeforeFocus = !!project.settings.timelineDockPinned;
+        }
+        project.settings.timelineDockPinned = false;
+      } else if (typeof project?.settings?.timelineDockPinnedBeforeFocus !== 'undefined'){
+        project.settings.timelineDockPinned = !!project.settings.timelineDockPinnedBeforeFocus;
+        delete project.settings.timelineDockPinnedBeforeFocus;
+      }
       const btn = document.getElementById('focusBtn');
       if (btn) btn.textContent = focused ? 'Exit Focus' : 'Focus';
       updateHud();
@@ -8599,12 +8619,13 @@
       syncNavHeight();
       syncTimelineDockState();
       syncFocusHudState();
+      if (focused) hideTimelineDockImmediately();
     }
     function toggleFocus(){
       project.settings = project.settings || {};
       project.settings.focus = !project.settings.focus;
-      saveLocal(project);
       applyFocusModeUI();
+      saveLocal(project);
     }
     function updateHud(){
       const hudC = document.getElementById('hudCounter');
