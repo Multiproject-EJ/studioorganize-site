@@ -209,60 +209,7 @@
         <aside class="panel">
           <h2>Scenes</h2>
           <div class="panel-body">
-            <div class="scene-list">
-              <div class="scene-card" data-scene="1" role="button" tabindex="0" aria-label="Scene 12A · Alley showdown">
-                <div class="scene-card-label" data-scene-edit-root>
-                  <span class="scene-card-color" aria-hidden="true"></span>
-                  <div class="scene-card-label-display">
-                    <strong data-scene-card-number>Scene 12A</strong>
-                    <span aria-hidden="true" class="scene-card-separator">·</span>
-                    <span data-scene-card-name>Alley showdown</span>
-                  </div>
-                  <input class="scene-card-input" type="text" value="Alley showdown" data-scene-input aria-label="Scene name" />
-                </div>
-                <small>Storyboard locked · 12 frames</small>
-                <p class="muted">Lighting cues synced to script beats.</p>
-              </div>
-              <div class="scene-card active" data-scene="2" role="button" tabindex="0" aria-label="Scene 13 · Rooftop chase">
-                <div class="scene-card-label" data-scene-edit-root>
-                  <span class="scene-card-color" aria-hidden="true"></span>
-                  <div class="scene-card-label-display">
-                    <strong data-scene-card-number>Scene 13</strong>
-                    <span aria-hidden="true" class="scene-card-separator">·</span>
-                    <span data-scene-card-name>Rooftop chase</span>
-                  </div>
-                  <input class="scene-card-input" type="text" value="Rooftop chase" data-scene-input aria-label="Scene name" />
-                </div>
-                <small>In progress · 8 frames</small>
-                <p class="muted">Share draft with second unit.</p>
-              </div>
-              <div class="scene-card" data-scene="3" role="button" tabindex="0" aria-label="Scene 18 · Safehouse briefing">
-                <div class="scene-card-label" data-scene-edit-root>
-                  <span class="scene-card-color" aria-hidden="true"></span>
-                  <div class="scene-card-label-display">
-                    <strong data-scene-card-number>Scene 18</strong>
-                    <span aria-hidden="true" class="scene-card-separator">·</span>
-                    <span data-scene-card-name>Safehouse briefing</span>
-                  </div>
-                  <input class="scene-card-input" type="text" value="Safehouse briefing" data-scene-input aria-label="Scene name" />
-                </div>
-                <small>Needs review · 5 frames</small>
-                <p class="muted">Director comments pending.</p>
-              </div>
-              <div class="scene-card" data-scene="4" role="button" tabindex="0" aria-label="Scene 21 · Finale">
-                <div class="scene-card-label" data-scene-edit-root>
-                  <span class="scene-card-color" aria-hidden="true"></span>
-                  <div class="scene-card-label-display">
-                    <strong data-scene-card-number>Scene 21</strong>
-                    <span aria-hidden="true" class="scene-card-separator">·</span>
-                    <span data-scene-card-name>Finale</span>
-                  </div>
-                  <input class="scene-card-input" type="text" value="Finale" data-scene-input aria-label="Scene name" />
-                </div>
-                <small>Storyboard AI ready</small>
-                <p class="muted">Generate new hero shots.</p>
-              </div>
-            </div>
+            <div class="scene-list" data-scene-list></div>
           </div>
         </aside>
 
@@ -278,7 +225,7 @@
               </div>
             </header>
             <div class="timeline-wrapper">
-              <div class="timeline-grid">
+              <div class="timeline-grid" data-timeline-grid>
                 <div class="timeline-scale" aria-hidden="true">
                   <div class="timeline-scale__header">
                     <span>Scene timeline (minutes)</span>
@@ -296,198 +243,8 @@
                     <span style="left:100%">0:40</span>
                   </div>
                 </div>
-
-                <div class="timeline-scene" data-scene-row="1" data-scene-name="Scene 12A · Alley showdown" data-scene-meta="Storyboard locked · 01:10 runtime · 12 frames">
-                  <div class="timeline-scene__label">
-                    <strong>Scene 12A</strong>
-                    <span>Alley showdown</span>
-                    <small>Storyboard locked · 12 frames</small>
-                  </div>
-                  <div class="timeline-scene__tracks">
-                    <div class="timeline-track" data-track="beats">
-                      <div class="timeline-track__header">Beat grid</div>
-                      <div class="timeline-track__lane"></div>
-                    </div>
-                    <div class="timeline-track" data-track="shots">
-                      <div class="timeline-track__header">Shots</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:2%; width:16%;">Establish threat</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:20%; width:28%;">Knife reversal</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:52%; width:24%;">Slow mo impact</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:78%; width:18%;">Escape alley</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="audio">
-                      <div class="timeline-track__header">Audio</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:6%; width:30%;">SFX: rain layers</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:44%; width:34%;">Score: tension swell</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="lighting">
-                      <div class="timeline-track__header">Lighting</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:12%; width:32%;">Practical neon boost</div>
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:58%; width:24%;">Backlight strobe</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="notes">
-                      <div class="timeline-track__header">Notes</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:4%; width:24%;">Director: stay wide</div>
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:64%; width:28%;">Producer: add rain plates</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="timeline-scene active" data-scene-row="2" data-scene-name="Scene 13 · Rooftop chase" data-scene-meta="Linked to draft v4 · 00:45 runtime · 8 frames">
-                  <div class="timeline-scene__label">
-                    <strong>Scene 13</strong>
-                    <span>Rooftop chase</span>
-                    <small>In progress · 8 frames</small>
-                  </div>
-                  <div class="timeline-scene__tracks">
-                    <div class="timeline-track" data-track="beats">
-                      <div class="timeline-track__header">Beat grid</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:0%; width:12%;">Beat 1</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:18%; width:12%;">Beat 2</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:36%; width:14%;">Beat 3</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:58%; width:14%;">Beat 4</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:78%; width:14%;">Beat 5</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="shots">
-                      <div class="timeline-track__header">Shots</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:4%; width:18%;">Drone reveal</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:26%; width:22%;">Leap across gap</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:54%; width:20%;">Handheld scramble</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:78%; width:16%;">Edge save</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="audio">
-                      <div class="timeline-track__header">Audio</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:10%; width:18%;">Drone whir</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:34%; width:28%;">Percussive chase bed</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:70%; width:18%;">Wind gusts</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="lighting">
-                      <div class="timeline-track__header">Lighting</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:6%; width:22%;">Practical neon spill</div>
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:38%; width:26%;">Helipad strobes</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="notes">
-                      <div class="timeline-track__header">Notes</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:14%; width:20%;">FX: add rain pass</div>
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:48%; width:26%;">Director: add wide landing</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="timeline-scene" data-scene-row="3" data-scene-name="Scene 18 · Safehouse briefing" data-scene-meta="Needs review · 00:32 runtime · 5 frames">
-                  <div class="timeline-scene__label">
-                    <strong>Scene 18</strong>
-                    <span>Safehouse briefing</span>
-                    <small>Needs review · 5 frames</small>
-                  </div>
-                  <div class="timeline-scene__tracks">
-                    <div class="timeline-track" data-track="beats">
-                      <div class="timeline-track__header">Beat grid</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:0%; width:20%;">Beat 1</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:30%; width:22%;">Beat 2</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:60%; width:26%;">Beat 3</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="shots">
-                      <div class="timeline-track__header">Shots</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:8%; width:24%;">Briefing table</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:38%; width:20%;">Insert dossier</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:64%; width:24%;">Reaction close</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="audio">
-                      <div class="timeline-track__header">Audio</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:10%; width:34%;">Ambient pads</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:56%; width:18%;">Paper shuffle</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="lighting">
-                      <div class="timeline-track__header">Lighting</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:16%; width:28%;">Desk practicals</div>
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:52%; width:20%;">Window bounce</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="notes">
-                      <div class="timeline-track__header">Notes</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:6%; width:26%;">Production: schedule pickups</div>
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:48%; width:28%;">Writer: add VO alt</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="timeline-scene" data-scene-row="4" data-scene-name="Scene 21 · Finale" data-scene-meta="Storyboard AI ready · 01:24 runtime · AI assisted">
-                  <div class="timeline-scene__label">
-                    <strong>Scene 21</strong>
-                    <span>Finale</span>
-                    <small>Storyboard AI ready</small>
-                  </div>
-                  <div class="timeline-scene__tracks">
-                    <div class="timeline-track" data-track="beats">
-                      <div class="timeline-track__header">Beat grid</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:0%; width:18%;">Beat 1</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:22%; width:18%;">Beat 2</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:46%; width:18%;">Beat 3</div>
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:70%; width:20%;">Beat 4</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="shots">
-                      <div class="timeline-track__header">Shots</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:6%; width:20%;">Hero entry</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:32%; width:26%;">Clash montage</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:62%; width:24%;">Final push</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="audio">
-                      <div class="timeline-track__header">Audio</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--audio" data-icon="🎵" style="left:10%; width:30%;">Choir motif</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:54%; width:26%;">Explosion design</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="lighting">
-                      <div class="timeline-track__header">Lighting</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:16%; width:32%;">Pyro flares</div>
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:56%; width:28%;">Hero key ramp</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track" data-track="notes">
-                      <div class="timeline-track__header">Notes</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:6%; width:28%;">Stunts: rehearse wire rigs</div>
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:52%; width:30%;">Editor: prep temp VFX</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
               </div>
+
             </div>
           </div>
         </section>
@@ -593,10 +350,10 @@
 
   <script>
     const trackToggles = document.querySelectorAll('[data-track-toggle]');
-    const sceneCards = document.querySelectorAll('.scene-card');
-    const sceneRows = document.querySelectorAll('[data-scene-row]');
+    const sceneListContainer = document.querySelector('[data-scene-list]');
     const sceneTitle = document.querySelector('[data-scene-title]');
     const sceneMeta = document.querySelector('[data-scene-meta]');
+    const timelineGrid = document.querySelector('[data-timeline-grid]');
     const aiPromptInput = document.getElementById('aiShotPrompt');
     const aiFrameInput = document.getElementById('aiFrameCount');
     const aiProviderSelect = document.getElementById('aiProvider');
@@ -619,9 +376,528 @@
 
     const storage = createScopedStorage('storyboard');
 
+    const sceneDataMap = new Map();
+    let sceneData = [];
+    let sceneCards = [];
+    let sceneRows = [];
+    let activeSceneId = null;
+
     initialiseAiProviderSelect();
     setupApiDialog();
     setupGenerationWorkflow();
+
+    const WRITER_DB_NAME = 'sw_db_v1';
+    const WRITER_DB_STORE = 'projects';
+    const WRITER_LAST_PROJECT_KEY = 'SW_LAST_PROJECT_ID';
+
+    const FALLBACK_SCENES_RAW = [
+      {
+        id: 'demo-alley',
+        slug: 'EXT. ALLEY - NIGHT',
+        storyboardStatus: 'Storyboard locked · 12 frames',
+        storyboardDescription: 'Lighting cues synced to script beats.',
+        cards: ['Establish threat', 'Knife reversal', 'Slow mo impact', 'Escape alley'],
+        storyboards: [
+          { id: 'demo-alley-shot-1', title: 'Establish threat' },
+          { id: 'demo-alley-shot-2', title: 'Knife reversal' },
+          { id: 'demo-alley-shot-3', title: 'Slow mo impact' },
+          { id: 'demo-alley-shot-4', title: 'Escape alley' }
+        ],
+        sounds: [
+          { id: 'demo-alley-sound-1', cue: 'SFX: rain layers' },
+          { id: 'demo-alley-sound-2', cue: 'Score: tension swell' }
+        ],
+        notes: 'Director: stay wide\nProducer: add rain plates',
+        metadata: {
+          sceneTagState: { locationType: 'ALLEY', timeOfDay: 'NIGHT', custom: ['Rain soaked'] },
+          sceneAutoColorLabel: 'Night exterior',
+          sceneAutoColorDetail: 'Neon practical bounce'
+        },
+        color: '#1d4ed8'
+      },
+      {
+        id: 'demo-rooftop',
+        slug: 'EXT. ROOFTOP - NIGHT',
+        storyboardStatus: 'In progress · 8 frames',
+        storyboardDescription: 'Share draft with second unit.',
+        cards: ['Drone reveal', 'Leap across gap', 'Handheld scramble', 'Edge save'],
+        storyboards: [
+          { id: 'demo-rooftop-shot-1', title: 'Drone reveal' },
+          { id: 'demo-rooftop-shot-2', title: 'Leap across gap' },
+          { id: 'demo-rooftop-shot-3', title: 'Handheld scramble' },
+          { id: 'demo-rooftop-shot-4', title: 'Edge save' }
+        ],
+        sounds: [
+          { id: 'demo-rooftop-sound-1', cue: 'Drone whir' },
+          { id: 'demo-rooftop-sound-2', cue: 'Score: percussive chase bed' },
+          { id: 'demo-rooftop-sound-3', cue: 'Wind gusts' }
+        ],
+        notes: 'FX: add rain pass\nDirector: add wide landing',
+        metadata: {
+          sceneTagState: { locationType: 'ROOFTOP', timeOfDay: 'NIGHT', custom: ['Neon spill'] },
+          sceneAutoColorLabel: 'City skyline',
+          sceneAutoColorDetail: 'Helipad strobes'
+        },
+        color: '#1f2937'
+      },
+      {
+        id: 'demo-safehouse',
+        slug: 'INT. SAFEHOUSE - NIGHT',
+        storyboardStatus: 'Needs review · 5 frames',
+        storyboardDescription: 'Director comments pending.',
+        cards: ['Intel drop', 'Mission brief', 'Surveillance plan'],
+        storyboards: [
+          { id: 'demo-safehouse-shot-1', title: 'Table wide' },
+          { id: 'demo-safehouse-shot-2', title: 'Files close-up' },
+          { id: 'demo-safehouse-shot-3', title: 'Resolve push-in' }
+        ],
+        sounds: [
+          { id: 'demo-safehouse-sound-1', cue: 'Score: low synth tension' },
+          { id: 'demo-safehouse-sound-2', cue: 'Radio chatter' }
+        ],
+        notes: 'AD: schedule reshoot\nDP: add monitor glow',
+        metadata: {
+          sceneTagState: { locationType: 'SAFEHOUSE', timeOfDay: 'NIGHT', custom: ['Briefing table'] },
+          sceneAutoColorLabel: 'Interior warm practicals',
+          sceneAutoColorDetail: 'Desk lamps dim'
+        },
+        color: '#0f172a'
+      },
+      {
+        id: 'demo-finale',
+        slug: 'INT. SOUNDSTAGE - NIGHT',
+        storyboardStatus: 'Storyboard AI ready',
+        storyboardDescription: 'Generate new hero shots.',
+        cards: ['Setup reveal', 'Hero choice', 'Twist', 'Resolution'],
+        storyboards: [
+          { id: 'demo-finale-shot-1', title: 'Reveal wide' },
+          { id: 'demo-finale-shot-2', title: 'Close hero' },
+          { id: 'demo-finale-shot-3', title: 'VFX burst' }
+        ],
+        sounds: [
+          { id: 'demo-finale-sound-1', cue: 'Score: ascend' },
+          { id: 'demo-finale-sound-2', cue: 'FX: energy surge' },
+          { id: 'demo-finale-sound-3', cue: 'Score: resolve' }
+        ],
+        notes: 'Producer: confirm VFX\nDirector: punch final beat',
+        metadata: {
+          sceneTagState: { locationType: 'STAGE', timeOfDay: 'NIGHT', custom: ['Hero moment'] },
+          sceneAutoColorLabel: 'Moving spots',
+          sceneAutoColorDetail: 'Backlight flare'
+        },
+        color: '#312e81'
+      }
+    ];
+
+    function sanitizeString(value) {
+      return typeof value === 'string' ? value.trim() : '';
+    }
+
+    function extractCardLabel(card) {
+      if (typeof card === 'string') return card.trim();
+      if (!card || typeof card !== 'object') return '';
+      const keys = ['title', 'label', 'name', 'text', 'slug'];
+      for (const key of keys) {
+        const value = card[key];
+        if (typeof value === 'string' && value.trim()) return value.trim();
+      }
+      return '';
+    }
+
+    function extractStoryboardLabel(entry, index) {
+      const label = extractCardLabel(entry);
+      if (label) return label;
+      return `Storyboard ${index + 1}`;
+    }
+
+    function extractSoundLabel(sound) {
+      if (typeof sound === 'string') return sound.trim();
+      if (!sound || typeof sound !== 'object') return '';
+      if (typeof sound.cue === 'string' && sound.cue.trim()) return sound.cue.trim();
+      if (typeof sound.title === 'string' && sound.title.trim()) return sound.title.trim();
+      return '';
+    }
+
+    function resolveAudioIcon(label) {
+      const lower = label.toLowerCase();
+      if (lower.includes('score') || lower.includes('music') || lower.includes('choir')) {
+        return '🎵';
+      }
+      return '🔊';
+    }
+
+    function getSceneSnippetFromElements(elements) {
+      if (!Array.isArray(elements)) return '';
+      const text = elements
+        .map(el => (el && typeof el.txt === 'string' ? el.txt : ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) return '';
+      return text.length > 160 ? `${text.slice(0, 157)}…` : text;
+    }
+
+    function formatWriterScene(scene, index, options = {}) {
+      const { source = 'writer' } = options;
+      const rawSlug = sanitizeString(scene?.slug) || sanitizeString(scene?.title);
+      const number = index + 1;
+      const numberLabel = sanitizeString(scene?.metadata?.sceneNumberLabel) || `Scene ${number}`;
+      const displayName = rawSlug || numberLabel;
+      const cards = Array.isArray(scene?.cards) ? scene.cards.map(extractCardLabel).filter(Boolean) : [];
+      const storyboards = Array.isArray(scene?.storyboards)
+        ? scene.storyboards.map((entry, idx) => extractStoryboardLabel(entry, idx)).filter(Boolean)
+        : [];
+      const sounds = Array.isArray(scene?.sounds) ? scene.sounds.map(extractSoundLabel).filter(Boolean) : [];
+      const metadata = scene && typeof scene.metadata === 'object' ? scene.metadata : {};
+      const tagState = metadata.sceneTagState && typeof metadata.sceneTagState === 'object' ? metadata.sceneTagState : {};
+      const notesLines = [];
+      const rawNotes = sanitizeString(scene?.notes);
+      if (rawNotes) {
+        rawNotes.split(/\n+/).map(part => part.trim()).filter(Boolean).forEach(part => notesLines.push(part));
+      }
+      const customTags = Array.isArray(tagState.custom) ? tagState.custom.map(sanitizeString).filter(Boolean) : [];
+      customTags.forEach(tag => notesLines.push(`Tag: ${tag}`));
+      const snippet = getSceneSnippetFromElements(scene?.elements);
+      let statusText = sanitizeString(scene?.storyboardStatus) || sanitizeString(metadata.storyboardStatus);
+      if (!statusText) {
+        const pieces = [];
+        if (cards.length) pieces.push(`${cards.length} beat${cards.length === 1 ? '' : 's'}`);
+        if (storyboards.length) pieces.push(`${storyboards.length} storyboard${storyboards.length === 1 ? '' : 's'}`);
+        if (sounds.length) pieces.push(`${sounds.length} sound cue${sounds.length === 1 ? '' : 's'}`);
+        statusText = pieces.join(' · ') || 'No beats yet';
+      }
+      const description = sanitizeString(scene?.storyboardDescription)
+        || sanitizeString(metadata.storyboardDescription)
+        || snippet
+        || 'Add scene summary in the writer to see it here.';
+      const lightingCues = [];
+      const autoLabel = sanitizeString(metadata.sceneAutoColorLabel);
+      const autoDetail = sanitizeString(metadata.sceneAutoColorDetail);
+      if (autoLabel) lightingCues.push(autoLabel);
+      if (autoDetail && autoDetail !== autoLabel) lightingCues.push(autoDetail);
+      const locationType = sanitizeString(tagState.locationType);
+      const timeOfDay = sanitizeString(tagState.timeOfDay);
+      const locationMeta = [locationType, timeOfDay].filter(Boolean).join(' · ');
+      if (!lightingCues.length && locationMeta) lightingCues.push(locationMeta);
+      const notesList = notesLines.slice(0, 4);
+      const sourceMeta = source === 'writer'
+        ? 'Synced from Writer workspace'
+        : 'Demo data — open Writer to sync live scenes.';
+      const timelinePieces = [];
+      if (statusText) timelinePieces.push(statusText);
+      if (locationMeta) timelinePieces.push(locationMeta);
+      timelinePieces.push(sourceMeta);
+      const colorValue = sanitizeString(scene?.color);
+      const color = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorValue) ? colorValue : '';
+      const colorSourceRaw = sanitizeString(metadata.sceneColorSource || scene?.colorSource);
+      const colorSourceLabel = color
+        ? (colorSourceRaw === 'custom'
+          ? 'Writer custom color'
+          : (colorSourceRaw === 'auto'
+            ? 'Writer auto color'
+            : (source === 'writer' ? 'Writer scene color' : 'Demo scene color')))
+        : 'Scene color';
+      return {
+        id: String(scene?.id || `scene-${index}`),
+        index,
+        numberLabel,
+        displayName,
+        statusText,
+        description,
+        timelineMeta: timelinePieces.join(' · '),
+        cards,
+        storyboards,
+        sounds,
+        lightingCues,
+        notesList,
+        color,
+        colorSourceLabel,
+        source,
+      };
+    }
+
+    function computeBlockPositions(count) {
+      if (!count) return [];
+      if (count === 1) {
+        return [{ left: 30, width: 40 }];
+      }
+      const width = Math.max(12, Math.min(36, 70 / count));
+      const step = (100 - width) / Math.max(1, count - 1);
+      const positions = [];
+      for (let index = 0; index < count; index += 1) {
+        const left = Math.max(0, Math.min(100 - width, step * index));
+        positions.push({ left, width });
+      }
+      return positions;
+    }
+
+    function createTimelineTrack(trackKey, headerLabel, blockClass, icon, items, iconResolver = null) {
+      const track = document.createElement('div');
+      track.className = 'timeline-track';
+      track.dataset.track = trackKey;
+      const header = document.createElement('div');
+      header.className = 'timeline-track__header';
+      header.textContent = headerLabel;
+      const lane = document.createElement('div');
+      lane.className = 'timeline-track__lane';
+      const values = Array.isArray(items) ? items.filter(Boolean) : [];
+      const positions = computeBlockPositions(values.length);
+      values.forEach((label, index) => {
+        const block = document.createElement('div');
+        block.className = `timeline-block ${blockClass}`;
+        const iconValue = iconResolver ? iconResolver(label) : icon;
+        block.dataset.icon = iconValue;
+        block.style.left = `${positions[index].left}%`;
+        block.style.width = `${positions[index].width}%`;
+        block.textContent = label;
+        lane.appendChild(block);
+      });
+      track.append(header, lane);
+      return track;
+    }
+
+    function createSceneCard(scene) {
+      const card = document.createElement('div');
+      card.className = 'scene-card';
+      card.dataset.scene = scene.id;
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      const combinedLabel = `${scene.numberLabel} · ${scene.displayName}`;
+      card.setAttribute('aria-label', combinedLabel);
+
+      const label = document.createElement('div');
+      label.className = 'scene-card-label';
+      label.setAttribute('data-scene-edit-root', '');
+
+      const color = document.createElement('span');
+      color.className = 'scene-card-color';
+      color.setAttribute('aria-hidden', 'true');
+      if (scene.color) {
+        color.style.background = scene.color;
+      }
+      if (scene.colorSourceLabel) {
+        color.title = scene.colorSourceLabel;
+      }
+
+      const display = document.createElement('div');
+      display.className = 'scene-card-label-display';
+      const strong = document.createElement('strong');
+      strong.dataset.sceneCardNumber = '';
+      strong.textContent = scene.numberLabel;
+      const separator = document.createElement('span');
+      separator.className = 'scene-card-separator';
+      separator.setAttribute('aria-hidden', 'true');
+      separator.textContent = '·';
+      const name = document.createElement('span');
+      name.dataset.sceneCardName = '';
+      name.textContent = scene.displayName;
+      display.append(strong, separator, name);
+
+      const input = document.createElement('input');
+      input.className = 'scene-card-input';
+      input.type = 'text';
+      input.value = scene.displayName;
+      input.setAttribute('data-scene-input', '');
+      input.setAttribute('aria-label', 'Scene name');
+
+      label.append(color, display, input);
+
+      const status = document.createElement('small');
+      status.textContent = scene.statusText || '';
+
+      const description = document.createElement('p');
+      description.className = 'muted';
+      description.textContent = scene.description || '';
+
+      card.append(label, status, description);
+
+      card.addEventListener('click', () => {
+        if (card.classList.contains('editing')) return;
+        activateScene(scene.id);
+      });
+
+      card.addEventListener('keydown', event => {
+        if (event.key === 'F2') {
+          event.preventDefault();
+          startSceneRename(card);
+          return;
+        }
+        if (card.classList.contains('editing')) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          activateScene(scene.id);
+        }
+      });
+
+      label.addEventListener('dblclick', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        startSceneRename(card);
+      });
+
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          finishSceneRename(card, true);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          finishSceneRename(card, false);
+        }
+      });
+      input.addEventListener('blur', () => finishSceneRename(card, true));
+      input.addEventListener('click', event => event.stopPropagation());
+
+      return card;
+    }
+
+    function createTimelineScene(scene) {
+      const row = document.createElement('div');
+      row.className = 'timeline-scene';
+      row.dataset.sceneRow = scene.id;
+      row.dataset.sceneName = `${scene.numberLabel} · ${scene.displayName}`;
+      row.dataset.sceneMeta = scene.timelineMeta;
+
+      const label = document.createElement('div');
+      label.className = 'timeline-scene__label';
+      const number = document.createElement('strong');
+      number.textContent = scene.numberLabel;
+      const name = document.createElement('span');
+      name.textContent = scene.displayName;
+      const small = document.createElement('small');
+      small.textContent = scene.statusText || '';
+      label.append(number, name, small);
+
+      const tracks = document.createElement('div');
+      tracks.className = 'timeline-scene__tracks';
+      tracks.append(
+        createTimelineTrack('beats', 'Beat grid', 'timeline-block--beats', '⏱', scene.cards),
+        createTimelineTrack('shots', 'Shots', 'timeline-block--shots', '🎬', scene.storyboards),
+        createTimelineTrack('audio', 'Audio', 'timeline-block--audio', '🔊', scene.sounds, resolveAudioIcon),
+        createTimelineTrack('lighting', 'Lighting', 'timeline-block--lighting', '💡', scene.lightingCues),
+        createTimelineTrack('notes', 'Notes', 'timeline-block--notes', '📝', scene.notesList)
+      );
+
+      row.append(label, tracks);
+      return row;
+    }
+
+    function renderScenes() {
+      if (!sceneListContainer || !timelineGrid) return;
+      sceneDataMap.clear();
+      sceneListContainer.innerHTML = '';
+      timelineGrid.querySelectorAll('.timeline-scene').forEach(el => el.remove());
+
+      if (!sceneData.length) {
+        const empty = document.createElement('p');
+        empty.className = 'muted';
+        empty.dataset.sceneEmpty = 'true';
+        empty.textContent = 'No scenes yet. Open the Writer workspace to add scenes.';
+        sceneListContainer.appendChild(empty);
+        if (sceneTitle) sceneTitle.textContent = 'No scenes yet';
+        if (sceneMeta) sceneMeta.textContent = 'Create a scene in the writer to sync it here.';
+        sceneCards = [];
+        sceneRows = [];
+        activeSceneId = null;
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      sceneData.forEach(scene => {
+        sceneDataMap.set(scene.id, scene);
+        fragment.appendChild(createSceneCard(scene));
+      });
+      sceneListContainer.appendChild(fragment);
+      sceneCards = Array.from(sceneListContainer.querySelectorAll('.scene-card'));
+
+      sceneData.forEach(scene => {
+        timelineGrid.appendChild(createTimelineScene(scene));
+      });
+      sceneRows = Array.from(timelineGrid.querySelectorAll('[data-scene-row]'));
+
+      if (!sceneDataMap.has(activeSceneId)) {
+        activeSceneId = sceneData[0]?.id || null;
+      }
+
+      if (activeSceneId) {
+        activateScene(activeSceneId, { scroll: false });
+      }
+    }
+
+    async function bootstrapScenes() {
+      if (sceneListContainer) {
+        sceneListContainer.innerHTML = '';
+        const loading = document.createElement('p');
+        loading.className = 'muted';
+        loading.dataset.sceneEmpty = 'true';
+        loading.textContent = 'Loading scenes from Writer…';
+        sceneListContainer.appendChild(loading);
+      }
+      const writerScenes = await loadWriterScenes();
+      if (writerScenes && writerScenes.length) {
+        sceneData = writerScenes;
+      } else {
+        sceneData = FALLBACK_SCENES_RAW.map((scene, index) => formatWriterScene(scene, index, { source: 'fallback' }));
+      }
+      renderScenes();
+    }
+
+    function getLastWriterProjectId() {
+      try {
+        return window.localStorage.getItem(WRITER_LAST_PROJECT_KEY) || null;
+      } catch (error) {
+        console.warn('Unable to read Writer project id from localStorage:', error);
+        return null;
+      }
+    }
+
+    function openWriterDb() {
+      return new Promise((resolve, reject) => {
+        try {
+          const request = indexedDB.open(WRITER_DB_NAME, 1);
+          request.onerror = () => reject(request.error || new Error('IndexedDB open failed'));
+          request.onsuccess = () => resolve(request.result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    function readWriterProject(db, projectId) {
+      return new Promise((resolve, reject) => {
+        try {
+          const transaction = db.transaction([WRITER_DB_STORE], 'readonly');
+          const store = transaction.objectStore(WRITER_DB_STORE);
+          const request = store.get(projectId);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error || new Error('Project lookup failed'));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    async function loadWriterScenes() {
+      if (!('indexedDB' in window)) return null;
+      const projectId = getLastWriterProjectId();
+      if (!projectId) return null;
+      let db;
+      try {
+        db = await openWriterDb();
+        const project = await readWriterProject(db, projectId);
+        if (!project || !Array.isArray(project.scenes) || !project.scenes.length) return null;
+        const title = sanitizeString(project.title);
+        return project.scenes.map((scene, index) => formatWriterScene(scene, index, { source: 'writer' }));
+      } catch (error) {
+        console.warn('Unable to load Writer scenes:', error);
+        return null;
+      } finally {
+        if (db && typeof db.close === 'function') {
+          db.close();
+        }
+      }
+    }
+
+
 
     function setTrackVisibility(track, visible) {
       document.querySelectorAll(`[data-track="${track}"]`).forEach(trackRow => {
@@ -639,6 +915,8 @@
     });
 
     function activateScene(id, opts = { scroll: true }) {
+      if (!id) return;
+      activeSceneId = id;
       sceneCards.forEach(card => {
         const isActive = card.dataset.scene === id;
         card.classList.toggle('active', isActive);
@@ -647,10 +925,13 @@
         const isActive = row.dataset.sceneRow === id;
         row.classList.toggle('active', isActive);
         if (isActive) {
-          sceneTitle.textContent = row.dataset.sceneName;
-          sceneMeta.textContent = row.dataset.sceneMeta;
+          if (sceneTitle) sceneTitle.textContent = row.dataset.sceneName || '';
+          if (sceneMeta) sceneMeta.textContent = row.dataset.sceneMeta || '';
           if (opts.scroll) {
-            row.querySelector('.timeline-scene__label').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const label = row.querySelector('.timeline-scene__label');
+            if (label && typeof label.scrollIntoView === 'function') {
+              label.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
           }
         }
       });
@@ -661,15 +942,17 @@
       const numberEl = card.querySelector('[data-scene-card-number]');
       const nameEl = card.querySelector('[data-scene-card-name]');
       if (!numberEl || !nameEl) return;
-      const sceneNumber = numberEl.textContent.trim();
+      const sceneId = card.dataset.scene;
+      const sceneInfo = sceneDataMap.get(sceneId);
+      const sceneNumber = sceneInfo ? sceneInfo.numberLabel : numberEl.textContent.trim();
       const trimmedName = newName.trim() || nameEl.textContent.trim();
       if (!trimmedName) return;
       nameEl.textContent = trimmedName;
+      if (sceneInfo) sceneInfo.displayName = trimmedName;
       const combinedLabel = sceneNumber ? `${sceneNumber} · ${trimmedName}` : trimmedName;
       card.setAttribute('aria-label', combinedLabel);
 
-      const sceneId = card.dataset.scene;
-      const matchingRow = document.querySelector(`[data-scene-row="${sceneId}"]`);
+      const matchingRow = sceneRows.find(row => row.dataset.sceneRow === sceneId);
       if (matchingRow) {
         matchingRow.dataset.sceneName = combinedLabel;
         const timelineName = matchingRow.querySelector('.timeline-scene__label span');
@@ -1088,51 +1371,7 @@
       });
     }
 
-    sceneCards.forEach(card => {
-      card.addEventListener('click', () => {
-        if (card.classList.contains('editing')) return;
-        activateScene(card.dataset.scene);
-      });
-      card.addEventListener('keydown', event => {
-        if (event.key === 'F2') {
-          event.preventDefault();
-          startSceneRename(card);
-          return;
-        }
-        if (card.classList.contains('editing')) {
-          return;
-        }
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          activateScene(card.dataset.scene);
-        }
-      });
-
-      const label = card.querySelector('[data-scene-edit-root]');
-      const input = card.querySelector('[data-scene-input]');
-      if (label) {
-        label.addEventListener('dblclick', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          startSceneRename(card);
-        });
-      }
-      if (input) {
-        input.addEventListener('keydown', event => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            finishSceneRename(card, true);
-          } else if (event.key === 'Escape') {
-            event.preventDefault();
-            finishSceneRename(card, false);
-          }
-        });
-        input.addEventListener('blur', () => finishSceneRename(card, true));
-        input.addEventListener('click', event => event.stopPropagation());
-      }
-    });
-
-    activateScene('2', { scroll: false });
+    bootstrapScenes();
   </script>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
   <script type="module" src="/assets/main.js"></script>
