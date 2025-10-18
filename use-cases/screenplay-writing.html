@@ -53,7 +53,7 @@
       html,body{height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
       body{color:var(--ink); --nav-height:72px;}
       main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
-      .app{display:grid; grid-template-rows:56px auto 1fr; flex:1; min-height:0; transition:transform .35s ease}
+      .app{display:grid; grid-template-rows:56px auto 1fr; flex:1; min-height:0; transition:transform .35s ease; --timeline-dock-offset:0px}
       .topbar{display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--ring)}
       .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
       .spacer{flex:1}
@@ -75,6 +75,7 @@
       .timeline-dock__content{display:flex; flex-direction:column; gap:12px; padding:12px 16px 18px; opacity:1; transform:translateY(0); transition:transform .35s ease, opacity .25s ease;}
       .timeline-dock.floating-hidden .timeline-dock__content{opacity:0; transform:translateY(-18px); pointer-events:none;}
       .timeline-dock.floating-hidden{flex-direction:column-reverse; padding-top:6px; padding-bottom:0; gap:6px;}
+      .timeline-dock.floating + .layout{margin-top:var(--timeline-dock-offset, 0px); transition:margin-top .35s ease;}
       .story-arc-layout{display:flex; flex-wrap:wrap; align-items:stretch; gap:16px;}
       .story-arc-columns{flex:1 1 280px; display:flex; flex-direction:column; gap:12px; min-width:0;}
       .story-arc-actions{display:flex; flex-direction:column; gap:12px; align-items:flex-end; justify-content:center; min-width:48px;}
@@ -8406,6 +8407,18 @@
       else updateTimelineHandleWidth();
     }
 
+    function updateTimelineDockOffset(){
+      const app = document.querySelector('.app');
+      if (!app) return;
+      const dock = document.getElementById('timelineDock');
+      if (!dock || !dock.classList.contains('floating')){
+        app.style.setProperty('--timeline-dock-offset', '0px');
+        return;
+      }
+      const offset = dock.offsetHeight || 0;
+      app.style.setProperty('--timeline-dock-offset', offset + 'px');
+    }
+
     function showTimelineDock(){
       const dock = document.getElementById('timelineDock');
       const handle = document.getElementById('timelineDockHandle');
@@ -8414,6 +8427,7 @@
       handle.setAttribute('aria-expanded', 'true');
       clearTimeout(timelineHideTimer);
       timelineHideTimer = null;
+      updateTimelineDockOffset();
       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
       else updateTimelineHandleWidth();
     }
@@ -8426,6 +8440,7 @@
       if (handle) handle.setAttribute('aria-expanded', 'false');
       clearTimeout(timelineHideTimer);
       timelineHideTimer = null;
+      updateTimelineDockOffset();
     }
 
     function scheduleTimelineHide(){
@@ -8442,12 +8457,14 @@
       if (!handle) return;
       if (!timelinePinned){
         handle.style.width = '';
+        updateTimelineDockOffset();
         return;
       }
       const dock = document.getElementById('timelineDock');
       const shell = dock?.querySelector('.timeline-dock__shell');
       const width = shell?.offsetWidth || 0;
       handle.style.width = width > 0 ? width + 'px' : '';
+      updateTimelineDockOffset();
     }
 
     function syncTimelineDockState(forceReveal){
@@ -8475,6 +8492,7 @@
         }
         if (handle) handle.style.width = '';
       }
+      updateTimelineDockOffset();
       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
       else updateTimelineHandleWidth();
     }
