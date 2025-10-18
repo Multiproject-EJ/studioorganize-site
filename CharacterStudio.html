@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Character Studio — StudioOrganize</title>
+  <meta
+    name="description"
+    content="Character Studio keeps every character's profile, arc, lookbook, and AI prompt in one dedicated workspace."
+  />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand-with-logo">
+      <a class="brand" href="/">StudioOrganize</a>
+      <span class="brand-with-logo__badge brand-with-logo__badge--character" aria-hidden="true">CS</span>
+    </div>
+    <nav class="menu">
+      <a class="menu__link menu__link--plain menu__link--icon" href="/">
+        <span aria-hidden="true">🏠</span>
+        <span class="sr-only">Home</span>
+      </a>
+      <div class="dropdown">
+        <button class="dropbtn dropbtn--plain" type="button">Use Cases</button>
+        <div class="dropdown-content">
+          <a href="/use-cases/">All Use Cases</a>
+          <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+          <a href="/use-cases/screenplay.html">Screenplay Script</a>
+          <a href="/use-cases/character-design.html">Character Design</a>
+          <a href="/use-cases/set-design.html">Set / Production Design</a>
+        </div>
+      </div>
+      <a class="menu__link menu__link--plain" href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a>
+      <div class="menu__actions">
+        <button class="theme-toggle theme-toggle--icon" type="button" data-theme-toggle aria-pressed="false">
+          <span class="sr-only">Toggle theme</span>
+          <span class="theme-toggle__icon" aria-hidden="true" data-theme-icon>☀️</span>
+        </button>
+        <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
+        <div class="dropdown" data-account-menu hidden>
+          <button class="menu__cta" type="button" data-account-button>Account</button>
+          <div class="dropdown-content">
+            <a href="/account.html">My Creator Page</a>
+            <a href="/product/personal.html">My Subscription</a>
+            <a href="#" data-account-logout>Log out</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="section">
+    <style>
+      html, body { height: 100%; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial; }
+      body {
+        color: var(--ink);
+        background: radial-gradient(circle at top right, rgba(123, 97, 255, 0.1), transparent 35%), var(--surface);
+        --nav-height: 72px;
+      }
+      .character-studio-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .character-timeline-topbar {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 22px 26px;
+        background: var(--panel);
+        border: 1px solid var(--ring);
+        border-radius: 20px;
+        box-shadow: 0 26px 72px rgba(15, 23, 42, 0.24);
+      }
+      .character-timeline-topbar > div:first-child {
+        flex: 1 1 260px;
+        min-width: 220px;
+      }
+      .character-timeline-topbar h2 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 600;
+      }
+      .character-timeline-topbar p {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+        max-width: 60ch;
+      }
+      .character-timeline-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        background: rgba(123, 97, 255, 0.16);
+        border: 1px solid rgba(123, 97, 255, 0.35);
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .character-timeline-spacer {
+        flex: 1 1 120px;
+      }
+      .character-timeline-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .character-timeline-btn {
+        border-radius: 999px;
+        border: 1px solid var(--ring);
+        background: transparent;
+        color: var(--ink);
+        padding: 8px 16px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+      }
+      .character-timeline-btn:hover {
+        border-color: var(--acc);
+        color: var(--acc);
+      }
+      .character-timeline-btn.active {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: var(--active-tab-text);
+        box-shadow: 0 12px 28px rgba(79, 123, 255, 0.28);
+      }
+      .character-timeline-btn:focus-visible {
+        outline: 2px solid rgba(79, 123, 255, 0.45);
+        outline-offset: 3px;
+      }
+      .timeline-dock {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px 6px;
+        background: linear-gradient(180deg, var(--bg) 0%, transparent 90%);
+      }
+      .timeline-dock.floating {
+        position: sticky;
+        top: 0;
+      }
+      .timeline-dock__handle {
+        order: 2;
+        width: clamp(64px, 18vw, 110px);
+        height: 10px;
+        border-radius: 999px;
+        border: none;
+        padding: 0;
+        background: var(--ring);
+        cursor: pointer;
+        transition: width .35s ease, background .3s ease, box-shadow .3s ease, opacity .2s ease, height .3s ease;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      }
+      .timeline-dock__handle:hover {
+        background: var(--acc);
+      }
+      .timeline-dock__handle:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 3px;
+      }
+      .timeline-dock__shell {
+        order: 1;
+        width: min(1080px, 100%);
+        background: var(--hud);
+        border: 1px solid var(--ring);
+        border-radius: 18px;
+        box-shadow: 0 14px 34px rgba(8, 15, 28, 0.32);
+        overflow: hidden;
+        transition: max-height .35s ease, box-shadow .35s ease, border-color .3s ease;
+        max-height: 560px;
+        margin: 0 auto;
+      }
+      .timeline-dock.floating-hidden .timeline-dock__shell {
+        max-height: 0;
+        border-color: transparent;
+        box-shadow: none;
+      }
+      .timeline-dock__content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px 18px;
+        opacity: 1;
+        transform: translateY(0);
+        transition: transform .35s ease, opacity .25s ease;
+      }
+      .timeline-dock.floating-hidden .timeline-dock__content {
+        opacity: 0;
+        transform: translateY(-18px);
+        pointer-events: none;
+      }
+      .story-arc-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+      .story-arc-columns {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .story-arc-timeline {
+        background: var(--panel);
+        border: 1px solid var(--ring);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .story-arc-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .story-arc-track {
+        display: flex;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .story-arc-step {
+        flex: 1 1 auto;
+      }
+      .story-arc-pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 14px;
+        background: var(--chip);
+        border-radius: 16px;
+        border: 1px solid var(--ring);
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+      }
+      .story-arc-step--active .story-arc-pill {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: var(--active-tab-text);
+        box-shadow: 0 12px 30px rgba(79, 123, 255, 0.35);
+      }
+      .story-arc-scenes {
+        background: var(--panel);
+        border: 1px solid var(--ring);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .story-arc-scenes__container {
+        max-height: 280px;
+        overflow: auto;
+      }
+      .story-arc-scenes__track {
+        display: grid;
+        gap: 12px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .story-arc-details {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: var(--panel);
+        border: 1px solid var(--ring);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .story-arc-details h3 {
+        margin: 0;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        color: var(--muted);
+      }
+      .story-arc-details strong {
+        font-size: 16px;
+      }
+      .story-arc-details p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .story-arc-scene__card {
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--ring);
+        border-radius: 14px;
+        background: var(--card);
+        padding: 12px 14px;
+        display: grid;
+        gap: 4px;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .story-arc-scene__card:hover {
+        border-color: var(--acc);
+        box-shadow: 0 12px 26px rgba(47, 110, 255, 0.2);
+        transform: translateY(-1px);
+      }
+      .story-arc-scene__label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        color: var(--muted);
+      }
+      .story-arc-scene__card strong {
+        font-size: 15px;
+      }
+      .story-arc-scene__meta,
+      .story-arc-scene__characters {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .story-arc-scene--character .story-arc-scene__card {
+        border-color: var(--acc);
+        box-shadow: inset 0 0 0 1px rgba(79, 123, 255, 0.3);
+      }
+      .story-arc-scene.active .story-arc-scene__card {
+        background: var(--acc);
+        color: var(--active-tab-text);
+        border-color: var(--acc);
+        box-shadow: 0 18px 36px rgba(47, 110, 255, 0.28);
+      }
+      .story-arc-scene.active .story-arc-scene__meta,
+      .story-arc-scene.active .story-arc-scene__characters,
+      .story-arc-scene.active .story-arc-scene__label {
+        color: var(--active-tab-text);
+        opacity: 0.85;
+      }
+      .timeline-panel {
+        padding: 0;
+        border: 1px solid var(--ring);
+        border-radius: 18px;
+        background: var(--panel);
+        box-shadow: 0 28px 68px rgba(15, 23, 42, 0.28);
+      }
+      .timeline-stage {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .timeline-stage header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--ring);
+        gap: 16px;
+      }
+      .timeline-stage header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .timeline-stage header span {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .timeline-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .timeline-wrapper {
+        flex: 1;
+        overflow: auto;
+        padding-bottom: 16px;
+      }
+      .timeline-grid {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-width: 720px;
+      }
+      .timeline-scale {
+        grid-column: 1 / -1;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--ring);
+        background: linear-gradient(135deg, rgba(79, 123, 255, 0.12), rgba(79, 123, 255, 0));
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      .timeline-scale__header {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .timeline-scale__ruler {
+        position: relative;
+        height: 28px;
+        border-bottom: 1px dashed rgba(79, 123, 255, 0.35);
+      }
+      .timeline-scale__ruler span {
+        position: absolute;
+        top: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        transform: translateX(-50%);
+      }
+      .timeline-scene {
+        display: contents;
+      }
+      .timeline-scene__label {
+        padding: 20px 18px;
+        border-right: 1px solid var(--ring);
+        background: var(--panel);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+      }
+      .timeline-scene__label strong {
+        font-size: 14px;
+        letter-spacing: .2px;
+      }
+      .timeline-scene__label span {
+        font-size: 13px;
+      }
+      .timeline-scene__label small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .timeline-scene__characters {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .timeline-scene--character .timeline-scene__label {
+        box-shadow: inset 3px 0 0 var(--acc);
+      }
+      .timeline-scene.active .timeline-scene__label {
+        background: var(--acc);
+        color: var(--active-tab-text);
+        box-shadow: inset 3px 0 0 rgba(8, 15, 28, 0.6);
+      }
+      .timeline-scene.active .timeline-scene__label span,
+      .timeline-scene.active .timeline-scene__label small,
+      .timeline-scene.active .timeline-scene__characters {
+        color: var(--active-tab-text);
+        opacity: 0.9;
+      }
+      .timeline-scene__tracks {
+        padding: 18px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        background: var(--card);
+        border-bottom: 1px solid var(--ring);
+      }
+      .timeline-track {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .timeline-track__header {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        color: var(--muted);
+      }
+      .timeline-track__lane {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--ring);
+        border-radius: 10px;
+        height: 48px;
+        overflow: hidden;
+      }
+      .timeline-track__lane::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(to right, transparent, transparent calc(12.5% - 1px), rgba(79, 123, 255, 0.12) calc(12.5% - 1px), rgba(79, 123, 255, 0.12) calc(12.5%));
+        pointer-events: none;
+      }
+      .timeline-track__empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .timeline-block {
+        position: absolute;
+        top: 6px;
+        bottom: 6px;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: rgba(15, 23, 42, 0.9);
+        font-weight: 500;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .timeline-block::before {
+        content: attr(data-icon);
+        font-size: 14px;
+      }
+      .timeline-block--shots {
+        background: rgba(79, 123, 255, 0.18);
+        border: 1px solid rgba(79, 123, 255, 0.35);
+      }
+      .timeline-block--audio {
+        background: rgba(220, 38, 38, 0.14);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+      }
+      .timeline-block--lighting {
+        background: rgba(14, 165, 233, 0.18);
+        border: 1px solid rgba(14, 165, 233, 0.3);
+      }
+      .timeline-block--notes {
+        background: rgba(126, 58, 242, 0.16);
+        border: 1px solid rgba(126, 58, 242, 0.28);
+      }
+      .timeline-block--beats {
+        background: rgba(16, 185, 129, 0.18);
+        border: 1px solid rgba(16, 185, 129, 0.32);
+      }
+      .timeline-track--hidden {
+        display: none;
+      }
+      main.section { flex: 1; display: flex; flex-direction: column; width: 100%; max-width: none; padding: 0; margin: 0; }
+      .character-studio-app { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: clamp(18px, 4vw, 32px); gap: 24px; }
+      .character-studio-window {
+        position: relative;
+        width: 100%;
+        min-height: 0;
+        background: var(--panel);
+        border: 1px solid var(--ring);
+        border-radius: 24px;
+        box-shadow: 0 36px 110px rgba(0, 0, 0, 0.35);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .character-studio-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 26px 30px;
+        border-bottom: 1px solid var(--ring);
+        background: var(--chip);
+      }
+      .brand-with-logo__badge--character {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: .6px;
+        background: linear-gradient(135deg, #7c3aed, #22d3ee);
+        color: white;
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
+      }
+      .character-studio-header h2 { margin: 0; font-size: 24px; font-weight: 600; }
+      .character-studio-header .muted-text { margin: 6px 0 0; max-width: 60ch; font-size: 14px; }
+      .character-studio-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+      .character-studio-header-badge {
+        font-size: 11px;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        background: rgba(123, 97, 255, 0.16);
+        border: 1px solid rgba(123, 97, 255, 0.35);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-weight: 600;
+      }
+      .character-studio-add {
+        background: var(--acc);
+        border: 1px solid var(--acc);
+        color: var(--active-tab-text);
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease;
+      }
+      .character-studio-add:hover { box-shadow: 0 14px 32px rgba(79, 123, 255, 0.25); transform: translateY(-1px); }
+      .character-studio-add:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(79,123,255,0.25); }
+      .character-studio-body { padding: 26px 30px 32px; flex: 1; overflow: hidden; }
+      .character-studio-layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; height: 100%; min-height: 0; }
+      .character-studio-sidebar { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+      .character-studio-sidebar-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+      .character-studio-sidebar h3 { margin: 0; font-size: 12px; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); }
+      .character-studio-sidebar-note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+      .character-studio-sidebar-list { display: flex; flex-direction: column; gap: 10px; overflow: auto; padding-right: 4px; min-height: 0; }
+      .character-studio-list-item {
+        background: var(--card);
+        border: 1px solid var(--ring);
+        border-radius: 14px;
+        padding: 12px 14px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        cursor: pointer;
+        color: inherit;
+        font: inherit;
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .character-studio-list-item strong { font-size: 14px; font-weight: 600; }
+      .character-studio-list-item span { font-size: 11px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; }
+      .character-studio-list-item:hover { border-color: var(--acc); box-shadow: 0 18px 48px rgba(47, 110, 255, 0.18); transform: translateY(-1px); }
+      .character-studio-list-item.active { border-color: var(--acc); box-shadow: 0 18px 48px rgba(47, 110, 255, 0.28); background: var(--acc); color: var(--active-tab-text); }
+      .character-studio-list-item.active span { color: var(--active-tab-text); opacity: 0.85; }
+      .character-studio-details { display: flex; flex-direction: column; gap: 20px; min-height: 0; overflow: auto; padding-right: 6px; }
+      .character-studio-detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+      .character-studio-detail-header h2 { margin: 0; font-size: 26px; font-weight: 600; }
+      .character-studio-detail-header .muted-text { margin: 6px 0 0; font-size: 13px; }
+      .character-studio-tertiary {
+        background: none;
+        border: 1px solid var(--ring);
+        border-radius: 12px;
+        padding: 6px 14px;
+        font-size: 12px;
+        cursor: pointer;
+        color: var(--muted);
+      }
+      .character-studio-tertiary:hover { border-color: var(--acc); color: var(--ink); }
+      .character-studio-section {
+        background: var(--card);
+        border: 1px solid var(--ring);
+        border-radius: 18px;
+        padding: 22px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .character-studio-section h3 { margin: 0; font-size: 14px; font-weight: 600; }
+      .character-studio-section p { margin: 0; }
+      .character-studio-two-col { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      .character-studio-field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+      .character-studio-field span { font-size: 11px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; }
+      .character-studio-field input,
+      .character-studio-field textarea {
+        background: var(--field);
+        color: var(--ink);
+        border: 1px solid var(--ring);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 14px;
+        width: 100%;
+      }
+      .character-studio-field textarea { min-height: 108px; resize: vertical; }
+      .character-studio-field textarea.small { min-height: 78px; }
+      .character-studio-stats-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+      .character-studio-stat { background: var(--chip); border: 1px solid var(--ring); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+      .character-studio-stat-value { font-size: 22px; font-weight: 700; }
+      .character-studio-stat-label { font-size: 11px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; }
+      .character-studio-traits-preview { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; align-items: flex-start; }
+      .character-studio-chip { background: var(--chip); border: 1px solid var(--ring); border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+      .character-studio-look-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      .character-studio-look-card { position: relative; border: 1px solid var(--ring); border-radius: 16px; overflow: hidden; background: var(--chip); aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; text-align: center; }
+      .character-studio-look-card [data-look-content] { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      .character-studio-look-card img { width: 100%; height: 100%; object-fit: cover; }
+      .character-studio-look-empty { padding: 0 16px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+      .character-studio-look-label { position: absolute; top: 10px; left: 10px; padding: 4px 8px; border-radius: 999px; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; background: rgba(15, 18, 30, 0.65); color: #fff; }
+      .character-studio-ai-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+      .character-studio-ai-actions button { background: var(--acc); border: 1px solid var(--acc); color: var(--active-tab-text); border-radius: 999px; padding: 10px 18px; font-weight: 600; cursor: pointer; }
+      .character-studio-status { font-size: 12px; color: var(--muted); min-height: 18px; }
+      .character-studio-status[data-state="ready"] { color: var(--acc); }
+      .character-studio-status[data-state="warning"] { color: #f97316; }
+      .character-studio-empty,
+      .character-studio-empty-list {
+        border: 1px dashed var(--ring);
+        border-radius: 16px;
+        padding: 28px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: var(--muted);
+        align-items: center;
+        justify-content: center;
+      }
+      .character-studio-empty h2 { margin: 0; font-size: 22px; color: var(--ink); }
+      .character-studio-empty p { margin: 0; font-size: 14px; }
+      .muted-text { color: var(--muted); font-size: 12px; }
+      @media (max-width: 1100px) {
+        .character-studio-layout { grid-template-columns: 260px 1fr; }
+        .timeline-grid { min-width: 600px; }
+        .timeline-stage header { flex-direction: column; align-items: flex-start; }
+      }
+      @media (max-width: 920px) {
+        .character-studio-body { padding: 22px 20px 26px; }
+        .character-studio-layout { grid-template-columns: 1fr; }
+        .character-studio-sidebar { order: 2; }
+        .character-studio-details { order: 1; }
+        .character-timeline-topbar { flex-direction: column; align-items: flex-start; }
+        .character-timeline-spacer { display: none; }
+        .story-arc-layout { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 640px) {
+        .character-studio-app { padding: 16px 12px; }
+        .character-studio-header { flex-direction: column; align-items: flex-start; }
+        .character-studio-header-actions { width: 100%; justify-content: space-between; }
+        .timeline-grid { min-width: 520px; }
+      }
+    </style>
+
+    <div class="character-studio-app">
+      <div class="character-studio-timeline">
+        <div class="character-timeline-topbar">
+          <div>
+            <h2>Story timeline</h2>
+            <p>Keep Character Studio in lockstep with writer beats and Storyboard Pro production tracks.</p>
+          </div>
+          <span class="character-timeline-badge">Scene-synced timelines</span>
+          <div class="character-timeline-spacer"></div>
+          <div class="character-timeline-group" role="group" aria-label="Timeline track visibility">
+            <button class="character-timeline-btn active" type="button" data-character-track-toggle="beats" aria-pressed="true">Beat grid</button>
+            <button class="character-timeline-btn active" type="button" data-character-track-toggle="shots" aria-pressed="true">Shots</button>
+            <button class="character-timeline-btn active" type="button" data-character-track-toggle="audio" aria-pressed="true">Audio</button>
+            <button class="character-timeline-btn active" type="button" data-character-track-toggle="lighting" aria-pressed="true">Lighting</button>
+            <button class="character-timeline-btn active" type="button" data-character-track-toggle="notes" aria-pressed="true">Notes</button>
+          </div>
+        </div>
+        <div id="characterTimelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
+          <button
+            id="characterTimelineDockHandle"
+            class="timeline-dock__handle"
+            type="button"
+            aria-pressed="true"
+            aria-expanded="true"
+            aria-label="Click to float story timelines"
+            title="Click to float story timelines"
+          ></button>
+          <div class="timeline-dock__shell">
+            <div class="timeline-dock__content">
+              <div class="story-arc-layout">
+                <div class="story-arc-columns">
+                  <div class="story-arc-timeline" aria-label="Story arc timeline">
+                    <div class="story-arc-container">
+                      <ol class="story-arc-track" role="list">
+                        <li class="story-arc-step" role="listitem">
+                          <div class="story-arc-pill">
+                            <span class="story-arc-label">Opening</span>
+                          </div>
+                        </li>
+                        <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                          <div class="story-arc-pill">
+                            <span class="story-arc-label">Middle</span>
+                          </div>
+                        </li>
+                        <li class="story-arc-step" role="listitem">
+                          <div class="story-arc-pill">
+                            <span class="story-arc-label">End</span>
+                          </div>
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                  <div class="story-arc-scenes" aria-label="Scene timeline">
+                    <div class="story-arc-scenes__container">
+                      <ol class="story-arc-scenes__track" id="characterStoryArcSceneSlots" role="list"></ol>
+                    </div>
+                  </div>
+                </div>
+                <div class="story-arc-details" aria-live="polite">
+                  <h3>Featured scene</h3>
+                  <strong data-character-story-arc-title>Scene timeline connects to Character Studio.</strong>
+                  <p data-character-story-arc-summary>Choose a scene to see beats, cast coverage, and lookbook prompts.</p>
+                  <p data-character-story-arc-meta></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <section class="timeline-panel">
+          <div class="timeline-stage">
+            <header>
+              <div>
+                <h2 data-character-timeline-scene-title>Timeline synced to Character Studio</h2>
+                <span data-character-timeline-scene-meta>Assign cast, beats, and production cues per scene.</span>
+              </div>
+              <div class="timeline-controls">
+                <span class="muted-text">Toggle tracks to focus on beats, looks, and production notes.</span>
+              </div>
+            </header>
+            <div class="timeline-wrapper">
+              <div class="timeline-grid" data-character-timeline-grid>
+                <div class="timeline-scale" aria-hidden="true">
+                  <div class="timeline-scale__header">
+                    <span>Scene timeline (minutes)</span>
+                    <span data-character-timeline-total></span>
+                  </div>
+                  <div class="timeline-scale__ruler" data-character-timeline-scale></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="character-studio-window">
+        <div class="character-studio-header">
+          <div>
+            <h2>Character Studio</h2>
+            <p class="muted-text">Craft multidimensional characters with dedicated planners, lookbooks, and AI prompts.</p>
+          </div>
+          <div class="character-studio-header-actions">
+            <span class="character-studio-header-badge">Cast</span>
+            <button class="character-studio-add" type="button" id="characterStudioAddBtn">+ New</button>
+          </div>
+        </div>
+        <div class="character-studio-body">
+          <div class="character-studio-layout">
+            <aside class="character-studio-sidebar">
+              <div class="character-studio-sidebar-header">
+                <h3>Characters</h3>
+              </div>
+              <p class="character-studio-sidebar-note">Keep track of stats, arcs, and visual references for every character in one place.</p>
+              <div class="character-studio-sidebar-list" data-character-list></div>
+            </aside>
+            <section class="character-studio-details" data-character-details></section>
+          </div>
+        </div>
+      </div>
+      <section class="feature-section">
+        <h2>Bring dimension to every member of your cast.</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h3>Structured character dossiers</h3>
+            <p>Capture profiles, backstory, and evolving arcs without jumping between docs.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Visual continuity built-in</h3>
+            <p>Collect portrait, turnaround, and expression sheets alongside production stats.</p>
+          </div>
+          <div class="feature-card">
+            <h3>AI concepting ready</h3>
+            <p>Draft prompts, reference notes, and feed everything directly into StudioOrganize AI.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Save and share</h3>
+            <p>Export details for collaborators or sync with your StudioOrganize project workspace.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__grid">
+      <div>
+        <strong>StudioOrganize</strong>
+        <p class="muted">Tools for storytellers &amp; focused work.</p>
+      </div>
+      <div>
+        <a href="/about.html">About</a><br />
+      </div>
+      <div>
+        <a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br />
+        <span class="muted">© <span id="y"></span> StudioOrganize</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      const CHARACTER_LOOK_LABELS = {
+        portrait: 'Portrait',
+        turnaround: 'Turnaround Sheet',
+        expression: 'Expression Sheet'
+      };
+
+      const initialCharacters = [
+        {
+          id: 'char-mr-mega',
+          name: 'Mr Mega',
+          role: 'Protagonist, Antagonist...',
+          archetype: 'Unlikely Hero',
+          pronouns: 'They/Them',
+          age: '63',
+          summary: 'Logline summary',
+          traits: ['Resilient', 'Impulsive', 'Secret romantic'],
+          background: 'Origin story, formative experiences',
+          familyTree: 'Parents, siblings, key relationships',
+          stats: { scenes: 0, dialogue: 0, screenTime: 0 },
+          arc: {
+            setup: 'Who are they at the beginning?',
+            development: 'Challenges, midpoint, reversals',
+            resolution: 'Where do they end up?'
+          },
+          looks: {
+            portrait: '',
+            turnarounds: [],
+            expressions: []
+          },
+          ai: {
+            prompt: 'Describe the character\'s look, vibe, and scene',
+            notes: 'Shot list, wardrobe callouts, artist references'
+          }
+        }
+      ];
+
+      const state = {
+        characters: initialCharacters.map(normalizeCharacter),
+        activeId: initialCharacters.length ? initialCharacters[0].id : null
+      };
+
+      const TIMELINE_TRACK_CONFIG = {
+        beats: { label: 'Beat grid', blockClass: 'timeline-block--beats', icon: '⏱' },
+        shots: { label: 'Shots', blockClass: 'timeline-block--shots', icon: '🎬' },
+        audio: { label: 'Audio', blockClass: 'timeline-block--audio', icon: '🔊' },
+        lighting: { label: 'Lighting', blockClass: 'timeline-block--lighting', icon: '💡' },
+        notes: { label: 'Notes', blockClass: 'timeline-block--notes', icon: '📝' }
+      };
+
+      function createTimelineState(){
+        const scenes = [
+          {
+            id: 'scene-rooftop-briefing',
+            label: 'Scene 05',
+            title: 'Rooftop briefing',
+            summary: 'Mr Mega learns that a stolen reactor core could destabilize the district.',
+            duration: 3.2,
+            act: 'Setup beat',
+            status: 'Draft v4 sync · Page 21',
+            location: 'Neon District rooftops · Night',
+            minuteStart: 17,
+            scriptPage: 21,
+            characters: ['char-mr-mega'],
+            beats: [
+              { id: 'briefing-beat-1', label: 'Mission drop', start: 0, duration: 0.9 },
+              { id: 'briefing-beat-2', label: 'Inner doubt surfaces', start: 1.3, duration: 0.8 },
+              { id: 'briefing-beat-3', label: 'Call to action', start: 2.4, duration: 0.7 }
+            ],
+            shots: [
+              { id: 'briefing-shot-1', label: 'Aerial establishing', start: 0, duration: 1.1 },
+              { id: 'briefing-shot-2', label: 'Holo briefing medium', start: 1.1, duration: 0.8 },
+              { id: 'briefing-shot-3', label: 'Close on Mr Mega', start: 2.1, duration: 0.7 }
+            ],
+            audio: [
+              { id: 'briefing-audio-1', label: 'Rain bed', start: 0, duration: 3.2 },
+              { id: 'briefing-audio-2', label: 'Hover traffic swell', start: 1.6, duration: 0.7 }
+            ],
+            lighting: [
+              { id: 'briefing-light-1', label: 'Neon rim kickers', start: 0, duration: 1.6 },
+              { id: 'briefing-light-2', label: 'Briefing holo wash', start: 1.6, duration: 1.1 }
+            ],
+            notes: [
+              { id: 'briefing-note-1', label: 'Wardrobe: reinforced trench', start: 0.3, duration: 0.8 },
+              { id: 'briefing-note-2', label: 'FX: digital rain pass', start: 1.9, duration: 0.7 }
+            ]
+          },
+          {
+            id: 'scene-rooftop-chase',
+            label: 'Scene 13',
+            title: 'Rooftop chase',
+            summary: 'Security drones pursue Mr Mega across neon signage and vertigo drops.',
+            duration: 4.1,
+            act: 'Momentum shift',
+            status: 'Script lock · Page 47',
+            location: 'Skytower terraces · Night',
+            minuteStart: 45,
+            scriptPage: 47,
+            characters: ['char-mr-mega'],
+            beats: [
+              { id: 'chase-beat-1', label: 'Launch over atrium', start: 0, duration: 0.9 },
+              { id: 'chase-beat-2', label: 'Drone blitz', start: 1.1, duration: 1.2 },
+              { id: 'chase-beat-3', label: 'EMP gamble', start: 2.6, duration: 0.8 },
+              { id: 'chase-beat-4', label: 'Leap to skydock', start: 3.4, duration: 0.5 }
+            ],
+            shots: [
+              { id: 'chase-shot-1', label: 'Wide skyline sprint', start: 0, duration: 1.4 },
+              { id: 'chase-shot-2', label: 'Drone POV rush', start: 1.4, duration: 0.9 },
+              { id: 'chase-shot-3', label: 'Handheld close call', start: 2.4, duration: 0.9 }
+            ],
+            audio: [
+              { id: 'chase-audio-1', label: 'Thruster squeal', start: 0.6, duration: 0.6 },
+              { id: 'chase-audio-2', label: 'Score: synth pulse', start: 1.5, duration: 2.2 }
+            ],
+            lighting: [
+              { id: 'chase-light-1', label: 'Signage strobes', start: 0, duration: 1.8 },
+              { id: 'chase-light-2', label: 'EMP flash', start: 2.6, duration: 0.4 }
+            ],
+            notes: [
+              { id: 'chase-note-1', label: 'Safety rig on leap', start: 3.2, duration: 0.5 }
+            ]
+          },
+          {
+            id: 'scene-safehouse',
+            label: 'Scene 18',
+            title: 'Safehouse regroup',
+            summary: 'Mr Mega reconnects with the crew to plan a counter-strike and patch injuries.',
+            duration: 3.6,
+            act: 'Resolution beat',
+            status: 'Draft v4 sync · Page 63',
+            location: 'Industrial safehouse · Interior night',
+            minuteStart: 58,
+            scriptPage: 63,
+            characters: ['char-mr-mega'],
+            beats: [
+              { id: 'safehouse-beat-1', label: 'Triage the damage', start: 0, duration: 1.0 },
+              { id: 'safehouse-beat-2', label: 'Reveal new intel', start: 1.1, duration: 1.0 },
+              { id: 'safehouse-beat-3', label: 'Plan the infiltration', start: 2.4, duration: 0.8 }
+            ],
+            shots: [
+              { id: 'safehouse-shot-1', label: 'Table spread', start: 0.2, duration: 1.2 },
+              { id: 'safehouse-shot-2', label: 'Character inserts', start: 1.6, duration: 1.0 }
+            ],
+            audio: [
+              { id: 'safehouse-audio-1', label: 'Low generator hum', start: 0, duration: 3.6 }
+            ],
+            lighting: [
+              { id: 'safehouse-light-1', label: 'Warm practicals', start: 0, duration: 2.4 },
+              { id: 'safehouse-light-2', label: 'Console glow', start: 2.4, duration: 1.0 }
+            ],
+            notes: [
+              { id: 'safehouse-note-1', label: 'Insert: cracked visor', start: 0.8, duration: 0.6 },
+              { id: 'safehouse-note-2', label: 'Prop reset: reactor map', start: 2.2, duration: 0.7 }
+            ]
+          }
+        ];
+
+        const visibility = Object.keys(TIMELINE_TRACK_CONFIG).reduce((acc, key) => {
+          acc[key] = true;
+          return acc;
+        }, {});
+
+        return {
+          scenes,
+          activeSceneId: scenes.length ? scenes[0].id : null,
+          trackVisibility: visibility,
+          dockPinned: true
+        };
+      }
+
+      const timelineState = createTimelineState();
+
+      function escapeHtml(value){
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function normalizeList(value){
+        if (Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
+        if (typeof value === 'string') return value.split(/\r?\n+/).map(v => v.trim()).filter(Boolean);
+        return [];
+      }
+
+      function createId(){
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return `char-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function createCharacterData(name = ''){
+        return {
+          id: createId(),
+          name,
+          role: '',
+          archetype: '',
+          pronouns: '',
+          age: '',
+          summary: '',
+          traits: [],
+          background: '',
+          familyTree: '',
+          stats: { scenes: 0, dialogue: 0, screenTime: 0 },
+          arc: { setup: '', development: '', resolution: '' },
+          looks: { portrait: '', turnarounds: [], expressions: [] },
+          ai: { prompt: '', notes: '' }
+        };
+      }
+
+      function normalizeCharacter(item){
+        const base = createCharacterData(item?.name || 'Untitled Character');
+        if (!item || typeof item !== 'object') return base;
+        const normalized = { ...base, ...item };
+        normalized.id = item.id || base.id;
+        normalized.name = typeof item.name === 'string' ? item.name : base.name;
+        normalized.role = typeof item.role === 'string' ? item.role : '';
+        normalized.archetype = typeof item.archetype === 'string' ? item.archetype : '';
+        normalized.pronouns = typeof item.pronouns === 'string' ? item.pronouns : '';
+        if (typeof item.age === 'number') normalized.age = String(item.age);
+        else if (typeof item.age === 'string') normalized.age = item.age;
+        normalized.summary = typeof item.summary === 'string' ? item.summary : '';
+        normalized.background = typeof item.background === 'string' ? item.background : '';
+        normalized.familyTree = typeof item.familyTree === 'string' ? item.familyTree : '';
+        normalized.traits = normalizeList(item.traits);
+        normalized.stats = { ...base.stats, ...(item.stats || {}) };
+        normalized.arc = { ...base.arc, ...(item.arc || {}) };
+        normalized.looks = { ...base.looks, ...(item.looks || {}) };
+        normalized.looks.turnarounds = normalizeList(normalized.looks.turnarounds);
+        normalized.looks.expressions = normalizeList(normalized.looks.expressions);
+        normalized.ai = { ...base.ai, ...(item.ai || {}) };
+        return normalized;
+      }
+
+      function getTimelineSceneById(id){
+        if (!id) return null;
+        return timelineState.scenes.find(scene => scene.id === id) || null;
+      }
+
+      function formatTimelineDuration(value){
+        if (!Number.isFinite(value)) return '';
+        if (value >= 3) return `${Math.round(value)} min`;
+        return `${value.toFixed(1)} min`;
+      }
+
+      function buildTimelineHeaderMeta(scene){
+        if (!scene) return 'Assign cast, beats, and production cues per scene.';
+        const parts = [];
+        if (scene.status) parts.push(scene.status);
+        if (Number.isFinite(scene.duration)) parts.push(formatTimelineDuration(scene.duration));
+        if (Number.isFinite(scene.scriptPage)) parts.push(`Script page ${scene.scriptPage}`);
+        if (scene.location) parts.push(scene.location);
+        return parts.join(' · ');
+      }
+
+      function buildTimelineRowMeta(scene){
+        const parts = [];
+        if (Number.isFinite(scene.minuteStart)) parts.push(`${scene.minuteStart} min mark`);
+        if (Number.isFinite(scene.duration)) parts.push(formatTimelineDuration(scene.duration));
+        if (scene.location) parts.push(scene.location);
+        return parts.join(' · ');
+      }
+
+      function getCharacterNameById(id){
+        if (!id) return '';
+        const character = state.characters.find(char => char.id === id);
+        return character?.name || '';
+      }
+
+      function getSceneCharacterNames(scene){
+        if (!scene || !Array.isArray(scene.characters) || !scene.characters.length) return [];
+        return scene.characters
+          .map(id => getCharacterNameById(id) || 'Assign cast')
+          .filter(Boolean);
+      }
+
+      function buildSceneCharacterLabel(scene){
+        const names = getSceneCharacterNames(scene);
+        if (!names.length) return 'No cast assigned yet';
+        const unique = [...new Set(names)];
+        if (unique.length === 1 && unique[0] === 'Assign cast') return 'Assign cast to this scene';
+        if (names.length === 1) return `${names[0]} focus`;
+        if (names.length === 2) return `${names[0]} & ${names[1]}`;
+        return `${names[0]}, ${names[1]} +${names.length - 2}`;
+      }
+
+      function updateTimelineCharacterMeta(){
+        document.querySelectorAll('[data-scene-characters]').forEach(node => {
+          const scene = getTimelineSceneById(node.dataset.sceneCharacters);
+          if (!scene) return;
+          node.textContent = buildSceneCharacterLabel(scene);
+        });
+        document.querySelectorAll('[data-arc-scene-characters]').forEach(node => {
+          const scene = getTimelineSceneById(node.dataset.arcSceneCharacters);
+          if (!scene) return;
+          node.textContent = `Featured: ${buildSceneCharacterLabel(scene)}`;
+        });
+      }
+
+      function renderTimelineScale(){
+        const ruler = document.querySelector('[data-character-timeline-scale]');
+        const totalEl = document.querySelector('[data-character-timeline-total]');
+        if (!ruler) return;
+        const maxDuration = timelineState.scenes.reduce((max, scene) => Math.max(max, Number(scene.duration) || 0), 0);
+        const totalDuration = timelineState.scenes.reduce((sum, scene) => sum + (Number(scene.duration) || 0), 0);
+        const scaleDuration = Math.max(maxDuration, 1);
+        const segments = 8;
+        ruler.innerHTML = '';
+        for (let i = 0; i <= segments; i++){
+          const span = document.createElement('span');
+          const value = (scaleDuration / segments) * i;
+          span.textContent = value >= 3 ? Math.round(value) : value.toFixed(1);
+          span.style.left = `${(i / segments) * 100}%`;
+          ruler.appendChild(span);
+        }
+        if (totalEl){
+          totalEl.textContent = `${totalDuration.toFixed(1)} min across scenes`;
+        }
+      }
+
+      function createTimelineTrack(scene, key){
+        const config = TIMELINE_TRACK_CONFIG[key];
+        if (!config) return null;
+        const track = document.createElement('div');
+        track.className = 'timeline-track';
+        if (!timelineState.trackVisibility[key]) track.classList.add('timeline-track--hidden');
+
+        const header = document.createElement('div');
+        header.className = 'timeline-track__header';
+        header.textContent = config.label;
+        track.appendChild(header);
+
+        const lane = document.createElement('div');
+        lane.className = 'timeline-track__lane';
+        track.appendChild(lane);
+
+        const items = Array.isArray(scene[key]) ? scene[key] : [];
+        const duration = Math.max(Number(scene.duration) || 0, 0.25);
+        if (!items.length){
+          const placeholder = document.createElement('div');
+          placeholder.className = 'timeline-track__empty';
+          placeholder.textContent = `Add ${config.label.toLowerCase()} for this scene`;
+          lane.appendChild(placeholder);
+          return track;
+        }
+
+        items.forEach(item => {
+          const block = document.createElement('div');
+          block.className = `timeline-block ${config.blockClass}`;
+          block.dataset.icon = config.icon || '';
+          block.textContent = item.label || '';
+          const start = Math.max(0, Math.min(duration, Number(item.start) || 0));
+          const span = Number(item.duration);
+          const end = Number.isFinite(span) ? Math.min(duration, start + span) : duration;
+          const widthPercent = Math.max(6, ((end - start) / duration) * 100);
+          block.style.left = `${(start / duration) * 100}%`;
+          block.style.width = `${Math.min(100, widthPercent)}%`;
+          lane.appendChild(block);
+        });
+
+        return track;
+      }
+
+      function createTimelineRow(scene){
+        const row = document.createElement('div');
+        row.className = 'timeline-scene';
+        row.dataset.sceneId = scene.id;
+        row.setAttribute('data-character-scene-row', '');
+
+        const label = document.createElement('div');
+        label.className = 'timeline-scene__label';
+
+        const heading = document.createElement('strong');
+        heading.textContent = `${scene.label} · ${scene.title}`;
+        label.appendChild(heading);
+
+        const summary = document.createElement('span');
+        summary.textContent = scene.summary || 'Add a summary to this scene.';
+        label.appendChild(summary);
+
+        const meta = document.createElement('small');
+        meta.dataset.sceneMeta = scene.id;
+        meta.textContent = buildTimelineRowMeta(scene);
+        label.appendChild(meta);
+
+        const characters = document.createElement('small');
+        characters.className = 'timeline-scene__characters';
+        characters.dataset.sceneCharacters = scene.id;
+        characters.textContent = buildSceneCharacterLabel(scene);
+        label.appendChild(characters);
+
+        row.appendChild(label);
+
+        const tracks = document.createElement('div');
+        tracks.className = 'timeline-scene__tracks';
+        Object.keys(TIMELINE_TRACK_CONFIG).forEach(key => {
+          const track = createTimelineTrack(scene, key);
+          if (track) tracks.appendChild(track);
+        });
+        row.appendChild(tracks);
+
+        row.addEventListener('click', () => setActiveTimelineScene(scene.id));
+
+        return row;
+      }
+
+      function renderTimelineGrid(){
+        const grid = document.querySelector('[data-character-timeline-grid]');
+        if (!grid) return;
+        grid.querySelectorAll('.timeline-scene').forEach(node => node.remove());
+        timelineState.scenes.forEach(scene => {
+          grid.appendChild(createTimelineRow(scene));
+        });
+        updateTimelineSceneHeader();
+        updateTimelineCharacterMeta();
+        updateTimelineHighlights();
+      }
+
+      function renderStoryArcScenes(){
+        const list = document.getElementById('characterStoryArcSceneSlots');
+        if (!list) return;
+        list.innerHTML = '';
+        timelineState.scenes.forEach(scene => {
+          const item = document.createElement('li');
+          item.className = 'story-arc-scene';
+          item.dataset.characterStoryArcScene = scene.id;
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'story-arc-scene__card';
+
+          const label = document.createElement('span');
+          label.className = 'story-arc-scene__label';
+          label.textContent = scene.act || 'Story beat';
+          button.appendChild(label);
+
+          const title = document.createElement('strong');
+          title.textContent = `${scene.label} · ${scene.title}`;
+          button.appendChild(title);
+
+          const meta = document.createElement('span');
+          meta.className = 'story-arc-scene__meta';
+          meta.dataset.arcSceneMeta = scene.id;
+          meta.textContent = scene.status || '';
+          button.appendChild(meta);
+
+          const cast = document.createElement('span');
+          cast.className = 'story-arc-scene__characters';
+          cast.dataset.arcSceneCharacters = scene.id;
+          cast.textContent = `Featured: ${buildSceneCharacterLabel(scene)}`;
+          button.appendChild(cast);
+
+          button.addEventListener('click', () => setActiveTimelineScene(scene.id));
+
+          item.appendChild(button);
+          list.appendChild(item);
+        });
+      }
+
+      function updateStoryArcSummary(scene){
+        const titleEl = document.querySelector('[data-character-story-arc-title]');
+        const summaryEl = document.querySelector('[data-character-story-arc-summary]');
+        const metaEl = document.querySelector('[data-character-story-arc-meta]');
+        if (!titleEl || !summaryEl || !metaEl) return;
+        if (!scene){
+          titleEl.textContent = 'Scene timeline connects to Character Studio.';
+          summaryEl.textContent = 'Choose a scene to see beats, cast coverage, and lookbook prompts.';
+          metaEl.textContent = '';
+          return;
+        }
+        titleEl.textContent = `${scene.label} · ${scene.title}`;
+        summaryEl.textContent = scene.summary || 'Add a summary to this scene.';
+        const metaParts = [];
+        if (scene.status) metaParts.push(scene.status);
+        if (scene.location) metaParts.push(scene.location);
+        if (Number.isFinite(scene.duration)) metaParts.push(`${scene.duration.toFixed(1)} min runtime`);
+        metaEl.textContent = metaParts.join(' · ');
+      }
+
+      function updateTimelineSceneHeader(){
+        const scene = getTimelineSceneById(timelineState.activeSceneId);
+        const titleEl = document.querySelector('[data-character-timeline-scene-title]');
+        const metaEl = document.querySelector('[data-character-timeline-scene-meta]');
+        if (!titleEl || !metaEl) return;
+        if (!scene){
+          titleEl.textContent = 'Timeline synced to Character Studio';
+          metaEl.textContent = 'Assign cast, beats, and production cues per scene.';
+        } else {
+          titleEl.textContent = `${scene.label} · ${scene.title}`;
+          metaEl.textContent = buildTimelineHeaderMeta(scene);
+        }
+        updateStoryArcSummary(scene);
+      }
+
+      function updateTimelineHighlights(){
+        const activeSceneId = timelineState.activeSceneId;
+        const activeCharacterId = state.activeId;
+        document.querySelectorAll('[data-character-scene-row]').forEach(node => {
+          const scene = getTimelineSceneById(node.dataset.sceneId);
+          const matchesCharacter = !!(activeCharacterId && scene?.characters?.includes(activeCharacterId));
+          node.classList.toggle('timeline-scene--character', matchesCharacter);
+          node.classList.toggle('active', scene?.id === activeSceneId);
+        });
+        document.querySelectorAll('[data-character-story-arc-scene]').forEach(node => {
+          const scene = getTimelineSceneById(node.dataset.characterStoryArcScene);
+          const matchesCharacter = !!(activeCharacterId && scene?.characters?.includes(activeCharacterId));
+          node.classList.toggle('story-arc-scene--character', matchesCharacter);
+          node.classList.toggle('active', scene?.id === activeSceneId);
+        });
+      }
+
+      function setActiveTimelineScene(id, options = {}){
+        const scene = getTimelineSceneById(id);
+        if (!scene){
+          timelineState.activeSceneId = null;
+          updateTimelineSceneHeader();
+          updateTimelineHighlights();
+          return;
+        }
+        const changed = timelineState.activeSceneId !== scene.id;
+        timelineState.activeSceneId = scene.id;
+        updateTimelineSceneHeader();
+        updateTimelineHighlights();
+        if (changed && options.scroll !== false){
+          const row = document.querySelector(`[data-character-scene-row][data-scene-id="${scene.id}"]`);
+          if (row && typeof row.scrollIntoView === 'function'){
+            row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        }
+      }
+
+      function syncTimelineToActiveCharacter(options = {}){
+        const activeCharacterId = state.activeId;
+        let desiredSceneId = timelineState.activeSceneId;
+        if (activeCharacterId){
+          const currentScene = getTimelineSceneById(desiredSceneId);
+          const currentMatches = currentScene?.characters?.includes(activeCharacterId);
+          if (!currentMatches || !options.preserveSelection){
+            const match = timelineState.scenes.find(scene => Array.isArray(scene.characters) && scene.characters.includes(activeCharacterId));
+            if (match) desiredSceneId = match.id;
+          }
+        }
+        if (desiredSceneId){
+          setActiveTimelineScene(desiredSceneId, { scroll: false });
+        } else {
+          setActiveTimelineScene(null);
+        }
+        updateTimelineCharacterMeta();
+        updateTimelineHighlights();
+      }
+
+      function updateTimelineDockPinned(){
+        const dock = document.getElementById('characterTimelineDock');
+        const handle = document.getElementById('characterTimelineDockHandle');
+        if (!dock || !handle) return;
+        dock.classList.toggle('pinned', timelineState.dockPinned);
+        dock.classList.toggle('floating', !timelineState.dockPinned);
+        handle.setAttribute('aria-pressed', timelineState.dockPinned ? 'true' : 'false');
+        handle.setAttribute('aria-expanded', timelineState.dockPinned ? 'true' : 'false');
+        handle.setAttribute('aria-label', timelineState.dockPinned ? 'Click to float story timelines' : 'Click to pin story timelines');
+        handle.title = timelineState.dockPinned ? 'Click to float story timelines' : 'Click to pin story timelines';
+      }
+
+      function bindTimelineControls(){
+        document.querySelectorAll('[data-character-track-toggle]').forEach(button => {
+          const track = button.getAttribute('data-character-track-toggle');
+          button.addEventListener('click', () => {
+            if (!Object.prototype.hasOwnProperty.call(TIMELINE_TRACK_CONFIG, track)) return;
+            const next = !timelineState.trackVisibility[track];
+            timelineState.trackVisibility[track] = next;
+            button.classList.toggle('active', next);
+            button.setAttribute('aria-pressed', next ? 'true' : 'false');
+            renderTimelineGrid();
+          });
+        });
+
+        const handle = document.getElementById('characterTimelineDockHandle');
+        if (handle){
+          handle.addEventListener('click', () => {
+            timelineState.dockPinned = !timelineState.dockPinned;
+            updateTimelineDockPinned();
+          });
+        }
+      }
+
+      function initializeTimeline(){
+        renderTimelineScale();
+        renderStoryArcScenes();
+        renderTimelineGrid();
+        if (timelineState.activeSceneId){
+          setActiveTimelineScene(timelineState.activeSceneId, { scroll: false });
+        }
+        updateTimelineCharacterMeta();
+        updateTimelineHighlights();
+        updateTimelineDockPinned();
+        bindTimelineControls();
+      }
+
+      function getActiveCharacter(){
+        if (!state.activeId) return null;
+        return state.characters.find(char => char.id === state.activeId) || null;
+      }
+
+      function characterSidebarMeta(character){
+        if (!character) return '';
+        if (character.role) return character.role;
+        if (character.archetype) return character.archetype;
+        const identity = [character.pronouns, character.age].filter(Boolean).join(' • ');
+        if (identity) return identity;
+        return 'Tap to detail profile';
+      }
+
+      function buildCharacterSubheading(character){
+        if (!character) return '';
+        const parts = [];
+        if (character.role) parts.push(character.role);
+        const identity = [character.pronouns, character.age].filter(Boolean).join(' • ');
+        if (identity) parts.push(identity);
+        if (character.archetype) parts.push(character.archetype);
+        return parts.join(' — ');
+      }
+
+      function buildTraitsPreviewMarkup(character){
+        const traits = Array.isArray(character?.traits) ? character.traits : [];
+        if (!traits.length) return '<span class="muted-text">Add traits to see quick reference chips.</span>';
+        return traits.map(trait => `<span class="character-studio-chip"><strong>${escapeHtml(trait)}</strong></span>`).join('');
+      }
+
+      function characterLookPreviewMarkup(kind, url, character){
+        const label = CHARACTER_LOOK_LABELS[kind] || 'Reference';
+        const name = character?.name ? character.name : 'Character';
+        if (url){
+          return `<img src="${escapeHtml(url)}" alt="${escapeHtml(`${name} ${label.toLowerCase()}`)}" />`;
+        }
+        return `<div class="character-studio-look-empty">Add a ${escapeHtml(label.toLowerCase())} URL to preview.</div>`;
+      }
+
+      function parseIntegerInput(value){
+        const num = parseInt(value, 10);
+        return Number.isFinite(num) && num >= 0 ? num : 0;
+      }
+
+      function parseFloatInput(value){
+        const num = parseFloat(value);
+        return Number.isFinite(num) && num >= 0 ? Number(num.toFixed(2)) : 0;
+      }
+
+      function updateCharacterField(id, path, value){
+        const character = state.characters.find(c => c.id === id);
+        if (!character) return;
+        const parts = path.split('.');
+        let target = character;
+        for (let i = 0; i < parts.length - 1; i++){
+          const key = parts[i];
+          if (typeof target[key] !== 'object' || target[key] === null) target[key] = {};
+          target = target[key];
+        }
+        target[parts[parts.length - 1]] = value;
+      }
+
+      function renderCharacterList(){
+        const listEl = document.querySelector('[data-character-list]');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        if (!state.characters.length){
+          state.activeId = null;
+          const empty = document.createElement('div');
+          empty.className = 'character-studio-empty-list';
+          empty.innerHTML = '<strong>No characters yet</strong><span>Add the first member of your cast to begin planning.</span>';
+          listEl.appendChild(empty);
+          syncTimelineToActiveCharacter({ preserveSelection: false });
+          return;
+        }
+        state.characters.forEach(char => {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'character-studio-list-item' + (char.id === state.activeId ? ' active' : '');
+          item.innerHTML = `<strong>${escapeHtml(char.name || 'Untitled Character')}</strong><span>${escapeHtml(characterSidebarMeta(char))}</span>`;
+          item.addEventListener('click', () => {
+            if (state.activeId === char.id) return;
+            state.activeId = char.id;
+            renderCharacterList();
+            renderCharacterDetails();
+            syncTimelineToActiveCharacter({ preserveSelection: true });
+          });
+          listEl.appendChild(item);
+        });
+        updateTimelineHighlights();
+      }
+
+      function renderCharacterDetails(){
+        const container = document.querySelector('[data-character-details]');
+        if (!container) return;
+        const active = getActiveCharacter();
+        if (!active){
+          container.innerHTML = `
+            <div class="character-studio-empty">
+              <h2>No characters yet</h2>
+              <p>Use the + New button to start building your cast.</p>
+            </div>`;
+          updateTimelineCharacterMeta();
+          updateTimelineHighlights();
+          return;
+        }
+
+        const statsScenes = Number.isFinite(active.stats?.scenes) ? active.stats.scenes : 0;
+        const statsDialogue = Number.isFinite(active.stats?.dialogue) ? active.stats.dialogue : 0;
+        const statsScreenTime = Number.isFinite(active.stats?.screenTime) ? active.stats.screenTime : 0;
+        const traitsText = Array.isArray(active.traits) ? active.traits.join('\n') : '';
+        const portraitUrl = active.looks?.portrait || '';
+        const turnaroundsText = Array.isArray(active.looks?.turnarounds) ? active.looks.turnarounds.join('\n') : '';
+        const expressionsText = Array.isArray(active.looks?.expressions) ? active.looks.expressions.join('\n') : '';
+        const turnaroundPreview = Array.isArray(active.looks?.turnarounds) ? active.looks.turnarounds[0] || '' : '';
+        const expressionPreview = Array.isArray(active.looks?.expressions) ? active.looks.expressions[0] || '' : '';
+        const subheading = buildCharacterSubheading(active);
+        const traitsPreview = buildTraitsPreviewMarkup(active);
+        const aiPrompt = active.ai?.prompt || '';
+        const aiNotes = active.ai?.notes || '';
+
+        container.innerHTML = `
+          <div class="character-studio-detail-header">
+            <div>
+              <h2 data-character-heading>${escapeHtml(active.name || 'Untitled Character')}</h2>
+              <p class="muted-text" data-character-subheading>${escapeHtml(subheading || 'Add role, pronouns, or age details.')}</p>
+            </div>
+            <div class="character-studio-header-actions">
+              <button class="character-studio-tertiary" type="button" data-character-delete>Delete Character</button>
+            </div>
+          </div>
+          <section class="character-studio-section">
+            <h3>Profile</h3>
+            <p class="muted-text">Keep the essentials handy when writing.</p>
+            <div class="character-studio-two-col">
+              <label class="character-studio-field">
+                <span>Name</span>
+                <input type="text" value="${escapeHtml(active.name || '')}" data-character-field="name" placeholder="Character name" />
+              </label>
+              <label class="character-studio-field">
+                <span>Role</span>
+                <input type="text" value="${escapeHtml(active.role || '')}" data-character-field="role" placeholder="Protagonist, Antagonist..." />
+              </label>
+              <label class="character-studio-field">
+                <span>Archetype</span>
+                <input type="text" value="${escapeHtml(active.archetype || '')}" data-character-field="archetype" placeholder="e.g. Reluctant hero" />
+              </label>
+              <label class="character-studio-field">
+                <span>Pronouns</span>
+                <input type="text" value="${escapeHtml(active.pronouns || '')}" data-character-field="pronouns" placeholder="They/Them" />
+              </label>
+              <label class="character-studio-field">
+                <span>Age</span>
+                <input type="text" value="${escapeHtml(active.age || '')}" data-character-field="age" placeholder="32" />
+              </label>
+            </div>
+            <label class="character-studio-field">
+              <span>Summary</span>
+              <textarea class="small" data-character-field="summary" placeholder="Logline summary">${escapeHtml(active.summary || '')}</textarea>
+            </label>
+          </section>
+          <section class="character-studio-section">
+            <h3>Stats &amp; Spotlight</h3>
+            <p class="muted-text">Track how often this character appears in the script.</p>
+            <div class="character-studio-stats-grid">
+              <div class="character-studio-stat">
+                <span class="character-studio-stat-value" data-character-stat="scenes">${escapeHtml(String(statsScenes))}</span>
+                <span class="character-studio-stat-label">Scenes</span>
+              </div>
+              <div class="character-studio-stat">
+                <span class="character-studio-stat-value" data-character-stat="dialogue">${escapeHtml(String(statsDialogue))}</span>
+                <span class="character-studio-stat-label">Dialogue Lines</span>
+              </div>
+              <div class="character-studio-stat">
+                <span class="character-studio-stat-value" data-character-stat="screenTime">${escapeHtml(String(statsScreenTime))}</span>
+                <span class="character-studio-stat-label">Estimated Minutes</span>
+              </div>
+            </div>
+            <div class="character-studio-two-col">
+              <label class="character-studio-field">
+                <span>Total scenes</span>
+                <input type="number" min="0" value="${escapeHtml(String(statsScenes))}" data-character-field="stats.scenes" />
+              </label>
+              <label class="character-studio-field">
+                <span>Dialogue lines</span>
+                <input type="number" min="0" value="${escapeHtml(String(statsDialogue))}" data-character-field="stats.dialogue" />
+              </label>
+              <label class="character-studio-field">
+                <span>Screen time (minutes)</span>
+                <input type="number" min="0" step="0.1" value="${escapeHtml(String(statsScreenTime))}" data-character-field="stats.screenTime" />
+              </label>
+            </div>
+          </section>
+          <section class="character-studio-section">
+            <h3>Traits &amp; Personality</h3>
+            <p class="muted-text">List defining qualities, habits, and secrets.</p>
+            <div class="character-studio-traits-preview" data-traits-preview>${traitsPreview}</div>
+            <label class="character-studio-field">
+              <span>Traits (one per line)</span>
+              <textarea data-character-field="traits" placeholder="Resilient&#10;Impulsive&#10;Secret romantic">${escapeHtml(traitsText)}</textarea>
+            </label>
+          </section>
+          <section class="character-studio-section">
+            <h3>Background &amp; Family</h3>
+            <div class="character-studio-two-col">
+              <label class="character-studio-field">
+                <span>Background story</span>
+                <textarea data-character-field="background" placeholder="Origin story, formative experiences">${escapeHtml(active.background || '')}</textarea>
+              </label>
+              <label class="character-studio-field">
+                <span>Family tree / relationships</span>
+                <textarea data-character-field="familyTree" placeholder="Parents, siblings, key relationships">${escapeHtml(active.familyTree || '')}</textarea>
+              </label>
+            </div>
+          </section>
+          <section class="character-studio-section">
+            <h3>Character Arc</h3>
+            <p class="muted-text">Map how the character transforms across the story.</p>
+            <div class="character-studio-two-col">
+              <label class="character-studio-field">
+                <span>Setup</span>
+                <textarea data-character-field="arc.setup" placeholder="Who are they at the beginning?">${escapeHtml(active.arc?.setup || '')}</textarea>
+              </label>
+              <label class="character-studio-field">
+                <span>Development</span>
+                <textarea data-character-field="arc.development" placeholder="Challenges, midpoint, reversals">${escapeHtml(active.arc?.development || '')}</textarea>
+              </label>
+              <label class="character-studio-field">
+                <span>Resolution</span>
+                <textarea data-character-field="arc.resolution" placeholder="Where do they end up?">${escapeHtml(active.arc?.resolution || '')}</textarea>
+              </label>
+            </div>
+          </section>
+          <section class="character-studio-section">
+            <h3>Lookbook</h3>
+            <p class="muted-text">Collect portrait, turnaround, and expression references.</p>
+            <div class="character-studio-two-col">
+              <label class="character-studio-field">
+                <span>Portrait URL</span>
+                <input type="url" data-character-field="looks.portrait" value="${escapeHtml(portraitUrl)}" placeholder="https://..." />
+              </label>
+              <label class="character-studio-field">
+                <span>Turnarounds (one per line)</span>
+                <textarea data-character-field="looks.turnarounds" class="small" placeholder="Link to turnaround sheets">${escapeHtml(turnaroundsText)}</textarea>
+              </label>
+              <label class="character-studio-field">
+                <span>Expression sheets (one per line)</span>
+                <textarea data-character-field="looks.expressions" class="small" placeholder="Link to expressions">${escapeHtml(expressionsText)}</textarea>
+              </label>
+            </div>
+            <div class="character-studio-look-grid">
+              <div class="character-studio-look-card" data-look-preview="portrait">
+                <span class="character-studio-look-label">Portrait</span>
+                <div data-look-content>
+                  ${characterLookPreviewMarkup('portrait', portraitUrl, active)}
+                </div>
+              </div>
+              <div class="character-studio-look-card" data-look-preview="turnaround">
+                <span class="character-studio-look-label">Turnaround</span>
+                <div data-look-content>
+                  ${characterLookPreviewMarkup('turnaround', turnaroundPreview, active)}
+                </div>
+              </div>
+              <div class="character-studio-look-card" data-look-preview="expression">
+                <span class="character-studio-look-label">Expressions</span>
+                <div data-look-content>
+                  ${characterLookPreviewMarkup('expression', expressionPreview, active)}
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="character-studio-section">
+            <h3>AI Concepting</h3>
+            <p class="muted-text">Draft prompts for StudioOrganize AI or export for other tools.</p>
+            <label class="character-studio-field">
+              <span>AI prompt</span>
+              <textarea data-character-field="ai.prompt" placeholder="Describe the character's look, vibe, and scene">${escapeHtml(aiPrompt)}</textarea>
+            </label>
+            <label class="character-studio-field">
+              <span>Notes / references</span>
+              <textarea data-character-field="ai.notes" class="small" placeholder="Shot list, wardrobe callouts, artist references">${escapeHtml(aiNotes)}</textarea>
+            </label>
+            <div class="character-studio-ai-actions">
+              <button type="button" data-character-ai-generate>Save prompt &amp; prep AI render</button>
+              <span class="character-studio-status" data-ai-status></span>
+            </div>
+          </section>
+        `;
+
+        bindCharacterStudioFields(container, active);
+        updateTimelineCharacterMeta();
+        updateTimelineHighlights();
+      }
+
+      function refreshCharacterMeta(character){
+        const heading = document.querySelector('[data-character-heading]');
+        if (heading) heading.textContent = character?.name ? character.name : 'Untitled Character';
+        const subheading = document.querySelector('[data-character-subheading]');
+        if (subheading){
+          const text = buildCharacterSubheading(character);
+          subheading.textContent = text || 'Add role, pronouns, or age details.';
+        }
+        updateTimelineCharacterMeta();
+        updateTimelineHighlights();
+      }
+
+      function refreshTraitsPreview(character){
+        const preview = document.querySelector('[data-traits-preview]');
+        if (preview) preview.innerHTML = buildTraitsPreviewMarkup(character);
+      }
+
+      function updateLookPreview(kind, character){
+        const slot = document.querySelector(`[data-look-preview="${kind}"]`);
+        if (!slot) return;
+        let url = '';
+        if (kind === 'portrait') url = (character?.looks?.portrait || '').trim();
+        else if (kind === 'turnaround') url = Array.isArray(character?.looks?.turnarounds) ? character.looks.turnarounds[0] || '' : '';
+        else if (kind === 'expression') url = Array.isArray(character?.looks?.expressions) ? character.looks.expressions[0] || '' : '';
+        const content = slot.querySelector('[data-look-content]');
+        if (content) content.innerHTML = characterLookPreviewMarkup(kind, url, character);
+      }
+
+      function bindCharacterStudioFields(container, active){
+        if (!container || !active) return;
+        const id = active.id;
+        const aiStatus = container.querySelector('[data-ai-status]');
+        const clearAiStatus = () => {
+          if (aiStatus){
+            aiStatus.textContent = '';
+            aiStatus.removeAttribute('data-state');
+          }
+        };
+
+        const nameInput = container.querySelector('[data-character-field="name"]');
+        if (nameInput){
+          nameInput.addEventListener('input', e => {
+            updateCharacterField(id, 'name', e.target.value);
+            renderCharacterList();
+            refreshCharacterMeta(active);
+            updateLookPreview('portrait', active);
+            updateLookPreview('turnaround', active);
+            updateLookPreview('expression', active);
+          });
+        }
+
+        const roleInput = container.querySelector('[data-character-field="role"]');
+        if (roleInput){
+          roleInput.addEventListener('input', e => {
+            updateCharacterField(id, 'role', e.target.value);
+            renderCharacterList();
+            refreshCharacterMeta(active);
+          });
+        }
+
+        const archetypeInput = container.querySelector('[data-character-field="archetype"]');
+        if (archetypeInput){
+          archetypeInput.addEventListener('input', e => {
+            updateCharacterField(id, 'archetype', e.target.value);
+            renderCharacterList();
+            refreshCharacterMeta(active);
+          });
+        }
+
+        const pronounsInput = container.querySelector('[data-character-field="pronouns"]');
+        if (pronounsInput){
+          pronounsInput.addEventListener('input', e => {
+            updateCharacterField(id, 'pronouns', e.target.value);
+            renderCharacterList();
+            refreshCharacterMeta(active);
+          });
+        }
+
+        const ageInput = container.querySelector('[data-character-field="age"]');
+        if (ageInput){
+          ageInput.addEventListener('input', e => {
+            updateCharacterField(id, 'age', e.target.value);
+            renderCharacterList();
+            refreshCharacterMeta(active);
+          });
+        }
+
+        const summaryInput = container.querySelector('[data-character-field="summary"]');
+        if (summaryInput){
+          summaryInput.addEventListener('input', e => {
+            updateCharacterField(id, 'summary', e.target.value);
+          });
+        }
+
+        const statsScenesInput = container.querySelector('[data-character-field="stats.scenes"]');
+        if (statsScenesInput){
+          statsScenesInput.addEventListener('input', e => {
+            const value = parseIntegerInput(e.target.value);
+            updateCharacterField(id, 'stats.scenes', value);
+            const display = container.querySelector('[data-character-stat="scenes"]');
+            if (display) display.textContent = value;
+          });
+        }
+
+        const statsDialogueInput = container.querySelector('[data-character-field="stats.dialogue"]');
+        if (statsDialogueInput){
+          statsDialogueInput.addEventListener('input', e => {
+            const value = parseIntegerInput(e.target.value);
+            updateCharacterField(id, 'stats.dialogue', value);
+            const display = container.querySelector('[data-character-stat="dialogue"]');
+            if (display) display.textContent = value;
+          });
+        }
+
+        const statsScreenTimeInput = container.querySelector('[data-character-field="stats.screenTime"]');
+        if (statsScreenTimeInput){
+          statsScreenTimeInput.addEventListener('input', e => {
+            const value = parseFloatInput(e.target.value);
+            updateCharacterField(id, 'stats.screenTime', value);
+            const display = container.querySelector('[data-character-stat="screenTime"]');
+            if (display) display.textContent = value;
+          });
+        }
+
+        const traitsInput = container.querySelector('[data-character-field="traits"]');
+        if (traitsInput){
+          traitsInput.addEventListener('input', e => {
+            const list = normalizeList(e.target.value);
+            updateCharacterField(id, 'traits', list);
+            refreshTraitsPreview(active);
+          });
+        }
+
+        const backgroundInput = container.querySelector('[data-character-field="background"]');
+        if (backgroundInput){
+          backgroundInput.addEventListener('input', e => {
+            updateCharacterField(id, 'background', e.target.value);
+          });
+        }
+
+        const familyInput = container.querySelector('[data-character-field="familyTree"]');
+        if (familyInput){
+          familyInput.addEventListener('input', e => {
+            updateCharacterField(id, 'familyTree', e.target.value);
+          });
+        }
+
+        const arcSetupInput = container.querySelector('[data-character-field="arc.setup"]');
+        if (arcSetupInput){
+          arcSetupInput.addEventListener('input', e => {
+            updateCharacterField(id, 'arc.setup', e.target.value);
+          });
+        }
+
+        const arcDevInput = container.querySelector('[data-character-field="arc.development"]');
+        if (arcDevInput){
+          arcDevInput.addEventListener('input', e => {
+            updateCharacterField(id, 'arc.development', e.target.value);
+          });
+        }
+
+        const arcResolutionInput = container.querySelector('[data-character-field="arc.resolution"]');
+        if (arcResolutionInput){
+          arcResolutionInput.addEventListener('input', e => {
+            updateCharacterField(id, 'arc.resolution', e.target.value);
+          });
+        }
+
+        const portraitInput = container.querySelector('[data-character-field="looks.portrait"]');
+        if (portraitInput){
+          portraitInput.addEventListener('input', e => {
+            const value = e.target.value.trim();
+            updateCharacterField(id, 'looks.portrait', value);
+            updateLookPreview('portrait', active);
+          });
+        }
+
+        const turnaroundsInput = container.querySelector('[data-character-field="looks.turnarounds"]');
+        if (turnaroundsInput){
+          turnaroundsInput.addEventListener('input', e => {
+            const list = normalizeList(e.target.value);
+            updateCharacterField(id, 'looks.turnarounds', list);
+            updateLookPreview('turnaround', active);
+          });
+        }
+
+        const expressionsInput = container.querySelector('[data-character-field="looks.expressions"]');
+        if (expressionsInput){
+          expressionsInput.addEventListener('input', e => {
+            const list = normalizeList(e.target.value);
+            updateCharacterField(id, 'looks.expressions', list);
+            updateLookPreview('expression', active);
+          });
+        }
+
+        const aiPromptInput = container.querySelector('[data-character-field="ai.prompt"]');
+        if (aiPromptInput){
+          aiPromptInput.addEventListener('input', e => {
+            updateCharacterField(id, 'ai.prompt', e.target.value);
+            clearAiStatus();
+          });
+        }
+
+        const aiNotesInput = container.querySelector('[data-character-field="ai.notes"]');
+        if (aiNotesInput){
+          aiNotesInput.addEventListener('input', e => {
+            updateCharacterField(id, 'ai.notes', e.target.value);
+            clearAiStatus();
+          });
+        }
+
+        const aiButton = container.querySelector('[data-character-ai-generate]');
+        if (aiButton){
+          aiButton.addEventListener('click', () => {
+            const prompt = (active.ai?.prompt || '').trim();
+            if (!prompt){
+              if (aiStatus){
+                aiStatus.textContent = 'Add an AI prompt to generate concept art.';
+                aiStatus.dataset.state = 'warning';
+              }
+              return;
+            }
+            if (aiStatus){
+              aiStatus.textContent = 'Prompt saved! Connect to StudioOrganize AI to generate character images.';
+              aiStatus.dataset.state = 'ready';
+            }
+          });
+        }
+
+        const deleteBtn = container.querySelector('[data-character-delete]');
+        if (deleteBtn){
+          deleteBtn.addEventListener('click', () => {
+            const name = active.name || 'this character';
+            const ok = window.confirm(`Delete ${name}? This will remove their notes and stats.`);
+            if (!ok) return;
+            const index = state.characters.findIndex(c => c.id === id);
+            if (index !== -1) state.characters.splice(index, 1);
+            if (state.characters.length){
+              state.activeId = state.characters[0].id;
+            } else {
+              state.activeId = null;
+            }
+            renderCharacterList();
+            renderCharacterDetails();
+            syncTimelineToActiveCharacter({ preserveSelection: false });
+          });
+        }
+      }
+
+      function addCharacter(){
+        const newCharacter = createCharacterData('New Character');
+        state.characters.push(newCharacter);
+        state.activeId = newCharacter.id;
+        renderCharacterList();
+        renderCharacterDetails();
+        syncTimelineToActiveCharacter({ preserveSelection: false });
+        window.requestAnimationFrame(() => {
+          const input = document.querySelector('[data-character-field="name"]');
+          if (input){
+            input.focus();
+            input.select();
+          }
+        });
+      }
+
+      const addButton = document.getElementById('characterStudioAddBtn');
+      if (addButton){
+        addButton.addEventListener('click', addCharacter);
+      }
+
+      initializeTimeline();
+      renderCharacterList();
+      renderCharacterDetails();
+      syncTimelineToActiveCharacter({ preserveSelection: true });
+    })();
+  </script>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+  <script type="module" src="/assets/main.js"></script>
+</body>
+</html>
