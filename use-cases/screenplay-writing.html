@@ -249,6 +249,7 @@
       .editor{padding:0; display:flex; flex-direction:column; min-height:0}
       .editor-heading{display:flex; align-items:center; justify-content:space-between; padding:10px 12px 0 12px; gap:12px}
       .editor-heading h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted)}
+      .editor-heading__actions{display:flex; align-items:center; gap:8px}
       .editor-stage{flex:1; display:flex; flex-direction:column; min-height:0; position:relative; --page-width:794px; --page-height:1123px}
       .editor-scroll{flex:1; overflow:auto; padding:0 12px 12px; display:flex; justify-content:center; align-items:stretch; position:relative}
       .editor-area{flex:1; max-width:var(--page-width); width:100%; min-height:100%; padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext; border-radius:12px; background:var(--panel); transition:box-shadow .2s ease, background .2s ease}
@@ -263,6 +264,11 @@
       .editor-view-toggle{display:inline-flex; border:1px solid var(--ring); border-radius:999px; padding:2px; background:var(--chip); gap:2px}
       .editor-view-toggle button{border:none; background:transparent; color:var(--muted); font-size:11px; letter-spacing:.3px; text-transform:uppercase; padding:4px 10px; border-radius:999px; cursor:pointer; transition:background .2s ease, color .2s ease}
       .editor-view-toggle button.active{background:var(--acc); color:var(--active-tab-text); font-weight:600}
+      #exitFocusBtn{display:none; width:30px; height:30px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--muted); font-size:16px; line-height:1; align-items:center; justify-content:center; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease; padding:0}
+      #exitFocusBtn:hover{border-color:var(--acc); background:var(--acc); color:var(--active-tab-text)}
+      #exitFocusBtn:focus{outline:none}
+      #exitFocusBtn:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
+      body.focus-mode #exitFocusBtn{display:inline-flex}
       .page-view-nav{display:flex; align-items:center; gap:6px; justify-content:center}
       .page-view-nav button{border:1px solid var(--ring); background:var(--chip); color:var(--ink); border-radius:8px; padding:4px 8px; font-size:12px; cursor:pointer}
       .page-view-nav button:disabled{opacity:0.5; cursor:not-allowed}
@@ -797,6 +803,7 @@
         font-size: 17px;
         line-height: 1.7;
       }
+      body.focus-mode .topbar{ display:none; }
       body.focus-mode .topbar .non-essential{ display:none !important; }
 
       /* Line highlight */
@@ -1064,9 +1071,12 @@
         <div class="panel editor">
           <div class="editor-heading">
             <h2>Script</h2>
-            <div class="editor-view-toggle" role="group" aria-label="Script view mode">
-              <button type="button" class="active" data-script-view-mode="scroll" aria-pressed="true">Scroll</button>
-              <button type="button" data-script-view-mode="pages" aria-pressed="false">Pages</button>
+            <div class="editor-heading__actions">
+              <div class="editor-view-toggle" role="group" aria-label="Script view mode">
+                <button type="button" class="active" data-script-view-mode="scroll" aria-pressed="true">Scroll</button>
+                <button type="button" data-script-view-mode="pages" aria-pressed="false">Pages</button>
+              </div>
+              <button type="button" id="exitFocusBtn" aria-label="Exit focus mode" title="Exit focus mode" onclick="if(document.body.classList.contains('focus-mode')) toggleFocus();">✕</button>
             </div>
           </div>
           <div class="editor-stage" id="editorStage" data-view-mode="scroll">
@@ -8350,6 +8360,11 @@
         if (!project) return;
         project.settings = project.settings || {};
         project.settings.timelineDockPinned = !project.settings.timelineDockPinned;
+        if (document.body.classList.contains('focus-mode')){
+          project.settings.timelineDockPinnedBeforeFocus = project.settings.timelineDockPinned;
+        } else if (typeof project.settings.timelineDockPinnedBeforeFocus !== 'undefined'){
+          delete project.settings.timelineDockPinnedBeforeFocus;
+        }
         saveLocal(project);
         syncTimelineDockState(true);
       });
@@ -8438,6 +8453,7 @@
     function syncTimelineDockState(forceReveal){
       const dock = document.getElementById('timelineDock');
       const handle = document.getElementById('timelineDockHandle');
+      const inFocusMode = document.body.classList.contains('focus-mode');
       timelinePinned = !!project?.settings?.timelineDockPinned;
       lastTimelinePinned = timelinePinned;
       if (handle){
@@ -8451,8 +8467,12 @@
       if (timelinePinned){
         showTimelineDock();
       } else {
-        if (forceReveal) showTimelineDock();
-        if (!timelineHovering) scheduleTimelineHide();
+        if (!inFocusMode){
+          if (forceReveal) showTimelineDock();
+          if (!timelineHovering) scheduleTimelineHide();
+        } else {
+          hideTimelineDockImmediately();
+        }
         if (handle) handle.style.width = '';
       }
       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
@@ -8581,6 +8601,16 @@
     function applyFocusModeUI(){
       const focused = !!project?.settings?.focus;
       document.body.classList.toggle('focus-mode', focused);
+      project.settings = project.settings || {};
+      if (focused){
+        if (typeof project.settings.timelineDockPinnedBeforeFocus === 'undefined'){
+          project.settings.timelineDockPinnedBeforeFocus = !!project.settings.timelineDockPinned;
+        }
+        project.settings.timelineDockPinned = false;
+      } else if (typeof project?.settings?.timelineDockPinnedBeforeFocus !== 'undefined'){
+        project.settings.timelineDockPinned = !!project.settings.timelineDockPinnedBeforeFocus;
+        delete project.settings.timelineDockPinnedBeforeFocus;
+      }
       const btn = document.getElementById('focusBtn');
       if (btn) btn.textContent = focused ? 'Exit Focus' : 'Focus';
       updateHud();
@@ -8589,12 +8619,13 @@
       syncNavHeight();
       syncTimelineDockState();
       syncFocusHudState();
+      if (focused) hideTimelineDockImmediately();
     }
     function toggleFocus(){
       project.settings = project.settings || {};
       project.settings.focus = !project.settings.focus;
-      saveLocal(project);
       applyFocusModeUI();
+      saveLocal(project);
     }
     function updateHud(){
       const hudC = document.getElementById('hudCounter');
