@@ -85,6 +85,82 @@
       .btn.active { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
       .btn.btn-primary { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
       .topbar-group { display: flex; gap: 6px; align-items: center; }
+      .timeline-dock { position: relative; z-index: 1200; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px 20px 6px; background: linear-gradient(180deg, var(--bg) 0%, transparent 90%); }
+      .timeline-dock.floating { position: sticky; top: 0; }
+      .timeline-dock__handle { order: 2; width: clamp(64px, 18vw, 110px); height: 10px; border-radius: 999px; border: none; padding: 0; background: var(--ring); cursor: pointer; transition: width .35s ease, background .3s ease, box-shadow .3s ease, opacity .2s ease, height .3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+      .timeline-dock__handle:hover { background: var(--acc); }
+      .timeline-dock__handle:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .timeline-dock.pinned .timeline-dock__handle { background: var(--acc); box-shadow: 0 8px 22px rgba(79,123,255,0.35); animation: timelineDockHandlePinnedRelax .35s ease forwards; animation-delay: 1s; }
+      @keyframes timelineDockHandlePinnedRelax {
+        from { background: var(--acc); box-shadow: 0 8px 22px rgba(79,123,255,0.35); height: 10px; opacity: 1; }
+        to { background: var(--ring); box-shadow: 0 3px 10px rgba(0,0,0,0.22); height: 6px; opacity: 0.7; }
+      }
+      .timeline-dock.floating-hidden .timeline-dock__handle { opacity: 0.85; }
+      .timeline-dock__shell { order: 1; width: min(1080px, 100%); background: var(--hud); border: 1px solid var(--ring); border-radius: 18px; box-shadow: 0 14px 34px rgba(8,15,28,0.32); overflow: hidden; transition: max-height .35s ease, box-shadow .35s ease, border-color .3s ease; max-height: 560px; margin: 0 auto; }
+      .timeline-dock.floating-hidden .timeline-dock__shell { max-height: 0; border-color: transparent; box-shadow: none; }
+      .timeline-dock__content { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 18px; opacity: 1; transform: translateY(0); transition: transform .35s ease, opacity .25s ease; }
+      .timeline-dock.floating-hidden .timeline-dock__content { opacity: 0; transform: translateY(-18px); pointer-events: none; }
+      .timeline-dock.floating-hidden { flex-direction: column-reverse; padding-top: 6px; padding-bottom: 0; gap: 6px; }
+      .story-arc-layout { display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px; }
+      .story-arc-columns { flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .story-arc-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; justify-content: center; min-width: 48px; }
+      .story-arc-action { position: relative; }
+      .story-arc-action-btn { width: 38px; height: 38px; border-radius: 999px; border: 1px solid var(--ring); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; cursor: pointer; transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; box-shadow: 0 10px 22px rgba(8,15,28,0.16); }
+      .story-arc-action-btn:hover { background: linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); border-color: var(--acc); color: var(--ink); transform: translateY(-1px); }
+      .story-arc-action-btn:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .story-arc-action-btn:active { transform: translateY(0); }
+      .story-arc-action--menu:hover .story-arc-action-btn,
+      .story-arc-action--menu:focus-within .story-arc-action-btn { background: linear-gradient(135deg, rgba(79,123,255,0.24), rgba(79,123,255,0.12)); border-color: var(--acc); color: var(--ink); }
+      .story-arc-action-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+      .story-arc-action-btn svg path,
+      .story-arc-action-btn svg circle,
+      .story-arc-action-btn svg polyline { stroke-linecap: round; stroke-linejoin: round; }
+      .story-arc-menu { position: absolute; top: calc(100% + 12px); right: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px; min-width: 220px; border-radius: 14px; border: 1px solid var(--ring); background: var(--panel); box-shadow: 0 24px 48px rgba(8,15,28,0.32); opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; z-index: 40; }
+      .story-arc-action--menu:hover .story-arc-menu,
+      .story-arc-action--menu:focus-within .story-arc-menu { opacity: 1; pointer-events: auto; transform: translateY(0); }
+      .story-arc-menu__item { border: none; border-radius: 10px; background: var(--chip); color: var(--ink); font-size: 13px; font-weight: 600; padding: 10px 12px; text-align: left; cursor: pointer; transition: background .2s ease, color .2s ease, transform .2s ease; }
+      .story-arc-menu__item:hover,
+      .story-arc-menu__item:focus-visible { background: linear-gradient(135deg, rgba(79,123,255,0.16), rgba(79,123,255,0.06)); color: var(--ink); outline: none; transform: translateY(-1px); }
+      .story-arc-menu__item:active { transform: translateY(0); }
+      .story-arc-timeline { padding: 0; }
+      .story-arc-container { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; padding: 3px 10px; }
+      .story-arc-track { display: flex; align-items: stretch; justify-content: space-between; gap: 8px; margin: 0; padding: 0; list-style: none; }
+      .story-arc-step { flex: 1; display: flex; min-width: 0; }
+      .story-arc-pill { position: relative; display: flex; flex-direction: column; gap: 1px; align-items: flex-start; justify-content: center; width: 100%; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--ring); background: linear-gradient(135deg, rgba(79,123,255,0.14), rgba(79,123,255,0.06)); box-shadow: inset 0 0 0 1px rgba(79,123,255,0.08); transition: background .2s ease, border-color .2s ease, box-shadow .2s ease; }
+      .story-arc-label { font-size: 9px; font-weight: 600; letter-spacing: .28px; text-transform: uppercase; color: var(--muted); }
+      .story-arc-step--active .story-arc-pill {
+        border: 2px solid transparent;
+        background:
+          linear-gradient(var(--panel), var(--panel)) padding-box,
+          linear-gradient(135deg, rgba(79,123,255,0.65), rgba(122,167,255,0.45)) border-box;
+        box-shadow: 0 0 0 3px rgba(79,123,255,0.28), 0 12px 28px rgba(79,123,255,0.18);
+      }
+      .story-arc-step--active .story-arc-label { color: var(--acc); }
+      .story-arc-scenes { padding: 0; }
+      .story-arc-scenes__container { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; padding: 6px 12px; }
+      .story-arc-scenes__track { display: flex; align-items: stretch; gap: 8px; margin: 0; padding: 0; list-style: none; }
+      .story-arc-scenes__step { flex: 1 1 0; min-width: 0; display: flex; }
+      .story-arc-scenes__slot { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 6px; border-radius: 10px; border: 1px solid var(--ring); background: var(--chip); text-align: center; position: relative; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+      .story-arc-scenes__slot:hover,
+      .story-arc-scenes__slot:focus-visible { border-color: var(--acc); box-shadow: 0 10px 24px rgba(79,123,255,0.22); background: linear-gradient(135deg, rgba(122,167,255,0.12), rgba(122,167,255,0.04)); outline: none; }
+      .story-arc-scenes__slot::after { content: attr(data-tooltip); position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translate(-50%, 0); background: var(--panel); color: var(--ink); border: 1px solid var(--ring); border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 500; box-shadow: 0 12px 24px rgba(8,15,28,0.25); opacity: 0; pointer-events: none; white-space: nowrap; max-width: 260px; text-overflow: ellipsis; overflow: hidden; transition: opacity .15s ease, transform .15s ease; z-index: 20; }
+      .story-arc-scenes__slot::before { content: ''; position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translate(-50%, 0) rotate(45deg); width: 10px; height: 10px; background: var(--panel); border: 1px solid var(--ring); border-top: none; border-left: none; opacity: 0; pointer-events: none; transition: opacity .15s ease, transform .15s ease; z-index: 19; box-shadow: 0 8px 16px rgba(8,15,28,0.2); }
+      .story-arc-scenes__slot:hover::after,
+      .story-arc-scenes__slot:hover::before,
+      .story-arc-scenes__slot:focus-visible::after,
+      .story-arc-scenes__slot:focus-visible::before { opacity: 1; transform: translate(-50%, -4px); }
+      .story-arc-scenes__scene-number { font-size: 10px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); transition: color .15s ease; }
+      .story-arc-scenes__scene-label { font-size: 12px; font-weight: 600; color: var(--ink); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .15s ease; }
+      .story-arc-scenes__slot--compact .story-arc-scenes__scene-number { text-transform: none; font-size: 13px; letter-spacing: 0; }
+      .story-arc-scenes__slot--compact .story-arc-scenes__scene-label { display: none; }
+      .story-arc-scenes__step--active .story-arc-scenes__slot { background: linear-gradient(135deg, var(--acc), rgba(122,167,255,0.95)); border-color: var(--acc); box-shadow: 0 8px 20px rgba(79,123,255,0.18); }
+      .story-arc-scenes__step--active .story-arc-scenes__scene-number { color: var(--active-tab-text); }
+      .story-arc-scenes__step--active .story-arc-scenes__scene-label { color: var(--active-tab-text); }
+      .story-arc-scenes__empty { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 10px; border: 1px dashed var(--ring); color: var(--muted); font-size: 12px; background: var(--chip); }
+      @media (max-width: 820px) {
+        .story-arc-layout { flex-direction: column; align-items: stretch; }
+        .story-arc-actions { flex-direction: row; justify-content: flex-end; align-items: center; }
+      }
       .layout { display: grid; grid-template-columns: 280px 1fr 320px; gap: 12px; padding: 16px; min-height: 0; }
       .panel { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
       .panel h2 { font-size: 13px; font-weight: 600; letter-spacing: .4px; color: var(--muted); margin: 12px 16px 8px; text-transform: uppercase; }
@@ -203,6 +279,68 @@
           <button class="btn active" type="button" data-track-toggle="notes" aria-pressed="true">Notes</button>
         </div>
         <button class="btn" type="button" onclick="window.location.href='/use-cases/screenplay-writing.html#storyboardOverlay'">Open writer workspace</button>
+      </div>
+
+      <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
+        <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
+        <div class="timeline-dock__shell">
+          <div class="timeline-dock__content">
+            <div class="story-arc-layout">
+              <div class="story-arc-columns">
+                <div class="story-arc-timeline" aria-label="Story arc timeline">
+                  <div class="story-arc-container">
+                    <ol class="story-arc-track" role="list">
+                      <li class="story-arc-step" role="listitem">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">Opening</span>
+                        </div>
+                      </li>
+                      <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">Middle</span>
+                        </div>
+                      </li>
+                      <li class="story-arc-step" role="listitem">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">End</span>
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+                <div class="story-arc-scenes" aria-label="Scene timeline">
+                  <div class="story-arc-scenes__container">
+                    <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+                  </div>
+                </div>
+              </div>
+              <div class="story-arc-actions" aria-label="Story timeline actions">
+                <div class="story-arc-action story-arc-action--menu">
+                  <button class="story-arc-action-btn" type="button" aria-haspopup="true" aria-label="Choose story arc template" title="Choose story arc template">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                      <path d="M10.5 4v6.5H17"></path>
+                      <path d="M17 3v4"></path>
+                      <path d="M19 5h-4"></path>
+                      <path d="M17 10.5l4.5-4.5"></path>
+                    </svg>
+                  </button>
+                  <div class="story-arc-menu" role="menu">
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Choose Story Arc · Opening, Middle, End</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Story Arc 2 · Build up</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Hero's Journey</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Conflict resolution</button>
+                  </div>
+                </div>
+                <button class="story-arc-action-btn" type="button" aria-label="Story timeline bookmarks" title="Story timeline bookmarks">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="layout">
@@ -375,6 +513,19 @@
     };
 
     const storage = createScopedStorage('storyboard');
+    const TIMELINE_STORAGE_KEYS = { dockPinned: 'timelineDockPinned' };
+    const TIMELINE_HIDE_DELAY = 3500;
+    let timelinePinned = true;
+    let timelineHideTimer = null;
+    let timelineHovering = false;
+    let lastTimelinePinned = null;
+
+    const storedTimelinePinned = storage.get(TIMELINE_STORAGE_KEYS.dockPinned);
+    if (storedTimelinePinned === 'true') {
+      timelinePinned = true;
+    } else if (storedTimelinePinned === 'false') {
+      timelinePinned = false;
+    }
 
     const sceneDataMap = new Map();
     let sceneData = [];
@@ -385,6 +536,8 @@
     initialiseAiProviderSelect();
     setupApiDialog();
     setupGenerationWorkflow();
+    setupTimelineDockInteractions();
+    renderTimelineDockScenes();
 
     const WRITER_DB_NAME = 'sw_db_v1';
     const WRITER_DB_STORE = 'projects';
@@ -798,6 +951,8 @@
         sceneCards = [];
         sceneRows = [];
         activeSceneId = null;
+        renderTimelineDockScenes();
+        updateStoryArcActiveState();
         return;
       }
 
@@ -813,6 +968,7 @@
         timelineGrid.appendChild(createTimelineScene(scene));
       });
       sceneRows = Array.from(timelineGrid.querySelectorAll('[data-scene-row]'));
+      renderTimelineDockScenes();
 
       if (!sceneDataMap.has(activeSceneId)) {
         activeSceneId = sceneData[0]?.id || null;
@@ -820,6 +976,8 @@
 
       if (activeSceneId) {
         activateScene(activeSceneId, { scroll: false });
+      } else {
+        updateStoryArcActiveState();
       }
     }
 
@@ -839,6 +997,85 @@
         sceneData = FALLBACK_SCENES_RAW.map((scene, index) => formatWriterScene(scene, index, { source: 'fallback' }));
       }
       renderScenes();
+    }
+
+    function renderTimelineDockScenes() {
+      const track = document.getElementById('storyArcSceneSlots');
+      if (!track) return;
+      track.innerHTML = '';
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+      if (!scenes.length) {
+        const empty = document.createElement('li');
+        empty.className = 'story-arc-scenes__empty';
+        empty.setAttribute('role', 'listitem');
+        empty.textContent = 'Add scenes to build your timeline.';
+        track.appendChild(empty);
+        return;
+      }
+      const collapseSceneLabels = scenes.length > 8;
+      scenes.forEach((scene, index) => {
+        const step = document.createElement('li');
+        step.className = 'story-arc-scenes__step';
+        step.dataset.storyArcSceneStep = scene.id;
+        step.setAttribute('role', 'listitem');
+
+        const slot = document.createElement('div');
+        slot.className = 'story-arc-scenes__slot' + (collapseSceneLabels ? ' story-arc-scenes__slot--compact' : '');
+        slot.dataset.storyArcSceneSlot = scene.id;
+        slot.tabIndex = 0;
+        slot.setAttribute('role', 'button');
+
+        const sceneNumberLabel = `Scene ${index + 1}`;
+        const rawName = typeof scene?.displayName === 'string' ? scene.displayName.trim() : '';
+        const slug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
+        const displayLabel = rawName || slug || sceneNumberLabel;
+        const tooltipLabel = displayLabel && displayLabel !== sceneNumberLabel ? `${sceneNumberLabel} • ${displayLabel}` : sceneNumberLabel;
+
+        const numberSpan = document.createElement('span');
+        numberSpan.className = 'story-arc-scenes__scene-number';
+        numberSpan.textContent = collapseSceneLabels ? String(index + 1) : sceneNumberLabel;
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'story-arc-scenes__scene-label';
+        labelSpan.textContent = displayLabel;
+        labelSpan.title = displayLabel;
+        if (collapseSceneLabels) {
+          labelSpan.hidden = true;
+        }
+
+        slot.dataset.tooltip = tooltipLabel;
+        slot.setAttribute('aria-label', tooltipLabel);
+        slot.setAttribute('aria-pressed', scene.id === activeSceneId ? 'true' : 'false');
+
+        slot.addEventListener('click', event => {
+          event.preventDefault();
+          activateScene(scene.id);
+        });
+        slot.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            activateScene(scene.id);
+          }
+        });
+
+        slot.append(numberSpan, labelSpan);
+        step.appendChild(slot);
+        track.appendChild(step);
+      });
+      updateStoryArcActiveState();
+    }
+
+    function updateStoryArcActiveState() {
+      const steps = document.querySelectorAll('[data-story-arc-scene-step]');
+      steps.forEach(step => {
+        const sceneId = step.dataset.storyArcSceneStep;
+        const isActive = sceneId && sceneId === activeSceneId;
+        step.classList.toggle('story-arc-scenes__step--active', Boolean(isActive));
+        const slot = step.querySelector('[data-story-arc-scene-slot]');
+        if (slot) {
+          slot.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        }
+      });
     }
 
     function getLastWriterProjectId() {
@@ -897,7 +1134,139 @@
       }
     }
 
+    function setupTimelineDockInteractions() {
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (!dock || !handle) return;
 
+      handle.addEventListener('click', () => {
+        timelinePinned = !timelinePinned;
+        storage.set(TIMELINE_STORAGE_KEYS.dockPinned, timelinePinned ? 'true' : 'false');
+        syncTimelineDockState(true);
+      });
+
+      dock.addEventListener('pointerenter', event => {
+        timelineHovering = true;
+        if (handle.contains(event.target)) {
+          showTimelineDock();
+        }
+      });
+      dock.addEventListener('pointerleave', () => {
+        timelineHovering = false;
+        scheduleTimelineHide();
+      });
+      dock.addEventListener('focusin', () => {
+        timelineHovering = true;
+        showTimelineDock();
+      });
+      dock.addEventListener('focusout', event => {
+        if (event.relatedTarget && dock.contains(event.relatedTarget)) return;
+        timelineHovering = false;
+        scheduleTimelineHide();
+      });
+
+      const topbar = document.querySelector('.topbar');
+      if (topbar) {
+        topbar.addEventListener('pointerenter', () => hideTimelineDockImmediately());
+        topbar.addEventListener('focusin', () => hideTimelineDockImmediately());
+      }
+
+      const timelineStage = document.querySelector('.timeline-stage');
+      if (timelineStage) {
+        const hideForInteraction = () => hideTimelineDockImmediately();
+        timelineStage.addEventListener('pointerdown', hideForInteraction);
+        timelineStage.addEventListener('focusin', hideForInteraction);
+      }
+
+      window.addEventListener('resize', () => {
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(updateTimelineHandleWidth);
+        } else {
+          updateTimelineHandleWidth();
+        }
+      });
+
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(updateTimelineHandleWidth);
+      } else {
+        updateTimelineHandleWidth();
+      }
+
+      syncTimelineDockState(true);
+    }
+
+    function showTimelineDock() {
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (!dock || !handle) return;
+      dock.classList.remove('floating-hidden');
+      handle.setAttribute('aria-expanded', 'true');
+      clearTimeout(timelineHideTimer);
+      timelineHideTimer = null;
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(updateTimelineHandleWidth);
+      } else {
+        updateTimelineHandleWidth();
+      }
+    }
+
+    function hideTimelineDockImmediately() {
+      if (timelinePinned) return;
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (dock) dock.classList.add('floating-hidden');
+      if (handle) handle.setAttribute('aria-expanded', 'false');
+      clearTimeout(timelineHideTimer);
+      timelineHideTimer = null;
+    }
+
+    function scheduleTimelineHide() {
+      if (timelinePinned) return;
+      clearTimeout(timelineHideTimer);
+      timelineHideTimer = window.setTimeout(() => {
+        if (timelinePinned || timelineHovering) return;
+        hideTimelineDockImmediately();
+      }, TIMELINE_HIDE_DELAY);
+    }
+
+    function updateTimelineHandleWidth() {
+      const handle = document.getElementById('timelineDockHandle');
+      if (!handle) return;
+      if (!timelinePinned) {
+        handle.style.width = '';
+        return;
+      }
+      const dock = document.getElementById('timelineDock');
+      const shell = dock ? dock.querySelector('.timeline-dock__shell') : null;
+      const width = shell ? shell.offsetWidth : 0;
+      handle.style.width = width ? `${width}px` : '';
+    }
+
+    function syncTimelineDockState(forceReveal = false) {
+      const dock = document.getElementById('timelineDock');
+      const handle = document.getElementById('timelineDockHandle');
+      if (handle) {
+        handle.setAttribute('aria-pressed', timelinePinned ? 'true' : 'false');
+        handle.setAttribute('aria-label', timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines');
+        handle.title = timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines';
+      }
+      if (!dock) return;
+      dock.classList.toggle('pinned', timelinePinned);
+      dock.classList.toggle('floating', !timelinePinned);
+      if (timelinePinned) {
+        showTimelineDock();
+      } else {
+        if (forceReveal) showTimelineDock();
+        if (!timelineHovering) scheduleTimelineHide();
+        if (handle) handle.style.width = '';
+      }
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(updateTimelineHandleWidth);
+      } else {
+        updateTimelineHandleWidth();
+      }
+      lastTimelinePinned = timelinePinned;
+    }
 
     function setTrackVisibility(track, visible) {
       document.querySelectorAll(`[data-track="${track}"]`).forEach(trackRow => {
@@ -935,6 +1304,7 @@
           }
         }
       });
+      updateStoryArcActiveState();
     }
 
     function updateSceneName(card, newName) {
@@ -963,6 +1333,7 @@
           sceneTitle.textContent = combinedLabel;
         }
       }
+      renderTimelineDockScenes();
     }
 
     function startSceneRename(card) {
