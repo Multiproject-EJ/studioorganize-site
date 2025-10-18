@@ -631,107 +631,6 @@
       .scene-emotion-chip.is-active{background:var(--emotion-chip-active, var(--emotion-color, rgba(148,163,184,0.45))); border-color:var(--emotion-color, rgba(148,163,184,0.55)); color:var(--emotion-chip-text, #0F172A); box-shadow:0 0 0 1px var(--emotion-chip-ring, rgba(148,163,184,0.45))}
       .scene-emotion-summary{margin:0; font-size:12px}
 
-      /* ==== Character Studio ==== */
-      body.character-studio-mode{overflow:hidden;}
-      #characterStudioOverlay{
-        position:fixed; left:0; right:0; bottom:0; top:var(--nav-height, 72px);
-        background:rgba(7,9,14,0.82);
-        backdrop-filter:blur(18px);
-        display:none; align-items:flex-start; justify-content:center;
-        padding:24px clamp(16px, 4vw, 48px) 32px;
-        z-index:420;
-        overflow:auto;
-      }
-      body.character-studio-mode #characterStudioOverlay{display:flex;}
-      .character-studio-window{
-        position:relative; width:100%; max-width:1200px; min-height:0;
-        background:var(--panel); border:1px solid var(--ring);
-        border-radius:24px; box-shadow:0 36px 110px rgba(0,0,0,0.5);
-        display:flex; flex-direction:column; overflow:hidden;
-      }
-      .character-studio-window:focus{outline:none;}
-      .character-studio-header{
-        display:flex; align-items:center; justify-content:space-between;
-        padding:22px 26px; border-bottom:1px solid var(--ring);
-        gap:16px; background:var(--chip);
-      }
-      .character-studio-header h2{margin:0; font-size:20px; font-weight:600;}
-      .character-studio-header .muted-text{margin:4px 0 0; max-width:48ch;}
-      .character-studio-close{
-        background:var(--chip); border:1px solid var(--ring); border-radius:999px;
-        padding:8px 16px; cursor:pointer; color:var(--ink);
-      }
-      .character-studio-body{padding:24px 26px 28px; flex:1; overflow:auto;}
-      .character-studio-layout{display:grid; grid-template-columns:280px 1fr; gap:20px; min-height:0;}
-      .character-studio-sidebar{display:flex; flex-direction:column; gap:12px; min-height:0;}
-      .character-studio-sidebar-header{display:flex; justify-content:space-between; align-items:center; gap:8px;}
-      .character-studio-sidebar h3{margin:0; font-size:12px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
-      .character-studio-add{
-        background:var(--acc); border:1px solid var(--acc); color:var(--active-tab-text);
-        border-radius:999px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;
-      }
-      .character-studio-sidebar-list{display:flex; flex-direction:column; gap:8px; overflow:auto; padding-right:4px; max-height:100%;}
-      .character-studio-list-item{
-        background:var(--card); border:1px solid var(--ring); border-radius:14px;
-        padding:10px 12px; text-align:left; display:flex; flex-direction:column; gap:4px;
-        cursor:pointer; color:inherit; font:inherit;
-      }
-      .character-studio-list-item strong{font-size:14px;}
-      .character-studio-list-item span{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
-      .character-studio-list-item:hover{border-color:var(--acc);}
-      .character-studio-list-item.active{border-color:var(--acc); box-shadow:0 18px 48px rgba(47,110,255,0.25); background:var(--acc); color:var(--active-tab-text);}
-      .character-studio-list-item.active span{color:var(--active-tab-text); opacity:0.9;}
-      .character-studio-sidebar-note{font-size:11px; color:var(--muted); line-height:1.4;}
-      .character-studio-details{display:flex; flex-direction:column; gap:18px; min-height:0;}
-      .character-studio-detail-header{display:flex; justify-content:space-between; align-items:flex-start; gap:18px; flex-wrap:wrap;}
-      .character-studio-detail-header h2{margin:0; font-size:24px; font-weight:600;}
-      .character-studio-detail-header .muted-text{margin:6px 0 0; font-size:13px;}
-      .character-studio-header-actions{display:flex; align-items:center; gap:8px;}
-      .character-studio-tertiary{
-        background:none; border:1px solid var(--ring); border-radius:12px;
-        padding:6px 12px; font-size:12px; cursor:pointer; color:var(--muted);
-      }
-      .character-studio-section{
-        background:var(--card); border:1px solid var(--ring); border-radius:18px;
-        padding:20px 22px; display:flex; flex-direction:column; gap:14px;
-      }
-      .character-studio-section h3{margin:0; font-size:14px; font-weight:600;}
-      .character-studio-section p{margin:0;}
-      .character-studio-two-col{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));}
-      .character-studio-field{display:flex; flex-direction:column; gap:6px; font-size:13px;}
-      .character-studio-field span{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
-      .character-studio-section textarea{min-height:96px; resize:vertical;}
-      .character-studio-section textarea.small{min-height:72px;}
-      .character-studio-stats-grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));}
-      .character-studio-stat{background:var(--chip); border:1px solid var(--ring); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
-      .character-studio-stat-value{font-size:22px; font-weight:700;}
-      .character-studio-stat-label{font-size:11px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
-      .character-studio-traits-preview{display:flex; flex-wrap:wrap; gap:8px; min-height:34px; align-items:flex-start;}
-      .character-studio-chip{background:var(--chip); border:1px solid var(--ring); border-radius:999px; padding:4px 10px; font-size:12px;}
-      .character-studio-chip strong{font-weight:600;}
-      .character-studio-look-grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));}
-      .character-studio-look-card{position:relative; border:1px solid var(--ring); border-radius:16px; overflow:hidden; background:var(--chip); aspect-ratio:4 / 3; display:flex; align-items:center; justify-content:center; text-align:center;}
-      .character-studio-look-card img{width:100%; height:100%; object-fit:cover;}
-      .character-studio-look-empty{padding:0 16px; font-size:12px; color:var(--muted); line-height:1.45;}
-      .character-studio-look-label{position:absolute; top:10px; left:10px; padding:4px 8px; border-radius:999px; font-size:11px; text-transform:uppercase; letter-spacing:.3px; background:rgba(15,18,30,0.65); color:#fff;}
-      .character-studio-ai-actions{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
-      .character-studio-ai-actions button{background:var(--acc); border:1px solid var(--acc); color:var(--active-tab-text); border-radius:999px; padding:8px 16px; font-weight:600; cursor:pointer;}
-      .character-studio-status{font-size:12px; color:var(--muted); min-height:18px;}
-      .character-studio-status[data-state="ready"]{color:var(--acc);}
-      .character-studio-status[data-state="warning"]{color:#f97316;}
-      .character-studio-empty, .character-studio-empty-list{border:1px dashed var(--ring); border-radius:16px; padding:28px; text-align:center; display:flex; flex-direction:column; gap:10px; color:var(--muted);}
-      .character-studio-empty h2{margin:0; font-size:20px; color:var(--ink);}
-      .character-studio-empty p{margin:0; font-size:13px;}
-      .character-studio-empty-list{color:var(--muted); font-size:12px; align-items:center;}
-      @media (max-width: 1100px){
-        .character-studio-layout{grid-template-columns:240px 1fr;}
-      }
-      @media (max-width: 900px){
-        .character-studio-layout{grid-template-columns:1fr;}
-        .character-studio-sidebar{order:2;}
-        .character-studio-details{order:1;}
-      }
-
       /* ==== Script dialog ==== */
       body.script-dialog-open{overflow:hidden;}
       .script-dialog{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(11,15,20,0.75); z-index:1200; padding:24px;}
@@ -1174,7 +1073,7 @@
                 <button class="btn" id="addCharacterBtn">Add</button>
               </div>
               <div class="row">
-                <button class="btn" type="button" id="openCharacterStudioBtn">Character Studio</button>
+                <a class="btn" id="openCharacterStudioBtn" href="../CharacterStudio.html">Character Studio</a>
               </div>
               <p class="muted-text">Tap a name to insert it as a CHARACTER line.</p>
               <p class="muted-text">Open Character Studio to develop arcs, looks, and family trees.</p>
@@ -1348,36 +1247,6 @@
 
           <button onclick="addScene()">+ Scene</button>
           <button onclick="toggleFocus()">Exit Focus</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="characterStudioOverlay" aria-hidden="true">
-      <div class="character-studio-window" role="dialog" aria-modal="true" aria-labelledby="characterStudioTitle" tabindex="-1">
-        <div class="character-studio-header">
-          <div>
-            <h2 id="characterStudioTitle">Character Studio</h2>
-            <p class="muted-text">Craft multidimensional characters with dedicated planners, lookbooks, and AI prompts.</p>
-          </div>
-          <button class="character-studio-close" type="button" id="characterStudioClose">Close ✕</button>
-        </div>
-        <div class="character-studio-body">
-          <div class="character-studio-layout">
-            <aside class="character-studio-sidebar">
-              <div class="character-studio-sidebar-header">
-                <h3>Cast</h3>
-                <button class="character-studio-add" type="button" id="characterStudioAddBtn">+ New</button>
-              </div>
-              <div class="character-studio-sidebar-list" data-character-list></div>
-              <p class="character-studio-sidebar-note">Keep track of stats, arcs, and visual references for every character in one place.</p>
-            </aside>
-            <section class="character-studio-details" data-character-details>
-              <div class="character-studio-empty">
-                <h2>No characters yet</h2>
-                <p>Add a character to start building their profile, traits, and arc.</p>
-              </div>
-            </section>
-          </div>
         </div>
       </div>
     </div>
@@ -6971,36 +6840,6 @@
         addCharacter(value);
         const fresh = document.getElementById('newCharacterName');
         if (fresh){ fresh.value = ''; fresh.focus(); }
-      });
-    }
-    const characterStudioBtn = document.getElementById('openCharacterStudioBtn');
-    if (characterStudioBtn){
-      characterStudioBtn.addEventListener('click', ()=> openCharacterStudio());
-    }
-    const characterStudioOverlay = document.getElementById('characterStudioOverlay');
-    if (characterStudioOverlay){
-      characterStudioOverlay.addEventListener('click', e=>{
-        if (e.target === characterStudioOverlay) closeCharacterStudio();
-      });
-    }
-    const characterStudioClose = document.getElementById('characterStudioClose');
-    if (characterStudioClose){
-      characterStudioClose.addEventListener('click', ()=> closeCharacterStudio());
-    }
-    const characterStudioAddBtn = document.getElementById('characterStudioAddBtn');
-    if (characterStudioAddBtn){
-      characterStudioAddBtn.addEventListener('click', ()=>{
-        const created = addCharacter('New Character');
-        if (!created) return;
-        characterStudioState.activeId = created.id;
-        renderCharacterStudio();
-        const nameField = document.querySelector('#characterStudioOverlay [data-character-field="name"]');
-        if (nameField){
-          requestAnimationFrame(()=>{
-            nameField.focus();
-            if (typeof nameField.select === 'function') nameField.select();
-          });
-        }
       });
     }
     const addSetBtn = document.getElementById('addSetBtn');
