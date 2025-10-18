@@ -462,12 +462,185 @@ function initGoalPlanner(){
   });
 }
 
+function buildFinishStoryDialog(){
+  let dialog = document.getElementById('finish-story-dialog');
+  if (dialog instanceof HTMLDialogElement) return dialog;
+
+  dialog = document.createElement('dialog');
+  dialog.id = 'finish-story-dialog';
+  dialog.className = 'modal';
+  dialog.setAttribute('aria-labelledby', 'finish-story-dialog-title');
+
+  dialog.innerHTML = `
+    <div class="modal__surface" role="document">
+      <header class="modal__header">
+        <div class="modal__header-copy">
+          <p class="modal__eyebrow">FinishThatStory.com</p>
+          <h2 id="finish-story-dialog-title">Story studio preview</h2>
+        </div>
+        <button type="button" class="modal__close" data-modal-close aria-label="Close dialog">×</button>
+      </header>
+      <div class="modal__body">
+        <section class="modal__section">
+          <h3>Featured story spotlight</h3>
+          <p class="modal__section-lead">Hero area reserved for the weekly feature. Expect rich media, creator credits, and a quick synopsis.</p>
+          <ul class="modal__list">
+            <li>Large trailer player or illustrated cover art.</li>
+            <li>Short logline, creator bios, production status, and funding goals.</li>
+            <li>Call-to-action for readers to subscribe, rate, or share.</li>
+          </ul>
+        </section>
+
+        <section class="modal__section">
+          <h3>Community story grid</h3>
+          <p class="modal__section-lead">A masonry-like gallery for submissions from the FinishThatStory community.</p>
+          <div class="modal__grid">
+            <div class="modal__card">
+              <span class="modal__badge">Thumbnail</span>
+              <h4>Story title</h4>
+              <p>Genre tags • Creator name</p>
+              <dl class="modal__ratings">
+                <div><dt>Members rating</dt><dd>★★★★★</dd></div>
+                <div><dt>Technical score</dt><dd>▲▲▲▲△</dd></div>
+              </dl>
+            </div>
+            <div class="modal__card">
+              <span class="modal__badge">Thumbnail</span>
+              <h4>Story title</h4>
+              <p>Short descriptor + runtime</p>
+              <dl class="modal__ratings">
+                <div><dt>Members rating</dt><dd>4.7</dd></div>
+                <div><dt>Technical score</dt><dd>Pro tier</dd></div>
+              </dl>
+            </div>
+            <div class="modal__card">
+              <span class="modal__badge">Thumbnail</span>
+              <h4>Story title</h4>
+              <p>Format • Language • Budget tier</p>
+              <dl class="modal__ratings">
+                <div><dt>Members rating</dt><dd>Trending</dd></div>
+                <div><dt>Technical score</dt><dd>In review</dd></div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        <section class="modal__section">
+          <h3>Detailed story card</h3>
+          <p class="modal__section-lead">Clicking a story opens a deep-dive card where members can experience and support the project.</p>
+          <ul class="modal__list">
+            <li>Embedded reader or video player with chapters for episode releases.</li>
+            <li>Production timeline, team roster, budget breakdown, and behind-the-scenes gallery.</li>
+            <li>Voting module: “Should we finance Episode 2?” with member sentiment tracking.</li>
+            <li>Creator notes, downloadable pitch decks, and discussion threads.</li>
+          </ul>
+        </section>
+
+        <section class="modal__section">
+          <h3>Categories &amp; filters</h3>
+          <p class="modal__section-lead">Let fans browse by mood, length, and medium.</p>
+          <ul class="modal__list modal__list--columns">
+            <li>Short</li>
+            <li>Comedy</li>
+            <li>Script</li>
+            <li>Novel</li>
+            <li>Cartoon</li>
+            <li>Documentary</li>
+            <li>Animated series</li>
+            <li>Audio drama</li>
+            <li>Experimental</li>
+          </ul>
+        </section>
+      </div>
+      <footer class="modal__footer">
+        <p>We&apos;re preparing the full FinishThatStory.com experience. Stay tuned for the official launch!</p>
+      </footer>
+    </div>
+  `;
+
+  document.body.appendChild(dialog);
+
+  const closeButton = dialog.querySelector('[data-modal-close]');
+  if (closeButton instanceof HTMLButtonElement){
+    closeButton.addEventListener('click', () => {
+      dialog.close('dismissed');
+    });
+  }
+
+  dialog.addEventListener('cancel', event => {
+    event.preventDefault();
+    dialog.close('dismissed');
+  });
+
+  dialog.addEventListener('close', () => {
+    document.body.classList.remove('modal-open');
+  });
+
+  dialog.addEventListener('click', event => {
+    if (event.target === dialog){
+      dialog.close('backdrop');
+    }
+  });
+
+  return dialog;
+}
+
+function initFinishStoryModal(){
+  const links = Array.from(document.querySelectorAll('a[href^="https://finishthatstory.com"], a[href^="http://finishthatstory.com"], a[href^="//finishthatstory.com"]'));
+  if (!links.length) return;
+
+  const dialog = buildFinishStoryDialog();
+
+  const focusTarget = dialog.querySelector('.modal__surface');
+  let lastFocusedTrigger = null;
+
+  if (!dialog.dataset.finishStoryFocusBound){
+    dialog.dataset.finishStoryFocusBound = 'true';
+    dialog.addEventListener('close', () => {
+      if (lastFocusedTrigger instanceof HTMLElement){
+        try {
+          lastFocusedTrigger.focus({ preventScroll: true });
+        } catch (_error){
+          lastFocusedTrigger.focus();
+        }
+      }
+      lastFocusedTrigger = null;
+    });
+  }
+
+  links.forEach(link => {
+    if (!(link instanceof HTMLAnchorElement)) return;
+    if (link.dataset.finishStoryBound) return;
+    link.dataset.finishStoryBound = 'true';
+    link.setAttribute('role', 'button');
+    link.setAttribute('aria-haspopup', 'dialog');
+    link.setAttribute('aria-controls', dialog.id);
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      lastFocusedTrigger = link;
+      if (typeof dialog.showModal === 'function'){
+        dialog.showModal();
+        document.body.classList.add('modal-open');
+        if (focusTarget instanceof HTMLElement){
+          focusTarget.setAttribute('tabindex', '-1');
+          focusTarget.focus();
+        }
+      } else if (link.href){
+        window.open(link.href, link.target || '_blank');
+        lastFocusedTrigger = null;
+      }
+    });
+  });
+}
+
 if (document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', () => {
     initDropdownMenus();
     initGoalPlanner();
+    initFinishStoryModal();
   }, { once: true });
 } else {
   initDropdownMenus();
   initGoalPlanner();
+  initFinishStoryModal();
 }
