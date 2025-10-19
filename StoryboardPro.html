@@ -80,6 +80,21 @@
         line-height: 1.2;
         transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
       }
+      .btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        stroke-width: 1.6;
+        fill: none;
+      }
+      .btn svg path,
+      .btn svg rect,
+      .btn svg circle,
+      .btn svg polyline,
+      .btn svg line {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
       .btn:hover { border-color: var(--acc); }
       .btn:focus-visible { outline: none; border-color: var(--acc); box-shadow: 0 0 0 2px rgba(79,123,255,0.18); }
       .btn.active { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
@@ -209,6 +224,7 @@
       .timeline-block--lighting { background: rgba(14,165,233,0.18); border: 1px solid rgba(14,165,233,0.3); }
       .timeline-block--notes { background: rgba(126,58,242,0.16); border: 1px solid rgba(126,58,242,0.28); }
       .timeline-block--beats { background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.3); }
+      .timeline-block--cards { background: rgba(251,191,36,0.18); border: 1px solid rgba(251,191,36,0.32); }
       .timeline-track--hidden { display: none; }
       .brand-with-logo__badge--storyboard { width: 36px; height: 36px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; letter-spacing: .6px; background: linear-gradient(135deg, #1d4ed8, #22d3ee); color: white; box-shadow: 0 8px 24px rgba(30,64,175,0.35); }
       .panel.ai-panel { background: linear-gradient(135deg, rgba(79,123,255,0.08), rgba(34,211,238,0.08)), var(--panel); border-color: rgba(79,123,255,0.45); }
@@ -313,6 +329,13 @@
         <span class="badge">Scene-synced timelines</span>
         <div class="spacer"></div>
         <div class="topbar-group" role="group" aria-label="Timeline track visibility">
+          <button class="btn active" type="button" data-track-toggle="cards" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="7" y="4" width="10" height="16" rx="2"></rect>
+              <path d="M12 9.5l2 2.5-2 2.5-2-2.5z"></path>
+            </svg>
+            Cards
+          </button>
           <button class="btn active" type="button" data-track-toggle="beats" aria-pressed="true">Beat grid</button>
           <button class="btn active" type="button" data-track-toggle="shots" aria-pressed="true">Shots</button>
           <button class="btn active" type="button" data-track-toggle="audio" aria-pressed="true">Audio</button>
@@ -963,8 +986,12 @@
 
       const tracks = document.createElement('div');
       tracks.className = 'timeline-scene__tracks';
+      const beatGridLabels = Array.isArray(scene.cards)
+        ? scene.cards.map((_, index) => `Beat ${index + 1}`)
+        : [];
       tracks.append(
-        createTimelineTrack('beats', 'Beat grid', 'timeline-block--beats', '⏱', scene.cards),
+        createTimelineTrack('cards', 'Cards', 'timeline-block--cards', '🃏', scene.cards),
+        createTimelineTrack('beats', 'Beat grid', 'timeline-block--beats', '⏱', beatGridLabels),
         createTimelineTrack('shots', 'Shots', 'timeline-block--shots', '🎬', scene.storyboards),
         createTimelineTrack('audio', 'Audio', 'timeline-block--audio', '🔊', scene.sounds, resolveAudioIcon),
         createTimelineTrack('lighting', 'Lighting', 'timeline-block--lighting', '💡', scene.lightingCues),
