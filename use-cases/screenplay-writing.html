@@ -907,9 +907,7 @@
           <div class="btn-menu non-essential" id="storyboardMenu">
             <button class="btn" type="button" id="storyboardMenuButton" aria-haspopup="true" aria-expanded="false">Storyboard ▾</button>
             <div class="btn-menu-list" id="storyboardMenuList" role="menu">
-              <button class="btn-menu-item" type="button" id="storyboardModeBtn" aria-haspopup="dialog" aria-pressed="false" role="menuitem">Storyboard Lite</button>
               <a class="btn-menu-item" id="storyboardProLink" href="/StoryboardPro.html" role="menuitem">Storyboard Pro</a>
-              <button class="btn-menu-item" type="button" id="timelineModeBtn" aria-pressed="false" role="menuitem">Timeline</button>
             </div>
           </div>
         </div>
@@ -1335,125 +1333,6 @@
 
           <button onclick="addScene()">+ Scene</button>
           <button onclick="toggleFocus()">Exit Focus</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="storyboardOverlay" aria-hidden="true">
-      <div class="storyboard-window" role="dialog" aria-modal="true" aria-labelledby="storyboardOverlayTitle">
-        <div class="storyboard-overlay-header">
-          <div>
-            <h2 id="storyboardOverlayTitle">Storyboard</h2>
-            <p class="muted-text">Map out every beat with scene-linked frames you can update in seconds.</p>
-            <div class="storyboard-ai-config" role="group" aria-label="AI configuration">
-              <label class="storyboard-ai-config-field" for="storyboardApiKey">
-                <span>OpenRouter API key</span>
-                <input id="storyboardApiKey" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
-              </label>
-              <label class="storyboard-ai-config-field" for="storyboardModel">
-                <span>Model</span>
-                <select id="storyboardModel">
-                  <option value="google/gemini-2.5-flash-image-preview">Gemini 2.5 Image Preview</option>
-                </select>
-              </label>
-              <p class="storyboard-ai-config-hint muted-text">Keys stay on this device. Use consistent character handles for reliable panels.</p>
-            </div>
-          </div>
-          <button class="storyboard-close-btn" type="button" id="storyboardOverlayClose">Close ✕</button>
-        </div>
-        <div class="storyboard-overlay-body">
-          <aside class="storyboard-sidebar">
-            <div class="storyboard-sidebar-header">
-              <h3>Scenes</h3>
-              <p class="muted-text">Jump between scenes and keep their key frames in sync.</p>
-            </div>
-            <div class="storyboard-scene-list" id="storyboardSceneList"></div>
-          </aside>
-          <section class="storyboard-gallery">
-            <div class="storyboard-gallery-header">
-              <div class="storyboard-gallery-heading">
-                <h3 id="storyboardGalleryTitle">No scene selected</h3>
-                <p class="muted-text" id="storyboardGalleryMeta"></p>
-              </div>
-              <div class="storyboard-mode-switch storyboard-mode-switch--overlay" role="group" aria-label="Storyboard media mode">
-                <button class="storyboard-mode-btn active" type="button" data-storyboard-mode-btn="image" aria-pressed="true">Picture frames</button>
-                <button class="storyboard-mode-btn" type="button" data-storyboard-mode-btn="video" aria-pressed="false">Video clips</button>
-              </div>
-              <button class="btn storyboard-open-btn" type="button" id="storyboardOpenSceneBtn" disabled>Open in Writer</button>
-            </div>
-            <div class="storyboard-gallery-input">
-              <input id="storyboardQuickUrl" placeholder="Paste storyboard image URL" inputmode="url" autocomplete="off" disabled />
-              <button class="btn" type="button" id="storyboardQuickAdd" disabled>Add storyboard</button>
-            </div>
-            <section class="storyboard-ai-panel" aria-labelledby="storyboardAIPanelTitle">
-              <div class="storyboard-ai-panel-header">
-                <div>
-                  <h4 id="storyboardAIPanelTitle">AI storyboard assistant</h4>
-                  <p class="muted-text">Describe the shot and Gemini 2.5 Image Preview will render frames that keep your cast on model.</p>
-                </div>
-                <label class="storyboard-ai-count" for="storyboardAIFrameCount">
-                  <span>Frames</span>
-                  <input id="storyboardAIFrameCount" type="number" min="1" max="4" value="1" inputmode="numeric" />
-                </label>
-              </div>
-              <label class="storyboard-ai-field" for="storyboardAIPrompt">
-                <span>Shot description</span>
-                <textarea id="storyboardAIPrompt" rows="3" placeholder="Describe the composition, action, and emotion you want to visualize…"></textarea>
-              </label>
-              <div class="storyboard-ai-characters">
-                <span class="storyboard-ai-label">Character handles</span>
-                <div id="storyboardAICharacterList" class="storyboard-ai-character-list"></div>
-              </div>
-              <div class="storyboard-ai-actions">
-                <button class="btn" type="button" id="storyboardAIGenerate">Generate storyboard</button>
-                <span class="storyboard-ai-status muted-text" id="storyboardAIStatus" role="status" aria-live="polite"></span>
-              </div>
-            </section>
-            <div class="storyboard-gallery-grid" id="storyboardGalleryGrid"></div>
-            <div class="storyboard-gallery-empty" id="storyboardGalleryEmpty">Select a scene to start building a storyboard.</div>
-          </section>
-        </div>
-      </div>
-    </div>
-
-    <div id="timelineOverlay" aria-hidden="true">
-      <div class="timeline-window" role="dialog" aria-modal="true" aria-labelledby="timelineOverlayTitle">
-        <div class="timeline-overlay-header">
-          <div>
-            <h2 id="timelineOverlayTitle">Timeline</h2>
-            <p class="muted-text">Rearrange scenes, add new beats, and preview the flow of your story.</p>
-          </div>
-          <button class="timeline-close-btn" type="button" id="timelineOverlayClose">Close ✕</button>
-        </div>
-        <div class="timeline-overlay-body">
-          <div class="timeline-prompt">What happens next? Drag cards to reorder scenes or click + to drop a new moment anywhere.</div>
-          <div class="timeline-board-wrapper">
-            <div class="timeline-board" id="timelineBoard"></div>
-          </div>
-        </div>
-        <div class="timeline-overlay-footer">
-          <div class="timeline-composer">
-            <label for="timelineNewSceneTitle">New scene prompt</label>
-            <input id="timelineNewSceneTitle" placeholder="Scene heading (e.g. INT. OFFICE - DAY)" />
-            <textarea id="timelineNewSceneSummary" placeholder="What happens in this scene?"></textarea>
-          </div>
-          <div class="timeline-composer-actions">
-            <span class="timeline-position-label" id="timelinePositionLabel">Will insert at the end.</span>
-            <button class="timeline-save-btn" type="button" id="timelineAddSceneBtn">Add Scene</button>
-          </div>
-        </div>
-        <div id="timelinePreview">
-          <div class="timeline-preview-card" role="document">
-            <div class="timeline-preview-header">
-              <h3 id="timelinePreviewTitle">Scene Title</h3>
-              <div class="timeline-preview-meta" id="timelinePreviewMeta"></div>
-            </div>
-            <div class="timeline-preview-body" id="timelinePreviewBody"></div>
-            <div class="timeline-preview-actions">
-              <button class="timeline-secondary-btn" type="button" id="timelinePreviewClose">Close</button>
-              <button class="timeline-save-btn" type="button" id="timelinePreviewOpen">Open in Writer</button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
