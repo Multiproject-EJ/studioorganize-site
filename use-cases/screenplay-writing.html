@@ -1023,7 +1023,7 @@
         <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
       </div>
       <section class="timeline-showcase" aria-label="Storyboard timeline preview">
-        <div class="timeline-dock pinned timeline-showcase__dock">
+        <div class="timeline-dock pinned timeline-showcase__dock" id="timelineDock" data-timeline-dock="primary">
           <div class="timeline-dock__shell">
             <div class="timeline-dock__content">
               <div class="story-arc-layout">
@@ -1051,186 +1051,84 @@
                   </div>
                   <div class="story-arc-scenes" aria-label="Scene timeline">
                     <div class="story-arc-scenes__container">
-                      <ol class="story-arc-scenes__track" role="list">
-                        <li class="story-arc-scenes__step story-arc-scenes__step--active" role="listitem">
-                          <div class="story-arc-scenes__slot" data-tooltip="Scene 12 • Rooftop chase">
-                            <span class="story-arc-scenes__scene-number">Scene 12</span>
-                            <span class="story-arc-scenes__scene-label">Rooftop chase</span>
-                          </div>
-                        </li>
-                        <li class="story-arc-scenes__step" role="listitem">
-                          <div class="story-arc-scenes__slot" data-tooltip="Scene 13 • Warehouse showdown">
-                            <span class="story-arc-scenes__scene-number">Scene 13</span>
-                            <span class="story-arc-scenes__scene-label">Warehouse showdown</span>
-                          </div>
-                        </li>
-                        <li class="story-arc-scenes__step" role="listitem">
-                          <div class="story-arc-scenes__slot" data-tooltip="Scene 14 • Finale">
-                            <span class="story-arc-scenes__scene-number">Scene 14</span>
-                            <span class="story-arc-scenes__scene-label">Final beat</span>
-                          </div>
-                        </li>
-                      </ol>
+                      <ol class="story-arc-scenes__track" role="list" data-story-arc-track></ol>
                     </div>
                   </div>
                 </div>
                 <div class="story-arc-actions" aria-label="Story timeline actions">
-                  <button class="story-arc-action-btn" type="button" aria-label="Storyboard templates" title="Storyboard templates">
+                  <button class="story-arc-action-btn" type="button" id="timelineModeBtn" aria-pressed="false" aria-label="Open timeline workspace" title="Open timeline workspace">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <circle cx="10.5" cy="10.5" r="6.5"></circle>
-                      <path d="M10.5 4v6.5H17"></path>
-                      <path d="M17 3v4"></path>
-                      <path d="M19 5h-4"></path>
-                      <path d="M17 10.5l4.5-4.5"></path>
-                    </svg>
-                  </button>
-                  <button class="story-arc-action-btn" type="button" aria-label="Timeline bookmarks" title="Timeline bookmarks">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
+                      <polyline points="7 17 17 7"></polyline>
+                      <polyline points="7 7 17 7 17 17"></polyline>
                     </svg>
                   </button>
                 </div>
+              </div>
+              <div>
+                <h2 style="margin:0 0 8px; font-size:14px; font-weight:600;">Scenes</h2>
+                <div id="timelineList" class="timeline-list" aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
+          <button class="timeline-dock__handle" id="timelineDockHandle" type="button" data-timeline-handle aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
+        </div>
+      </section>
+
+      <div id="focusTimelineDock" class="timeline-dock" data-timeline-dock="focus">
+        <div class="timeline-dock__shell">
+          <div class="timeline-dock__content">
+            <div class="story-arc-scenes" aria-label="Scene timeline">
+              <div class="story-arc-scenes__container">
+                <ol class="story-arc-scenes__track" role="list" data-story-arc-track></ol>
               </div>
             </div>
           </div>
         </div>
+        <button class="timeline-dock__handle" type="button" data-timeline-handle aria-pressed="false" aria-expanded="false" aria-label="Story timelines available in focus mode" title="Story timelines available in focus mode"></button>
+      </div>
 
-        <section class="panel timeline-panel timeline-showcase__panel">
-          <div class="timeline-stage">
-            <header>
-              <div>
-                <h2>Scene 12 · Rooftop chase</h2>
-                <span>Synced from Writer workspace · 00:45 runtime · 8 frames</span>
-              </div>
-              <div class="timeline-controls">
-                <span class="muted">Timeline locked to script page 47</span>
-              </div>
-            </header>
-            <div class="timeline-wrapper">
-              <div class="timeline-grid">
-                <div class="timeline-scale" aria-hidden="true">
-                  <div class="timeline-scale__header">
-                    <span>Scene timeline (minutes)</span>
-                    <span>Drag & drop clips to re-time</span>
-                  </div>
-                  <div class="timeline-scale__ruler">
-                    <span style="left:0%">0:00</span>
-                    <span style="left:12.5%">0:05</span>
-                    <span style="left:25%">0:10</span>
-                    <span style="left:37.5%">0:15</span>
-                    <span style="left:50%">0:20</span>
-                    <span style="left:62.5%">0:25</span>
-                    <span style="left:75%">0:30</span>
-                    <span style="left:87.5%">0:35</span>
-                    <span style="left:100%">0:40</span>
-                  </div>
-                </div>
-                <div class="timeline-scene timeline-scene--active">
-                  <div class="timeline-scene__label">
-                    <strong>Scene 12 · Rooftop chase</strong>
-                    <span>Hero escapes across neon skyline</span>
-                    <small>Storyboard Pro · Synced from writer</small>
-                  </div>
-                  <div class="timeline-scene__tracks">
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Cards</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:2%; width:30%;">Setup reveal</div>
-                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:36%; width:28%;">Rooftop sprint</div>
-                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:68%; width:24%;">Heli pickup</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Beat grid</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:10%; width:60%;">Raise the stakes</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Shots</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:4%; width:28%;">Drone opener</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:36%; width:24%;">Tracking run</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:64%; width:26%;">Leap to chopper</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Audio</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:12%; width:34%;">Score: synth pulse</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:50%; width:30%;">FX: rotor wash</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Lighting</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:8%; width:38%;">Neon bounce rigs</div>
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:50%; width:32%;">Chopper key</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Notes</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:16%; width:50%;">Director: hold on hero before jump</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="timeline-scene">
-                  <div class="timeline-scene__label">
-                    <strong>Scene 13 · Warehouse showdown</strong>
-                    <span>Team converges on the artifact</span>
-                    <small>Storyboard Pro · Synced from writer</small>
-                  </div>
-                  <div class="timeline-scene__tracks">
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Cards</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:6%; width:34%;">Briefing</div>
-                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:44%; width:30%;">Artifact reveal</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Beat grid</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:18%; width:50%;">Confrontation</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Shots</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:10%; width:28%;">Push on villain</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:42%; width:26%;">Reveal artifact</div>
-                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:72%; width:20%;">Overhead standoff</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Audio</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:22%; width:36%;">Score: tension bed</div>
-                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:62%; width:24%;">FX: machinery hum</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Lighting</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:12%; width:40%;">Sodium top lights</div>
-                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:58%; width:28%;">Practical uplights</div>
-                      </div>
-                    </div>
-                    <div class="timeline-track">
-                      <div class="timeline-track__header">Notes</div>
-                      <div class="timeline-track__lane">
-                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:18%; width:52%;">Producer: add safety rail extras</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      <div id="timelineOverlay" aria-hidden="true">
+        <div class="timeline-window">
+          <div class="timeline-overlay-header">
+            <div>
+              <h2>Storyboard timeline</h2>
+              <p class="muted-text">Scenes stay in sync with the Writer workspace. Drag to reorder or tap for details.</p>
+            </div>
+            <button class="timeline-close-btn" type="button" id="timelineOverlayClose">Close</button>
+          </div>
+          <div class="timeline-overlay-body">
+            <p class="timeline-prompt">Add scenes from the Writer panel and they will appear here for quick scheduling.</p>
+            <div class="timeline-board-wrapper">
+              <div class="timeline-board" id="timelineBoard"></div>
+            </div>
+          </div>
+          <div class="timeline-overlay-footer">
+            <div class="timeline-composer" aria-label="Add a new scene to the timeline">
+              <label for="timelineNewSceneTitle">New scene title</label>
+              <input id="timelineNewSceneTitle" type="text" placeholder="Scene heading" />
+              <label for="timelineNewSceneSummary">Summary</label>
+              <textarea id="timelineNewSceneSummary" placeholder="Optional description"></textarea>
+              <div class="timeline-composer-actions">
+                <span class="timeline-position-label" id="timelinePositionLabel">Will insert at the end.</span>
+                <button class="timeline-save-btn" type="button" id="timelineAddSceneBtn">Add scene</button>
               </div>
             </div>
           </div>
-        </section>
-      </section>
+          <div id="timelinePreview" aria-hidden="true">
+            <div class="timeline-preview-card">
+              <div class="timeline-preview-header">
+                <h3 id="timelinePreviewTitle">Scene preview</h3>
+                <span class="timeline-preview-meta" id="timelinePreviewMeta"></span>
+              </div>
+              <div class="timeline-preview-body" id="timelinePreviewBody"></div>
+              <div class="timeline-preview-actions">
+                <button class="timeline-secondary-btn" type="button" id="timelinePreviewClose">Close</button>
+                <button class="timeline-secondary-btn" type="button" id="timelinePreviewOpen">Open in Writer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="layout">
         <div class="panel">
