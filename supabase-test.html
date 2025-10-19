@@ -70,8 +70,15 @@
       display: grid;
       gap: 1.5rem;
     }
+    .tester__auth-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
     @media (min-width: 860px) {
       .tester__layout {
+        grid-template-columns: 1fr 1fr;
+      }
+      .tester__auth-grid {
         grid-template-columns: 1fr 1fr;
       }
     }
@@ -84,9 +91,52 @@
       display: grid;
       gap: 1rem;
     }
+    .card--interactive {
+      position: relative;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+    .card--interactive::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      border: 2px solid transparent;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      pointer-events: none;
+    }
+    .card--interactive:hover::before {
+      border-color: rgba(95, 168, 255, 0.5);
+      box-shadow: 0 12px 32px rgba(79, 123, 255, 0.25);
+    }
+    .card--interactive[data-active="true"] {
+      cursor: default;
+    }
+    .card--interactive[data-active="true"]::before {
+      border-color: var(--acc);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--acc) 40%, transparent);
+    }
+    .card--interactive[data-active="false"] {
+      filter: grayscale(0.08) brightness(0.98);
+    }
+    .card--interactive[data-active="false"] form,
+    .card--interactive[data-active="false"] .card__actions {
+      opacity: 0.65;
+    }
+    .card--interactive[data-active="false"] input,
+    .card--interactive[data-active="false"] textarea,
+    .card--interactive[data-active="false"] button,
+    .card--interactive[data-active="false"] select {
+      pointer-events: none;
+    }
     .card h2 {
       margin: 0;
       font-size: 1.25rem;
+    }
+    .card__actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
     }
     form {
       display: grid;
@@ -218,6 +268,38 @@
       border-color: rgba(115, 253, 208, 0.28);
       border-color: color-mix(in srgb, var(--tester-pill-success-text) 35%, transparent);
     }
+    .developer-tools {
+      display: grid;
+      gap: 1rem;
+    }
+    .developer-toggle {
+      justify-self: start;
+      font: inherit;
+      font-weight: 600;
+      padding: 0.55rem 1.2rem;
+      border-radius: 999px;
+      border: 1px solid var(--tester-border);
+      background: var(--tester-surface-alt);
+      color: inherit;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 12px 24px rgba(8, 15, 28, 0.15);
+    }
+    .developer-toggle:hover {
+      border-color: var(--acc);
+      transform: translateY(-1px);
+    }
+    .developer-toggle:focus-visible {
+      outline: 2px solid var(--acc);
+      outline-offset: 3px;
+    }
+    .developer-panels {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .developer-panels[hidden] {
+      display: none !important;
+    }
     .note {
       font-size: 0.9rem;
       line-height: 1.55;
@@ -280,19 +362,9 @@
   </header>
 
   <main class="tester">
-    <section class="tester__intro">
-      <h1>Supabase connection tester</h1>
-      <p>This page creates a plain Supabase client with the project's anon key so we can quickly verify read and write access. Use the forms below to sign up or sign in, fetch your linked profile row, and create a throwaway scene record.</p>
-      <div class="status-row">
-        <strong>Session:</strong>
-        <span class="status-pill" data-session-indicator data-state="signed-out">Signed out</span>
-        <span data-session-details>No active session</span>
-      </div>
-    </section>
-
-    <div class="tester__layout">
-      <section class="card">
-        <h2>Authentication</h2>
+    <div class="tester__auth-grid">
+      <section class="card card--interactive" data-auth-card="signup" data-active="true" tabindex="0" role="group" aria-labelledby="auth-card-signup">
+        <h2 id="auth-card-signup">Authentication</h2>
         <p class="note">The sign-up form stores your name in Supabase auth metadata. After confirming the account, sign in to test database queries.</p>
 
         <form id="signup-form">
@@ -317,10 +389,14 @@
             <button type="submit">Send sign-up request</button>
           </fieldset>
         </form>
+      </section>
+
+      <section class="card card--interactive" data-auth-card="signin" data-active="false" tabindex="0" role="group" aria-labelledby="auth-card-signin">
+        <h2 id="auth-card-signin">Sign in</h2>
 
         <form id="login-form">
           <fieldset>
-            <legend>Sign in</legend>
+            <legend class="sr-only">Sign in to an existing account</legend>
             <label>
               Email
               <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required />
@@ -329,74 +405,91 @@
               Password
               <input type="password" name="password" autocomplete="current-password" required />
             </label>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <div class="card__actions">
               <button type="submit">Sign in</button>
               <button type="button" class="btn-secondary" data-signout>Sign out</button>
             </div>
           </fieldset>
         </form>
       </section>
-
-      <section class="card">
-        <h2>Profile data</h2>
-        <p class="note">These helpers call <code>public.profiles</code>. Row Level Security means you must be signed in before they return data.</p>
-
-        <fieldset data-requires-auth disabled>
-          <legend>Fetch current profile</legend>
-          <button type="button" class="btn-secondary" data-fetch-profile>Load profile row</button>
-        </fieldset>
-
-        <form id="profile-form">
-          <fieldset data-requires-auth disabled>
-            <legend>Update profile</legend>
-            <label>
-              Full name
-              <input type="text" name="full_name" placeholder="Grace Hopper" />
-            </label>
-            <label>
-              Studio name
-              <input type="text" name="studio_name" placeholder="StudioOrganize" />
-            </label>
-            <label>
-              Phone number
-              <input type="tel" name="phone" placeholder="123-456-7890" />
-            </label>
-            <button type="submit">Save profile details</button>
-          </fieldset>
-        </form>
-      </section>
     </div>
 
-    <section class="card">
-      <h2>Scene sandbox</h2>
-      <p class="note">Scenes are tied to your profile via <code>owner_id</code>. Use these to confirm insert and select permissions on the new tables.</p>
+    <div class="developer-tools">
+      <button class="developer-toggle" type="button" data-dev-toggle data-label-show="Show developer tools" data-label-hide="Hide developer tools" aria-expanded="false" aria-controls="developer-panels">Show developer tools</button>
+      <div class="developer-panels" id="developer-panels" data-dev-panels hidden>
+        <section class="tester__intro">
+          <h1>Supabase connection tester</h1>
+          <p>This page creates a plain Supabase client with the project's anon key so we can quickly verify read and write access. Use the forms below to sign up or sign in, fetch your linked profile row, and create a throwaway scene record.</p>
+          <div class="status-row">
+            <strong>Session:</strong>
+            <span class="status-pill" data-session-indicator data-state="signed-out">Signed out</span>
+            <span data-session-details>No active session</span>
+          </div>
+        </section>
 
-      <form id="scene-form">
-        <fieldset data-requires-auth disabled>
-          <legend>Create a test scene</legend>
-          <label>
-            Scene title
-            <input type="text" name="title" placeholder="INT. SOUNDSTAGE — DAY" required />
-          </label>
-          <label>
-            Synopsis
-            <textarea name="synopsis" rows="3" placeholder="Short overview of what happens..."></textarea>
-          </label>
-          <button type="submit">Insert scene</button>
-        </fieldset>
-      </form>
+        <div class="tester__layout">
+          <section class="card">
+            <h2>Profile data</h2>
+            <p class="note">These helpers call <code>public.profiles</code>. Row Level Security means you must be signed in before they return data.</p>
 
-      <fieldset data-requires-auth disabled>
-        <legend>Load latest scenes</legend>
-        <button type="button" class="btn-secondary" data-load-scenes>Fetch scenes for current user</button>
-      </fieldset>
-    </section>
+            <fieldset data-requires-auth disabled>
+              <legend>Fetch current profile</legend>
+              <button type="button" class="btn-secondary" data-fetch-profile>Load profile row</button>
+            </fieldset>
 
-    <section class="card">
-      <h2>Event log</h2>
-      <p class="note">Each action appends to the log below. Errors are highlighted so we can quickly spot permission issues.</p>
-      <div class="log" data-log>Ready.</div>
-    </section>
+            <form id="profile-form">
+              <fieldset data-requires-auth disabled>
+                <legend>Update profile</legend>
+                <label>
+                  Full name
+                  <input type="text" name="full_name" placeholder="Grace Hopper" />
+                </label>
+                <label>
+                  Studio name
+                  <input type="text" name="studio_name" placeholder="StudioOrganize" />
+                </label>
+                <label>
+                  Phone number
+                  <input type="tel" name="phone" placeholder="123-456-7890" />
+                </label>
+                <button type="submit">Save profile details</button>
+              </fieldset>
+            </form>
+          </section>
+
+          <section class="card">
+            <h2>Scene sandbox</h2>
+            <p class="note">Scenes are tied to your profile via <code>owner_id</code>. Use these to confirm insert and select permissions on the new tables.</p>
+
+            <form id="scene-form">
+              <fieldset data-requires-auth disabled>
+                <legend>Create a test scene</legend>
+                <label>
+                  Scene title
+                  <input type="text" name="title" placeholder="INT. SOUNDSTAGE — DAY" required />
+                </label>
+                <label>
+                  Synopsis
+                  <textarea name="synopsis" rows="3" placeholder="Short overview of what happens..."></textarea>
+                </label>
+                <button type="submit">Insert scene</button>
+              </fieldset>
+            </form>
+
+            <fieldset data-requires-auth disabled>
+              <legend>Load latest scenes</legend>
+              <button type="button" class="btn-secondary" data-load-scenes>Fetch scenes for current user</button>
+            </fieldset>
+          </section>
+        </div>
+
+        <section class="card">
+          <h2>Event log</h2>
+          <p class="note">Each action appends to the log below. Errors are highlighted so we can quickly spot permission issues.</p>
+          <div class="log" data-log>Ready.</div>
+        </section>
+      </div>
+    </div>
   </main>
 
   <script type="module" src="/assets/main.js"></script>
@@ -420,6 +513,9 @@
     const accountButton = document.querySelector('[data-account-button]');
     const accountLogoutLink = document.querySelector('[data-account-logout]');
     const sheetEndpoint = document.querySelector('meta[name="google-sheet-endpoint"]')?.content?.trim() || '';
+    const authCards = Array.from(document.querySelectorAll('[data-auth-card]'));
+    const devToggleButton = document.querySelector('[data-dev-toggle]');
+    const devPanels = document.querySelector('[data-dev-panels]');
 
     function toggleElementVisibility(element, shouldShow) {
       if (!element) return;
@@ -437,6 +533,105 @@
     const state = {
       session: null
     };
+
+    function updateInteractiveCardState(card, isActive) {
+      if (!card) return;
+      card.dataset.active = isActive ? 'true' : 'false';
+      card.classList.toggle('is-active', isActive);
+      card.classList.toggle('is-inactive', !isActive);
+      card.setAttribute('aria-selected', String(isActive));
+      const focusableSelectors = 'input, textarea, button, select, a';
+      const focusableElements = card.querySelectorAll(focusableSelectors);
+      focusableElements.forEach((element) => {
+        if (isActive) {
+          if (Object.prototype.hasOwnProperty.call(element.dataset, 'prevTabindex')) {
+            const previous = element.dataset.prevTabindex;
+            if (previous) {
+              element.setAttribute('tabindex', previous);
+            } else {
+              element.removeAttribute('tabindex');
+            }
+            delete element.dataset.prevTabindex;
+          } else if (element.getAttribute('tabindex') === '-1') {
+            element.removeAttribute('tabindex');
+          }
+          element.removeAttribute('aria-hidden');
+        } else {
+          if (!Object.prototype.hasOwnProperty.call(element.dataset, 'prevTabindex')) {
+            const existing = element.getAttribute('tabindex');
+            element.dataset.prevTabindex = existing ?? '';
+          }
+          element.setAttribute('tabindex', '-1');
+          element.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+
+    let activeAuthCard = authCards.find((card) => card.dataset.active === 'true') || null;
+
+    function setActiveAuthCard(card) {
+      if (!card || card === activeAuthCard) return;
+      activeAuthCard = card;
+      authCards.forEach((item) => updateInteractiveCardState(item, item === activeAuthCard));
+    }
+
+    if (authCards.length) {
+      if (!activeAuthCard) {
+        activeAuthCard = authCards[0];
+      }
+      authCards.forEach((card) => {
+        if (!card.hasAttribute('role')) {
+          card.setAttribute('role', 'group');
+        }
+        card.setAttribute('aria-selected', String(card === activeAuthCard));
+        updateInteractiveCardState(card, card === activeAuthCard);
+        card.addEventListener(
+          'pointerdown',
+          (event) => {
+            if (card !== activeAuthCard && (event.button === 0 || event.pointerType === 'touch')) {
+              setActiveAuthCard(card);
+              event.preventDefault();
+            }
+          },
+          true
+        );
+        card.addEventListener('click', (event) => {
+          if (card !== activeAuthCard) {
+            event.preventDefault();
+          }
+        });
+        card.addEventListener('keydown', (event) => {
+          if ((event.key === 'Enter' || event.key === ' ') && card !== activeAuthCard) {
+            event.preventDefault();
+            setActiveAuthCard(card);
+          }
+        });
+        card.addEventListener('focus', () => {
+          if (card !== activeAuthCard) {
+            setActiveAuthCard(card);
+          }
+        });
+      });
+    }
+
+    if (devToggleButton && devPanels) {
+      const showLabel = devToggleButton.dataset.labelShow || 'Show developer tools';
+      const hideLabel = devToggleButton.dataset.labelHide || 'Hide developer tools';
+
+      const updateDeveloperToggleLabel = (expanded) => {
+        devToggleButton.textContent = expanded ? hideLabel : showLabel;
+      };
+
+      updateDeveloperToggleLabel(false);
+
+      devToggleButton.addEventListener('click', () => {
+        const expanded = devToggleButton.getAttribute('aria-expanded') === 'true';
+        const next = !expanded;
+        devToggleButton.setAttribute('aria-expanded', String(next));
+        devPanels.hidden = !next;
+        updateDeveloperToggleLabel(next);
+      });
+    }
 
     function log(message, payload, level = 'info') {
       const time = new Date().toLocaleTimeString();
