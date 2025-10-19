@@ -732,6 +732,9 @@
       }
 
       body.focus-mode .app{ transform: translateY(calc(-1 * var(--nav-height, 0px))); }
+      body.focus-mode .timeline-dock.floating-hidden{ padding-top:0; padding-bottom:0; gap:0; }
+      body.focus-mode .timeline-dock.floating-hidden .timeline-dock__shell{ margin:0; }
+      body.focus-mode .timeline-dock.floating-hidden + .layout{ margin-top:0; }
 
       /* Bottom HUD visible only in focus mode */
       #focusHudDock{
@@ -8254,6 +8257,12 @@
       if (!app) return;
       const dock = document.getElementById('timelineDock');
       if (!dock || !dock.classList.contains('floating')){
+        app.style.setProperty('--timeline-dock-offset', '0px');
+        return;
+      }
+      const inFocusMode = document.body.classList.contains('focus-mode');
+      const timelineHidden = dock.classList.contains('floating-hidden');
+      if (inFocusMode && timelineHidden){
         app.style.setProperty('--timeline-dock-offset', '0px');
         return;
       }
