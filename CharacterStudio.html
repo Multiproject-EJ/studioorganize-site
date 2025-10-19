@@ -530,41 +530,74 @@
     </div>
 
     <div class="workspace-launcher" data-workspace-launcher>
-      <button class="workspace-launcher__toggle" type="button" aria-expanded="false" data-workspace-toggle>
-        <span>Workspace menu</span>
-        <span class="workspace-launcher__toggle-chevron" aria-hidden="true">▾</span>
-      </button>
+      <div class="workspace-launcher__toggle-wrap">
+        <button class="workspace-launcher__toggle" type="button" aria-expanded="false" aria-label="Workspace menu" data-workspace-toggle>
+          <span class="sr-only">Workspace menu</span>
+          <span class="workspace-launcher__icon" aria-hidden="true"></span>
+        </button>
+        <div class="workspace-launcher__chat" data-workspace-chat hidden aria-hidden="true">
+          <div class="workspace-launcher__chat-bubble">
+            <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
+              <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
+            </div>
+            <div class="workspace-launcher__chat-suggestions">
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's start a new story together</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's analyze my story and improve</button>
+            </div>
+            <form class="workspace-launcher__chat-form" data-workspace-chat-form>
+              <div class="workspace-launcher__chat-input">
+                <input type="text" placeholder="Ask StudioOrganize…" aria-label="Ask the workspace assistant" data-workspace-chat-input />
+                <button type="submit" class="workspace-launcher__chat-send" aria-label="Send chat message">
+                  <span aria-hidden="true">➤</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
       <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
         <div class="workspace-launcher__actions">
           <button type="button" class="workspace-launcher__script" data-workspace-script>
             <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
-            <span>New Script</span>
+            <span>STORY</span>
           </button>
         </div>
         <nav class="workspace-launcher__modules" aria-label="Workspace modules">
           <a class="workspace-launcher__module" href="/use-cases/screenplay-writing.html">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">🎬</span>
-            <span class="workspace-launcher__module-label">Screenplay</span>
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="/assets/img/screenplay_writer1.webp" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Screenplay Writing</span>
           </a>
           <a class="workspace-launcher__module workspace-launcher__module--active" href="/CharacterStudio.html">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">🧑‍🎨</span>
-            <span class="workspace-launcher__module-label">Characters</span>
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Character Studio</span>
           </a>
           <a class="workspace-launcher__module" href="/StoryboardPro.html">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">🗂️</span>
-            <span class="workspace-launcher__module-label">Storyboard</span>
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Storyboard Pro</span>
           </a>
           <a class="workspace-launcher__module" href="/use-cases/generate-ideas.html">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">💡</span>
-            <span class="workspace-launcher__module-label">Ideas</span>
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Idea Generator</span>
           </a>
           <a class="workspace-launcher__module" href="/use-cases/set-design.html">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">🏗️</span>
-            <span class="workspace-launcher__module-label">Set Design</span>
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Set Design</span>
           </a>
           <a class="workspace-launcher__module" href="/creative-hub.html">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">🧭</span>
-            <span class="workspace-launcher__module-label">Creative Hub</span>
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Creative Hub</span>
           </a>
         </nav>
       </div>

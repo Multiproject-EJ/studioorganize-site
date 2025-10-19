@@ -434,7 +434,78 @@ function initWorkspaceLauncher(){
   if (!launchers.length) return;
 
   const OPEN_CLASS = 'workspace-launcher--open';
+  const CHAT_VISIBLE_CLASS = 'workspace-launcher__chat--visible';
   const CLOSE_TIMEOUT = 280;
+  const CHAT_TIMEOUT = 260;
+
+  const getChatBubble = launcher => {
+    return launcher.querySelector('[data-workspace-chat]');
+  };
+
+  const getChatInput = launcher => {
+    return launcher.querySelector('[data-workspace-chat-input]');
+  };
+
+  const showChatBubble = (launcher, { focusInput = true } = {}) => {
+    const chat = getChatBubble(launcher);
+    if (!(chat instanceof HTMLElement)) return;
+    if (!chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS)){
+      if (focusInput){
+        const input = getChatInput(launcher);
+        if (input instanceof HTMLElement){
+          window.requestAnimationFrame(() => {
+            if (typeof input.focus === 'function'){
+              input.focus({ preventScroll: true });
+            }
+          });
+        }
+      }
+      return;
+    }
+
+    chat.hidden = false;
+    chat.setAttribute('aria-hidden', 'false');
+    void chat.offsetWidth;
+    chat.classList.add(CHAT_VISIBLE_CLASS);
+
+    if (focusInput){
+      const input = getChatInput(launcher);
+      if (input instanceof HTMLElement){
+        window.requestAnimationFrame(() => {
+          if (typeof input.focus === 'function'){
+            try {
+              input.focus({ preventScroll: true });
+            } catch (_error){
+              input.focus();
+            }
+          }
+        });
+      }
+    }
+  };
+
+  const hideChatBubble = launcher => {
+    const chat = getChatBubble(launcher);
+    if (!(chat instanceof HTMLElement)) return;
+    if (chat.hidden) return;
+
+    const handleTransitionEnd = event => {
+      if (event.target !== chat) return;
+      chat.removeEventListener('transitionend', handleTransitionEnd);
+      chat.hidden = true;
+    };
+
+    chat.addEventListener('transitionend', handleTransitionEnd);
+    window.setTimeout(() => {
+      chat.removeEventListener('transitionend', handleTransitionEnd);
+      if (!chat.hidden){
+        chat.hidden = true;
+      }
+    }, CHAT_TIMEOUT);
+
+    chat.classList.remove(CHAT_VISIBLE_CLASS);
+    chat.setAttribute('aria-hidden', 'true');
+  };
 
   const closeLauncher = (launcher, { focusToggle = false } = {}) => {
     if (!(launcher instanceof HTMLElement)) return;
@@ -447,6 +518,7 @@ function initWorkspaceLauncher(){
     launcher.classList.remove(OPEN_CLASS);
     panel.setAttribute('aria-hidden', 'true');
     toggle.setAttribute('aria-expanded', 'false');
+    hideChatBubble(launcher);
 
     if (!panel.hidden){
       panel.dataset.workspaceClosing = 'true';
@@ -475,7 +547,7 @@ function initWorkspaceLauncher(){
     }
   };
 
-  const openLauncher = launcher => {
+  const openLauncher = (launcher, { focusPanel = true, revealChat = false } = {}) => {
     if (!(launcher instanceof HTMLElement)) return;
     const toggle = launcher.querySelector('[data-workspace-toggle]');
     const panel = launcher.querySelector('[data-workspace-panel]');
@@ -486,17 +558,27 @@ function initWorkspaceLauncher(){
       void panel.offsetWidth;
     }
 
+    delete panel.dataset.workspaceClosing;
+
     launcher.classList.add(OPEN_CLASS);
     panel.setAttribute('aria-hidden', 'false');
     toggle.setAttribute('aria-expanded', 'true');
 
-    window.requestAnimationFrame(() => {
-      try {
-        panel.focus({ preventScroll: true });
-      } catch (_error){
-        panel.focus();
-      }
-    });
+    if (revealChat){
+      showChatBubble(launcher);
+    } else {
+      hideChatBubble(launcher);
+    }
+
+    if (focusPanel){
+      window.requestAnimationFrame(() => {
+        try {
+          panel.focus({ preventScroll: true });
+        } catch (_error){
+          panel.focus();
+        }
+      });
+    }
   };
 
   const closeAll = except => {
@@ -531,9 +613,39 @@ function initWorkspaceLauncher(){
         closeLauncher(launcher);
       } else {
         closeAll(launcher);
-        openLauncher(launcher);
+        const shouldFocusPanel = typeof event.detail === 'number' ? event.detail === 0 : true;
+        openLauncher(launcher, { focusPanel: shouldFocusPanel, revealChat: true });
       }
     });
+
+    let hoverTimeoutId;
+
+    const clearHoverTimeout = () => {
+      if (hoverTimeoutId){
+        window.clearTimeout(hoverTimeoutId);
+        hoverTimeoutId = undefined;
+      }
+    };
+
+    const handlePointerEnter = () => {
+      clearHoverTimeout();
+      if (!launcher.classList.contains(OPEN_CLASS)){
+        closeAll(launcher);
+        openLauncher(launcher, { focusPanel: false, revealChat: false });
+      }
+    };
+
+    const handlePointerLeave = () => {
+      clearHoverTimeout();
+      hoverTimeoutId = window.setTimeout(() => {
+        if (!launcher.matches(':hover') && !launcher.matches(':focus-within')){
+          closeLauncher(launcher);
+        }
+      }, CLOSE_TIMEOUT);
+    };
+
+    launcher.addEventListener('pointerenter', handlePointerEnter);
+    launcher.addEventListener('pointerleave', handlePointerLeave);
 
     panel.addEventListener('mousedown', event => {
       event.stopPropagation();
@@ -568,6 +680,62 @@ function initWorkspaceLauncher(){
         }
       });
     }
+
+    const chat = launcher.querySelector('[data-workspace-chat]');
+    const chatThread = chat?.querySelector('[data-workspace-chat-thread]') ?? null;
+    const chatInput = chat?.querySelector('[data-workspace-chat-input]') ?? null;
+    const chatForm = chat?.querySelector('[data-workspace-chat-form]') ?? null;
+    const chatSuggestions = chat ? Array.from(chat.querySelectorAll('[data-workspace-chat-suggestion]')) : [];
+
+    const appendChatMessage = (role, message) => {
+      if (!(chatThread instanceof HTMLElement)) return;
+      if (!message) return;
+      const bubble = document.createElement('div');
+      bubble.className = `workspace-launcher__chat-message workspace-launcher__chat-message--${role}`;
+      bubble.textContent = message;
+      chatThread.appendChild(bubble);
+      chatThread.scrollTop = chatThread.scrollHeight;
+    };
+
+    if (chatForm instanceof HTMLFormElement && chatForm.dataset.workspaceChatFormBound !== 'true'){
+      chatForm.dataset.workspaceChatFormBound = 'true';
+      chatForm.addEventListener('submit', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!(chatInput instanceof HTMLInputElement)) return;
+        const value = chatInput.value.trim();
+        if (!value) return;
+        appendChatMessage('user', value);
+        appendChatMessage('assistant', 'I\'ll keep that in mind! Try the STORY button or one of the workspaces to keep the momentum going.');
+        chatInput.value = '';
+      });
+    }
+
+    chatSuggestions.forEach(button => {
+      if (!(button instanceof HTMLElement)) return;
+      if (button.dataset.workspaceChatSuggestionBound === 'true') return;
+      button.dataset.workspaceChatSuggestionBound = 'true';
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const suggestion = button.textContent?.trim();
+        if (!suggestion) return;
+        appendChatMessage('user', suggestion);
+        if (suggestion.toLowerCase().includes('analyze')){
+          appendChatMessage('assistant', 'Let\'s dig in! Share a scene or outline and I\'ll highlight beats to refine.');
+        } else {
+          appendChatMessage('assistant', 'Amazing! Tap STORY to spin up a fresh draft or jump into the Screenplay workspace.');
+        }
+        if (chatInput instanceof HTMLInputElement){
+          chatInput.value = '';
+          try {
+            chatInput.focus({ preventScroll: true });
+          } catch (_error){
+            chatInput.focus();
+          }
+        }
+      });
+    });
   });
 
   if (document.documentElement.dataset.workspaceLauncherGlobalBound === 'true') return;
