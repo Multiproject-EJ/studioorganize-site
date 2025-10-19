@@ -119,6 +119,50 @@
   </div>
 
 <main class="section">
+  <section class="creator-overview" aria-label="Today's studio overview">
+    <div class="creator-overview__today">
+      <span class="creator-overview__kicker">📅 Today</span>
+      <h2 class="creator-overview__date" data-creator-date>Sunday, October 19</h2>
+      <p class="creator-overview__time" data-creator-time>6:12 PM</p>
+      <p class="creator-overview__subtitle">Stay synced with your studio rhythm.</p>
+    </div>
+    <div class="creator-overview__weather" aria-live="polite">
+      <div class="creator-overview__weather-header">
+        <span class="creator-overview__weather-icon" aria-hidden="true" data-weather-icon>🌤️</span>
+        <span class="creator-overview__temp"><span data-weather-temp>72</span>°F</span>
+      </div>
+      <p class="creator-overview__condition" data-weather-status>Partly cloudy with steady light.</p>
+      <p class="creator-overview__location" data-weather-location>Los Angeles Studio Lot</p>
+      <p class="creator-overview__updated">Updated <span data-weather-updated>just now</span></p>
+    </div>
+    <div class="creator-overview__streak" aria-live="polite">
+      <div class="creator-overview__streak-header">
+        <span class="creator-overview__streak-icon" aria-hidden="true">🔥</span>
+        <div>
+          <p class="creator-overview__streak-title">Streak Tracker</p>
+          <p class="creator-overview__streak-subtitle">Keep the creative flame going.</p>
+        </div>
+      </div>
+      <div class="creator-overview__streak-stats">
+        <span class="creator-overview__streak-count" data-streak-count>7</span>
+        <span class="creator-overview__streak-label">days in a row</span>
+      </div>
+      <div class="creator-overview__streak-progress" role="img" aria-label="Streak progress 7 of 10 days">
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="empty"></span>
+        <span data-level="empty"></span>
+        <span data-level="empty"></span>
+      </div>
+      <p class="creator-overview__streak-note">Three more sessions unlock the Momentum badge.</p>
+    </div>
+  </section>
+
   <div class="app-menu" data-app-menu>
     <button
       class="app-menu__toggle"
@@ -216,63 +260,6 @@
         Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
       </p>
     </div>
-
-    <section class="creator-hud" aria-label="Today's creative snapshot">
-      <article class="creator-hud__card" aria-live="polite">
-        <header class="creator-hud__header">
-          <span class="creator-hud__icon" aria-hidden="true">📅</span>
-          <div>
-            <h3 class="creator-hud__title">Today</h3>
-            <p class="creator-hud__subtitle">Stay synced with your studio rhythm.</p>
-          </div>
-        </header>
-        <p class="creator-hud__date" data-creator-date>Wednesday, April 24</p>
-        <p class="creator-hud__time" data-creator-time>08:30 AM</p>
-      </article>
-
-      <article class="creator-hud__card" aria-live="polite">
-        <header class="creator-hud__header">
-          <span class="creator-hud__icon" aria-hidden="true" data-weather-icon>🌤️</span>
-          <div>
-            <h3 class="creator-hud__title">Studio Weather</h3>
-            <p class="creator-hud__subtitle">Set the mood for today's session.</p>
-          </div>
-        </header>
-        <div class="creator-hud__weather">
-          <p class="creator-hud__temp"><span data-weather-temp>72</span>°F</p>
-          <div class="creator-hud__weather-details">
-            <p class="creator-hud__condition" data-weather-status>Partly cloudy with steady light.</p>
-            <p class="creator-hud__location" data-weather-location>Los Angeles Studio Lot</p>
-          </div>
-        </div>
-        <p class="creator-hud__updated muted">Updated <span data-weather-updated>5 minutes ago</span></p>
-      </article>
-
-      <article class="creator-hud__card creator-hud__card--streak">
-        <header class="creator-hud__header">
-          <span class="creator-hud__icon" aria-hidden="true">🔥</span>
-          <div>
-            <h3 class="creator-hud__title">Streak Tracker</h3>
-            <p class="creator-hud__subtitle">Keep the creative flame going.</p>
-          </div>
-        </header>
-        <p class="creator-hud__streak-count" data-streak-count>7</p>
-        <p class="creator-hud__streak-label">days in a row</p>
-        <div class="creator-hud__progress" role="img" aria-label="Streak progress 7 of 10 days">
-          <span data-level="full"></span>
-          <span data-level="full"></span>
-          <span data-level="full"></span>
-          <span data-level="full"></span>
-          <span data-level="full"></span>
-          <span data-level="full"></span>
-          <span data-level="full"></span>
-          <span data-level="empty"></span>
-          <span data-level="empty"></span>
-          <span data-level="empty"></span>
-        </div>
-        <p class="creator-hud__cta">Three more sessions unlock the Momentum badge.</p>
-      </article>
-    </section>
 
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
@@ -534,12 +521,12 @@
 
 <script>
   (function(){
-    const hud = document.querySelector('.creator-hud');
-    if (!hud) return;
+    const overview = document.querySelector('.creator-overview');
+    if (!overview) return;
 
     const now = new Date();
-    const dateEl = hud.querySelector('[data-creator-date]');
-    const timeEl = hud.querySelector('[data-creator-time]');
+    const dateEl = overview.querySelector('[data-creator-date]');
+    const timeEl = overview.querySelector('[data-creator-time]');
     const dateFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
 
@@ -554,11 +541,11 @@
       updated: now
     };
 
-    const iconEl = hud.querySelector('[data-weather-icon]');
-    const tempEl = hud.querySelector('[data-weather-temp]');
-    const statusEl = hud.querySelector('[data-weather-status]');
-    const locationEl = hud.querySelector('[data-weather-location]');
-    const updatedEl = hud.querySelector('[data-weather-updated]');
+    const iconEl = overview.querySelector('[data-weather-icon]');
+    const tempEl = overview.querySelector('[data-weather-temp]');
+    const statusEl = overview.querySelector('[data-weather-status]');
+    const locationEl = overview.querySelector('[data-weather-location]');
+    const updatedEl = overview.querySelector('[data-weather-updated]');
 
     if (iconEl) iconEl.textContent = weather.icon;
     if (tempEl) tempEl.textContent = weather.temperature;
