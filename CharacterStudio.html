@@ -267,6 +267,10 @@
       .character-studio-detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
       .character-studio-detail-header h2 { margin: 0; font-size: 26px; font-weight: 600; }
       .character-studio-detail-header .muted-text { margin: 6px 0 0; font-size: 13px; }
+      .character-studio-profile-layout { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+      .character-studio-profile-portrait { flex: 0 0 220px; max-width: 260px; width: 100%; background: var(--chip); border: 1px solid var(--ring); border-radius: 16px; overflow: hidden; aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center; }
+      .character-studio-profile-portrait img { width: 100%; height: 100%; object-fit: cover; }
+      .character-studio-profile-fields { flex: 1 1 260px; display: flex; flex-direction: column; gap: 16px; }
       .character-studio-tertiary {
         background: none;
         border: 1px solid var(--ring);
@@ -1284,32 +1288,39 @@
               <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-profile" aria-labelledby="character-tab-profile" data-tab-panel="profile"${panelAttributes('profile')}>
                 <h3>Profile</h3>
                 <p class="muted-text">Keep the essentials handy when writing.</p>
-                <div class="character-studio-two-col">
-                  <label class="character-studio-field">
-                    <span>Name</span>
-                    <input type="text" value="${escapeHtml(active.name || '')}" data-character-field="name" placeholder="Character name" />
-                  </label>
-                  <label class="character-studio-field">
-                    <span>Role</span>
-                    <input type="text" value="${escapeHtml(active.role || '')}" data-character-field="role" placeholder="Protagonist, Antagonist..." />
-                  </label>
-                  <label class="character-studio-field">
-                    <span>Archetype</span>
-                    <input type="text" value="${escapeHtml(active.archetype || '')}" data-character-field="archetype" placeholder="e.g. Reluctant hero" />
-                  </label>
-                  <label class="character-studio-field">
-                    <span>Pronouns</span>
-                    <input type="text" value="${escapeHtml(active.pronouns || '')}" data-character-field="pronouns" placeholder="They/Them" />
-                  </label>
-                  <label class="character-studio-field">
-                    <span>Age</span>
-                    <input type="text" value="${escapeHtml(active.age || '')}" data-character-field="age" placeholder="32" />
-                  </label>
+                <div class="character-studio-profile-layout">
+                  <div class="character-studio-profile-portrait" data-profile-portrait>
+                    ${characterLookPreviewMarkup('portrait', portraitUrl, active)}
+                  </div>
+                  <div class="character-studio-profile-fields">
+                    <div class="character-studio-two-col">
+                      <label class="character-studio-field">
+                        <span>Name</span>
+                        <input type="text" value="${escapeHtml(active.name || '')}" data-character-field="name" placeholder="Character name" />
+                      </label>
+                      <label class="character-studio-field">
+                        <span>Role</span>
+                        <input type="text" value="${escapeHtml(active.role || '')}" data-character-field="role" placeholder="Protagonist, Antagonist..." />
+                      </label>
+                      <label class="character-studio-field">
+                        <span>Archetype</span>
+                        <input type="text" value="${escapeHtml(active.archetype || '')}" data-character-field="archetype" placeholder="e.g. Reluctant hero" />
+                      </label>
+                      <label class="character-studio-field">
+                        <span>Pronouns</span>
+                        <input type="text" value="${escapeHtml(active.pronouns || '')}" data-character-field="pronouns" placeholder="They/Them" />
+                      </label>
+                      <label class="character-studio-field">
+                        <span>Age</span>
+                        <input type="text" value="${escapeHtml(active.age || '')}" data-character-field="age" placeholder="32" />
+                      </label>
+                    </div>
+                    <label class="character-studio-field">
+                      <span>Summary</span>
+                      <textarea class="small" data-character-field="summary" placeholder="Logline summary">${escapeHtml(active.summary || '')}</textarea>
+                    </label>
+                  </div>
                 </div>
-                <label class="character-studio-field">
-                  <span>Summary</span>
-                  <textarea class="small" data-character-field="summary" placeholder="Logline summary">${escapeHtml(active.summary || '')}</textarea>
-                </label>
               </section>
               <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-stats" aria-labelledby="character-tab-stats" data-tab-panel="stats"${panelAttributes('stats')}>
                 <h3>Stats &amp; Spotlight</h3>
@@ -1473,6 +1484,10 @@
         else if (kind === 'expression') url = Array.isArray(character?.looks?.expressions) ? character.looks.expressions[0] || '' : '';
         const content = slot.querySelector('[data-look-content]');
         if (content) content.innerHTML = characterLookPreviewMarkup(kind, url, character);
+        if (kind === 'portrait'){
+          const profileSlot = document.querySelector('[data-profile-portrait]');
+          if (profileSlot) profileSlot.innerHTML = characterLookPreviewMarkup('portrait', url, character);
+        }
       }
 
       function setupCharacterTabs(container){
