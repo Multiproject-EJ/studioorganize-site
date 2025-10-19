@@ -99,6 +99,11 @@
       .character-studio-header h2 { margin: 0; font-size: 24px; font-weight: 600; }
       .character-studio-header .muted-text { margin: 6px 0 0; max-width: 60ch; font-size: 14px; }
       .character-studio-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+      .character-studio-header-buttons { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+      .character-studio-project { font-size: 12px; color: var(--muted); }
+      .character-studio-project[data-state="warning"] { color: #f97316; }
+      .character-studio-project[data-state="error"] { color: #ef4444; }
+      .character-studio-project[data-state="ready"] { color: var(--acc); }
       .character-studio-tabs { display: flex; flex-direction: column; gap: 18px; }
       .character-studio-tablist { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border-radius: 14px; background: var(--card); border: 1px solid var(--ring); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); overflow-x: auto; }
       .character-studio-tablist::-webkit-scrollbar { height: 6px; }
@@ -138,7 +143,7 @@
         padding: 6px 12px;
         font-weight: 600;
       }
-      .character-studio-add {
+      .character-studio-add { 
         background: var(--acc);
         border: 1px solid var(--acc);
         color: var(--active-tab-text);
@@ -151,6 +156,21 @@
       }
       .character-studio-add:hover { box-shadow: 0 14px 32px rgba(79, 123, 255, 0.25); transform: translateY(-1px); }
       .character-studio-add:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(79,123,255,0.25); }
+      .character-studio-save {
+        background: linear-gradient(135deg, var(--brand-2), var(--brand));
+        border: 1px solid transparent;
+        color: var(--cta-text);
+        border-radius: 999px;
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 18px 48px rgba(124, 58, 237, 0.28);
+        transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+      }
+      .character-studio-save:hover { box-shadow: 0 20px 52px rgba(124, 58, 237, 0.32); transform: translateY(-1px); }
+      .character-studio-save:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.35); }
+      .character-studio-save[disabled] { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
       .character-studio-body { padding: 26px 30px 32px; flex: 1; overflow: hidden; }
       .character-studio-layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; height: 100%; min-height: 0; }
       .character-studio-sidebar { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
@@ -235,6 +255,11 @@
       .character-studio-status { font-size: 12px; color: var(--muted); min-height: 18px; }
       .character-studio-status[data-state="ready"] { color: var(--acc); }
       .character-studio-status[data-state="warning"] { color: #f97316; }
+      .character-studio-save-status { font-size: 12px; color: var(--muted); min-height: 18px; }
+      .character-studio-save-status[data-state="ready"] { color: var(--acc); }
+      .character-studio-save-status[data-state="warning"] { color: #f97316; }
+      .character-studio-save-status[data-state="error"] { color: #ef4444; }
+      .character-studio-save-status[data-state="saving"] { color: var(--brand); }
       .character-studio-empty,
       .character-studio-empty-list {
         border: 1px dashed var(--ring);
@@ -276,7 +301,12 @@
           </div>
           <div class="character-studio-header-actions">
             <span class="character-studio-header-badge">Cast</span>
-            <button class="character-studio-add" type="button" id="characterStudioAddBtn">+ New</button>
+            <span class="character-studio-project" data-project-label></span>
+            <div class="character-studio-header-buttons">
+              <button class="character-studio-add" type="button" id="characterStudioAddBtn">+ New</button>
+              <button class="character-studio-save" type="button" id="characterStudioSaveBtn" disabled>Save</button>
+            </div>
+            <span class="character-studio-save-status" data-save-status aria-live="polite"></span>
           </div>
         </div>
         <div class="character-studio-body">
@@ -329,41 +359,86 @@
         { id: 'ai', label: 'AI Concepting' }
       ];
 
-      const initialCharacters = [
-        {
-          id: 'char-mr-mega',
-          name: 'Mr Mega',
-          role: 'Protagonist, Antagonist...',
-          archetype: 'Unlikely Hero',
-          pronouns: 'They/Them',
-          age: '63',
-          summary: 'Logline summary',
-          traits: ['Resilient', 'Impulsive', 'Secret romantic'],
-          background: 'Origin story, formative experiences',
-          familyTree: 'Parents, siblings, key relationships',
-          stats: { scenes: 0, dialogue: 0, screenTime: 0 },
-          arc: {
-            setup: 'Who are they at the beginning?',
-            development: 'Challenges, midpoint, reversals',
-            resolution: 'Where do they end up?'
-          },
-          looks: {
-            portrait: '',
-            turnarounds: [],
-            expressions: []
-          },
-          ai: {
-            prompt: 'Describe the character\'s look, vibe, and scene',
-            notes: 'Shot list, wardrobe callouts, artist references'
-          }
+      const initialCharacters = [];
+
+      function getStoredProjectId(){
+        try {
+          const raw = localStorage.getItem('SW_LAST_PROJECT_ID');
+          if (!raw) return null;
+          const trimmed = raw.trim();
+          return trimmed ? trimmed : null;
+        } catch (err){
+          return null;
         }
-      ];
+      }
+
+      const storedProjectId = getStoredProjectId();
 
       const state = {
         characters: initialCharacters.map(normalizeCharacter),
         activeId: initialCharacters.length ? initialCharacters[0].id : null,
-        activeTabId: 'profile'
+        activeTabId: 'profile',
+        projectId: storedProjectId,
+        supabase: null,
+        session: null,
+        ownerId: null,
+        projectLabel: '',
+        projectLabelState: '',
+        loading: Boolean(storedProjectId),
+        saving: false,
+        dirty: false,
+        saveStatus: '',
+        saveStatusState: '',
+        remoteIds: new Set(initialCharacters.map(char => char.id))
       };
+
+      function setProjectLabel(text, status = ''){
+        state.projectLabel = text || '';
+        state.projectLabelState = status || '';
+        const labelEl = document.querySelector('[data-project-label]');
+        if (!labelEl) return;
+        const content = state.projectLabel || '';
+        labelEl.textContent = content;
+        if (status){
+          labelEl.dataset.state = status;
+        } else {
+          labelEl.removeAttribute('data-state');
+        }
+        labelEl.hidden = false;
+      }
+
+      function setSaveStatus(message, status = ''){
+        state.saveStatus = message || '';
+        state.saveStatusState = status || '';
+        const statusEl = document.querySelector('[data-save-status]');
+        if (!statusEl) return;
+        statusEl.textContent = state.saveStatus;
+        if (status){
+          statusEl.dataset.state = status;
+        } else {
+          statusEl.removeAttribute('data-state');
+        }
+      }
+
+      function updateSaveButtonState(){
+        const btn = document.getElementById('characterStudioSaveBtn');
+        if (!btn) return;
+        const disabled = state.saving || state.loading || !state.supabase || !state.session || !state.ownerId || !state.projectId || !state.dirty;
+        btn.disabled = disabled;
+        btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        btn.textContent = state.saving ? 'Saving…' : 'Save';
+      }
+
+      function markDirty(){
+        state.dirty = true;
+        updateSaveButtonState();
+        if (state.saving) return;
+        if (state.session && state.projectId){
+          setSaveStatus('Unsaved changes', 'warning');
+        } else {
+          setSaveStatus('Unsaved changes (sign in to sync)', 'warning');
+        }
+      }
 
       function escapeHtml(value){
         return String(value ?? '')
@@ -381,8 +456,25 @@
       }
 
       function createId(){
-        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-        return `char-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'){
+          try { return crypto.randomUUID(); }
+          catch (err){}
+        }
+        let d = Date.now();
+        let d2 = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+          ? performance.now() * 1000
+          : 0;
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          let r = Math.random() * 16;
+          if (d > 0){
+            r = (d + r) % 16 | 0;
+            d = Math.floor(d / 16);
+          } else {
+            r = (d2 + r) % 16 | 0;
+            d2 = Math.floor(d2 / 16);
+          }
+          return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+        });
       }
 
       function createCharacterData(name = ''){
@@ -426,6 +518,83 @@
         normalized.looks.expressions = normalizeList(normalized.looks.expressions);
         normalized.ai = { ...base.ai, ...(item.ai || {}) };
         return normalized;
+      }
+
+      function supabaseRowToCharacter(row){
+        if (!row || typeof row !== 'object') return createCharacterData('Untitled Character');
+        const screenTimeValue = typeof row.stats_screen_time === 'number'
+          ? row.stats_screen_time
+          : Number(row.stats_screen_time);
+        const normalized = {
+          id: row.id || createId(),
+          name: typeof row.name === 'string' ? row.name : '',
+          role: typeof row.role === 'string' ? row.role : '',
+          archetype: typeof row.archetype === 'string' ? row.archetype : '',
+          pronouns: typeof row.pronouns === 'string' ? row.pronouns : '',
+          age: typeof row.age === 'string' ? row.age : (typeof row.age === 'number' ? String(row.age) : ''),
+          summary: typeof row.summary === 'string' ? row.summary : '',
+          background: typeof row.background === 'string' ? row.background : '',
+          familyTree: typeof row.family_tree === 'string' ? row.family_tree : '',
+          traits: Array.isArray(row.traits) ? row.traits : [],
+          stats: {
+            scenes: Number.isFinite(row.stats_scenes) ? row.stats_scenes : 0,
+            dialogue: Number.isFinite(row.stats_dialogue) ? row.stats_dialogue : 0,
+            screenTime: Number.isFinite(screenTimeValue) ? Number(screenTimeValue) : 0
+          },
+          arc: {
+            setup: typeof row.arc_setup === 'string' ? row.arc_setup : '',
+            development: typeof row.arc_development === 'string' ? row.arc_development : '',
+            resolution: typeof row.arc_resolution === 'string' ? row.arc_resolution : ''
+          },
+          looks: {
+            portrait: typeof row.look_portrait_url === 'string' ? row.look_portrait_url : '',
+            turnarounds: Array.isArray(row.look_turnaround_urls) ? row.look_turnaround_urls : [],
+            expressions: Array.isArray(row.look_expression_urls) ? row.look_expression_urls : []
+          },
+          ai: {
+            prompt: typeof row.ai_prompt === 'string' ? row.ai_prompt : '',
+            notes: typeof row.ai_notes === 'string' ? row.ai_notes : ''
+          }
+        };
+        return normalizeCharacter(normalized);
+      }
+
+      function characterToSupabaseRow(character){
+        const normalized = normalizeCharacter(character);
+        const traits = normalizeList(normalized.traits);
+        const turnarounds = normalizeList(normalized.looks?.turnarounds || []);
+        const expressions = normalizeList(normalized.looks?.expressions || []);
+        const statsScenes = Number.isFinite(normalized.stats?.scenes) ? normalized.stats.scenes : 0;
+        const statsDialogue = Number.isFinite(normalized.stats?.dialogue) ? normalized.stats.dialogue : 0;
+        const statsScreenTime = Number.isFinite(normalized.stats?.screenTime)
+          ? Number(normalized.stats.screenTime)
+          : 0;
+        return {
+          id: normalized.id,
+          owner_id: state.ownerId,
+          project_id: state.projectId,
+          name: normalized.name || '',
+          role: normalized.role || null,
+          archetype: normalized.archetype || null,
+          pronouns: normalized.pronouns || null,
+          age: normalized.age || null,
+          summary: normalized.summary || null,
+          background: normalized.background || null,
+          family_tree: normalized.familyTree || null,
+          traits,
+          stats_scenes: statsScenes,
+          stats_dialogue: statsDialogue,
+          stats_screen_time: statsScreenTime,
+          arc_setup: normalized.arc?.setup || null,
+          arc_development: normalized.arc?.development || null,
+          arc_resolution: normalized.arc?.resolution || null,
+          look_portrait_url: normalized.looks?.portrait || null,
+          look_turnaround_urls: turnarounds,
+          look_expression_urls: expressions,
+          ai_prompt: normalized.ai?.prompt || null,
+          ai_notes: normalized.ai?.notes || null,
+          updated_at: new Date().toISOString()
+        };
       }
 
       function getActiveCharacter(){
@@ -487,19 +656,47 @@
           if (typeof target[key] !== 'object' || target[key] === null) target[key] = {};
           target = target[key];
         }
-        target[parts[parts.length - 1]] = value;
+        const finalKey = parts[parts.length - 1];
+        const previous = target[finalKey];
+        target[finalKey] = value;
+        let changed = previous !== value;
+        if (Array.isArray(previous) && Array.isArray(value)){
+          changed = previous.length !== value.length || previous.some((entry, index) => entry !== value[index]);
+        }
+        if (changed) markDirty();
       }
 
       function renderCharacterList(){
         const listEl = document.querySelector('[data-character-list]');
         if (!listEl) return;
         listEl.innerHTML = '';
-        if (!state.characters.length){
-          state.activeId = null;
+        const showMessage = (title, detail) => {
           const empty = document.createElement('div');
           empty.className = 'character-studio-empty-list';
-          empty.innerHTML = '<strong>No characters yet</strong><span>Add the first member of your cast to begin planning.</span>';
+          empty.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span>`;
           listEl.appendChild(empty);
+        };
+        if (state.loading){
+          showMessage('Loading characters…', 'Syncing the cast from Supabase.');
+          return;
+        }
+        if (!state.projectId){
+          state.activeId = null;
+          showMessage('No story linked', 'Open your story in the Writer to connect Character Studio.');
+          return;
+        }
+        if (!state.supabase){
+          showMessage('Connecting to Supabase…', 'One moment while we prepare your workspace.');
+          return;
+        }
+        if (!state.session){
+          state.activeId = null;
+          showMessage('Sign in to continue', 'Sign in to load and save your cast.');
+          return;
+        }
+        if (!state.characters.length){
+          state.activeId = null;
+          showMessage('No characters yet', 'Add the first member of your cast to begin planning.');
           return;
         }
         state.characters.forEach(char => {
@@ -520,6 +717,38 @@
       function renderCharacterDetails(){
         const container = document.querySelector('[data-character-details]');
         if (!container) return;
+        if (state.loading){
+          container.innerHTML = `
+            <div class="character-studio-empty">
+              <h2>Loading characters…</h2>
+              <p>Syncing the cast from Supabase.</p>
+            </div>`;
+          return;
+        }
+        if (!state.projectId){
+          container.innerHTML = `
+            <div class="character-studio-empty">
+              <h2>No story linked</h2>
+              <p>Open your story in the Writer to connect Character Studio.</p>
+            </div>`;
+          return;
+        }
+        if (!state.supabase){
+          container.innerHTML = `
+            <div class="character-studio-empty">
+              <h2>Connecting to Supabase…</h2>
+              <p>One moment while we prepare your workspace.</p>
+            </div>`;
+          return;
+        }
+        if (!state.session){
+          container.innerHTML = `
+            <div class="character-studio-empty">
+              <h2>Sign in to continue</h2>
+              <p>Sign in to view and save this cast.</p>
+            </div>`;
+          return;
+        }
         const active = getActiveCharacter();
         if (!active){
           container.innerHTML = `
@@ -1035,16 +1264,220 @@
             } else {
               state.activeId = null;
             }
+            markDirty();
             renderCharacterList();
             renderCharacterDetails();
           });
         }
       }
 
+      async function waitForSupabaseClient(timeoutMs = 6000){
+        if (window.supabaseClient) return window.supabaseClient;
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs){
+          await new Promise(resolve => setTimeout(resolve, 50));
+          if (window.supabaseClient) return window.supabaseClient;
+        }
+        return window.supabaseClient || null;
+      }
+
+      async function fetchSupabaseSession(client){
+        try {
+          const { data, error } = await client.auth.getSession();
+          if (error) throw error;
+          return data?.session ?? null;
+        } catch (err){
+          console.error('Character Studio failed to fetch Supabase session', err);
+          return null;
+        }
+      }
+
+      async function loadProjectMetadata(){
+        if (!state.supabase || !state.projectId || !state.ownerId) return;
+        try {
+          const filters = [`id.eq.${state.projectId}`, `project_id.eq.${state.projectId}`, `script_id.eq.${state.projectId}`];
+          const { data, error } = await state.supabase
+            .from('project_data')
+            .select('id, project_id, script_id, script_name, name, title, description, updated_at')
+            .or(filters.join(','))
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (error) throw error;
+          if (data){
+            const label = data.script_name || data.name || data.title || 'Untitled Story';
+            setProjectLabel(`Story: ${label}`, 'ready');
+            return;
+          }
+        } catch (err){
+          console.warn('Character Studio project metadata fetch failed:', err);
+        }
+        const fallback = state.projectId ? `Story ID: ${state.projectId.slice(0, 8).toUpperCase()}` : 'No story selected';
+        setProjectLabel(fallback, state.projectId ? '' : 'warning');
+      }
+
+      async function loadCharactersFromSupabase(){
+        if (!state.supabase || !state.projectId || !state.ownerId){
+          state.loading = false;
+          renderCharacterList();
+          renderCharacterDetails();
+          updateSaveButtonState();
+          return;
+        }
+        state.loading = true;
+        renderCharacterList();
+        renderCharacterDetails();
+        updateSaveButtonState();
+        setSaveStatus('Loading characters…', 'saving');
+        try {
+          const { data, error } = await state.supabase
+            .from('characters')
+            .select('id, name, role, archetype, pronouns, age, summary, background, family_tree, traits, stats_scenes, stats_dialogue, stats_screen_time, arc_setup, arc_development, arc_resolution, look_portrait_url, look_turnaround_urls, look_expression_urls, ai_prompt, ai_notes, created_at')
+            .eq('project_id', state.projectId)
+            .order('created_at', { ascending: true });
+          if (error) throw error;
+          const list = Array.isArray(data) ? data.map(supabaseRowToCharacter) : [];
+          state.characters = list;
+          state.activeId = list.length ? list[0].id : null;
+          state.remoteIds = new Set(list.map(char => char.id));
+          state.dirty = false;
+          if (list.length){
+            setSaveStatus('Characters synced.', 'ready');
+          } else {
+            setSaveStatus('No characters saved yet for this story.', 'warning');
+          }
+        } catch (err){
+          console.error('Failed to load characters from Supabase', err);
+          setSaveStatus('Unable to load characters from Supabase.', 'error');
+        } finally {
+          state.loading = false;
+          renderCharacterList();
+          renderCharacterDetails();
+          updateSaveButtonState();
+        }
+      }
+
+      async function handleSession(session){
+        state.session = session;
+        const ownerId = session?.user?.id || null;
+        const previousOwner = state.ownerId;
+        state.ownerId = ownerId;
+        updateSaveButtonState();
+        if (!ownerId){
+          state.remoteIds = new Set();
+          state.characters = [];
+          state.activeId = null;
+          state.dirty = false;
+          state.loading = false;
+          renderCharacterList();
+          renderCharacterDetails();
+          if (state.projectId){
+            setSaveStatus('Sign in to load and save your cast.', 'warning');
+          }
+          return;
+        }
+        if (!state.projectId){
+          state.loading = false;
+          renderCharacterList();
+          renderCharacterDetails();
+          setSaveStatus('Open your story in the Writer to link characters.', 'warning');
+          return;
+        }
+        if (previousOwner !== ownerId){
+          state.remoteIds = new Set();
+        }
+        await Promise.all([loadProjectMetadata(), loadCharactersFromSupabase()]);
+      }
+
+      async function handleSaveClick(){
+        if (state.saving) return;
+        if (!state.supabase){
+          setSaveStatus('Supabase is still initializing. Please try again.', 'warning');
+          return;
+        }
+        if (!state.session || !state.ownerId){
+          setSaveStatus('Sign in to save your cast.', 'warning');
+          return;
+        }
+        if (!state.projectId){
+          setSaveStatus('Open your story in the Writer to link characters.', 'warning');
+          return;
+        }
+        if (!state.dirty){
+          setSaveStatus('Everything is up to date.', 'ready');
+          return;
+        }
+        state.saving = true;
+        updateSaveButtonState();
+        setSaveStatus('Saving…', 'saving');
+        try {
+          const rows = state.characters.map(characterToSupabaseRow);
+          if (rows.length){
+            const { error } = await state.supabase
+              .from('characters')
+              .upsert(rows, { onConflict: 'id' });
+            if (error) throw error;
+          }
+          const localIds = new Set(rows.map(row => row.id));
+          const remoteIds = Array.from(state.remoteIds || []);
+          const idsToDelete = remoteIds.filter(id => !localIds.has(id));
+          if (idsToDelete.length){
+            const { error: deleteError } = await state.supabase
+              .from('characters')
+              .delete()
+              .in('id', idsToDelete);
+            if (deleteError) throw deleteError;
+          }
+          state.remoteIds = localIds;
+          state.dirty = false;
+          setSaveStatus('Characters saved!', 'ready');
+        } catch (err){
+          console.error('Failed to save characters to Supabase', err);
+          setSaveStatus('Save failed. Please try again.', 'error');
+        } finally {
+          state.saving = false;
+          updateSaveButtonState();
+        }
+      }
+
+      async function initializeSupabase(){
+        if (!state.projectId){
+          setProjectLabel('No story selected — open the Writer to choose a story.', 'warning');
+          state.loading = false;
+          renderCharacterList();
+          renderCharacterDetails();
+          updateSaveButtonState();
+          return;
+        }
+        const supabase = await waitForSupabaseClient();
+        if (!supabase){
+          state.loading = false;
+          setSaveStatus('Supabase is unavailable. Reload to try again.', 'error');
+          renderCharacterList();
+          renderCharacterDetails();
+          updateSaveButtonState();
+          return;
+        }
+        state.supabase = supabase;
+        updateSaveButtonState();
+        const session = await fetchSupabaseSession(supabase);
+        await handleSession(session);
+        supabase.auth.onAuthStateChange((event, nextSession) => {
+          if (event === 'TOKEN_REFRESHED'){
+            state.session = nextSession;
+            state.ownerId = nextSession?.user?.id || null;
+            updateSaveButtonState();
+            return;
+          }
+          handleSession(nextSession).catch(err => console.error('Character Studio auth change failed', err));
+        });
+      }
+
       function addCharacter(){
         const newCharacter = createCharacterData('New Character');
         state.characters.push(newCharacter);
         state.activeId = newCharacter.id;
+        markDirty();
         renderCharacterList();
         renderCharacterDetails();
         window.requestAnimationFrame(() => {
@@ -1061,8 +1494,21 @@
         addButton.addEventListener('click', addCharacter);
       }
 
+      const saveButton = document.getElementById('characterStudioSaveBtn');
+      if (saveButton){
+        saveButton.addEventListener('click', () => { handleSaveClick(); });
+      }
+
+      const initialProjectLabel = state.projectId
+        ? `Story ID: ${state.projectId.slice(0, 8).toUpperCase()}`
+        : 'No story selected — open the Writer to choose a story.';
+      setProjectLabel(initialProjectLabel, state.projectId ? '' : 'warning');
+      setSaveStatus('', '');
+
       renderCharacterList();
       renderCharacterDetails();
+      updateSaveButtonState();
+      initializeSupabase();
     })();
   </script>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
