@@ -115,7 +115,7 @@ img{max-width:100%;display:block}
 .workspace-launcher__chat-send{width:30px;height:30px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 24px rgba(8,15,28,.38);transition:transform .18s ease,box-shadow .18s ease}
 .workspace-launcher__chat-send:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(8,15,28,.45)}
 .workspace-launcher__chat-send:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.workspace-launcher__panel{position:absolute;top:50%;right:calc(var(--workspace-launcher-gutter) + 76px);transform:translate(18px,-50%);background:rgba(12,18,28,.92);backdrop-filter:blur(14px);border:1px solid var(--ring);border-radius:999px;box-shadow:0 26px 70px rgba(8,15,28,.55);padding:12px 18px;display:flex;align-items:center;gap:18px;opacity:0;pointer-events:none;transition:transform .28s ease,opacity .22s ease;z-index:30}
+.workspace-launcher__panel{position:absolute;top:50%;right:calc(var(--workspace-launcher-gutter) + 76px);transform:translate(18px,-50%);background:linear-gradient(transparent,transparent) padding-box,linear-gradient(135deg,#4f7bff,#ff6b6b) border-box;border:2px solid transparent;border-radius:999px;box-shadow:0 0 0 2px rgba(79,123,255,.18),0 26px 70px rgba(8,15,28,.55);padding:12px 18px;display:flex;align-items:center;gap:18px;opacity:0;pointer-events:none;transition:transform .28s ease,opacity .22s ease;z-index:30}
 .workspace-launcher__panel[hidden]{display:none}
 .workspace-launcher--open .workspace-launcher__panel{opacity:1;transform:translate(-12px,-50%);pointer-events:auto}
 .workspace-launcher__panel:focus{outline:none}
@@ -134,7 +134,7 @@ img{max-width:100%;display:block}
 .workspace-launcher__module--active{border-color:var(--acc);background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg,rgba(79,123,255,.92),rgba(167,139,250,.85)) border-box;box-shadow:0 20px 48px rgba(79,123,255,.28)}
 .workspace-launcher__module--active .workspace-launcher__module-icon{border-color:var(--acc);box-shadow:0 20px 46px rgba(79,123,255,.32)}
 @media (max-width:900px){
-  .workspace-launcher__panel{position:fixed;top:auto;bottom:24px;right:var(--workspace-launcher-gutter);transform:translateY(24px);width:calc(100% - (var(--workspace-launcher-gutter) * 2));flex-wrap:wrap;justify-content:center}
+  .workspace-launcher__panel{position:fixed;top:auto;bottom:24px;right:var(--workspace-launcher-gutter);transform:translateY(24px);width:calc(100% - (var(--workspace-launcher-gutter) * 2));flex-wrap:wrap;justify-content:center;background:linear-gradient(transparent,transparent) padding-box,linear-gradient(135deg,#4f7bff,#ff6b6b) border-box}
   .workspace-launcher--open .workspace-launcher__panel{transform:translateY(0)}
   .workspace-launcher__chat{left:auto;right:var(--workspace-launcher-gutter);transform:translateY(-8px)}
   .workspace-launcher__chat--visible{transform:translateY(0)}
