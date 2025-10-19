@@ -439,18 +439,52 @@
 
       const initialCharacters = [];
 
+      function normalizeProjectId(value){
+        if (typeof value !== 'string') return null;
+        const trimmed = value.trim();
+        return trimmed ? trimmed : null;
+      }
+
       function getStoredProjectId(){
         try {
           const raw = localStorage.getItem('SW_LAST_PROJECT_ID');
-          if (!raw) return null;
-          const trimmed = raw.trim();
-          return trimmed ? trimmed : null;
+          return normalizeProjectId(raw);
         } catch (err){
           return null;
         }
       }
 
-      const storedProjectId = getStoredProjectId();
+      function setStoredProjectId(projectId){
+        try {
+          if (projectId){
+            localStorage.setItem('SW_LAST_PROJECT_ID', projectId);
+          } else {
+            localStorage.removeItem('SW_LAST_PROJECT_ID');
+          }
+        } catch (err){
+          /* ignore storage errors */
+        }
+      }
+
+      function getProjectIdFromQuery(){
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const keys = ['projectId', 'project', 'scriptId', 'script'];
+          for (const key of keys){
+            const value = params.get(key);
+            const normalized = normalizeProjectId(value);
+            if (normalized) return normalized;
+          }
+        } catch (err){
+          /* ignore malformed query strings */
+        }
+        return null;
+      }
+
+      const queryProjectId = getProjectIdFromQuery();
+      if (queryProjectId) setStoredProjectId(queryProjectId);
+
+      const storedProjectId = queryProjectId || getStoredProjectId();
 
       const state = {
         characters: initialCharacters.map(normalizeCharacter),
@@ -576,12 +610,20 @@
           const list = Array.isArray(project?.catalogs?.characters)
             ? project.catalogs.characters.map(normalizeCharacter)
             : [];
+          if (!list.length) return;
           state.characters = list;
           if (!list.some(char => char.id === state.activeId)){
             state.activeId = list.length ? list[0].id : null;
           }
+          state.dirty = true;
           renderCharacterList();
           renderCharacterDetails();
+          updateSaveButtonState();
+          if (state.session && state.projectId){
+            setSaveStatus('Unsaved changes', 'warning');
+          } else {
+            setSaveStatus('Unsaved changes (sign in to sync)', 'warning');
+          }
         } catch (err){
           console.warn('Character Studio failed to load characters from the Writer workspace', err);
         }
