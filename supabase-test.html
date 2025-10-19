@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Supabase Connection Tester — StudioOrganize</title>
   <link rel="stylesheet" href="/assets/styles.css" />
+  <meta name="google-sheet-endpoint" content="">
   <style>
     :root {
       --tester-surface: var(--panel);
@@ -177,6 +178,22 @@
     .status-row strong {
       font-size: 1rem;
     }
+    .form-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-weight: 600;
+    }
+    .form-checkbox input[type="checkbox"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-top: 0.2rem;
+    }
+    .form-checkbox span {
+      font-weight: 400;
+      color: var(--tester-note);
+      line-height: 1.45;
+    }
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -291,6 +308,10 @@
               Password
               <input type="password" name="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required />
             </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="marketing_opt_out" value="yes" />
+              <span>I prefer <strong>not</strong> to receive updates about StudioOrganize sister products.</span>
+            </label>
             <button type="submit">Send sign-up request</button>
           </fieldset>
         </form>
@@ -396,6 +417,7 @@
     const accountMenu = document.querySelector('[data-account-menu]');
     const accountButton = document.querySelector('[data-account-button]');
     const accountLogoutLink = document.querySelector('[data-account-logout]');
+    const sheetEndpoint = document.querySelector('meta[name="google-sheet-endpoint"]')?.content?.trim() || '';
 
     function toggleElementVisibility(element, shouldShow) {
       if (!element) return;
@@ -432,6 +454,34 @@
         wrapper.style.color = '#73ffd3';
       }
       logEl.prepend(wrapper);
+    }
+
+    async function forwardSignupToSheet(details) {
+      if (!sheetEndpoint) {
+        log('Skipping Google Sheets capture because no endpoint is configured.');
+        return;
+      }
+      try {
+        const response = await fetch(sheetEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: details.name || '',
+            email: details.email,
+            marketingOptOut: details.marketingOptOut,
+            consentCapturedAt: new Date().toISOString(),
+            source: 'supabase-test-signup'
+          })
+        });
+        if (!response.ok) {
+          throw new Error(`Sheet endpoint responded with ${response.status}`);
+        }
+        log('Captured signup consent in Google Sheets.', null, 'success');
+      } catch (error) {
+        log('Failed to capture signup consent in Google Sheets.', error, 'error');
+      }
     }
 
     function setAuthDependentState(isAuthed) {
@@ -500,9 +550,10 @@
         event.preventDefault();
         const form = event.currentTarget;
         const formData = new FormData(form);
-        const email = formData.get('email');
-        const password = formData.get('password');
-        const name = formData.get('name');
+        const email = (formData.get('email') || '').toString();
+        const password = (formData.get('password') || '').toString();
+        const name = (formData.get('name') || '').toString();
+        const marketingOptOut = formData.get('marketing_opt_out') === 'yes';
         log('Submitting sign-up request...');
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -516,6 +567,7 @@
           return;
         }
         log('Sign-up request sent. Check for confirmation email.', data, 'success');
+        await forwardSignupToSheet({ name, email, marketingOptOut });
         form.reset();
       });
     }
