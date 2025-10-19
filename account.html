@@ -119,51 +119,93 @@
   </div>
 
 <main class="section">
-  <header class="page-header">
-    <h1>Creator Apps</h1>
-    <p class="lead">Jump into the StudioOrganize workspace that fits your next project.</p>
-  </header>
-
-  <div class="app-grid">
-    <a class="app-card app-card--fit" href="https://studioorganize.com/use-cases/screenplay-writing.html">
-      <img src="/assets/img/screenplay_writer1.webp" alt="Screenplay writing workspace" loading="lazy" />
-      <span class="app-card__label">Screenplay Writing</span>
-    </a>
-    <a class="app-card app-card--fit" href="/CharacterStudio.html">
-      <img src="/assets/img/studioorganize_mock.png" alt="Character Studio workspace preview" loading="lazy" />
-      <span class="app-card__label">Character Studio</span>
-    </a>
-    <div class="app-card app-card--placeholder">
-      <img src="/assets/img/studioorganize_mock.png" alt="Set design workspace placeholder" loading="lazy" />
-      <span class="app-card__label">Set Design</span>
-    </div>
-    <div class="app-card-menu" data-storyboard-app-menu>
-      <button
-        class="app-card app-card--menu"
-        type="button"
-        data-menu-toggle
-        aria-expanded="false"
-        aria-controls="storyboardAppMenu"
-      >
-        <img src="/assets/img/studioorganize_mock.png" alt="Storyboarding workspace preview" loading="lazy" />
-        <span class="app-card__label">
-          Storyboarding
-          <span class="app-card__chevron" aria-hidden="true">▾</span>
-        </span>
-      </button>
-      <div class="app-card__dropdown" id="storyboardAppMenu" hidden data-menu-list>
-        <a class="app-card__dropdown-item" href="/use-cases/screenplay-writing.html#storyboardModeBtn">Storyboard Lite</a>
-        <a class="app-card__dropdown-item" href="/StoryboardPro.html">Storyboard Pro</a>
-        <a class="app-card__dropdown-item" href="/use-cases/screenplay-writing.html#timelineModeBtn">Timeline Mode</a>
-      </div>
-    </div>
-    <div class="app-card app-card--placeholder">
-      <img src="/assets/img/studioorganize_mock.png" alt="Sound design workspace placeholder" loading="lazy" />
-      <span class="app-card__label">Sound Design</span>
-    </div>
-    <div class="app-card app-card--placeholder">
-      <img src="/assets/img/studioorganize_mock.png" alt="Editing suite workspace placeholder" loading="lazy" />
-      <span class="app-card__label">Editing Suite</span>
+  <div class="app-menu" data-app-menu>
+    <button
+      class="app-menu__toggle"
+      type="button"
+      data-app-menu-toggle
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
+      <span class="app-menu__title">Creator Apps</span>
+      <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
+    </button>
+    <div class="app-menu__popover" role="menu" data-app-menu-panel hidden>
+      <ul class="app-menu__list">
+        <li role="none">
+          <a class="app-menu__item" href="https://studioorganize.com/use-cases/screenplay-writing.html" role="menuitem">
+            <span class="app-menu__item-media">
+              <img src="/assets/img/screenplay_writer1.webp" alt="" loading="lazy" />
+            </span>
+            <span class="app-menu__item-text">
+              <span class="app-menu__item-title">Screenplay Writing</span>
+              <span class="app-menu__item-copy">Screenplay writing workspace</span>
+            </span>
+          </a>
+        </li>
+        <li role="none">
+          <a class="app-menu__item" href="/CharacterStudio.html" role="menuitem">
+            <span class="app-menu__item-media">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="app-menu__item-text">
+              <span class="app-menu__item-title">Character Studio</span>
+              <span class="app-menu__item-copy">Character Studio workspace preview</span>
+            </span>
+          </a>
+        </li>
+        <li role="none">
+          <span class="app-menu__item app-menu__item--disabled" role="menuitem" aria-disabled="true" tabindex="-1">
+            <span class="app-menu__item-media">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="app-menu__item-text">
+              <span class="app-menu__item-title">Set Design</span>
+              <span class="app-menu__item-copy">Set design workspace placeholder</span>
+            </span>
+          </span>
+        </li>
+        <li role="none">
+          <div class="app-menu__item app-menu__item--submenu" role="group" aria-label="Storyboarding">
+            <div class="app-menu__item-header">
+              <span class="app-menu__item-media">
+                <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+              </span>
+              <div class="app-menu__item-text">
+                <span class="app-menu__item-title">Storyboarding</span>
+                <span class="app-menu__item-copy">Storyboarding workspace preview</span>
+              </div>
+            </div>
+            <ul class="app-menu__sublist" role="menu">
+              <li role="none"><a href="/use-cases/screenplay-writing.html#storyboardModeBtn" role="menuitem">Storyboard Lite</a></li>
+              <li role="none"><a href="/StoryboardPro.html" role="menuitem">Storyboard Pro</a></li>
+              <li role="none"><a href="/use-cases/screenplay-writing.html#timelineModeBtn" role="menuitem">Timeline Mode</a></li>
+            </ul>
+          </div>
+        </li>
+        <li role="none">
+          <span class="app-menu__item app-menu__item--disabled" role="menuitem" aria-disabled="true" tabindex="-1">
+            <span class="app-menu__item-media">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="app-menu__item-text">
+              <span class="app-menu__item-title">Sound Design</span>
+              <span class="app-menu__item-copy">Sound design workspace placeholder</span>
+            </span>
+          </span>
+        </li>
+        <li role="none">
+          <span class="app-menu__item app-menu__item--disabled" role="menuitem" aria-disabled="true" tabindex="-1">
+            <span class="app-menu__item-media">
+              <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+            </span>
+            <span class="app-menu__item-text">
+              <span class="app-menu__item-title">Editing Suite</span>
+              <span class="app-menu__item-copy">Editing suite workspace placeholder</span>
+            </span>
+          </span>
+        </li>
+      </ul>
     </div>
   </div>
 
@@ -174,6 +216,63 @@
         Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
       </p>
     </div>
+
+    <section class="creator-hud" aria-label="Today's creative snapshot">
+      <article class="creator-hud__card" aria-live="polite">
+        <header class="creator-hud__header">
+          <span class="creator-hud__icon" aria-hidden="true">📅</span>
+          <div>
+            <h3 class="creator-hud__title">Today</h3>
+            <p class="creator-hud__subtitle">Stay synced with your studio rhythm.</p>
+          </div>
+        </header>
+        <p class="creator-hud__date" data-creator-date>Wednesday, April 24</p>
+        <p class="creator-hud__time" data-creator-time>08:30 AM</p>
+      </article>
+
+      <article class="creator-hud__card" aria-live="polite">
+        <header class="creator-hud__header">
+          <span class="creator-hud__icon" aria-hidden="true" data-weather-icon>🌤️</span>
+          <div>
+            <h3 class="creator-hud__title">Studio Weather</h3>
+            <p class="creator-hud__subtitle">Set the mood for today's session.</p>
+          </div>
+        </header>
+        <div class="creator-hud__weather">
+          <p class="creator-hud__temp"><span data-weather-temp>72</span>°F</p>
+          <div class="creator-hud__weather-details">
+            <p class="creator-hud__condition" data-weather-status>Partly cloudy with steady light.</p>
+            <p class="creator-hud__location" data-weather-location>Los Angeles Studio Lot</p>
+          </div>
+        </div>
+        <p class="creator-hud__updated muted">Updated <span data-weather-updated>5 minutes ago</span></p>
+      </article>
+
+      <article class="creator-hud__card creator-hud__card--streak">
+        <header class="creator-hud__header">
+          <span class="creator-hud__icon" aria-hidden="true">🔥</span>
+          <div>
+            <h3 class="creator-hud__title">Streak Tracker</h3>
+            <p class="creator-hud__subtitle">Keep the creative flame going.</p>
+          </div>
+        </header>
+        <p class="creator-hud__streak-count" data-streak-count>7</p>
+        <p class="creator-hud__streak-label">days in a row</p>
+        <div class="creator-hud__progress" role="img" aria-label="Streak progress 7 of 10 days">
+          <span data-level="full"></span>
+          <span data-level="full"></span>
+          <span data-level="full"></span>
+          <span data-level="full"></span>
+          <span data-level="full"></span>
+          <span data-level="full"></span>
+          <span data-level="full"></span>
+          <span data-level="empty"></span>
+          <span data-level="empty"></span>
+          <span data-level="empty"></span>
+        </div>
+        <p class="creator-hud__cta">Three more sessions unlock the Momentum badge.</p>
+      </article>
+    </section>
 
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
@@ -210,6 +309,42 @@
           <span class="challenge-badge__cta">Activate challenge</span>
         </button>
       </div>
+    </section>
+
+    <section class="creator-notifications" aria-label="Latest notifications">
+      <div class="creator-notifications__header">
+        <h3>Notifications</h3>
+        <p class="muted">Review your studio alerts and nudges from the AI coach.</p>
+      </div>
+      <ul class="creator-notifications__list">
+        <li class="creator-notifications__item creator-notifications__item--alert">
+          <div class="creator-notifications__icon" aria-hidden="true">⏰</div>
+          <div class="creator-notifications__content">
+            <h4>Storyboard draft deadline passed</h4>
+            <p>The "Episode 3 storyboard" milestone was due yesterday. Reschedule to keep your collaborators updated.</p>
+            <button type="button" class="creator-notifications__action">Reschedule now</button>
+          </div>
+        </li>
+        <li class="creator-notifications__item creator-notifications__item--coach">
+          <div class="creator-notifications__icon" aria-hidden="true">🤖</div>
+          <div class="creator-notifications__content">
+            <h4>StudioOrganize AI Coach</h4>
+            <p>"Great consistency! Want a warm-up prompt for today's writing sprint?"</p>
+            <div class="creator-notifications__actions">
+              <button type="button" class="creator-notifications__action">Send prompt</button>
+              <button type="button" class="creator-notifications__action creator-notifications__action--ghost">Remind me later</button>
+            </div>
+          </div>
+        </li>
+        <li class="creator-notifications__item">
+          <div class="creator-notifications__icon" aria-hidden="true">📌</div>
+          <div class="creator-notifications__content">
+            <h4>New reference board shared</h4>
+            <p>Alex added a "Lighting moods" board to the Set Design workspace. Add your notes before Friday.</p>
+            <button type="button" class="creator-notifications__action">Open board</button>
+          </div>
+        </li>
+      </ul>
     </section>
 
     <div class="creator-dashboard__grid">
@@ -399,21 +534,64 @@
 
 <script>
   (function(){
-    const menuRoot = document.querySelector('[data-storyboard-app-menu]');
-    if (!menuRoot) return;
+    const hud = document.querySelector('.creator-hud');
+    if (!hud) return;
 
-    const toggle = menuRoot.querySelector('[data-menu-toggle]');
-    const dropdown = menuRoot.querySelector('[data-menu-list]');
-    if (!toggle || !dropdown) return;
+    const now = new Date();
+    const dateEl = hud.querySelector('[data-creator-date]');
+    const timeEl = hud.querySelector('[data-creator-time]');
+    const dateFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+
+    dateEl && (dateEl.textContent = dateFormatter.format(now));
+    timeEl && (timeEl.textContent = timeFormatter.format(now));
+
+    const weather = {
+      icon: '🌤️',
+      temperature: 72,
+      status: 'Partly cloudy with steady light.',
+      location: 'Los Angeles Studio Lot',
+      updated: now
+    };
+
+    const iconEl = hud.querySelector('[data-weather-icon]');
+    const tempEl = hud.querySelector('[data-weather-temp]');
+    const statusEl = hud.querySelector('[data-weather-status]');
+    const locationEl = hud.querySelector('[data-weather-location]');
+    const updatedEl = hud.querySelector('[data-weather-updated]');
+
+    if (iconEl) iconEl.textContent = weather.icon;
+    if (tempEl) tempEl.textContent = weather.temperature;
+    if (statusEl) statusEl.textContent = weather.status;
+    if (locationEl) locationEl.textContent = weather.location;
+    if (updatedEl) updatedEl.textContent = 'just now';
+  })();
+</script>
+<script>
+  (function(){
+    const appMenu = document.querySelector('[data-app-menu]');
+    if (!appMenu) return;
+
+    const toggle = appMenu.querySelector('[data-app-menu-toggle]');
+    const panel = appMenu.querySelector('[data-app-menu-panel]');
+    if (!toggle || !panel) return;
+
+    const focusableSelectors = 'a[href], button:not([disabled])';
 
     function closeMenu(){
-      dropdown.hidden = true;
+      if (panel.hidden) return;
+      panel.hidden = true;
       toggle.setAttribute('aria-expanded', 'false');
+      appMenu.classList.remove('app-menu--open');
     }
 
     function openMenu(){
-      dropdown.hidden = false;
+      if (!panel.hidden) return;
+      panel.hidden = false;
       toggle.setAttribute('aria-expanded', 'true');
+      appMenu.classList.add('app-menu--open');
+      const firstFocusable = panel.querySelector(focusableSelectors);
+      firstFocusable?.focus();
     }
 
     function isOpen(){
@@ -427,11 +605,9 @@
     });
 
     toggle.addEventListener('keydown', event => {
-      if (event.key === 'ArrowDown' && !isOpen()){
+      if ((event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') && !isOpen()){
         event.preventDefault();
         openMenu();
-        const firstItem = dropdown.querySelector('a');
-        firstItem?.focus();
       }
       if (event.key === 'Escape' && isOpen()){
         event.preventDefault();
@@ -439,12 +615,7 @@
       }
     });
 
-    dropdown.addEventListener('click', event => {
-      event.stopPropagation();
-      closeMenu();
-    });
-
-    dropdown.addEventListener('keydown', event => {
+    panel.addEventListener('keydown', event => {
       if (event.key === 'Escape'){
         event.stopPropagation();
         closeMenu();
@@ -453,7 +624,7 @@
     });
 
     document.addEventListener('click', event => {
-      if (!menuRoot.contains(event.target)){
+      if (!appMenu.contains(event.target)){
         closeMenu();
       }
     });
