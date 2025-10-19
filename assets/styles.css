@@ -57,8 +57,11 @@ img{max-width:100%;display:block}
 /* nav */
 .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(10px);z-index:10}
 .brand{font-weight:800;letter-spacing:.2px;display:inline-flex;align-items:center;gap:8px;line-height:1}
-.brand--logo{gap:0}
-.brand__logo{display:block;height:32px;width:auto}
+.brand--logo{gap:0;position:relative;min-height:32px}
+.brand__text{font-weight:inherit;letter-spacing:inherit}
+.brand__logo{display:none;height:32px;width:auto;object-fit:contain}
+.brand--logo-ready .brand__logo{display:block}
+.brand--logo-ready .brand__text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .brand-with-logo{display:flex;align-items:center;gap:10px;position:relative}
 .brand-with-logo__badge{height:32px;width:auto}
 .brand-with-logo__apps{display:inline-flex;align-items:center;justify-content:center;padding:0;border:none;background:transparent;cursor:pointer;border-radius:14px;line-height:0}
