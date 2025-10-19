@@ -732,6 +732,21 @@
       }
 
       body.focus-mode .app{ transform: translateY(calc(-1 * var(--nav-height, 0px))); }
+      body.focus-mode #timelineDock{
+        width: min(1080px, 90vw);
+        margin: 0 auto;
+        padding-left: 0;
+        padding-right: 0;
+        align-items: stretch;
+      }
+      body.focus-mode #timelineDock .timeline-dock__shell{
+        width: 100%;
+        margin: 0;
+      }
+      body.focus-mode #timelineDock .timeline-dock__handle{
+        width: 100%;
+        max-width: none;
+      }
       body.focus-mode .timeline-dock.floating-hidden{ padding-top:0; padding-bottom:0; gap:0; }
       body.focus-mode .timeline-dock.floating-hidden .timeline-dock__shell{ margin:0; }
       body.focus-mode .timeline-dock.floating-hidden + .layout{ margin-top:0; }
