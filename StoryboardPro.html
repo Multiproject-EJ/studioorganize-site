@@ -231,6 +231,286 @@
       .ai-panel header { padding: 16px; border-bottom: 1px solid rgba(79,123,255,0.25); }
       .ai-panel header h2 { margin: 0; font-size: 15px; font-weight: 600; }
       .ai-panel header p { margin: 6px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+      .timeline-controls__actions { display: inline-flex; gap: 8px; align-items: center; margin-left: auto; }
+      .timeline-controls__actions .btn svg { stroke-width: 1.8; }
+      .card-dialog { border: none; padding: 0; background: rgba(15,23,42,0.6); color: #0f172a; }
+      .card-dialog::backdrop { background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); }
+      .card-dialog__surface {
+        width: min(1120px, 96vw);
+        max-height: 90vh;
+        overflow: hidden;
+        background: linear-gradient(180deg, #f8fbff 0%, #eef2ff 100%);
+        border-radius: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 40px 90px rgba(15, 23, 42, 0.32);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 24px;
+        color-scheme: light;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      .card-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .card-dialog__eyebrow { margin: 0 0 4px; text-transform: uppercase; letter-spacing: .32px; font-size: 11px; color: #64748b; }
+      .card-dialog__header h2 { margin: 0; font-size: 22px; font-weight: 700; color: #0f172a; }
+      .card-dialog__scene { margin: 6px 0 0; font-size: 13px; color: #475569; font-weight: 600; }
+      .card-dialog__header-actions { display: flex; align-items: center; gap: 12px; }
+      .card-dialog__close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(248, 250, 255, 0.9);
+        color: #0f172a;
+        font-size: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color .2s ease, background .2s ease, transform .2s ease;
+      }
+      .card-dialog__close:hover { border-color: rgba(37, 99, 235, 0.65); background: rgba(226, 232, 240, 0.9); transform: translateY(-1px); }
+      .card-dialog__close:focus-visible { outline: 2px solid rgba(37, 99, 235, 0.75); outline-offset: 3px; }
+      .card-dialog__body { display: grid; grid-template-columns: 320px minmax(0, 1fr) 280px; gap: 18px; align-items: flex-start; }
+      .card-dialog__sidebar { display: flex; flex-direction: column; gap: 16px; }
+      .card-dialog__main { display: flex; flex-direction: column; gap: 16px; }
+      .card-dialog__preview { display: flex; flex-direction: column; gap: 16px; }
+      .card-dialog__section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .card-dialog__section-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .card-dialog__section-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; }
+      .card-dialog__hint { margin: 0; font-size: 12px; color: #64748b; line-height: 1.5; }
+      .card-dialog__chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: .3px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: rgba(37, 99, 235, 0.1);
+        color: #1d4ed8;
+        border: 1px solid rgba(37, 99, 235, 0.2);
+      }
+      .card-dialog__chip--accent { background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.28); color: #0f766e; }
+      .card-dialog__tabs { display: inline-flex; align-items: center; gap: 6px; background: rgba(226, 232, 240, 0.85); border-radius: 999px; padding: 4px; }
+      .card-dialog__tab {
+        border: none;
+        background: transparent;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .2px;
+        color: #475569;
+        cursor: pointer;
+        transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+      }
+      .card-dialog__tab:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5); }
+      .card-dialog__tab--active { background: linear-gradient(135deg, #2563eb, #60a5fa); color: #f8fbff; box-shadow: 0 16px 32px rgba(37, 99, 235, 0.28); }
+      .card-dialog__panel-group { display: flex; flex-direction: column; gap: 18px; }
+      .card-dialog__panel { display: flex; flex-direction: column; gap: 14px; }
+      .card-dialog__panel[hidden] { display: none; }
+      .card-dialog__panel h4 { margin: 0; font-size: 12px; letter-spacing: .25px; text-transform: uppercase; color: #475569; }
+      .card-dialog__cta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .card-dialog__cta {
+        border: 1px dashed rgba(37, 99, 235, 0.38);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(240, 249, 255, 0.9);
+        color: #1d4ed8;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+        cursor: pointer;
+        transition: border-color .2s ease, background .2s ease, transform .2s ease;
+      }
+      .card-dialog__cta span:first-child { font-size: 18px; line-height: 1; }
+      .card-dialog__cta:hover { border-color: rgba(37, 99, 235, 0.6); background: rgba(219, 234, 254, 0.9); transform: translateY(-1px); }
+      .card-dialog__asset-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+      .card-dialog__asset-strip::-webkit-scrollbar { height: 6px; }
+      .card-dialog__asset-strip::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 999px; }
+      .card-dialog__asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+      .card-dialog__asset {
+        position: relative;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.96);
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+        cursor: pointer;
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        min-width: 160px;
+      }
+      .card-dialog__asset:hover { border-color: rgba(37, 99, 235, 0.55); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); transform: translateY(-1px); }
+      .card-dialog__asset:focus-visible { outline: 2px solid rgba(37, 99, 235, 0.55); outline-offset: 3px; }
+      .card-dialog__asset--active { border-color: rgba(37, 99, 235, 0.85); box-shadow: 0 22px 46px rgba(37, 99, 235, 0.24); }
+      .card-dialog__asset-thumb { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(14, 165, 233, 0.1)); display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #1d4ed8; }
+      .card-dialog__asset-name { font-size: 13px; font-weight: 600; color: #0f172a; }
+      .card-dialog__asset-meta { font-size: 11px; color: #64748b; }
+      .card-dialog__asset-badge {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        padding: 3px 6px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+      }
+      .card-dialog__label { font-size: 12px; font-weight: 600; color: #475569; display: flex; flex-direction: column; gap: 6px; }
+      .card-dialog__textarea {
+        width: 100%;
+        min-height: 90px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        padding: 12px;
+        font: inherit;
+        resize: vertical;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+      }
+      .card-dialog__textarea:focus-visible { outline: 2px solid rgba(37, 99, 235, 0.55); outline-offset: 2px; }
+      .card-dialog__form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+      .card-dialog__form-grid select {
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        padding: 10px 12px;
+        font: inherit;
+      }
+      .card-dialog__actions { display: flex; align-items: center; gap: 10px; }
+      .card-dialog__status {
+        margin: 0;
+        font-size: 12px;
+        color: #1d4ed8;
+        background: rgba(37, 99, 235, 0.08);
+        border-radius: 12px;
+        padding: 8px 12px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+      }
+      .card-dialog__status[data-state="loading"] { color: #0f172a; background: rgba(14, 165, 233, 0.14); }
+      .card-dialog__summary { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
+      .card-dialog__text-stack { display: flex; flex-direction: column; gap: 10px; }
+      .card-dialog__text-card {
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        background: rgba(248, 250, 255, 0.95);
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .card-dialog__text-card--note { background: rgba(244, 244, 255, 0.95); }
+      .card-dialog__text-card strong { font-size: 13px; color: #0f172a; }
+      .card-dialog__text-card p { margin: 0; font-size: 13px; color: #334155; line-height: 1.4; }
+      .card-dialog__text-badge {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .32px;
+        text-transform: uppercase;
+        color: #2563eb;
+      }
+      .card-dialog__empty { margin: 0; font-size: 12px; color: #64748b; }
+      .card-dialog__frame-list { display: flex; flex-direction: column; gap: 10px; }
+      .card-dialog__frame {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(255, 255, 255, 0.94);
+      }
+      .card-dialog__frame-index {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+        font-size: 13px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+      }
+      .card-dialog__frame strong { display: block; font-size: 13px; color: #0f172a; }
+      .card-dialog__frame span { font-size: 12px; color: #64748b; }
+      .card-dialog__preview-card {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 22px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .card-dialog__preview-meta { display: flex; flex-direction: column; gap: 4px; }
+      .card-dialog__preview-label { font-size: 11px; letter-spacing: .32px; text-transform: uppercase; color: #64748b; }
+      .card-dialog__preview-meta strong { font-size: 15px; color: #0f172a; }
+      .card-dialog__preview-sub { font-size: 12px; color: #475569; }
+      .card-dialog__preview-figure {
+        position: relative;
+        border-radius: 18px;
+        background: var(--card-dialog-preview, linear-gradient(135deg, #a5b4fc, #f9a8d4));
+        aspect-ratio: 4 / 3;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
+        overflow: hidden;
+      }
+      .card-dialog__preview-figure::after {
+        content: 'ChatGPT image creator';
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.82);
+        color: #0f172a;
+        font-size: 11px;
+        letter-spacing: .32px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .card-dialog__preview-notes { display: flex; flex-direction: column; gap: 6px; }
+      .card-dialog__preview-notes strong { font-size: 12px; letter-spacing: .24px; text-transform: uppercase; color: #475569; }
+      .card-dialog__preview-notes p { margin: 0; font-size: 13px; color: #334155; line-height: 1.4; }
+      .card-dialog__preview-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+      .card-dialog__footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+      .card-dialog__footer .btn { min-width: 130px; justify-content: center; }
+      .card-dialog__footer .btn.btn-primary { box-shadow: 0 16px 40px rgba(37, 99, 235, 0.26); }
+      @media (max-width: 1140px) {
+        .card-dialog__body { grid-template-columns: minmax(0, 1fr); }
+        .card-dialog__preview { order: -1; }
+      }
+      @media (max-width: 720px) {
+        .card-dialog__surface { padding: 18px; }
+        .card-dialog__body { gap: 14px; }
+        .card-dialog__section { padding: 14px; }
+        .card-dialog__footer { flex-direction: column; align-items: stretch; }
+        .card-dialog__footer .btn { width: 100%; }
+      }
       .ai-form { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
       .ai-form label { font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); }
       .ai-form textarea, .ai-form input { width: 100%; border-radius: 12px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); padding: 10px 12px; font-size: 14px; resize: vertical; min-height: 96px; }
@@ -456,6 +736,16 @@
               </div>
               <div class="timeline-controls">
                 <span class="muted">Timeline synced to script page 47</span>
+                <div class="timeline-controls__actions">
+                  <button class="btn" type="button" data-card-dialog-open aria-haspopup="dialog" aria-controls="cardDialog">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                      <path d="M8 9h8"></path>
+                      <path d="M8 13h5"></path>
+                    </svg>
+                    Card dialog
+                  </button>
+                </div>
               </div>
             </header>
             <div class="timeline-wrapper">
@@ -543,6 +833,174 @@
       </form>
     </dialog>
 
+    <dialog class="card-dialog" id="cardDialog" data-card-dialog aria-labelledby="cardDialogTitle">
+      <div class="card-dialog__surface" role="document">
+        <header class="card-dialog__header">
+          <div>
+            <p class="card-dialog__eyebrow">Cards workspace</p>
+            <h2 id="cardDialogTitle">Beat card generator</h2>
+            <p class="card-dialog__scene" data-card-dialog-scene>Scene 13 · Rooftop chase</p>
+            <p class="card-dialog__hint" data-card-dialog-meta>Linked to draft v4 · 00:45 runtime · 8 frames</p>
+          </div>
+          <div class="card-dialog__header-actions">
+            <span class="card-dialog__chip card-dialog__chip--accent">ChatGPT image creator</span>
+            <button class="card-dialog__close" type="button" data-card-dialog-close aria-label="Close card dialog">×</button>
+          </div>
+        </header>
+        <div class="card-dialog__body">
+          <aside class="card-dialog__sidebar">
+            <section class="card-dialog__section card-dialog__section--tabs">
+              <div class="card-dialog__section-header">
+                <h3>Assets &amp; frames</h3>
+                <div class="card-dialog__tabs" role="tablist" aria-label="Card sources">
+                  <button class="card-dialog__tab card-dialog__tab--active" type="button" role="tab" aria-selected="true" data-card-tab="assets" data-card-dialog-initial-focus>Assets</button>
+                  <button class="card-dialog__tab" type="button" role="tab" aria-selected="false" data-card-tab="frames" tabindex="-1">Frames</button>
+                </div>
+              </div>
+              <div class="card-dialog__panel-group">
+                <div class="card-dialog__panel" data-card-panel="assets" role="tabpanel" tabindex="-1">
+                  <div class="card-dialog__cta-grid">
+                    <button class="card-dialog__cta" type="button">
+                      <span>＋</span>
+                      Create character
+                      <span class="card-dialog__hint">Draft a new hero in ChatGPT image creator.</span>
+                    </button>
+                    <button class="card-dialog__cta" type="button">
+                      <span>⇪</span>
+                      Upload image
+                      <span class="card-dialog__hint">Keep hand-drawn concepts in the asset locker.</span>
+                    </button>
+                  </div>
+                  <h4>Recent</h4>
+                  <div class="card-dialog__asset-strip">
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Designer gesture sketches" data-card-meta="Sketchbook · synced 2m ago" data-card-preview="linear-gradient(135deg, #bae6fd, #c3ddff)" data-card-prompt="Designer and creative director reviewing rooftop chase beats around a lightboard, cinematic storyboard style.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">CD</span>
+                      <span class="card-dialog__asset-name">Designer sketching</span>
+                      <span class="card-dialog__asset-meta">Sketchbook · synced 2m ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Client reference moodboard" data-card-meta="Moodboard · synced 5m ago" data-card-preview="linear-gradient(135deg, #fde68a, #fbcfe8)" data-card-prompt="Reference board pinned to a studio wall with neon rooftop lighting studies, cinematic notes in margins.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">MB</span>
+                      <span class="card-dialog__asset-name">Moodboard slices</span>
+                      <span class="card-dialog__asset-meta">Moodboard · synced 5m ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Rooftop chase 3D blockout" data-card-meta="Previz · synced 11m ago" data-card-preview="linear-gradient(135deg, #bbf7d0, #bef264)" data-card-prompt="Grey box 3D previz of a rooftop chase with dramatic overhead lighting and hero silhouettes.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">3D</span>
+                      <span class="card-dialog__asset-name">Previz pass</span>
+                      <span class="card-dialog__asset-meta">Previz · synced 11m ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                  </div>
+                  <h4>All assets</h4>
+                  <div class="card-dialog__asset-grid">
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Storyboard thumbnails" data-card-meta="Artist upload · yesterday" data-card-preview="linear-gradient(135deg, #ddd6fe, #f5d0fe)" data-card-prompt="Hand-drawn storyboard thumbnails of the rooftop chase with motion arrows and timing notes.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">SB</span>
+                      <span class="card-dialog__asset-name">Storyboard thumbnails</span>
+                      <span class="card-dialog__asset-meta">Artist upload · yesterday</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Lighting reference plates" data-card-meta="Look dev · 2 days ago" data-card-preview="linear-gradient(135deg, #bae6ff, #7dd3fc)" data-card-prompt="Lighting plates captured at night with neon reflections, foggy rain atmosphere on rooftops.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">LX</span>
+                      <span class="card-dialog__asset-name">Lighting plates</span>
+                      <span class="card-dialog__asset-meta">Look dev · 2 days ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Shot list annotations" data-card-meta="Director notes · 3 days ago" data-card-preview="linear-gradient(135deg, #fca5a5, #fef08a)" data-card-prompt="Shot list annotated with camera moves and emotional beats for the rooftop escape.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">DR</span>
+                      <span class="card-dialog__asset-name">Director notes</span>
+                      <span class="card-dialog__asset-meta">Director notes · 3 days ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Costume swatches" data-card-meta="Wardrobe · this week" data-card-preview="linear-gradient(135deg, #fed7aa, #fecdd3)" data-card-prompt="Wardrobe swatches pinned beside rooftop reference photos, hero jacket and antagonist cape.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">WD</span>
+                      <span class="card-dialog__asset-name">Costume palette</span>
+                      <span class="card-dialog__asset-meta">Wardrobe · this week</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Animatic still" data-card-meta="Edit review · last week" data-card-preview="linear-gradient(135deg, #cbd5f5, #e0f2fe)" data-card-prompt="Animatic still of the hero leaping between rooftops with motion blur and city glow.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">AN</span>
+                      <span class="card-dialog__asset-name">Animatic still</span>
+                      <span class="card-dialog__asset-meta">Edit review · last week</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Location photos" data-card-meta="Scout · last month" data-card-preview="linear-gradient(135deg, #bbf7d0, #86efac)" data-card-prompt="Location scout photos of rain-slicked rooftops with emergency lighting and puddles.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">SC</span>
+                      <span class="card-dialog__asset-name">Location plates</span>
+                      <span class="card-dialog__asset-meta">Scout · last month</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-dialog__panel" data-card-panel="frames" role="tabpanel" tabindex="-1" hidden>
+                  <p class="card-dialog__hint">Storyboard frames generated for this beat will appear here.</p>
+                  <div class="card-dialog__frame-list" data-card-dialog-frames></div>
+                </div>
+              </div>
+            </section>
+          </aside>
+          <section class="card-dialog__main">
+            <section class="card-dialog__section">
+              <div class="card-dialog__section-header">
+                <h3>Generate with ChatGPT</h3>
+                <span class="card-dialog__chip card-dialog__chip--accent">Use as image input</span>
+              </div>
+              <p class="card-dialog__hint">Send script context to ChatGPT’s image creator for consistent storyboard cards.</p>
+              <label class="card-dialog__label" for="cardDialogPrompt">Prompt</label>
+              <textarea id="cardDialogPrompt" class="card-dialog__textarea" rows="4" placeholder="Describe the beat to render a frame…" data-card-dialog-prompt></textarea>
+              <div class="card-dialog__form-grid">
+                <label class="card-dialog__label">Style
+                  <select data-card-dialog-style>
+                    <option>Cinematic storyboard linework</option>
+                    <option>Flat animation storyboard</option>
+                    <option>Graphic novel noir</option>
+                  </select>
+                </label>
+                <label class="card-dialog__label">Aspect ratio
+                  <select data-card-dialog-aspect>
+                    <option value="16:9">16:9</option>
+                    <option value="2.39:1">2.39:1</option>
+                    <option value="1:1">1:1</option>
+                  </select>
+                </label>
+              </div>
+              <div class="card-dialog__actions">
+                <button class="btn" type="button" data-card-dialog-generate>Preview with ChatGPT</button>
+              </div>
+              <p class="card-dialog__status" data-card-dialog-status role="status" aria-live="polite">Ready to generate with ChatGPT image creator.</p>
+            </section>
+            <section class="card-dialog__section">
+              <div class="card-dialog__section-header">
+                <h3>Text fields</h3>
+                <span class="card-dialog__hint">Cards, notes, and director cues synced live from Writer.</span>
+              </div>
+              <p class="card-dialog__summary" data-card-dialog-summary>Bring in your scene summary to seed prompts.</p>
+              <div class="card-dialog__text-stack" data-card-dialog-text></div>
+            </section>
+          </section>
+          <aside class="card-dialog__preview">
+            <div class="card-dialog__section card-dialog__preview-card">
+              <div class="card-dialog__preview-meta">
+                <span class="card-dialog__preview-label">Selected asset</span>
+                <strong data-card-dialog-preview-label>Designer sketching</strong>
+                <span class="card-dialog__preview-sub" data-card-dialog-preview-meta>Sketchbook · synced 2m ago</span>
+              </div>
+              <div class="card-dialog__preview-figure" data-card-dialog-preview-figure></div>
+              <div class="card-dialog__preview-notes">
+                <strong>Scene context</strong>
+                <p data-card-dialog-meta-preview>Linked to draft v4 · 00:45 runtime · 8 frames</p>
+              </div>
+              <div class="card-dialog__preview-tags" data-card-dialog-preview-tags></div>
+            </div>
+          </aside>
+        </div>
+        <footer class="card-dialog__footer">
+          <button class="btn" type="button" data-card-dialog-close>Close</button>
+          <button class="btn btn-primary" type="button" data-card-dialog-generate>Generate 4 frames</button>
+        </footer>
+      </div>
+    </dialog>
+
     <section class="feature-section">
       <h2>Storyboard Pro keeps every department locked to the same scene timeline.</h2>
       <div class="feature-grid">
@@ -598,6 +1056,23 @@
     const apiDialog = document.querySelector('[data-api-dialog]');
     const apiForm = document.querySelector('[data-api-form]');
     const apiCloseButtons = document.querySelectorAll('[data-api-close]');
+    const cardDialog = document.querySelector('[data-card-dialog]');
+    const cardDialogElements = cardDialog
+      ? {
+          scene: cardDialog.querySelector('[data-card-dialog-scene]'),
+          meta: cardDialog.querySelector('[data-card-dialog-meta]'),
+          metaPreview: cardDialog.querySelector('[data-card-dialog-meta-preview]'),
+          summary: cardDialog.querySelector('[data-card-dialog-summary]'),
+          text: cardDialog.querySelector('[data-card-dialog-text]'),
+          frames: cardDialog.querySelector('[data-card-dialog-frames]'),
+          previewLabel: cardDialog.querySelector('[data-card-dialog-preview-label]'),
+          previewMeta: cardDialog.querySelector('[data-card-dialog-preview-meta]'),
+          previewFigure: cardDialog.querySelector('[data-card-dialog-preview-figure]'),
+          previewTags: cardDialog.querySelector('[data-card-dialog-preview-tags]'),
+          status: cardDialog.querySelector('[data-card-dialog-status]'),
+          prompt: cardDialog.querySelector('[data-card-dialog-prompt]'),
+        }
+      : null;
     const apiGeminiInput = apiDialog ? apiDialog.querySelector('[data-api-gemini]') : null;
     const apiSoaraInput = apiDialog ? apiDialog.querySelector('[data-api-soara]') : null;
     const apiFeedbackLabel = apiDialog ? apiDialog.querySelector('[data-api-feedback]') : null;
@@ -631,6 +1106,7 @@
 
     initialiseAiProviderSelect();
     setupApiDialog();
+    setupCardDialog();
     setupGenerationWorkflow();
     setupTimelineDockInteractions();
     renderTimelineDockScenes();
@@ -1053,6 +1529,7 @@
         activeSceneId = null;
         renderTimelineDockScenes();
         updateStoryArcActiveState();
+        syncCardDialogSceneData();
         return;
       }
 
@@ -1078,6 +1555,7 @@
         activateScene(activeSceneId, { scroll: false });
       } else {
         updateStoryArcActiveState();
+        syncCardDialogSceneData();
       }
     }
 
@@ -1405,6 +1883,7 @@
         }
       });
       updateStoryArcActiveState();
+      syncCardDialogSceneData();
     }
 
     function updateSceneName(card, newName) {
@@ -1434,6 +1913,7 @@
         }
       }
       renderTimelineDockScenes();
+      syncCardDialogSceneData();
     }
 
     function startSceneRename(card) {
@@ -1601,6 +2081,364 @@
           closeDialog();
         }
       });
+    }
+
+    function syncCardDialogSceneData() {
+      if (!cardDialog || !cardDialogElements) return;
+
+      const scene = activeSceneId ? sceneDataMap.get(activeSceneId) : null;
+      const sceneLabel = cardDialogElements.scene;
+      if (sceneLabel) {
+        sceneLabel.textContent = scene
+          ? `${scene.numberLabel} · ${scene.displayName}`
+          : 'Select a scene to start generating cards';
+      }
+
+      const timelineMeta = scene
+        ? (scene.timelineMeta || 'Timeline metadata not available yet.')
+        : 'Open a scene to sync timeline metadata.';
+      if (cardDialogElements.meta) {
+        cardDialogElements.meta.textContent = timelineMeta;
+      }
+      if (cardDialogElements.metaPreview) {
+        cardDialogElements.metaPreview.textContent = timelineMeta;
+      }
+
+      if (cardDialogElements.summary) {
+        cardDialogElements.summary.textContent = scene
+          ? scene.description
+          : 'Bring in your scene summary to seed prompts.';
+      }
+
+      const textStack = cardDialogElements.text;
+      if (textStack) {
+        textStack.innerHTML = '';
+        const beats = scene && Array.isArray(scene.cards) ? scene.cards : [];
+        const notes = scene && Array.isArray(scene.notesList) ? scene.notesList : [];
+        if (!beats.length && !notes.length) {
+          const empty = document.createElement('p');
+          empty.className = 'card-dialog__empty';
+          empty.textContent = 'No beats or notes yet. Add them in Writer to sync them here.';
+          textStack.appendChild(empty);
+        } else {
+          beats.forEach((beat, index) => {
+            if (!beat) return;
+            const item = document.createElement('article');
+            item.className = 'card-dialog__text-card';
+            const badge = document.createElement('span');
+            badge.className = 'card-dialog__text-badge';
+            badge.textContent = `Beat ${index + 1}`;
+            const title = document.createElement('strong');
+            title.textContent = beat;
+            item.append(badge, title);
+            textStack.appendChild(item);
+          });
+          notes.forEach(note => {
+            if (!note) return;
+            const item = document.createElement('article');
+            item.className = 'card-dialog__text-card card-dialog__text-card--note';
+            const badge = document.createElement('span');
+            badge.className = 'card-dialog__text-badge';
+            badge.textContent = 'Note';
+            const body = document.createElement('p');
+            body.textContent = note;
+            item.append(badge, body);
+            textStack.appendChild(item);
+          });
+        }
+      }
+
+      const framesContainer = cardDialogElements.frames;
+      if (framesContainer) {
+        framesContainer.innerHTML = '';
+        const frames = scene && Array.isArray(scene.storyboards) ? scene.storyboards : [];
+        if (!frames.length) {
+          const emptyFrame = document.createElement('p');
+          emptyFrame.className = 'card-dialog__empty';
+          emptyFrame.textContent = 'No storyboard frames yet. Generate previews to fill this tab.';
+          framesContainer.appendChild(emptyFrame);
+        } else {
+          frames.forEach((frame, index) => {
+            if (!frame) return;
+            const entry = document.createElement('div');
+            entry.className = 'card-dialog__frame';
+            const indexEl = document.createElement('span');
+            indexEl.className = 'card-dialog__frame-index';
+            indexEl.textContent = String(index + 1).padStart(2, '0');
+            const copy = document.createElement('div');
+            const title = document.createElement('strong');
+            title.textContent = frame;
+            const caption = document.createElement('span');
+            caption.textContent = 'Synced storyboard';
+            copy.append(title, caption);
+            entry.append(indexEl, copy);
+            framesContainer.appendChild(entry);
+          });
+        }
+      }
+
+      const tagsContainer = cardDialogElements.previewTags;
+      if (tagsContainer) {
+        tagsContainer.innerHTML = '';
+        const tags = [];
+        if (scene) {
+          const cues = Array.isArray(scene.lightingCues) ? scene.lightingCues : [];
+          cues.forEach(cue => {
+            if (cue) tags.push(cue);
+          });
+          if (Array.isArray(scene.cards) && scene.cards.length) {
+            tags.push(`${scene.cards.length} beats`);
+          }
+          if (scene.source === 'writer') {
+            tags.unshift('Live writer sync');
+          } else if (scene.source === 'fallback') {
+            tags.unshift('Demo scene');
+          }
+        }
+        if (!tags.length) {
+          tagsContainer.hidden = true;
+        } else {
+          tagsContainer.hidden = false;
+          tags.slice(0, 4).forEach(label => {
+            const chip = document.createElement('span');
+            chip.className = 'card-dialog__chip';
+            chip.textContent = label;
+            tagsContainer.appendChild(chip);
+          });
+        }
+      }
+
+      const promptInput = cardDialogElements.prompt;
+      if (promptInput instanceof HTMLTextAreaElement && promptInput.dataset.userEdited !== 'true') {
+        const pieces = [];
+        if (scene && Array.isArray(scene.cards) && scene.cards.length) {
+          pieces.push(scene.cards[0]);
+        }
+        if (scene?.description) {
+          pieces.push(scene.description);
+        }
+        const base = pieces.join(' — ').trim();
+        if (base) {
+          const suffix = base.endsWith('.') ? '' : '.';
+          promptInput.value = `${base}${suffix} Render as a cinematic storyboard panel with on-model characters.`;
+        } else {
+          promptInput.value = '';
+        }
+        promptInput.dataset.userEdited = 'false';
+      }
+    }
+
+    function setupCardDialog() {
+      if (!cardDialog || !cardDialogElements) return;
+      if (cardDialog.dataset.cardDialogReady === 'true') return;
+
+      cardDialog.dataset.cardDialogReady = 'true';
+      const openButtons = document.querySelectorAll('[data-card-dialog-open]');
+      const closeButtons = cardDialog.querySelectorAll('[data-card-dialog-close]');
+      const tabButtons = Array.from(cardDialog.querySelectorAll('[data-card-tab]'));
+      const panels = Array.from(cardDialog.querySelectorAll('[data-card-panel]'));
+      const assetButtons = Array.from(cardDialog.querySelectorAll('[data-card-asset]'));
+      const generateButtons = cardDialog.querySelectorAll('[data-card-dialog-generate]');
+      const initialFocus = cardDialog.querySelector('[data-card-dialog-initial-focus]');
+      const promptInput = cardDialogElements.prompt instanceof HTMLTextAreaElement ? cardDialogElements.prompt : null;
+      const isDialogElement = typeof HTMLDialogElement !== 'undefined' && cardDialog instanceof HTMLDialogElement;
+      let currentTab = tabButtons[0]?.dataset.cardTab || 'assets';
+      let activeAsset = null;
+      let statusTimer = null;
+      let lastTrigger = null;
+
+      function resetStatus() {
+        if (!cardDialogElements.status) return;
+        cardDialogElements.status.dataset.state = 'ready';
+        cardDialogElements.status.textContent = 'Ready to generate with ChatGPT image creator.';
+      }
+
+      function closeDialog(returnValue = 'dismissed') {
+        if (isDialogElement && typeof cardDialog.close === 'function') {
+          cardDialog.close(returnValue);
+        } else {
+          cardDialog.removeAttribute('open');
+          cardDialog.dispatchEvent(new Event('close'));
+        }
+      }
+
+      function selectTab(value, { focusPanel = false } = {}) {
+        tabButtons.forEach(button => {
+          const isActive = button.dataset.cardTab === value;
+          button.classList.toggle('card-dialog__tab--active', isActive);
+          button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          button.tabIndex = isActive ? 0 : -1;
+        });
+        panels.forEach(panel => {
+          const isActive = panel.dataset.cardPanel === value;
+          panel.hidden = !isActive;
+          panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+          if (isActive && focusPanel && typeof panel.focus === 'function') {
+            panel.focus({ preventScroll: true });
+          }
+        });
+        currentTab = value;
+      }
+
+      function selectAsset(asset, { silent = false } = {}) {
+        if (!asset) return;
+        assetButtons.forEach(button => {
+          const isActive = button === asset;
+          button.classList.toggle('card-dialog__asset--active', isActive);
+          button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        activeAsset = asset;
+        const label = asset.getAttribute('data-card-label')
+          || asset.querySelector('.card-dialog__asset-name')?.textContent?.trim()
+          || '';
+        const meta = asset.getAttribute('data-card-meta')
+          || asset.querySelector('.card-dialog__asset-meta')?.textContent?.trim()
+          || '';
+        const preview = asset.getAttribute('data-card-preview');
+        const assetPrompt = asset.getAttribute('data-card-prompt');
+        if (cardDialogElements.previewLabel) {
+          cardDialogElements.previewLabel.textContent = label || 'Selected asset';
+        }
+        if (cardDialogElements.previewMeta) {
+          cardDialogElements.previewMeta.textContent = meta;
+        }
+        if (cardDialogElements.previewFigure) {
+          if (preview) {
+            cardDialogElements.previewFigure.style.setProperty('--card-dialog-preview', preview);
+          } else {
+            cardDialogElements.previewFigure.style.removeProperty('--card-dialog-preview');
+          }
+        }
+        if (!silent && promptInput && promptInput.dataset.userEdited !== 'true' && assetPrompt) {
+          promptInput.value = assetPrompt;
+          promptInput.dataset.userEdited = 'false';
+        }
+      }
+
+      if (promptInput) {
+        promptInput.addEventListener('input', () => {
+          promptInput.dataset.userEdited = promptInput.value.trim() ? 'true' : 'false';
+        });
+      }
+
+      tabButtons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+          selectTab(button.dataset.cardTab || 'assets', { focusPanel: true });
+        });
+        button.addEventListener('keydown', event => {
+          if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            const direction = event.key === 'ArrowRight' ? 1 : -1;
+            const nextIndex = (index + direction + tabButtons.length) % tabButtons.length;
+            const nextButton = tabButtons[nextIndex];
+            selectTab(nextButton.dataset.cardTab || 'assets');
+            nextButton.focus();
+          }
+        });
+      });
+
+      assetButtons.forEach(button => {
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => selectAsset(button));
+        button.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectAsset(button);
+          }
+        });
+      });
+      if (assetButtons.length) {
+        selectAsset(assetButtons[0], { silent: true });
+      }
+
+      generateButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          if (!cardDialogElements.status) return;
+          if (statusTimer) {
+            window.clearTimeout(statusTimer);
+          }
+          const promptValue = promptInput && typeof promptInput.value === 'string' ? promptInput.value.trim() : '';
+          const snippet = promptValue ? `“${promptValue.slice(0, 64)}${promptValue.length > 64 ? '…' : ''}”` : 'scene context';
+          cardDialogElements.status.dataset.state = 'loading';
+          cardDialogElements.status.textContent = `ChatGPT is rendering frames from ${snippet}.`;
+          statusTimer = window.setTimeout(() => {
+            cardDialogElements.status.dataset.state = 'ready';
+            cardDialogElements.status.textContent = '4 new card frames ready in the Frames tab.';
+          }, 1400);
+        });
+      });
+
+      function openDialog(trigger) {
+        lastTrigger = trigger instanceof HTMLElement ? trigger : null;
+        resetStatus();
+        syncCardDialogSceneData();
+        if (assetButtons.length) {
+          selectAsset(activeAsset || assetButtons[0], { silent: true });
+        }
+        selectTab(currentTab || 'assets');
+        if (isDialogElement && typeof cardDialog.showModal === 'function') {
+          cardDialog.showModal();
+          document.body.classList.add('modal-open');
+        } else {
+          cardDialog.setAttribute('open', 'true');
+          document.body.classList.add('modal-open');
+        }
+        const focusTarget = initialFocus instanceof HTMLElement ? initialFocus : tabButtons[0];
+        if (focusTarget instanceof HTMLElement) {
+          requestAnimationFrame(() => {
+            try {
+              focusTarget.focus({ preventScroll: true });
+            } catch (_error) {
+              focusTarget.focus();
+            }
+          });
+        }
+      }
+
+      openButtons.forEach(button => {
+        button.addEventListener('click', event => {
+          event.preventDefault();
+          openDialog(button);
+        });
+      });
+
+      closeButtons.forEach(button => {
+        button.addEventListener('click', event => {
+          event.preventDefault();
+          closeDialog('button');
+        });
+      });
+
+      cardDialog.addEventListener('cancel', event => {
+        event.preventDefault();
+        closeDialog('cancel');
+      });
+
+      cardDialog.addEventListener('click', event => {
+        if (event.target === cardDialog) {
+          closeDialog('backdrop');
+        }
+      });
+
+      cardDialog.addEventListener('close', () => {
+        document.body.classList.remove('modal-open');
+        if (statusTimer) {
+          window.clearTimeout(statusTimer);
+          statusTimer = null;
+        }
+        resetStatus();
+        if (lastTrigger instanceof HTMLElement) {
+          try {
+            lastTrigger.focus({ preventScroll: true });
+          } catch (_error) {
+            lastTrigger.focus();
+          }
+        }
+        lastTrigger = null;
+      });
+
+      selectTab(currentTab);
+      syncCardDialogSceneData();
     }
 
     function setAiStatus(message) {
