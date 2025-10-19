@@ -8,7 +8,10 @@
 </head>
 <body>
 <header class="nav">
-  <a class="brand" href="/">StudioOrganize</a>
+  <a class="brand brand--with-logo" href="/">
+    <span class="brand__logo" aria-hidden="true"></span>
+    <span class="sr-only">StudioOrganize</span>
+  </a>
   <nav class="menu">
     <a class="menu__link menu__link--plain menu__link--icon" href="/">
       <span aria-hidden="true">🏠</span>
