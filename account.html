@@ -55,17 +55,33 @@
       <img src="/assets/img/screenplay_writer1.webp" alt="Screenplay writing workspace" loading="lazy" />
       <span class="app-card__label">Screenplay Writing</span>
     </a>
-    <div class="app-card app-card--placeholder">
-      <img src="/assets/img/studioorganize_mock.png" alt="Character design workspace placeholder" loading="lazy" />
-      <span class="app-card__label">Character Design</span>
-    </div>
+    <a class="app-card app-card--fit" href="/CharacterStudio.html">
+      <img src="/assets/img/studioorganize_mock.png" alt="Character Studio workspace preview" loading="lazy" />
+      <span class="app-card__label">Character Studio</span>
+    </a>
     <div class="app-card app-card--placeholder">
       <img src="/assets/img/studioorganize_mock.png" alt="Set design workspace placeholder" loading="lazy" />
       <span class="app-card__label">Set Design</span>
     </div>
-    <div class="app-card app-card--placeholder">
-      <img src="/assets/img/studioorganize_mock.png" alt="Storyboarding workspace placeholder" loading="lazy" />
-      <span class="app-card__label">Storyboarding</span>
+    <div class="app-card-menu" data-storyboard-app-menu>
+      <button
+        class="app-card app-card--menu"
+        type="button"
+        data-menu-toggle
+        aria-expanded="false"
+        aria-controls="storyboardAppMenu"
+      >
+        <img src="/assets/img/studioorganize_mock.png" alt="Storyboarding workspace preview" loading="lazy" />
+        <span class="app-card__label">
+          Storyboarding
+          <span class="app-card__chevron" aria-hidden="true">▾</span>
+        </span>
+      </button>
+      <div class="app-card__dropdown" id="storyboardAppMenu" hidden data-menu-list>
+        <a class="app-card__dropdown-item" href="/use-cases/screenplay-writing.html#storyboardModeBtn">Storyboard Lite</a>
+        <a class="app-card__dropdown-item" href="/StoryboardPro.html">Storyboard Pro</a>
+        <a class="app-card__dropdown-item" href="/use-cases/screenplay-writing.html#timelineModeBtn">Timeline Mode</a>
+      </div>
     </div>
     <div class="app-card app-card--placeholder">
       <img src="/assets/img/studioorganize_mock.png" alt="Sound design workspace placeholder" loading="lazy" />
@@ -307,6 +323,77 @@
   </div>
 </footer>
 
+<script>
+  (function(){
+    const menuRoot = document.querySelector('[data-storyboard-app-menu]');
+    if (!menuRoot) return;
+
+    const toggle = menuRoot.querySelector('[data-menu-toggle]');
+    const dropdown = menuRoot.querySelector('[data-menu-list]');
+    if (!toggle || !dropdown) return;
+
+    function closeMenu(){
+      dropdown.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openMenu(){
+      dropdown.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function isOpen(){
+      return toggle.getAttribute('aria-expanded') === 'true';
+    }
+
+    toggle.addEventListener('click', event => {
+      event.stopPropagation();
+      if (isOpen()) closeMenu();
+      else openMenu();
+    });
+
+    toggle.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown' && !isOpen()){
+        event.preventDefault();
+        openMenu();
+        const firstItem = dropdown.querySelector('a');
+        firstItem?.focus();
+      }
+      if (event.key === 'Escape' && isOpen()){
+        event.preventDefault();
+        closeMenu();
+      }
+    });
+
+    dropdown.addEventListener('click', event => {
+      event.stopPropagation();
+      closeMenu();
+    });
+
+    dropdown.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.stopPropagation();
+        closeMenu();
+        toggle.focus();
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (!menuRoot.contains(event.target)){
+        closeMenu();
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && isOpen()){
+        closeMenu();
+        toggle.focus();
+      }
+    });
+
+    closeMenu();
+  })();
+</script>
 <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 <script type="module" src="/assets/main.js"></script>
 </body>
