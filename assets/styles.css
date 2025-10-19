@@ -331,3 +331,41 @@ img{max-width:100%;display:block}
 .modules-grid .card h3{margin-top:6px}
 .module-icon{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--alt);border:1px solid var(--line);font-size:22px;margin-bottom:8px}
 
+
+/* admin dashboard */
+.admin-dashboard{max-width:1100px;margin:0 auto;padding:48px 18px 60px;display:grid;gap:32px}
+.admin-dashboard__intro{display:grid;gap:8px}
+.admin-dashboard__eyebrow{text-transform:uppercase;letter-spacing:.2em;font-size:12px;color:var(--muted);margin:0}
+.admin-card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:clamp(24px,5vw,32px);display:grid;gap:28px;box-shadow:0 26px 68px rgba(8,15,28,.4)}
+.admin-card__head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.admin-card__eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
+.admin-card__meta{margin:6px 0 0;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-card__meta-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(125,211,252,.12);color:var(--brand);font-size:12px;border:1px solid rgba(125,211,252,.25)}
+.admin-card__cta{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);font-weight:600;text-decoration:none;box-shadow:0 16px 34px rgba(79,123,255,.32);transition:transform .18s ease,box-shadow .18s ease}
+.admin-card__cta:hover{transform:translateY(-1px);box-shadow:0 20px 44px rgba(79,123,255,.4)}
+.admin-card__cta:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.admin-card__sales-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.sales-metric{background:var(--hud);border:1px solid var(--ring);border-radius:18px;padding:18px;display:grid;gap:6px;min-height:150px}
+.sales-metric__label{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+.sales-metric__value{margin:0;font-size:26px;font-weight:700;color:var(--ink)}
+.sales-metric__delta{margin:0;font-size:14px;font-weight:600;color:var(--muted)}
+.sales-metric__note{margin:0;font-size:13px;color:var(--muted);line-height:1.4}
+.sales-metric[data-trend="up"] .sales-metric__delta{color:#4ade80}
+.sales-metric[data-trend="down"] .sales-metric__delta{color:#f87171}
+.sales-metric[data-trend="steady"] .sales-metric__delta{color:#facc15}
+.admin-card__status{display:grid;gap:20px}
+.admin-card__status-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.status-list{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.status-item{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:16px 18px;border-radius:16px;background:var(--hud);border:1px solid var(--ring);flex-wrap:wrap}
+.status-item__label{margin:0;font-weight:600;font-size:15px;color:var(--ink)}
+.status-item__note{margin:6px 0 0;font-size:13px;color:var(--muted);max-width:360px;line-height:1.5}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid rgba(95,168,255,.28);background:rgba(95,168,255,.12);color:var(--acc)}
+.status-pill[data-state="good"]{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.3);color:#4ade80}
+.status-pill[data-state="steady"]{background:rgba(250,204,21,.12);border-color:rgba(250,204,21,.3);color:#facc15}
+.status-pill[data-state="warn"]{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.32);color:#f87171}
+@media (max-width:720px){
+  .admin-dashboard{padding:32px 16px 48px}
+  .admin-card{padding:22px;gap:24px}
+  .admin-card__sales-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  .status-item{flex-direction:column;align-items:flex-start}
+}
