@@ -10,6 +10,10 @@ Because this is a static site, local development simply involves opening the HTM
 
 User authentication and member data are powered by [Supabase](https://supabase.com/). To understand how the Supabase project is structured and how the site communicates with it, read [`SUPABASE.md`](SUPABASE.md).
 
+### Capturing sign-up consent in Google Sheets
+
+If you want to log new registrations (including their marketing opt-out preference) to a private Google Sheet, follow the step-by-step setup in [`docs/google-sheets-signups.md`](docs/google-sheets-signups.md). The guide walks through creating an Apps Script web app and wiring the sign-up form so only your Google account can view the captured data.
+
 Environment variables required to interact with Supabase:
 
 ```
