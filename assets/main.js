@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveBrandLogo } from './brand-logos.js';
 
 // footer year
 const y = document.getElementById('y');
@@ -50,6 +51,41 @@ function updateThemeSelects(theme){
   });
 }
 
+function markBrandLogoReady(img){
+  const brand = img.closest('.brand--logo');
+  if (brand){
+    brand.classList.add('brand--logo-ready');
+  }
+}
+
+function bindBrandLogo(img){
+  if (img.dataset.brandLogoBound === 'true') return;
+  img.dataset.brandLogoBound = 'true';
+  img.addEventListener('load', () => markBrandLogoReady(img));
+  img.addEventListener('error', () => {
+    const brand = img.closest('.brand--logo');
+    if (brand){
+      brand.classList.remove('brand--logo-ready');
+    }
+  });
+  if (img.complete && img.naturalWidth){
+    markBrandLogoReady(img);
+  }
+}
+
+function updateBrandLogos(theme){
+  const next = resolveBrandLogo(theme);
+  document.querySelectorAll('[data-brand-logo]').forEach(img => {
+    if (!(img instanceof HTMLImageElement)) return;
+    bindBrandLogo(img);
+    if (next && img.getAttribute('src') !== next){
+      img.setAttribute('src', next);
+    } else if (img.complete && img.naturalWidth){
+      markBrandLogoReady(img);
+    }
+  });
+}
+
 function applySiteTheme(theme, persist = true){
   const normalized = theme === 'light' ? 'light' : 'dark';
   const prev = document.documentElement.dataset.theme;
@@ -58,6 +94,7 @@ function applySiteTheme(theme, persist = true){
   if (persist) storeTheme(normalized);
   updateToggleLabels(normalized);
   updateThemeSelects(normalized);
+  updateBrandLogos(normalized);
   if (prev !== normalized){
     document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: normalized } }));
   }
