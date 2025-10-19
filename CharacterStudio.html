@@ -392,6 +392,123 @@
         remoteIds: new Set(initialCharacters.map(char => char.id))
       };
 
+      const LOCAL_DB_NAME = 'sw_db_v1';
+      const LOCAL_DB_STORE = 'projects';
+      const LOCAL_PERSIST_DELAY_MS = 400;
+      let localDb = null;
+      let localPersistTimer = null;
+
+      function openLocalProjectDb(){
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(LOCAL_DB_NAME, 1);
+          request.onupgradeneeded = event => {
+            const database = event.target.result;
+            if (!database.objectStoreNames.contains(LOCAL_DB_STORE)){
+              database.createObjectStore(LOCAL_DB_STORE, { keyPath: 'projectId' });
+            }
+          };
+          request.onsuccess = event => {
+            localDb = event.target.result;
+            resolve();
+          };
+          request.onerror = event => reject(event);
+        });
+      }
+
+      async function ensureLocalDb(){
+        if (localDb) return true;
+        try {
+          await openLocalProjectDb();
+          return !!localDb;
+        } catch (err){
+          console.warn('Character Studio failed to open local project database', err);
+          return false;
+        }
+      }
+
+      function loadProjectFromLocalStore(projectId){
+        return new Promise((resolve, reject) => {
+          if (!localDb){
+            resolve(null);
+            return;
+          }
+          const tx = localDb.transaction([LOCAL_DB_STORE], 'readonly');
+          const store = tx.objectStore(LOCAL_DB_STORE);
+          const request = store.get(projectId);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = event => reject(event);
+        });
+      }
+
+      function saveProjectToLocalStore(project){
+        return new Promise((resolve, reject) => {
+          if (!localDb){
+            resolve();
+            return;
+          }
+          const tx = localDb.transaction([LOCAL_DB_STORE], 'readwrite');
+          tx.objectStore(LOCAL_DB_STORE).put(project);
+          tx.oncomplete = () => resolve();
+          tx.onerror = event => reject(event);
+        });
+      }
+
+      async function persistCharactersToLocal(){
+        if (!state.projectId) return;
+        localPersistTimer = null;
+        const ready = await ensureLocalDb();
+        if (!ready) return;
+        try {
+          const project = await loadProjectFromLocalStore(state.projectId);
+          if (!project || typeof project !== 'object') return;
+          const nextCharacters = state.characters.map(normalizeCharacter);
+          const catalogs = project.catalogs && typeof project.catalogs === 'object'
+            ? project.catalogs
+            : {};
+          const previous = Array.isArray(catalogs.characters) ? catalogs.characters : [];
+          const previousJson = JSON.stringify(previous);
+          const nextJson = JSON.stringify(nextCharacters);
+          if (previousJson === nextJson) return;
+          catalogs.characters = nextCharacters;
+          project.catalogs = catalogs;
+          project.updatedAt = Date.now();
+          await saveProjectToLocalStore(project);
+        } catch (err){
+          console.warn('Character Studio failed to persist characters locally', err);
+        }
+      }
+
+      function scheduleLocalPersist(){
+        if (!state.projectId) return;
+        if (localPersistTimer) window.clearTimeout(localPersistTimer);
+        localPersistTimer = window.setTimeout(() => {
+          persistCharactersToLocal().catch(err => {
+            console.warn('Character Studio failed to schedule local character save', err);
+          });
+        }, LOCAL_PERSIST_DELAY_MS);
+      }
+
+      async function hydrateCharactersFromLocal(){
+        if (!state.projectId) return;
+        const ready = await ensureLocalDb();
+        if (!ready) return;
+        try {
+          const project = await loadProjectFromLocalStore(state.projectId);
+          if (!project || typeof project !== 'object') return;
+          const list = Array.isArray(project?.catalogs?.characters)
+            ? project.catalogs.characters.map(normalizeCharacter)
+            : [];
+          state.characters = list;
+          if (!list.some(char => char.id === state.activeId)){
+            state.activeId = list.length ? list[0].id : null;
+          }
+          renderCharacterList();
+          renderCharacterDetails();
+        } catch (err){
+          console.warn('Character Studio failed to load characters from the Writer workspace', err);
+        }
+      }
+
       function setProjectLabel(text, status = ''){
         state.projectLabel = text || '';
         state.projectLabelState = status || '';
@@ -432,6 +549,7 @@
       function markDirty(){
         state.dirty = true;
         updateSaveButtonState();
+        scheduleLocalPersist();
         if (state.saving) return;
         if (state.session && state.projectId){
           setSaveStatus('Unsaved changes', 'warning');
@@ -676,27 +794,22 @@
           empty.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span>`;
           listEl.appendChild(empty);
         };
-        if (state.loading){
-          showMessage('Loading characters…', 'Syncing the cast from Supabase.');
-          return;
-        }
         if (!state.projectId){
           state.activeId = null;
           showMessage('No story linked', 'Open your story in the Writer to connect Character Studio.');
           return;
         }
-        if (!state.supabase){
-          showMessage('Connecting to Supabase…', 'One moment while we prepare your workspace.');
-          return;
-        }
-        if (!state.session){
-          state.activeId = null;
-          showMessage('Sign in to continue', 'Sign in to load and save your cast.');
-          return;
-        }
         if (!state.characters.length){
           state.activeId = null;
-          showMessage('No characters yet', 'Add the first member of your cast to begin planning.');
+          if (state.loading){
+            showMessage('Loading characters…', 'Syncing the cast from Supabase.');
+          } else if (!state.supabase){
+            showMessage('Connecting to Supabase…', 'One moment while we prepare your workspace.');
+          } else if (!state.session){
+            showMessage('Sign in to continue', 'Sign in to load and save your cast.');
+          } else {
+            showMessage('No characters yet', 'Add the first member of your cast to begin planning.');
+          }
           return;
         }
         state.characters.forEach(char => {
@@ -717,14 +830,6 @@
       function renderCharacterDetails(){
         const container = document.querySelector('[data-character-details]');
         if (!container) return;
-        if (state.loading){
-          container.innerHTML = `
-            <div class="character-studio-empty">
-              <h2>Loading characters…</h2>
-              <p>Syncing the cast from Supabase.</p>
-            </div>`;
-          return;
-        }
         if (!state.projectId){
           container.innerHTML = `
             <div class="character-studio-empty">
@@ -733,28 +838,40 @@
             </div>`;
           return;
         }
-        if (!state.supabase){
-          container.innerHTML = `
-            <div class="character-studio-empty">
-              <h2>Connecting to Supabase…</h2>
-              <p>One moment while we prepare your workspace.</p>
-            </div>`;
-          return;
-        }
-        if (!state.session){
-          container.innerHTML = `
-            <div class="character-studio-empty">
-              <h2>Sign in to continue</h2>
-              <p>Sign in to view and save this cast.</p>
-            </div>`;
+        if (!state.characters.length){
+          if (state.loading){
+            container.innerHTML = `
+              <div class="character-studio-empty">
+                <h2>Loading characters…</h2>
+                <p>Syncing the cast from Supabase.</p>
+              </div>`;
+          } else if (!state.supabase){
+            container.innerHTML = `
+              <div class="character-studio-empty">
+                <h2>Connecting to Supabase…</h2>
+                <p>One moment while we prepare your workspace.</p>
+              </div>`;
+          } else if (!state.session){
+            container.innerHTML = `
+              <div class="character-studio-empty">
+                <h2>Sign in to continue</h2>
+                <p>Sign in to view and save this cast.</p>
+              </div>`;
+          } else {
+            container.innerHTML = `
+              <div class="character-studio-empty">
+                <h2>No characters yet</h2>
+                <p>Use the + New button to start building your cast.</p>
+              </div>`;
+          }
           return;
         }
         const active = getActiveCharacter();
         if (!active){
           container.innerHTML = `
             <div class="character-studio-empty">
-              <h2>No characters yet</h2>
-              <p>Use the + New button to start building your cast.</p>
+              <h2>No character selected</h2>
+              <p>Choose a character from the list to begin planning.</p>
             </div>`;
           return;
         }
@@ -1341,6 +1458,7 @@
           state.activeId = list.length ? list[0].id : null;
           state.remoteIds = new Set(list.map(char => char.id));
           state.dirty = false;
+          await persistCharactersToLocal();
           if (list.length){
             setSaveStatus('Characters synced.', 'ready');
           } else {
@@ -1430,6 +1548,7 @@
           }
           state.remoteIds = localIds;
           state.dirty = false;
+          await persistCharactersToLocal();
           setSaveStatus('Characters saved!', 'ready');
         } catch (err){
           console.error('Failed to save characters to Supabase', err);
@@ -1508,6 +1627,7 @@
       renderCharacterList();
       renderCharacterDetails();
       updateSaveButtonState();
+      hydrateCharactersFromLocal();
       initializeSupabase();
     })();
   </script>
