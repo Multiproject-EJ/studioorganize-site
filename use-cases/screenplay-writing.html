@@ -886,6 +886,46 @@
       .selection-type-menu[hidden]{display:none !important}
       [data-theme="dark"] .selection-menu, [data-theme="dark"] .selection-type-menu{box-shadow:0 30px 70px rgba(8,15,28,0.72), 0 0 0 1px rgba(79,123,255,0.35), 0 0 22px rgba(79,123,255,0.3)}
     </style>
+    <div class="workspace-launcher" data-workspace-launcher>
+      <button class="workspace-launcher__toggle" type="button" aria-expanded="false" data-workspace-toggle>
+        <span>Workspace menu</span>
+        <span class="workspace-launcher__toggle-chevron" aria-hidden="true">▾</span>
+      </button>
+      <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
+        <div class="workspace-launcher__actions">
+          <button type="button" class="workspace-launcher__script" data-workspace-script>
+            <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
+            <span>New Script</span>
+          </button>
+        </div>
+        <nav class="workspace-launcher__modules" aria-label="Workspace modules">
+          <a class="workspace-launcher__module workspace-launcher__module--active" href="/use-cases/screenplay-writing.html">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">🎬</span>
+            <span class="workspace-launcher__module-label">Screenplay</span>
+          </a>
+          <a class="workspace-launcher__module" href="/CharacterStudio.html">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">🧑‍🎨</span>
+            <span class="workspace-launcher__module-label">Characters</span>
+          </a>
+          <a class="workspace-launcher__module" href="/StoryboardPro.html">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">🗂️</span>
+            <span class="workspace-launcher__module-label">Storyboard</span>
+          </a>
+          <a class="workspace-launcher__module" href="/use-cases/generate-ideas.html">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">💡</span>
+            <span class="workspace-launcher__module-label">Ideas</span>
+          </a>
+          <a class="workspace-launcher__module" href="/use-cases/set-design.html">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">🏗️</span>
+            <span class="workspace-launcher__module-label">Set Design</span>
+          </a>
+          <a class="workspace-launcher__module" href="/creative-hub.html">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">🧭</span>
+            <span class="workspace-launcher__module-label">Creative Hub</span>
+          </a>
+        </nav>
+      </div>
+    </div>
     <div class="app">
       <div class="topbar">
         <h1 id="title">Untitled Project</h1>

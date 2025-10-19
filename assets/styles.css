@@ -90,6 +90,37 @@ img{max-width:100%;display:block}
 .theme-toggle--icon:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
+/* workspace launcher */
+.workspace-launcher{--workspace-launcher-gutter:clamp(18px,4vw,32px);position:relative;display:flex;justify-content:flex-end;align-items:flex-start;padding:12px var(--workspace-launcher-gutter) 0;z-index:5}
+.workspace-launcher__toggle{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:none;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:var(--cta-text);font:inherit;font-weight:700;cursor:pointer;box-shadow:0 14px 32px rgba(0,0,0,.38);transition:transform .2s ease,box-shadow .2s ease}
+.workspace-launcher__toggle:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.workspace-launcher__toggle:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.workspace-launcher__toggle-chevron{font-size:.9em;transition:transform .2s ease}
+.workspace-launcher--open .workspace-launcher__toggle-chevron{transform:rotate(180deg)}
+.workspace-launcher__panel{position:absolute;top:calc(100% + 12px);right:var(--workspace-launcher-gutter);width:min(560px,calc(100% - (var(--workspace-launcher-gutter) * 2)));background:var(--panel);border:1px solid var(--ring);border-radius:18px;box-shadow:0 26px 70px rgba(8,15,28,.55);padding:20px clamp(18px,4vw,28px);display:grid;gap:18px;opacity:0;transform:translateX(24px);pointer-events:none;transition:transform .24s ease,opacity .2s ease;z-index:30}
+.workspace-launcher__panel[hidden]{display:none}
+.workspace-launcher--open .workspace-launcher__panel{opacity:1;transform:translateX(0);pointer-events:auto}
+.workspace-launcher__panel:focus{outline:none}
+.workspace-launcher__actions{display:flex;justify-content:flex-start}
+.workspace-launcher__script{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px solid transparent;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);font:inherit;font-weight:700;cursor:pointer;box-shadow:0 16px 36px rgba(79,123,255,.32);transition:transform .2s ease,box-shadow .2s ease}
+.workspace-launcher__script:hover{transform:translateY(-1px);box-shadow:0 20px 44px rgba(79,123,255,.38)}
+.workspace-launcher__script:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.workspace-launcher__script-icon{font-size:1.1em;line-height:1}
+.workspace-launcher__modules{display:flex;flex-wrap:wrap;gap:16px}
+.workspace-launcher__module{display:grid;gap:8px;justify-items:center;text-decoration:none;color:var(--ink);font-weight:600;font-size:13px;min-width:92px}
+.workspace-launcher__module:focus-visible{outline:none}
+.workspace-launcher__module-icon{width:68px;height:68px;border-radius:999px;display:grid;place-items:center;background:var(--chip);border:1px solid var(--ring);font-size:26px;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease;box-shadow:0 14px 34px rgba(8,15,28,.26)}
+.workspace-launcher__module:hover .workspace-launcher__module-icon,.workspace-launcher__module:focus-visible .workspace-launcher__module-icon{transform:translateY(-2px);border-color:var(--acc);background:linear-gradient(135deg,rgba(79,123,255,.18),rgba(167,139,250,.14));box-shadow:0 20px 46px rgba(8,15,28,.38)}
+.workspace-launcher__module:focus-visible .workspace-launcher__module-icon{outline:2px solid var(--acc);outline-offset:3px}
+.workspace-launcher__module-label{color:var(--muted);font-size:12px;letter-spacing:.35px;text-transform:uppercase}
+.workspace-launcher__module--active .workspace-launcher__module-icon{border-color:var(--acc);background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg,rgba(79,123,255,.92),rgba(167,139,250,.85)) border-box;box-shadow:0 18px 44px rgba(79,123,255,.32)}
+.workspace-launcher__module--active .workspace-launcher__module-label{color:var(--acc)}
+@media (max-width:720px){
+  .workspace-launcher{--workspace-launcher-gutter:clamp(14px,6vw,24px)}
+  .workspace-launcher__panel{width:calc(100% - (var(--workspace-launcher-gutter) * 2))}
+  .workspace-launcher__modules{justify-content:center}
+}
+
 /* dropdown */
 .dropdown{position:relative}
 .dropbtn{background:var(--panel)}

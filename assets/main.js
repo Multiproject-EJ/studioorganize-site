@@ -429,6 +429,164 @@ function initCreatorAppMenu(){
   });
 }
 
+function initWorkspaceLauncher(){
+  const launchers = Array.from(document.querySelectorAll('[data-workspace-launcher]'));
+  if (!launchers.length) return;
+
+  const OPEN_CLASS = 'workspace-launcher--open';
+  const CLOSE_TIMEOUT = 280;
+
+  const closeLauncher = (launcher, { focusToggle = false } = {}) => {
+    if (!(launcher instanceof HTMLElement)) return;
+    const toggle = launcher.querySelector('[data-workspace-toggle]');
+    const panel = launcher.querySelector('[data-workspace-panel]');
+    if (!(toggle instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
+
+    if (!launcher.classList.contains(OPEN_CLASS) && panel.hidden) return;
+
+    launcher.classList.remove(OPEN_CLASS);
+    panel.setAttribute('aria-hidden', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+
+    if (!panel.hidden){
+      panel.dataset.workspaceClosing = 'true';
+      const handleTransitionEnd = event => {
+        if (event.target !== panel) return;
+        if (event.propertyName !== 'opacity' && event.propertyName !== 'transform') return;
+        panel.hidden = true;
+        delete panel.dataset.workspaceClosing;
+      };
+      panel.addEventListener('transitionend', handleTransitionEnd, { once: true });
+      window.setTimeout(() => {
+        panel.removeEventListener('transitionend', handleTransitionEnd);
+        if (panel.dataset.workspaceClosing === 'true'){
+          panel.hidden = true;
+          delete panel.dataset.workspaceClosing;
+        }
+      }, CLOSE_TIMEOUT);
+    }
+
+    if (focusToggle && toggle instanceof HTMLElement){
+      try {
+        toggle.focus({ preventScroll: true });
+      } catch (_error){
+        toggle.focus();
+      }
+    }
+  };
+
+  const openLauncher = launcher => {
+    if (!(launcher instanceof HTMLElement)) return;
+    const toggle = launcher.querySelector('[data-workspace-toggle]');
+    const panel = launcher.querySelector('[data-workspace-panel]');
+    if (!(toggle instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
+
+    if (panel.hidden){
+      panel.hidden = false;
+      void panel.offsetWidth;
+    }
+
+    launcher.classList.add(OPEN_CLASS);
+    panel.setAttribute('aria-hidden', 'false');
+    toggle.setAttribute('aria-expanded', 'true');
+
+    window.requestAnimationFrame(() => {
+      try {
+        panel.focus({ preventScroll: true });
+      } catch (_error){
+        panel.focus();
+      }
+    });
+  };
+
+  const closeAll = except => {
+    launchers.forEach(launcher => {
+      if (launcher === except) return;
+      closeLauncher(launcher);
+    });
+  };
+
+  launchers.forEach((launcher, index) => {
+    if (!(launcher instanceof HTMLElement)) return;
+    if (launcher.dataset.workspaceLauncherBound === 'true') return;
+    launcher.dataset.workspaceLauncherBound = 'true';
+
+    const toggle = launcher.querySelector('[data-workspace-toggle]');
+    const panel = launcher.querySelector('[data-workspace-panel]');
+
+    if (!(toggle instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
+
+    if (!panel.id){
+      panel.id = `workspaceLauncherPanel${index + 1}`;
+    }
+
+    toggle.setAttribute('aria-controls', panel.id);
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-haspopup', 'true');
+
+    toggle.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (launcher.classList.contains(OPEN_CLASS)){
+        closeLauncher(launcher);
+      } else {
+        closeAll(launcher);
+        openLauncher(launcher);
+      }
+    });
+
+    panel.addEventListener('mousedown', event => {
+      event.stopPropagation();
+    });
+
+    panel.addEventListener('click', event => {
+      if (!(event.target instanceof HTMLElement)) return;
+      if (event.target.closest('[data-workspace-script]')) return;
+      event.stopPropagation();
+    });
+
+    const scriptButton = panel.querySelector('[data-workspace-script]');
+    if (scriptButton instanceof HTMLElement && scriptButton.dataset.workspaceScriptBound !== 'true'){
+      scriptButton.dataset.workspaceScriptBound = 'true';
+      scriptButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        closeAll();
+
+        const dialog = document.getElementById('scriptDialog');
+        const isOpen = dialog instanceof HTMLElement && dialog.classList.contains('open');
+
+        if (typeof window.openScriptDialog === 'function'){
+          if (isOpen && typeof window.closeScriptDialog === 'function'){
+            window.closeScriptDialog();
+          } else {
+            window.openScriptDialog();
+          }
+        } else {
+          window.location.href = '/use-cases/screenplay-writing.html';
+        }
+      });
+    }
+  });
+
+  if (document.documentElement.dataset.workspaceLauncherGlobalBound === 'true') return;
+  document.documentElement.dataset.workspaceLauncherGlobalBound = 'true';
+
+  document.addEventListener('click', () => {
+    closeAll();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape'){
+      const openLauncherEl = launchers.find(launcher => launcher.classList.contains(OPEN_CLASS));
+      if (openLauncherEl){
+        closeLauncher(openLauncherEl, { focusToggle: true });
+      }
+    }
+  });
+}
+
 const GOALS_STORAGE_KEY = 'SO_ACCOUNT_GOALS';
 
 function parseStoredGoals(value){
@@ -778,12 +936,14 @@ function initFinishStoryModal(){
 if (document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', () => {
     initCreatorAppMenu();
+    initWorkspaceLauncher();
     initDropdownMenus();
     initGoalPlanner();
     initFinishStoryModal();
   }, { once: true });
 } else {
   initCreatorAppMenu();
+  initWorkspaceLauncher();
   initDropdownMenus();
   initGoalPlanner();
   initFinishStoryModal();
