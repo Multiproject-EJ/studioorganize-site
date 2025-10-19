@@ -215,6 +215,34 @@ create index if not exists characters_project_idx on public.characters (project_
 
 do $$
 begin
+    if exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'characters'
+          and column_name = 'project_id'
+    ) then
+        if not exists (
+            select 1
+            from public.characters
+            where project_id is null
+            limit 1
+        ) then
+            begin
+                alter table public.characters alter column project_id set not null;
+            exception
+                when others then
+                    raise notice 'Unable to enforce NOT NULL on characters.project_id: %', sqlerrm;
+            end;
+        else
+            raise notice 'Skipping NOT NULL enforcement on characters.project_id because existing rows contain null values.';
+        end if;
+    end if;
+end;
+$$;
+
+do $$
+begin
     if not exists (
         select 1
         from pg_trigger
