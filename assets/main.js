@@ -50,6 +50,17 @@ function updateThemeSelects(theme){
   });
 }
 
+function updateBrandLogos(theme){
+  const logos = document.querySelectorAll('[data-logo-dark][data-logo-light]');
+  logos.forEach(node => {
+    if (!(node instanceof HTMLImageElement)) return;
+    const next = theme === 'light' ? node.dataset.logoLight : node.dataset.logoDark;
+    if (next && node.getAttribute('src') !== next){
+      node.setAttribute('src', next);
+    }
+  });
+}
+
 function applySiteTheme(theme, persist = true){
   const normalized = theme === 'light' ? 'light' : 'dark';
   const prev = document.documentElement.dataset.theme;
@@ -58,6 +69,7 @@ function applySiteTheme(theme, persist = true){
   if (persist) storeTheme(normalized);
   updateToggleLabels(normalized);
   updateThemeSelects(normalized);
+  updateBrandLogos(normalized);
   if (prev !== normalized){
     document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: normalized } }));
   }
