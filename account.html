@@ -45,29 +45,45 @@
 </header>
 
   <div class="workspace-launcher" data-workspace-launcher>
-    <div class="workspace-launcher__toggle-wrap">
-      <button class="workspace-launcher__toggle" type="button" aria-expanded="false" aria-label="Workspace menu" data-workspace-toggle>
-        <span class="sr-only">Workspace menu</span>
-        <span class="workspace-launcher__icon" aria-hidden="true"></span>
-      </button>
-      <div class="workspace-launcher__chat" data-workspace-chat hidden aria-hidden="true">
-        <div class="workspace-launcher__chat-bubble">
-          <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
-            <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
-          </div>
-          <div class="workspace-launcher__chat-suggestions">
-            <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's start a new story together</button>
-            <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's analyze my story and improve</button>
-          </div>
-          <form class="workspace-launcher__chat-form" data-workspace-chat-form>
-            <div class="workspace-launcher__chat-input">
-              <input type="text" placeholder="Ask StudioOrganize…" aria-label="Ask the workspace assistant" data-workspace-chat-input />
-              <button type="submit" class="workspace-launcher__chat-send" aria-label="Send chat message">
-                <span aria-hidden="true">➤</span>
-              </button>
+    <div class="workspace-launcher__controls">
+      <div class="workspace-launcher__toggle-wrap">
+        <button class="workspace-launcher__toggle" type="button" aria-expanded="false" aria-label="Workspace menu" data-workspace-toggle>
+          <span class="sr-only">Workspace menu</span>
+          <span class="workspace-launcher__icon" aria-hidden="true"></span>
+        </button>
+        <div class="workspace-launcher__chat" data-workspace-chat hidden aria-hidden="true">
+          <div class="workspace-launcher__chat-bubble">
+            <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
+              <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
             </div>
-          </form>
+            <div class="workspace-launcher__chat-suggestions">
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's start a new story together</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's analyze my story and improve</button>
+            </div>
+            <form class="workspace-launcher__chat-form" data-workspace-chat-form>
+              <div class="workspace-launcher__chat-input">
+                <input type="text" placeholder="Ask StudioOrganize…" aria-label="Ask the workspace assistant" data-workspace-chat-input />
+                <button type="submit" class="workspace-launcher__chat-send" aria-label="Send chat message">
+                  <span aria-hidden="true">➤</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
+      <div class="workspace-launcher__notifications" data-notifications>
+        <button
+          class="notifications-toggle"
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-controls="notificationsModal"
+          data-notifications-toggle
+        >
+          <span class="notifications-toggle__icon" aria-hidden="true">✉️</span>
+          <span class="notifications-toggle__badge" data-notifications-count></span>
+          <span class="sr-only" data-notifications-label>Open notifications</span>
+        </button>
       </div>
     </div>
     <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
@@ -298,41 +314,57 @@
       </div>
     </section>
 
-    <section class="creator-notifications" aria-label="Latest notifications">
-      <div class="creator-notifications__header">
-        <h3>Notifications</h3>
-        <p class="muted">Review your studio alerts and nudges from the AI coach.</p>
-      </div>
-      <ul class="creator-notifications__list">
-        <li class="creator-notifications__item creator-notifications__item--alert">
-          <div class="creator-notifications__icon" aria-hidden="true">⏰</div>
-          <div class="creator-notifications__content">
-            <h4>Storyboard draft deadline passed</h4>
-            <p>The "Episode 3 storyboard" milestone was due yesterday. Reschedule to keep your collaborators updated.</p>
-            <button type="button" class="creator-notifications__action">Reschedule now</button>
+    <div
+      class="notifications-modal"
+      id="notificationsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notificationsModalTitle"
+      hidden
+      data-notifications-modal
+    >
+      <div class="notifications-modal__overlay" data-notifications-overlay></div>
+      <div class="notifications-modal__dialog" role="document">
+        <header class="notifications-modal__header">
+          <div>
+            <h3 id="notificationsModalTitle">Notifications</h3>
+            <p class="muted">Review your studio alerts and nudges from the AI coach.</p>
           </div>
-        </li>
-        <li class="creator-notifications__item creator-notifications__item--coach">
-          <div class="creator-notifications__icon" aria-hidden="true">🤖</div>
-          <div class="creator-notifications__content">
-            <h4>StudioOrganize AI Coach</h4>
-            <p>"Great consistency! Want a warm-up prompt for today's writing sprint?"</p>
-            <div class="creator-notifications__actions">
-              <button type="button" class="creator-notifications__action">Send prompt</button>
-              <button type="button" class="creator-notifications__action creator-notifications__action--ghost">Remind me later</button>
+          <button type="button" class="notifications-modal__close" aria-label="Close notifications" data-notifications-close>
+            ×
+          </button>
+        </header>
+        <ul class="creator-notifications__list">
+          <li class="creator-notifications__item creator-notifications__item--alert" data-notification-item>
+            <div class="creator-notifications__icon" aria-hidden="true">⏰</div>
+            <div class="creator-notifications__content">
+              <h4>Storyboard draft deadline passed</h4>
+              <p>The "Episode 3 storyboard" milestone was due yesterday. Reschedule to keep your collaborators updated.</p>
+              <button type="button" class="creator-notifications__action">Reschedule now</button>
             </div>
-          </div>
-        </li>
-        <li class="creator-notifications__item">
-          <div class="creator-notifications__icon" aria-hidden="true">📌</div>
-          <div class="creator-notifications__content">
-            <h4>New reference board shared</h4>
-            <p>Alex added a "Lighting moods" board to the Set Design workspace. Add your notes before Friday.</p>
-            <button type="button" class="creator-notifications__action">Open board</button>
-          </div>
-        </li>
-      </ul>
-    </section>
+          </li>
+          <li class="creator-notifications__item creator-notifications__item--coach" data-notification-item>
+            <div class="creator-notifications__icon" aria-hidden="true">🤖</div>
+            <div class="creator-notifications__content">
+              <h4>StudioOrganize AI Coach</h4>
+              <p>"Great consistency! Want a warm-up prompt for today's writing sprint?"</p>
+              <div class="creator-notifications__actions">
+                <button type="button" class="creator-notifications__action">Send prompt</button>
+                <button type="button" class="creator-notifications__action creator-notifications__action--ghost">Remind me later</button>
+              </div>
+            </div>
+          </li>
+          <li class="creator-notifications__item" data-notification-item>
+            <div class="creator-notifications__icon" aria-hidden="true">📌</div>
+            <div class="creator-notifications__content">
+              <h4>New reference board shared</h4>
+              <p>Alex added a "Lighting moods" board to the Set Design workspace. Add your notes before Friday.</p>
+              <button type="button" class="creator-notifications__action">Open board</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <div class="creator-dashboard__grid">
       <div class="insight-card">
