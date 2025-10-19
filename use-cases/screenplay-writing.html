@@ -53,7 +53,7 @@
       html,body{height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
       body{color:var(--ink); --nav-height:72px;}
       main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
-      .app{display:grid; grid-template-rows:56px auto 1fr; flex:1; min-height:0; transition:transform .35s ease; --timeline-dock-offset:0px}
+      .app{display:grid; grid-template-rows:56px auto 1fr; flex:1; min-height:0; margin-top:0; transition:transform .35s ease, margin-top .35s ease; --timeline-dock-offset:0px}
       .topbar{display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--ring)}
       .topbar h1{font-size:16px; font-weight:600; margin:0 8px 0 0}
       .spacer{flex:1}
@@ -774,7 +774,10 @@
         pointer-events: none;
       }
 
-      body.focus-mode .app{ transform: translateY(calc(-1 * var(--nav-height, 0px))); }
+      body.focus-mode .app{
+        transform: none;
+        margin-top: calc(-1 * var(--nav-height, 0px));
+      }
       body.focus-mode #timelineDock{
         display: none;
       }
