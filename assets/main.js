@@ -50,6 +50,7 @@ function updateThemeSelects(theme){
   });
 }
 
+
 function applySiteTheme(theme, persist = true){
   const normalized = theme === 'light' ? 'light' : 'dark';
   const prev = document.documentElement.dataset.theme;
