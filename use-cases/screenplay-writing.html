@@ -132,6 +132,43 @@
       .story-arc-scenes__step--active .story-arc-scenes__scene-number{color:var(--active-tab-text);}
       .story-arc-scenes__step--active .story-arc-scenes__scene-label{color:var(--active-tab-text);}
       .story-arc-scenes__empty{flex:1; display:flex; align-items:center; justify-content:center; min-height:48px; border-radius:10px; border:1px dashed var(--ring); color:var(--muted); font-size:12px; background:var(--chip);}
+      .timeline-showcase{padding:16px clamp(16px, 5vw, 32px); display:flex; flex-direction:column; gap:22px;}
+      .timeline-showcase__dock .timeline-dock__shell{margin:0 auto;}
+      .timeline-showcase__panel{border-radius:20px; overflow:hidden; border:1px solid var(--ring); background:var(--hud);}
+      .timeline-showcase__panel .timeline-stage{background:var(--hud);}
+      .timeline-showcase__panel .timeline-wrapper{max-height:520px;}
+      .timeline-panel{padding:0;}
+      .timeline-stage{flex:1; display:flex; flex-direction:column; min-height:0;}
+      .timeline-stage header{display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid var(--ring); gap:16px;}
+      .timeline-stage header h2{margin:0; font-size:15px; font-weight:600;}
+      .timeline-stage header span{font-size:12px; color:var(--muted);}
+      .timeline-controls{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+      .timeline-wrapper{flex:1; overflow:auto; padding-bottom:16px;}
+      .timeline-grid{display:grid; grid-template-columns:200px 1fr; min-width:680px;}
+      .timeline-scale{grid-column:1 / -1; padding:12px 24px; border-bottom:1px solid var(--ring); background:linear-gradient(135deg, rgba(79,123,255,0.12), rgba(79,123,255,0)); position:sticky; top:0; z-index:2;}
+      .timeline-scale__header{font-size:12px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase; margin-bottom:10px; display:flex; justify-content:space-between;}
+      .timeline-scale__ruler{position:relative; height:28px; border-bottom:1px dashed rgba(79,123,255,0.35);}
+      .timeline-scale__ruler span{position:absolute; top:8px; font-size:11px; color:var(--muted); transform:translateX(-50%);}
+      .timeline-scene{display:contents;}
+      .timeline-scene__label{padding:20px 16px; border-right:1px solid var(--ring); background:var(--panel); display:flex; flex-direction:column; gap:6px; position:sticky; left:0; z-index:1;}
+      .timeline-scene__label strong{font-size:14px; letter-spacing:.2px;}
+      .timeline-scene__label span{font-size:13px;}
+      .timeline-scene__label small{font-size:12px; color:var(--muted);}
+      .timeline-scene--active .timeline-scene__label{box-shadow:inset 3px 0 0 var(--acc);}
+      .timeline-scene__tracks{padding:16px 24px; display:flex; flex-direction:column; gap:14px; background:var(--card); border-bottom:1px solid var(--ring);}
+      .timeline-track{display:flex; flex-direction:column; gap:6px;}
+      .timeline-track__header{font-size:11px; text-transform:uppercase; letter-spacing:.3px; color:var(--muted);}
+      .timeline-track__lane{position:relative; background:var(--panel); border:1px solid var(--ring); border-radius:10px; height:48px; overflow:hidden;}
+      .timeline-track__lane::before{content:""; position:absolute; inset:0; background-image:repeating-linear-gradient(to right, transparent, transparent calc(12.5% - 1px), rgba(79,123,255,0.12) calc(12.5% - 1px), rgba(79,123,255,0.12) calc(12.5%)); pointer-events:none;}
+      .timeline-block{position:absolute; top:6px; bottom:6px; border-radius:8px; padding:6px 10px; font-size:12px; display:inline-flex; align-items:center; gap:6px; color:rgba(15,23,42,0.9); font-weight:500;}
+      .timeline-block::before{content:attr(data-icon); font-size:14px;}
+      .timeline-block--shots{background:rgba(79,123,255,0.18); border:1px solid rgba(79,123,255,0.35);}
+      .timeline-block--audio{background:rgba(220,38,38,0.14); border:1px solid rgba(220,38,38,0.3);}
+      .timeline-block--lighting{background:rgba(14,165,233,0.18); border:1px solid rgba(14,165,233,0.3);}
+      .timeline-block--notes{background:rgba(126,58,242,0.16); border:1px solid rgba(126,58,242,0.28);}
+      .timeline-block--beats{background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.3);}
+      .timeline-block--cards{background:rgba(251,191,36,0.18); border:1px solid rgba(251,191,36,0.32);}
+      .timeline-track--hidden{display:none;}
       @media (max-width: 820px){
         .story-arc-layout{flex-direction:column; align-items:stretch;}
         .story-arc-actions{flex-direction:row; justify-content:flex-end; align-items:center;}
@@ -998,42 +1035,60 @@
         <!-- Focus toggle -->
         <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
       </div>
-      <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock" data-timeline-dock="primary">
-        <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines" data-timeline-handle></button>
-        <div class="timeline-dock__shell">
-          <div class="timeline-dock__content">
-            <div class="story-arc-layout">
-              <div class="story-arc-columns">
-                <div class="story-arc-timeline" aria-label="Story arc timeline">
-                  <div class="story-arc-container">
-                    <ol class="story-arc-track" role="list">
-                      <li class="story-arc-step" role="listitem">
-                        <div class="story-arc-pill">
-                          <span class="story-arc-label">Opening</span>
-                        </div>
-                      </li>
-                      <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
-                        <div class="story-arc-pill">
-                          <span class="story-arc-label">Middle</span>
-                        </div>
-                      </li>
-                      <li class="story-arc-step" role="listitem">
-                        <div class="story-arc-pill">
-                          <span class="story-arc-label">End</span>
-                        </div>
-                      </li>
-                    </ol>
+      <section class="timeline-showcase" aria-label="Storyboard timeline preview">
+        <div class="timeline-dock pinned timeline-showcase__dock">
+          <div class="timeline-dock__shell">
+            <div class="timeline-dock__content">
+              <div class="story-arc-layout">
+                <div class="story-arc-columns">
+                  <div class="story-arc-timeline" aria-label="Story arc timeline">
+                    <div class="story-arc-container">
+                      <ol class="story-arc-track" role="list">
+                        <li class="story-arc-step" role="listitem">
+                          <div class="story-arc-pill">
+                            <span class="story-arc-label">Opening</span>
+                          </div>
+                        </li>
+                        <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                          <div class="story-arc-pill">
+                            <span class="story-arc-label">Middle</span>
+                          </div>
+                        </li>
+                        <li class="story-arc-step" role="listitem">
+                          <div class="story-arc-pill">
+                            <span class="story-arc-label">End</span>
+                          </div>
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                  <div class="story-arc-scenes" aria-label="Scene timeline">
+                    <div class="story-arc-scenes__container">
+                      <ol class="story-arc-scenes__track" role="list">
+                        <li class="story-arc-scenes__step story-arc-scenes__step--active" role="listitem">
+                          <div class="story-arc-scenes__slot" data-tooltip="Scene 12 • Rooftop chase">
+                            <span class="story-arc-scenes__scene-number">Scene 12</span>
+                            <span class="story-arc-scenes__scene-label">Rooftop chase</span>
+                          </div>
+                        </li>
+                        <li class="story-arc-scenes__step" role="listitem">
+                          <div class="story-arc-scenes__slot" data-tooltip="Scene 13 • Warehouse showdown">
+                            <span class="story-arc-scenes__scene-number">Scene 13</span>
+                            <span class="story-arc-scenes__scene-label">Warehouse showdown</span>
+                          </div>
+                        </li>
+                        <li class="story-arc-scenes__step" role="listitem">
+                          <div class="story-arc-scenes__slot" data-tooltip="Scene 14 • Finale">
+                            <span class="story-arc-scenes__scene-number">Scene 14</span>
+                            <span class="story-arc-scenes__scene-label">Final beat</span>
+                          </div>
+                        </li>
+                      </ol>
+                    </div>
                   </div>
                 </div>
-                <div class="story-arc-scenes" aria-label="Scene timeline">
-                  <div class="story-arc-scenes__container">
-                    <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list" data-story-arc-track="primary"></ol>
-                  </div>
-                </div>
-              </div>
-              <div class="story-arc-actions" aria-label="Story timeline actions">
-                <div class="story-arc-action story-arc-action--menu">
-                  <button class="story-arc-action-btn" type="button" aria-haspopup="true" aria-label="Choose story arc template" title="Choose story arc template">
+                <div class="story-arc-actions" aria-label="Story timeline actions">
+                  <button class="story-arc-action-btn" type="button" aria-label="Storyboard templates" title="Storyboard templates">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                       <circle cx="10.5" cy="10.5" r="6.5"></circle>
                       <path d="M10.5 4v6.5H17"></path>
@@ -1042,23 +1097,153 @@
                       <path d="M17 10.5l4.5-4.5"></path>
                     </svg>
                   </button>
-                  <div class="story-arc-menu" role="menu">
-                    <button class="story-arc-menu__item" type="button" role="menuitem">Choose Story Arc · Opening, Middle, End</button>
-                    <button class="story-arc-menu__item" type="button" role="menuitem">Story Arc 2 · Build up</button>
-                    <button class="story-arc-menu__item" type="button" role="menuitem">Hero's Journey</button>
-                    <button class="story-arc-menu__item" type="button" role="menuitem">Conflict resolution</button>
-                  </div>
+                  <button class="story-arc-action-btn" type="button" aria-label="Timeline bookmarks" title="Timeline bookmarks">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
+                    </svg>
+                  </button>
                 </div>
-                <button class="story-arc-action-btn" type="button" aria-label="Story timeline bookmarks" title="Story timeline bookmarks">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
-                  </svg>
-                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+
+        <section class="panel timeline-panel timeline-showcase__panel">
+          <div class="timeline-stage">
+            <header>
+              <div>
+                <h2>Scene 12 · Rooftop chase</h2>
+                <span>Synced from Writer workspace · 00:45 runtime · 8 frames</span>
+              </div>
+              <div class="timeline-controls">
+                <span class="muted">Timeline locked to script page 47</span>
+              </div>
+            </header>
+            <div class="timeline-wrapper">
+              <div class="timeline-grid">
+                <div class="timeline-scale" aria-hidden="true">
+                  <div class="timeline-scale__header">
+                    <span>Scene timeline (minutes)</span>
+                    <span>Drag & drop clips to re-time</span>
+                  </div>
+                  <div class="timeline-scale__ruler">
+                    <span style="left:0%">0:00</span>
+                    <span style="left:12.5%">0:05</span>
+                    <span style="left:25%">0:10</span>
+                    <span style="left:37.5%">0:15</span>
+                    <span style="left:50%">0:20</span>
+                    <span style="left:62.5%">0:25</span>
+                    <span style="left:75%">0:30</span>
+                    <span style="left:87.5%">0:35</span>
+                    <span style="left:100%">0:40</span>
+                  </div>
+                </div>
+                <div class="timeline-scene timeline-scene--active">
+                  <div class="timeline-scene__label">
+                    <strong>Scene 12 · Rooftop chase</strong>
+                    <span>Hero escapes across neon skyline</span>
+                    <small>Storyboard Pro · Synced from writer</small>
+                  </div>
+                  <div class="timeline-scene__tracks">
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Cards</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:2%; width:30%;">Setup reveal</div>
+                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:36%; width:28%;">Rooftop sprint</div>
+                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:68%; width:24%;">Heli pickup</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Beat grid</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:10%; width:60%;">Raise the stakes</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Shots</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:4%; width:28%;">Drone opener</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:36%; width:24%;">Tracking run</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:64%; width:26%;">Leap to chopper</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Audio</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:12%; width:34%;">Score: synth pulse</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:50%; width:30%;">FX: rotor wash</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Lighting</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:8%; width:38%;">Neon bounce rigs</div>
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:50%; width:32%;">Chopper key</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Notes</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:16%; width:50%;">Director: hold on hero before jump</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="timeline-scene">
+                  <div class="timeline-scene__label">
+                    <strong>Scene 13 · Warehouse showdown</strong>
+                    <span>Team converges on the artifact</span>
+                    <small>Storyboard Pro · Synced from writer</small>
+                  </div>
+                  <div class="timeline-scene__tracks">
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Cards</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:6%; width:34%;">Briefing</div>
+                        <div class="timeline-block timeline-block--cards" data-icon="🃏" style="left:44%; width:30%;">Artifact reveal</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Beat grid</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--beats" data-icon="⏱" style="left:18%; width:50%;">Confrontation</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Shots</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:10%; width:28%;">Push on villain</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:42%; width:26%;">Reveal artifact</div>
+                        <div class="timeline-block timeline-block--shots" data-icon="🎬" style="left:72%; width:20%;">Overhead standoff</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Audio</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:22%; width:36%;">Score: tension bed</div>
+                        <div class="timeline-block timeline-block--audio" data-icon="🔊" style="left:62%; width:24%;">FX: machinery hum</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Lighting</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:12%; width:40%;">Sodium top lights</div>
+                        <div class="timeline-block timeline-block--lighting" data-icon="💡" style="left:58%; width:28%;">Practical uplights</div>
+                      </div>
+                    </div>
+                    <div class="timeline-track">
+                      <div class="timeline-track__header">Notes</div>
+                      <div class="timeline-track__lane">
+                        <div class="timeline-block timeline-block--notes" data-icon="📝" style="left:18%; width:52%;">Producer: add safety rail extras</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
 
       <div class="layout">
         <div class="panel">
@@ -1070,67 +1255,6 @@
         </div>
 
         <div class="panel editor">
-          <div id="focusTimelineDock" class="timeline-dock pinned" aria-label="Story timeline dock (focus mode)" data-timeline-dock="focus">
-            <button id="focusTimelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="false" aria-expanded="false" aria-label="Story timelines are pinned in focus mode" title="Story timelines are pinned in focus mode" data-timeline-handle disabled></button>
-            <div class="timeline-dock__shell">
-              <div class="timeline-dock__content">
-                <div class="story-arc-layout">
-                  <div class="story-arc-columns">
-                    <div class="story-arc-timeline" aria-label="Story arc timeline">
-                      <div class="story-arc-container">
-                        <ol class="story-arc-track" role="list">
-                          <li class="story-arc-step" role="listitem">
-                            <div class="story-arc-pill">
-                              <span class="story-arc-label">Opening</span>
-                            </div>
-                          </li>
-                          <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
-                            <div class="story-arc-pill">
-                              <span class="story-arc-label">Middle</span>
-                            </div>
-                          </li>
-                          <li class="story-arc-step" role="listitem">
-                            <div class="story-arc-pill">
-                              <span class="story-arc-label">End</span>
-                            </div>
-                          </li>
-                        </ol>
-                      </div>
-                    </div>
-                    <div class="story-arc-scenes" aria-label="Scene timeline">
-                      <div class="story-arc-scenes__container">
-                        <ol class="story-arc-scenes__track" id="focusStoryArcSceneSlots" role="list" data-story-arc-track="focus"></ol>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="story-arc-actions" aria-label="Story timeline actions">
-                    <div class="story-arc-action story-arc-action--menu">
-                      <button class="story-arc-action-btn" type="button" aria-haspopup="true" aria-label="Choose story arc template" title="Choose story arc template">
-                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                          <circle cx="10.5" cy="10.5" r="6.5"></circle>
-                          <path d="M10.5 4v6.5H17"></path>
-                          <path d="M17 3v4"></path>
-                          <path d="M19 5h-4"></path>
-                          <path d="M17 10.5l4.5-4.5"></path>
-                        </svg>
-                      </button>
-                      <div class="story-arc-menu" role="menu">
-                        <button class="story-arc-menu__item" type="button" role="menuitem">Choose Story Arc · Opening, Middle, End</button>
-                        <button class="story-arc-menu__item" type="button" role="menuitem">Story Arc 2 · Build up</button>
-                        <button class="story-arc-menu__item" type="button" role="menuitem">Hero's Journey</button>
-                        <button class="story-arc-menu__item" type="button" role="menuitem">Conflict resolution</button>
-                      </div>
-                    </div>
-                    <button class="story-arc-action-btn" type="button" aria-label="Story timeline bookmarks" title="Story timeline bookmarks">
-                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="editor-heading">
             <h2>Script</h2>
             <div class="editor-heading__actions">
@@ -7047,7 +7171,9 @@
       }
     });
 
-    setupTimelineDockInteractions();
+    if (document.querySelector('[data-timeline-dock]')){
+      setupTimelineDockInteractions();
+    }
     setupFocusHudInteractions();
 
     const scriptDialogCancel = document.getElementById('scriptDialogCancel');
