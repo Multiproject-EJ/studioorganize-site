@@ -733,19 +733,24 @@
 
       body.focus-mode .app{ transform: translateY(calc(-1 * var(--nav-height, 0px))); }
       body.focus-mode #timelineDock{
-        width: min(1080px, 90vw);
-        margin: 0 auto;
-        padding-left: 0;
-        padding-right: 0;
-        align-items: stretch;
+        display: none;
       }
-      body.focus-mode #timelineDock .timeline-dock__shell{
-        width: 100%;
-        margin: 0;
+      #focusTimelineDock{ display:none; }
+      body.focus-mode #focusTimelineDock{
+        display:flex;
+        position:sticky;
+        top:0;
+        z-index:2000;
+        padding:14px 16px 8px;
+        background:linear-gradient(180deg, var(--bg) 0%, transparent 90%);
       }
-      body.focus-mode #timelineDock .timeline-dock__handle{
-        width: 100%;
-        max-width: none;
+      body.focus-mode #focusTimelineDock .timeline-dock__shell{
+        width:min(1080px, 100%);
+        margin:0 auto;
+      }
+      body.focus-mode #focusTimelineDock .timeline-dock__handle{
+        width:100%;
+        max-width:none;
       }
       body.focus-mode .timeline-dock.floating-hidden{ padding-top:0; padding-bottom:0; gap:0; }
       body.focus-mode .timeline-dock.floating-hidden .timeline-dock__shell{ margin:0; }
@@ -918,8 +923,8 @@
         <!-- Focus toggle -->
         <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
       </div>
-      <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
-        <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
+      <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock" data-timeline-dock="primary">
+        <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines" data-timeline-handle></button>
         <div class="timeline-dock__shell">
           <div class="timeline-dock__content">
             <div class="story-arc-layout">
@@ -947,7 +952,7 @@
                 </div>
                 <div class="story-arc-scenes" aria-label="Scene timeline">
                   <div class="story-arc-scenes__container">
-                    <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+                    <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list" data-story-arc-track="primary"></ol>
                   </div>
                 </div>
               </div>
@@ -990,6 +995,67 @@
         </div>
 
         <div class="panel editor">
+          <div id="focusTimelineDock" class="timeline-dock pinned" aria-label="Story timeline dock (focus mode)" data-timeline-dock="focus">
+            <button id="focusTimelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="false" aria-expanded="false" aria-label="Story timelines are pinned in focus mode" title="Story timelines are pinned in focus mode" data-timeline-handle disabled></button>
+            <div class="timeline-dock__shell">
+              <div class="timeline-dock__content">
+                <div class="story-arc-layout">
+                  <div class="story-arc-columns">
+                    <div class="story-arc-timeline" aria-label="Story arc timeline">
+                      <div class="story-arc-container">
+                        <ol class="story-arc-track" role="list">
+                          <li class="story-arc-step" role="listitem">
+                            <div class="story-arc-pill">
+                              <span class="story-arc-label">Opening</span>
+                            </div>
+                          </li>
+                          <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                            <div class="story-arc-pill">
+                              <span class="story-arc-label">Middle</span>
+                            </div>
+                          </li>
+                          <li class="story-arc-step" role="listitem">
+                            <div class="story-arc-pill">
+                              <span class="story-arc-label">End</span>
+                            </div>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                    <div class="story-arc-scenes" aria-label="Scene timeline">
+                      <div class="story-arc-scenes__container">
+                        <ol class="story-arc-scenes__track" id="focusStoryArcSceneSlots" role="list" data-story-arc-track="focus"></ol>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="story-arc-actions" aria-label="Story timeline actions">
+                    <div class="story-arc-action story-arc-action--menu">
+                      <button class="story-arc-action-btn" type="button" aria-haspopup="true" aria-label="Choose story arc template" title="Choose story arc template">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                          <path d="M10.5 4v6.5H17"></path>
+                          <path d="M17 3v4"></path>
+                          <path d="M19 5h-4"></path>
+                          <path d="M17 10.5l4.5-4.5"></path>
+                        </svg>
+                      </button>
+                      <div class="story-arc-menu" role="menu">
+                        <button class="story-arc-menu__item" type="button" role="menuitem">Choose Story Arc · Opening, Middle, End</button>
+                        <button class="story-arc-menu__item" type="button" role="menuitem">Story Arc 2 · Build up</button>
+                        <button class="story-arc-menu__item" type="button" role="menuitem">Hero's Journey</button>
+                        <button class="story-arc-menu__item" type="button" role="menuitem">Conflict resolution</button>
+                      </div>
+                    </div>
+                    <button class="story-arc-action-btn" type="button" aria-label="Story timeline bookmarks" title="Story timeline bookmarks">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="editor-heading">
             <h2>Script</h2>
             <div class="editor-heading__actions">
@@ -3005,6 +3071,79 @@
     /* =========================
      * Rendering & UI
      * =======================*/
+    function renderStoryArcSceneTracks(scenes){
+      const tracks = document.querySelectorAll('[data-story-arc-track]');
+      tracks.forEach(track => {
+        if (!track) return;
+        track.innerHTML = '';
+        if (!Array.isArray(scenes) || !scenes.length){
+          const emptyState = document.createElement('li');
+          emptyState.className = 'story-arc-scenes__empty';
+          emptyState.setAttribute('role', 'listitem');
+          emptyState.textContent = 'Add scenes to build your timeline.';
+          track.appendChild(emptyState);
+          return;
+        }
+        const collapseSceneLabels = scenes.length > 8;
+        scenes.forEach((scene, index)=>{
+          const li = document.createElement('li');
+          li.className = 'story-arc-scenes__step' + (scene.id === activeSceneId ? ' story-arc-scenes__step--active' : '');
+          li.setAttribute('role', 'listitem');
+          const slot = document.createElement('div');
+          slot.className = 'story-arc-scenes__slot' + (collapseSceneLabels ? ' story-arc-scenes__slot--compact' : '');
+          slot.tabIndex = 0;
+          slot.setAttribute('role', 'button');
+          slot.setAttribute('aria-pressed', scene.id === activeSceneId ? 'true' : 'false');
+          const numberSpan = document.createElement('span');
+          numberSpan.className = 'story-arc-scenes__scene-number';
+          const sceneNumberLabel = `Scene ${index + 1}`;
+          numberSpan.textContent = collapseSceneLabels ? String(index + 1) : sceneNumberLabel;
+          const labelSpan = document.createElement('span');
+          labelSpan.className = 'story-arc-scenes__scene-label';
+          const rawSlug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
+          const fallbackTitle = typeof scene?.title === 'string' ? scene.title.trim() : '';
+          const displayLabel = rawSlug || fallbackTitle || `Scene ${index + 1}`;
+          if (collapseSceneLabels){
+            labelSpan.textContent = '';
+            labelSpan.hidden = true;
+          } else {
+            labelSpan.textContent = displayLabel;
+          }
+          labelSpan.title = displayLabel;
+          const tooltipLabel = displayLabel && displayLabel !== sceneNumberLabel ? `${sceneNumberLabel} • ${displayLabel}` : sceneNumberLabel;
+          slot.dataset.tooltip = tooltipLabel;
+          slot.setAttribute('aria-label', tooltipLabel);
+          slot.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (sceneDragSceneId) return;
+            if (sceneInlineRenameId) return;
+            let shouldRender = false;
+            if (scenePopoverOpenId){
+              scenePopoverOpenId = null;
+              shouldRender = true;
+            }
+            if (activeSceneId !== scene.id){
+              activeSceneId = scene.id;
+              shouldRender = true;
+            }
+            if (shouldRender) render();
+          });
+          slot.addEventListener('keydown', event => {
+            if (event.target !== slot) return;
+            if (event.key === 'Enter' || event.key === ' '){
+              event.preventDefault();
+              slot.click();
+            }
+          });
+          slot.appendChild(numberSpan);
+          slot.appendChild(labelSpan);
+          li.appendChild(slot);
+          track.appendChild(li);
+        });
+      });
+    }
+
     function render(){
       ensureProjectShape();
       pruneStoryboardAIState();
@@ -3024,76 +3163,8 @@
         syncTimelineDockState(true);
       }
 
-      const storyArcSceneTrack = document.getElementById('storyArcSceneSlots');
-      if (storyArcSceneTrack){
-        storyArcSceneTrack.innerHTML = '';
-        const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
-        if (scenes.length){
-          const collapseSceneLabels = scenes.length > 8;
-          scenes.forEach((scene, index)=>{
-            const li = document.createElement('li');
-            li.className = 'story-arc-scenes__step' + (scene.id === activeSceneId ? ' story-arc-scenes__step--active' : '');
-            li.setAttribute('role', 'listitem');
-            const slot = document.createElement('div');
-            slot.className = 'story-arc-scenes__slot' + (collapseSceneLabels ? ' story-arc-scenes__slot--compact' : '');
-            slot.tabIndex = 0;
-            slot.setAttribute('role', 'button');
-            slot.setAttribute('aria-pressed', scene.id === activeSceneId ? 'true' : 'false');
-            const numberSpan = document.createElement('span');
-            numberSpan.className = 'story-arc-scenes__scene-number';
-            const sceneNumberLabel = `Scene ${index + 1}`;
-            numberSpan.textContent = collapseSceneLabels ? String(index + 1) : sceneNumberLabel;
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'story-arc-scenes__scene-label';
-            const rawSlug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
-            const fallbackTitle = typeof scene?.title === 'string' ? scene.title.trim() : '';
-            const displayLabel = rawSlug || fallbackTitle || `Scene ${index + 1}`;
-            if (collapseSceneLabels){
-              labelSpan.textContent = '';
-              labelSpan.hidden = true;
-            } else {
-              labelSpan.textContent = displayLabel;
-            }
-            labelSpan.title = displayLabel;
-            const tooltipLabel = displayLabel && displayLabel !== sceneNumberLabel ? `${sceneNumberLabel} • ${displayLabel}` : sceneNumberLabel;
-            slot.dataset.tooltip = tooltipLabel;
-            slot.setAttribute('aria-label', tooltipLabel);
-            slot.addEventListener('click', event => {
-              event.preventDefault();
-              event.stopPropagation();
-              if (sceneDragSceneId) return;
-              if (sceneInlineRenameId) return;
-              let shouldRender = false;
-              if (scenePopoverOpenId){
-                scenePopoverOpenId = null;
-                shouldRender = true;
-              }
-              if (activeSceneId !== scene.id){
-                activeSceneId = scene.id;
-                shouldRender = true;
-              }
-              if (shouldRender) render();
-            });
-            slot.addEventListener('keydown', event => {
-              if (event.target !== slot) return;
-              if (event.key === 'Enter' || event.key === ' '){
-                event.preventDefault();
-                slot.click();
-              }
-            });
-            slot.appendChild(numberSpan);
-            slot.appendChild(labelSpan);
-            li.appendChild(slot);
-            storyArcSceneTrack.appendChild(li);
-          });
-        } else {
-          const emptyState = document.createElement('li');
-          emptyState.className = 'story-arc-scenes__empty';
-          emptyState.setAttribute('role', 'listitem');
-          emptyState.textContent = 'Add scenes to build your timeline.';
-          storyArcSceneTrack.appendChild(emptyState);
-        }
-      }
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      renderStoryArcSceneTracks(scenes);
 
       // scenes list
       const list = document.getElementById('sceneList');
@@ -8319,34 +8390,52 @@
     }
 
     function updateTimelineHandleWidth(){
-      const handle = document.getElementById('timelineDockHandle');
-      if (!handle) return;
-      if (!timelinePinned){
-        handle.style.width = '';
-        updateTimelineDockOffset();
-        return;
-      }
-      const dock = document.getElementById('timelineDock');
-      const shell = dock?.querySelector('.timeline-dock__shell');
-      const width = shell?.offsetWidth || 0;
-      handle.style.width = width > 0 ? width + 'px' : '';
+      const handles = document.querySelectorAll('[data-timeline-handle]');
+      handles.forEach(handle => {
+        const dock = handle.closest('[data-timeline-dock]');
+        if (!dock) return;
+        if (!dock.classList.contains('pinned')){
+          handle.style.width = '';
+          return;
+        }
+        const shell = dock.querySelector('.timeline-dock__shell');
+        const width = shell?.offsetWidth || 0;
+        handle.style.width = width > 0 ? width + 'px' : '';
+      });
       updateTimelineDockOffset();
     }
 
     function syncTimelineDockState(forceReveal){
-      const dock = document.getElementById('timelineDock');
-      const handle = document.getElementById('timelineDockHandle');
+      const primaryDock = document.getElementById('timelineDock');
+      const focusDock = document.getElementById('focusTimelineDock');
       const inFocusMode = document.body.classList.contains('focus-mode');
       timelinePinned = !!project?.settings?.timelineDockPinned;
       lastTimelinePinned = timelinePinned;
-      if (handle){
-        handle.setAttribute('aria-pressed', timelinePinned ? 'true' : 'false');
-        handle.setAttribute('aria-label', timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines');
-        handle.title = timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines';
+      const handles = document.querySelectorAll('[data-timeline-handle]');
+      handles.forEach(handle => {
+        const dock = handle.closest('[data-timeline-dock]');
+        if (!dock) return;
+        const isFocusDock = dock.dataset.timelineDock === 'focus';
+        if (isFocusDock){
+          handle.setAttribute('aria-pressed', inFocusMode ? 'true' : 'false');
+          handle.setAttribute('aria-expanded', inFocusMode ? 'true' : 'false');
+          handle.setAttribute('aria-label', inFocusMode ? 'Story timelines are pinned in focus mode' : 'Story timelines available in focus mode');
+          handle.title = inFocusMode ? 'Story timelines are pinned in focus mode' : 'Story timelines available in focus mode';
+        } else {
+          handle.setAttribute('aria-pressed', timelinePinned ? 'true' : 'false');
+          handle.setAttribute('aria-expanded', timelinePinned ? 'true' : 'false');
+          handle.setAttribute('aria-label', timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines');
+          handle.title = timelinePinned ? 'Click to float story timelines' : 'Click to pin story timelines';
+        }
+      });
+      if (focusDock){
+        focusDock.classList.toggle('pinned', inFocusMode);
+        focusDock.classList.toggle('floating', false);
+        focusDock.classList.toggle('floating-hidden', !inFocusMode);
       }
-      if (!dock) return;
-      dock.classList.toggle('pinned', timelinePinned);
-      dock.classList.toggle('floating', !timelinePinned);
+      if (!primaryDock) return;
+      primaryDock.classList.toggle('pinned', timelinePinned);
+      primaryDock.classList.toggle('floating', !timelinePinned);
       if (timelinePinned){
         showTimelineDock();
       } else {
@@ -8356,7 +8445,6 @@
         } else {
           hideTimelineDockImmediately();
         }
-        if (handle) handle.style.width = '';
       }
       updateTimelineDockOffset();
       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(updateTimelineHandleWidth);
