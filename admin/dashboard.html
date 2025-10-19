@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard — StudioOrganize</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/">StudioOrganize</a>
+  <nav class="menu">
+    <a class="menu__link menu__link--plain menu__link--icon" href="/">
+      <span aria-hidden="true">🏠</span>
+      <span class="sr-only">Home</span>
+    </a>
+    <div class="dropdown">
+      <button class="dropbtn dropbtn--plain" type="button">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+    <a class="menu__link menu__link--plain" href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a>
+    <div class="menu__actions">
+      <button class="theme-toggle theme-toggle--icon" type="button" data-theme-toggle aria-pressed="false">
+        <span class="sr-only">Toggle theme</span>
+        <span class="theme-toggle__icon" aria-hidden="true" data-theme-icon>☀️</span>
+      </button>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link>Sign up / Log in</a>
+      <div class="dropdown" data-account-menu hidden>
+        <button class="menu__cta" type="button" data-account-button>Account</button>
+        <div class="dropdown-content">
+          <a href="/account.html">My Creator Page</a>
+          <a href="/product/personal.html">My Subscription</a>
+          <a href="#" data-account-logout>Log out</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="admin-dashboard" aria-labelledby="adminDashboardTitle">
+  <header class="admin-dashboard__intro">
+    <p class="admin-dashboard__eyebrow">Operations</p>
+    <h1 id="adminDashboardTitle">StudioOrganize admin</h1>
+    <p class="muted">A snapshot of revenue momentum and the health of our production workspace.</p>
+  </header>
+
+  <section class="admin-card" aria-labelledby="salesOpsCard">
+    <header class="admin-card__head">
+      <div>
+        <p class="admin-card__eyebrow">Sales stats</p>
+        <h2 id="salesOpsCard">Stripe revenue pulse</h2>
+        <p class="admin-card__meta">
+          Synced 5 minutes ago
+          <span aria-hidden="true">•</span>
+          <span class="admin-card__meta-pill">Last payout: 18 Oct</span>
+        </p>
+      </div>
+      <a class="admin-card__cta" href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer">Open Stripe</a>
+    </header>
+
+    <div class="admin-card__sales-grid" role="list">
+      <article class="sales-metric" data-trend="up" role="listitem">
+        <p class="sales-metric__label">Monthly revenue</p>
+        <p class="sales-metric__value">€12,480</p>
+        <p class="sales-metric__delta">+18% vs Sep</p>
+        <p class="sales-metric__note">Projected €14,000 by month end.</p>
+      </article>
+      <article class="sales-metric" data-trend="up" role="listitem">
+        <p class="sales-metric__label">Daily average</p>
+        <p class="sales-metric__value">€416</p>
+        <p class="sales-metric__delta">+9% week over week</p>
+        <p class="sales-metric__note">Best day: Tue — €612 total across 18 checkouts.</p>
+      </article>
+      <article class="sales-metric" data-trend="steady" role="listitem">
+        <p class="sales-metric__label">Conversion rate</p>
+        <p class="sales-metric__value">4.6%</p>
+        <p class="sales-metric__delta">+0.3 pts vs 30-day avg</p>
+        <p class="sales-metric__note">Traffic uptick from timeline demo launch.</p>
+      </article>
+      <article class="sales-metric" data-trend="down" role="listitem">
+        <p class="sales-metric__label">Refund rate</p>
+        <p class="sales-metric__value">1.2%</p>
+        <p class="sales-metric__delta">-0.5 pts vs last month</p>
+        <p class="sales-metric__note">No open disputes. Monitor for bundle churn.</p>
+      </article>
+    </div>
+
+    <section class="admin-card__status" aria-labelledby="supabaseStatusTitle">
+      <header class="admin-card__status-head">
+        <div>
+          <h3 id="supabaseStatusTitle">Supabase workspace health</h3>
+          <p class="muted">Live signals from the production database and automations.</p>
+        </div>
+        <span class="status-pill" data-state="good">All systems go</span>
+      </header>
+      <ul class="status-list">
+        <li class="status-item">
+          <div>
+            <p class="status-item__label">Profiles &amp; subscriptions</p>
+            <p class="status-item__note">Row counts in sync (last replication 4m ago).</p>
+          </div>
+          <span class="status-pill" data-state="good">Healthy</span>
+        </li>
+        <li class="status-item">
+          <div>
+            <p class="status-item__label">Workspace scenes backup</p>
+            <p class="status-item__note">Nightly archive completed in 92s.</p>
+          </div>
+          <span class="status-pill" data-state="good">Operational</span>
+        </li>
+        <li class="status-item">
+          <div>
+            <p class="status-item__label">Realtime edits channel</p>
+            <p class="status-item__note">Latency 180&nbsp;ms (95th percentile).</p>
+          </div>
+          <span class="status-pill" data-state="steady">Watching</span>
+        </li>
+        <li class="status-item">
+          <div>
+            <p class="status-item__label">Automations — character sync</p>
+            <p class="status-item__note">Paused awaiting new API quota (resume ETA 20 Oct).</p>
+          </div>
+          <span class="status-pill" data-state="warn">Action needed</span>
+        </li>
+      </ul>
+    </section>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div><strong>StudioOrganize</strong></div>
+    <div>
+      <a href="mailto:support@studioorganize.com">support@studioorganize.com</a><br />
+      <span class="muted">© <span id="y"></span> StudioOrganize</span>
+    </div>
+  </div>
+</footer>
+<script type="module" src="/assets/main.js"></script>
+</body>
+</html>
