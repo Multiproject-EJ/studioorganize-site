@@ -280,6 +280,110 @@
       </p>
     </div>
 
+    <section class="project-progress" aria-label="Story goal overview" data-project-progress>
+      <div class="project-progress__header">
+        <div>
+          <h3>Story Goal Tracker</h3>
+          <p class="muted">
+            See the targets you set while loading scripts, compare them against your latest draft, and choose the next creative move in a single click.
+          </p>
+        </div>
+        <button type="button" class="project-progress__refresh" data-project-progress-refresh>
+          <span aria-hidden="true">⟳</span>
+          <span data-project-progress-refresh-label>Refresh goals</span>
+        </button>
+      </div>
+
+      <p class="project-progress__empty muted" data-project-progress-empty>
+        Set page, runtime, or scene goals from the Screenplay workspace to see your story progression here.
+      </p>
+
+      <div class="project-progress__table-wrap" data-project-progress-table hidden>
+        <table class="project-progress__table">
+          <thead>
+            <tr>
+              <th scope="col">Story</th>
+              <th scope="col">Pages</th>
+              <th scope="col">Runtime</th>
+              <th scope="col">Scenes</th>
+            </tr>
+          </thead>
+          <tbody data-project-progress-rows></tbody>
+        </table>
+      </div>
+
+      <div class="project-progress__detail" data-project-detail hidden>
+        <div class="project-progress__detail-header">
+          <div>
+            <span class="project-progress__detail-kicker">Spotlight story</span>
+            <h4 data-project-detail-title>Untitled Script</h4>
+            <p class="project-progress__detail-summary muted" data-project-detail-summary></p>
+          </div>
+        </div>
+        <div class="project-progress__detail-meta">
+          <span data-project-detail-updated></span>
+          <span data-project-detail-characters></span>
+        </div>
+        <div class="project-progress__detail-grid">
+          <div class="project-progress__metric" data-project-metric="pages">
+            <p class="project-progress__metric-label">Pages</p>
+            <p class="project-progress__metric-value">
+              <span data-metric-value>0</span>
+              <span data-metric-goal></span>
+            </p>
+            <div class="project-progress__metric-progress">
+              <div class="project-progress__bar" data-metric-bar></div>
+              <span class="project-progress__metric-percent" data-metric-percent></span>
+            </div>
+          </div>
+          <div class="project-progress__metric" data-project-metric="runtime">
+            <p class="project-progress__metric-label">Runtime</p>
+            <p class="project-progress__metric-value">
+              <span data-metric-value>0</span>
+              <span data-metric-goal></span>
+            </p>
+            <div class="project-progress__metric-progress">
+              <div class="project-progress__bar" data-metric-bar></div>
+              <span class="project-progress__metric-percent" data-metric-percent></span>
+            </div>
+          </div>
+          <div class="project-progress__metric" data-project-metric="scenes">
+            <p class="project-progress__metric-label">Scenes</p>
+            <p class="project-progress__metric-value">
+              <span data-metric-value>0</span>
+              <span data-metric-goal></span>
+            </p>
+            <div class="project-progress__metric-progress">
+              <div class="project-progress__bar" data-metric-bar></div>
+              <span class="project-progress__metric-percent" data-metric-percent></span>
+            </div>
+          </div>
+        </div>
+        <div class="project-progress__notes" data-project-note hidden>
+          <h5>Latest project note</h5>
+          <p data-project-note-text></p>
+        </div>
+        <div class="project-progress__actions" role="group" aria-label="Quick actions for the selected story">
+          <button type="button" class="project-progress__action project-progress__action--primary" data-project-action="open-script">
+            <span class="project-progress__action-title">Let's jump into this script</span>
+            <span class="project-progress__action-copy">Open the Screenplay workspace and pick up exactly where you left off.</span>
+          </button>
+          <a class="project-progress__action" data-project-action="character" href="/CharacterStudio.html">
+            <span class="project-progress__action-title">Develop a character</span>
+            <span class="project-progress__action-copy">Shape motivations, relationships, and arcs in Character Studio.</span>
+          </a>
+          <a class="project-progress__action" data-project-action="set" href="/use-cases/set-design.html">
+            <span class="project-progress__action-title">Plan your next set</span>
+            <span class="project-progress__action-copy">Lay out props, lighting, and mood boards for the upcoming scene.</span>
+          </a>
+          <a class="project-progress__action" data-project-action="storyboard" href="/StoryboardPro.html">
+            <span class="project-progress__action-title">Storyboard the next sequence</span>
+            <span class="project-progress__action-copy">Map shot ideas and camera moves to prep your shoot.</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
         <h3>Challenge Badges</h3>
@@ -553,6 +657,629 @@
     </div>
   </div>
 </footer>
+
+<script>
+  (function(){
+    const container = document.querySelector('[data-project-progress]');
+    if (!container) return;
+
+    const SELECT_STORAGE_KEY = 'SO_ACCOUNT_SELECTED_PROJECT';
+    const LAST_PROJECT_KEY = 'SW_LAST_PROJECT_ID';
+    const DB_NAME = 'sw_db_v1';
+    const STORE_NAME = 'projects';
+    const SCRIPT_LINES_PER_PAGE = 55;
+
+    const metricsConfig = [
+      {
+        key: 'pages',
+        statKey: 'pageEstimate',
+        goalKey: 'pageCount',
+        label: 'Pages',
+        unitSingular: 'page',
+        unitPlural: 'pages',
+        formatValue: value => formatNumber(value),
+        formatGoal: value => `${formatNumber(value)} ${value === 1 ? 'page' : 'pages'}`
+      },
+      {
+        key: 'runtime',
+        statKey: 'runtimeEstimate',
+        goalKey: 'runtimeMinutes',
+        label: 'Runtime',
+        unitSingular: 'minute',
+        unitPlural: 'minutes',
+        formatValue: value => `${formatNumber(value)} min`,
+        formatGoal: value => `${formatNumber(value)} ${value === 1 ? 'minute' : 'minutes'}`
+      },
+      {
+        key: 'scenes',
+        statKey: 'sceneCount',
+        goalKey: 'sceneCount',
+        label: 'Scenes',
+        unitSingular: 'scene',
+        unitPlural: 'scenes',
+        formatValue: value => formatNumber(value),
+        formatGoal: value => `${formatNumber(value)} ${value === 1 ? 'scene' : 'scenes'}`
+      }
+    ];
+
+    const numberFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+
+    const tableWrap = container.querySelector('[data-project-progress-table]');
+    const tableBody = container.querySelector('[data-project-progress-rows]');
+    const emptyState = container.querySelector('[data-project-progress-empty]');
+    const detail = container.querySelector('[data-project-detail]');
+    const refreshButton = container.querySelector('[data-project-progress-refresh]');
+    const refreshLabel = container.querySelector('[data-project-progress-refresh-label]');
+    const detailTitle = detail?.querySelector('[data-project-detail-title]') ?? null;
+    const detailSummary = detail?.querySelector('[data-project-detail-summary]') ?? null;
+    const detailUpdated = detail?.querySelector('[data-project-detail-updated]') ?? null;
+    const detailCharacters = detail?.querySelector('[data-project-detail-characters]') ?? null;
+    const detailNotes = detail?.querySelector('[data-project-note]') ?? null;
+    const detailNotesText = detail?.querySelector('[data-project-note-text]') ?? null;
+
+    let projectsData = [];
+    let selectedProjectId = null;
+    let loading = false;
+
+    function formatNumber(value){
+      if (!Number.isFinite(value)) return '0';
+      return numberFormatter.format(value);
+    }
+
+    function resolveProjectId(project){
+      const id = project?.projectId ?? project?.project_id ?? project?.id;
+      return id ? String(id) : '';
+    }
+
+    function parseNumericGoal(value){
+      if (typeof value === 'number'){
+        if (!Number.isFinite(value) || value <= 0) return null;
+        return Math.round(value);
+      }
+      if (typeof value === 'string'){
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed <= 0) return null;
+        return Math.round(parsed);
+      }
+      return null;
+    }
+
+    function normalizeProjectGoals(goals){
+      const source = (goals && typeof goals === 'object') ? goals : {};
+      const normalized = {
+        pageCount: parseNumericGoal(source.pageCount ?? source.pages ?? source.pageGoal ?? source.goalPages),
+        runtimeMinutes: parseNumericGoal(source.runtimeMinutes ?? source.runtime ?? source.lengthMinutes ?? source.length ?? source.runtimeGoal ?? source.goalRuntime),
+        sceneCount: parseNumericGoal(source.sceneCount ?? source.scenes ?? source.sceneTotal ?? source.sceneGoal ?? source.goalScenes)
+      };
+      Object.keys(source).forEach(key => {
+        if (!(key in normalized)){
+          normalized[key] = source[key];
+        }
+      });
+      return normalized;
+    }
+
+    function estimateScenePageCount(scene){
+      if (!scene || !Array.isArray(scene.elements)) return 1;
+      const lines = scene.elements.length || 0;
+      return Math.max(1, Math.ceil(lines / SCRIPT_LINES_PER_PAGE));
+    }
+
+    function extractDate(value){
+      if (!value) return null;
+      if (typeof value === 'number'){
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+      if (typeof value === 'string'){
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+      return null;
+    }
+
+    function formatDate(date){
+      if (!(date instanceof Date)) return '';
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function computePercent(value, goal){
+      if (!goal || goal <= 0) return null;
+      if (!Number.isFinite(value)) return null;
+      const ratio = value / goal;
+      return {
+        ratio,
+        clamped: Math.max(0, Math.min(1, ratio)),
+        percentLabel: Math.round(Math.max(0, ratio) * 100)
+      };
+    }
+
+    function computeProjectSnapshot(project){
+      const id = resolveProjectId(project);
+      if (!id) return null;
+      const rawTitle = typeof project?.title === 'string' ? project.title.trim() : '';
+      const title = rawTitle || 'Untitled Script';
+      const goals = normalizeProjectGoals(project?.settings?.goals);
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const pageEstimate = scenes.reduce((total, scene) => total + estimateScenePageCount(scene), 0);
+      const runtimeEstimate = pageEstimate;
+      const sceneCount = scenes.length;
+      const characters = Array.isArray(project?.catalogs?.characters) ? project.catalogs.characters : [];
+      const charactersCount = characters.length;
+      const notes = typeof project?.notes === 'string' ? project.notes.trim() : '';
+      const updatedAt = extractDate(project?.updatedAt ?? project?.updated_at);
+      const createdAt = extractDate(project?.createdAt ?? project?.created_at);
+      const percentages = {
+        pages: computePercent(pageEstimate, goals.pageCount ?? null),
+        runtime: computePercent(runtimeEstimate, goals.runtimeMinutes ?? null),
+        scenes: computePercent(sceneCount, goals.sceneCount ?? null)
+      };
+      const ratios = Object.values(percentages)
+        .map(entry => entry?.ratio)
+        .filter(value => typeof value === 'number' && Number.isFinite(value));
+      const overall = ratios.length ? ratios.reduce((sum, value) => sum + value, 0) / ratios.length : null;
+      return {
+        id,
+        title,
+        goals,
+        stats: { pageEstimate, runtimeEstimate, sceneCount, charactersCount },
+        percentages,
+        overall,
+        updatedAt,
+        createdAt,
+        notes
+      };
+    }
+
+    function fetchWorkspaceProjects(){
+      return new Promise(resolve => {
+        if (!('indexedDB' in window)){
+          resolve([]);
+          return;
+        }
+        let settled = false;
+        const finish = value => {
+          if (!settled){
+            settled = true;
+            resolve(value);
+          }
+        };
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onerror = () => finish([]);
+        request.onupgradeneeded = event => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)){
+            db.createObjectStore(STORE_NAME, { keyPath: 'projectId' });
+          }
+        };
+        request.onsuccess = event => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)){
+            finish([]);
+            try { db.close(); } catch (_error){}
+            return;
+          }
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          if (typeof store.getAll === 'function'){
+            const getAll = store.getAll();
+            getAll.onsuccess = () => {
+              finish(Array.isArray(getAll.result) ? getAll.result : []);
+            };
+            getAll.onerror = () => finish([]);
+          } else {
+            const rows = [];
+            const cursor = store.openCursor();
+            cursor.onsuccess = e => {
+              const cur = e.target.result;
+              if (cur){
+                rows.push(cur.value);
+                cur.continue();
+              } else {
+                finish(rows);
+              }
+            };
+            cursor.onerror = () => finish([]);
+          }
+          tx.oncomplete = () => {
+            try { db.close(); } catch (_error){}
+          };
+        };
+      });
+    }
+
+    function loadStoredSelection(){
+      try {
+        return localStorage.getItem(SELECT_STORAGE_KEY);
+      } catch (_error){
+        return null;
+      }
+    }
+
+    function persistSelection(id){
+      try {
+        localStorage.setItem(SELECT_STORAGE_KEY, id);
+      } catch (_error){}
+    }
+
+    function persistLastProject(id){
+      try {
+        localStorage.setItem(LAST_PROJECT_KEY, id);
+      } catch (_error){}
+    }
+
+    function clearTable(){
+      if (tableBody){
+        tableBody.textContent = '';
+      }
+      if (detail){
+        detail.hidden = true;
+      }
+    }
+
+    function renderTable(){
+      if (!tableBody) return;
+      tableBody.textContent = '';
+      projectsData.forEach(project => {
+        const row = document.createElement('tr');
+        row.className = 'project-progress__row';
+        row.dataset.projectId = project.id;
+        if (project.id === selectedProjectId){
+          row.classList.add('is-selected');
+        }
+
+        const storyCell = document.createElement('th');
+        storyCell.scope = 'row';
+
+        const selectButton = document.createElement('button');
+        selectButton.type = 'button';
+        selectButton.className = 'project-progress__select';
+        selectButton.dataset.projectSelect = project.id;
+        selectButton.setAttribute('aria-label', `Analyze ${project.title}`);
+        if (project.id === selectedProjectId){
+          selectButton.setAttribute('aria-current', 'true');
+        }
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'project-progress__story-name';
+        nameSpan.textContent = project.title;
+
+        const metaSpan = document.createElement('span');
+        metaSpan.className = 'project-progress__story-meta';
+        const metaParts = [];
+        if (project.overall !== null){
+          metaParts.push(`${Math.round(project.overall * 100)}% to goal`);
+        }
+        if (project.updatedAt){
+          metaParts.push(`Updated ${formatDate(project.updatedAt)}`);
+        } else if (project.createdAt){
+          metaParts.push(`Created ${formatDate(project.createdAt)}`);
+        }
+        if (!metaParts.length){
+          metaParts.push('Goals not set yet');
+        }
+        metaSpan.textContent = metaParts.join(' • ');
+
+        selectButton.append(nameSpan, metaSpan);
+        storyCell.appendChild(selectButton);
+        row.appendChild(storyCell);
+
+        metricsConfig.forEach(metric => {
+          const cell = document.createElement('td');
+          cell.className = 'project-progress__cell project-progress__cell--stat';
+
+          const statWrapper = document.createElement('div');
+          statWrapper.className = 'project-progress__stat';
+
+          const valueEl = document.createElement('span');
+          valueEl.className = 'project-progress__stat-value';
+          const statValue = project.stats[metric.statKey];
+          valueEl.textContent = metric.formatValue ? metric.formatValue(statValue) : formatNumber(statValue);
+          statWrapper.appendChild(valueEl);
+
+          const goalEl = document.createElement('span');
+          goalEl.className = 'project-progress__stat-goal';
+          const goalValue = project.goals[metric.goalKey];
+          if (goalValue){
+            const goalLabel = metric.formatGoal
+              ? metric.formatGoal(goalValue)
+              : `${formatNumber(goalValue)} ${goalValue === 1 ? metric.unitSingular : metric.unitPlural}`;
+            goalEl.textContent = `of ${goalLabel}`;
+          } else {
+            goalEl.textContent = 'Goal not set';
+            goalEl.classList.add('project-progress__stat-goal--missing');
+          }
+          statWrapper.appendChild(goalEl);
+
+          const barRow = document.createElement('div');
+          barRow.className = 'project-progress__stat-bar';
+
+          const bar = document.createElement('div');
+          bar.className = 'project-progress__bar';
+          const percentData = project.percentages[metric.key];
+          if (percentData && goalValue){
+            bar.style.setProperty('--progress', percentData.clamped.toFixed(3));
+            bar.setAttribute('role', 'progressbar');
+            bar.setAttribute('aria-valuemin', '0');
+            bar.setAttribute('aria-valuemax', String(goalValue));
+            bar.setAttribute('aria-valuenow', String(Math.min(statValue, goalValue)));
+            bar.setAttribute('aria-label', `${metric.label} goal progress`);
+          } else {
+            bar.style.setProperty('--progress', '0');
+          }
+          barRow.appendChild(bar);
+
+          if (percentData){
+            const percentLabel = document.createElement('span');
+            percentLabel.className = 'project-progress__stat-percent';
+            percentLabel.textContent = `${Math.round(Math.max(0, percentData.ratio) * 100)}%`;
+            barRow.appendChild(percentLabel);
+          }
+
+          statWrapper.appendChild(barRow);
+          cell.appendChild(statWrapper);
+          row.appendChild(cell);
+        });
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    function updateRowSelection(){
+      if (!tableBody) return;
+      tableBody.querySelectorAll('.project-progress__row').forEach(row => {
+        const isSelected = row.dataset.projectId === selectedProjectId;
+        row.classList.toggle('is-selected', isSelected);
+        const button = row.querySelector('[data-project-select]');
+        if (button){
+          if (isSelected){
+            button.setAttribute('aria-current', 'true');
+          } else {
+            button.removeAttribute('aria-current');
+          }
+        }
+      });
+    }
+
+    function updateDetailPanel(){
+      if (!detail) return;
+      const project = projectsData.find(item => item.id === selectedProjectId);
+      if (!project){
+        detail.hidden = true;
+        return;
+      }
+      detail.hidden = false;
+      if (detailTitle){
+        detailTitle.textContent = project.title;
+      }
+      if (detailSummary){
+        let summaryText = '';
+        if (project.overall !== null){
+          const overallPercent = Math.round(project.overall * 100);
+          summaryText = `You're ${overallPercent}% of the way to the goals you set for this story.`;
+          const focusEntry = metricsConfig
+            .map(metric => ({ metric, percent: project.percentages[metric.key] }))
+            .filter(entry => entry.percent && Number.isFinite(entry.percent.ratio))
+            .sort((a, b) => a.percent.ratio - b.percent.ratio)[0];
+          if (focusEntry){
+            const ratio = Math.max(0, focusEntry.percent.ratio);
+            if (ratio >= 1){
+              summaryText += ` You've already met your ${focusEntry.metric.label.toLowerCase()} goal—consider setting a new target.`;
+            } else {
+              summaryText += ` ${focusEntry.metric.label} progress is at ${Math.round(ratio * 100)}%, making it a strong next milestone.`;
+            }
+          }
+        } else {
+          summaryText = 'Add page, runtime, or scene goals in the Screenplay workspace to track this story here.';
+        }
+        detailSummary.textContent = summaryText;
+      }
+      if (detailUpdated){
+        if (project.updatedAt){
+          detailUpdated.textContent = `Updated ${formatDate(project.updatedAt)}`;
+        } else if (project.createdAt){
+          detailUpdated.textContent = `Created ${formatDate(project.createdAt)}`;
+        } else {
+          detailUpdated.textContent = 'Update time pending';
+        }
+      }
+      if (detailCharacters){
+        const count = project.stats.charactersCount || 0;
+        detailCharacters.textContent = count > 0
+          ? `${formatNumber(count)} ${count === 1 ? 'character profile' : 'character profiles'} started`
+          : 'No character profiles yet';
+      }
+      metricsConfig.forEach(metric => {
+        const metricEl = detail.querySelector(`[data-project-metric="${metric.key}"]`);
+        if (!metricEl) return;
+        const valueEl = metricEl.querySelector('[data-metric-value]');
+        const goalEl = metricEl.querySelector('[data-metric-goal]');
+        const barEl = metricEl.querySelector('[data-metric-bar]');
+        const percentEl = metricEl.querySelector('[data-metric-percent]');
+        const statValue = project.stats[metric.statKey];
+        const goalValue = project.goals[metric.goalKey];
+        if (valueEl){
+          valueEl.textContent = metric.formatValue ? metric.formatValue(statValue) : formatNumber(statValue);
+        }
+        if (goalEl){
+          if (goalValue){
+            const goalLabel = metric.formatGoal
+              ? metric.formatGoal(goalValue)
+              : `${formatNumber(goalValue)} ${goalValue === 1 ? metric.unitSingular : metric.unitPlural}`;
+            goalEl.textContent = `of ${goalLabel}`;
+            goalEl.classList.remove('project-progress__stat-goal--missing');
+          } else {
+            goalEl.textContent = 'Goal not set';
+            goalEl.classList.add('project-progress__stat-goal--missing');
+          }
+        }
+        const percentData = project.percentages[metric.key];
+        if (percentEl){
+          percentEl.textContent = percentData ? `${Math.round(Math.max(0, percentData.ratio) * 100)}%` : '—';
+        }
+        if (barEl){
+          const ratio = percentData ? Math.max(0, Math.min(1, percentData.ratio)) : 0;
+          barEl.style.setProperty('--progress', ratio.toFixed(3));
+          if (percentData && goalValue){
+            barEl.setAttribute('role', 'progressbar');
+            barEl.setAttribute('aria-valuemin', '0');
+            barEl.setAttribute('aria-valuemax', String(goalValue));
+            barEl.setAttribute('aria-valuenow', String(Math.min(statValue, goalValue)));
+            barEl.setAttribute('aria-label', `${metric.label} goal progress`);
+          } else {
+            barEl.removeAttribute('role');
+            barEl.removeAttribute('aria-valuemin');
+            barEl.removeAttribute('aria-valuemax');
+            barEl.removeAttribute('aria-valuenow');
+            barEl.removeAttribute('aria-label');
+          }
+        }
+      });
+      if (detailNotes && detailNotesText){
+        const snippet = project.notes ? project.notes.slice(0, 320).trim() : '';
+        if (snippet){
+          detailNotes.hidden = false;
+          detailNotesText.textContent = project.notes.length > 320 ? `${snippet}…` : snippet;
+        } else {
+          detailNotes.hidden = true;
+          detailNotesText.textContent = '';
+        }
+      }
+    }
+
+    function selectProject(id){
+      const project = projectsData.find(item => item.id === id);
+      if (!project){
+        if (projectsData.length){
+          const fallback = projectsData[0].id;
+          if (fallback && fallback !== id){
+            selectProject(fallback);
+          } else if (detail){
+            detail.hidden = true;
+          }
+        } else if (detail){
+          detail.hidden = true;
+        }
+        return;
+      }
+      selectedProjectId = project.id;
+      persistSelection(project.id);
+      persistLastProject(project.id);
+      updateRowSelection();
+      updateDetailPanel();
+    }
+
+    function setEmptyStateMessage(){
+      if (!emptyState) return;
+      if (!('indexedDB' in window)){
+        emptyState.textContent = 'Your browser does not support offline script storage. Open the Screenplay workspace to capture goals.';
+      } else {
+        emptyState.textContent = 'Set page, runtime, or scene goals from the Screenplay workspace to see your story progression here.';
+      }
+    }
+
+    async function loadProjects(){
+      if (loading) return;
+      loading = true;
+      container.dataset.projectProgressLoading = 'true';
+      try {
+        const raw = await fetchWorkspaceProjects();
+        const deduped = [];
+        const seen = new Set();
+        raw.forEach(item => {
+          const snapshot = computeProjectSnapshot(item);
+          if (!snapshot) return;
+          if (seen.has(snapshot.id)) return;
+          seen.add(snapshot.id);
+          deduped.push(snapshot);
+        });
+        deduped.sort((a, b) => {
+          const aTime = (a.updatedAt && a.updatedAt.getTime()) || (a.createdAt && a.createdAt.getTime()) || 0;
+          const bTime = (b.updatedAt && b.updatedAt.getTime()) || (b.createdAt && b.createdAt.getTime()) || 0;
+          return bTime - aTime;
+        });
+        projectsData = deduped;
+        if (!projectsData.length){
+          if (tableWrap) tableWrap.hidden = true;
+          setEmptyStateMessage();
+          if (emptyState) emptyState.hidden = false;
+          clearTable();
+          selectedProjectId = null;
+          return;
+        }
+        if (emptyState) emptyState.hidden = true;
+        if (tableWrap) tableWrap.hidden = false;
+
+        const storedSelection = loadStoredSelection();
+        const initialId = storedSelection && projectsData.some(item => item.id === storedSelection)
+          ? storedSelection
+          : (projectsData[0]?.id || null);
+        selectedProjectId = initialId;
+        renderTable();
+        if (initialId){
+          selectProject(initialId);
+        } else {
+          updateRowSelection();
+          updateDetailPanel();
+        }
+      } finally {
+        loading = false;
+        delete container.dataset.projectProgressLoading;
+      }
+    }
+
+    setEmptyStateMessage();
+    loadProjects();
+
+    if (tableBody){
+      tableBody.addEventListener('click', event => {
+        const button = event.target instanceof HTMLElement ? event.target.closest('[data-project-select]') : null;
+        if (!button) return;
+        const id = button.getAttribute('data-project-select');
+        if (id){
+          selectProject(id);
+        }
+      });
+    }
+
+    container.addEventListener('click', event => {
+      const action = event.target instanceof HTMLElement ? event.target.closest('[data-project-action]') : null;
+      if (!action) return;
+      const project = projectsData.find(item => item.id === selectedProjectId);
+      const projectId = project?.id;
+      if (projectId){
+        persistLastProject(projectId);
+        persistSelection(projectId);
+      }
+      const type = action.getAttribute('data-project-action');
+      if (type === 'open-script'){
+        event.preventDefault();
+        window.location.href = '/use-cases/screenplay-writing.html';
+      }
+    });
+
+    if (refreshButton){
+      refreshButton.addEventListener('click', () => {
+        if (loading) return;
+        refreshButton.disabled = true;
+        refreshButton.classList.add('is-busy');
+        if (refreshLabel){
+          refreshLabel.dataset.previousLabel = refreshLabel.textContent || '';
+          refreshLabel.textContent = 'Refreshing…';
+        }
+        loadProjects().finally(() => {
+          refreshButton.disabled = false;
+          refreshButton.classList.remove('is-busy');
+          if (refreshLabel){
+            const previous = refreshLabel.dataset.previousLabel || 'Refresh goals';
+            refreshLabel.textContent = previous;
+            delete refreshLabel.dataset.previousLabel;
+          }
+        });
+      });
+    }
+  })();
+</script>
 
 <script>
   (function(){
