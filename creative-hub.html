@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/styles.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -262,6 +263,121 @@
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(216,180,254,0.12),transparent_65%)] animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
           </div>
           <div className="relative z-10 flex flex-col min-h-screen">
+            <div className="workspace-launcher" data-workspace-launcher>
+              <div className="workspace-launcher__controls">
+                <div className="workspace-launcher__toggle-wrap">
+                  <button
+                    className="workspace-launcher__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-label="Workspace menu"
+                    data-workspace-toggle=""
+                  >
+                    <span className="sr-only">Workspace menu</span>
+                    <span className="workspace-launcher__icon" aria-hidden="true"></span>
+                  </button>
+                  <div className="workspace-launcher__chat" data-workspace-chat="" hidden aria-hidden="true">
+                    <div className="workspace-launcher__chat-bubble">
+                      <div className="workspace-launcher__chat-thread" data-workspace-chat-thread="">
+                        <div className="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">
+                          Hi there! Ready to build something great today?
+                        </div>
+                      </div>
+                      <div className="workspace-launcher__chat-suggestions">
+                        <button
+                          type="button"
+                          className="workspace-launcher__chat-chip"
+                          data-workspace-chat-suggestion=""
+                        >
+                          {"Let's start a new story together"}
+                        </button>
+                        <button
+                          type="button"
+                          className="workspace-launcher__chat-chip"
+                          data-workspace-chat-suggestion=""
+                        >
+                          {"Let's analyze my story and improve"}
+                        </button>
+                      </div>
+                      <form className="workspace-launcher__chat-form" data-workspace-chat-form="">
+                        <div className="workspace-launcher__chat-input">
+                          <input
+                            type="text"
+                            placeholder="Ask StudioOrganize…"
+                            aria-label="Ask the workspace assistant"
+                            data-workspace-chat-input=""
+                          />
+                          <button type="submit" className="workspace-launcher__chat-send" aria-label="Send chat message">
+                            <span aria-hidden="true">➤</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                className="workspace-launcher__panel"
+                data-workspace-panel=""
+                aria-hidden="true"
+                hidden
+                tabIndex={-1}
+              >
+                <div className="workspace-launcher__actions">
+                  <button type="button" className="workspace-launcher__script" data-workspace-script="">
+                    <span className="workspace-launcher__script-icon" aria-hidden="true">＋</span>
+                    <span>STORY</span>
+                  </button>
+                </div>
+                <nav className="workspace-launcher__modules" aria-label="Workspace modules">
+                  <a
+                    className="workspace-launcher__module"
+                    href="/use-cases/screenplay-writing.html"
+                    data-label="Screenplay Writing"
+                  >
+                    <span className="workspace-launcher__module-icon" aria-hidden="true">
+                      <img src="/assets/img/screenplay_writer1.webp" alt="" loading="lazy" />
+                    </span>
+                    <span className="sr-only">Screenplay Writing</span>
+                  </a>
+                  <a className="workspace-launcher__module" href="/CharacterStudio.html" data-label="Character Studio">
+                    <span className="workspace-launcher__module-icon" aria-hidden="true">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span className="sr-only">Character Studio</span>
+                  </a>
+                  <a className="workspace-launcher__module" href="/StoryboardPro.html" data-label="Storyboard Pro">
+                    <span className="workspace-launcher__module-icon" aria-hidden="true">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span className="sr-only">Storyboard Pro</span>
+                  </a>
+                  <a className="workspace-launcher__module" href="/use-cases/generate-ideas.html" data-label="Idea Generator">
+                    <span className="workspace-launcher__module-icon" aria-hidden="true">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span className="sr-only">Idea Generator</span>
+                  </a>
+                  <a className="workspace-launcher__module" href="/use-cases/set-design.html" data-label="Set Design">
+                    <span className="workspace-launcher__module-icon" aria-hidden="true">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span className="sr-only">Set Design</span>
+                  </a>
+                  <a
+                    className="workspace-launcher__module workspace-launcher__module--active"
+                    href="/creative-hub.html"
+                    data-label="Creative Hub"
+                    aria-current="page"
+                  >
+                    <span className="workspace-launcher__module-icon" aria-hidden="true">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span className="sr-only">Creative Hub</span>
+                  </a>
+                </nav>
+              </div>
+            </div>
             <header className="px-6 pt-8 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <span className="text-sm uppercase tracking-[0.4em] text-slate-500">StorySpark</span>
@@ -895,5 +1011,6 @@
 
     ReactDOM.createRoot(document.getElementById('app')).render(<App />);
   </script>
+  <script type="module" src="/assets/main.js"></script>
 </body>
 </html>
