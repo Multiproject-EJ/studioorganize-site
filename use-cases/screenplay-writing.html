@@ -704,6 +704,8 @@
       .script-dialog__section-header{display:flex; flex-direction:column; gap:4px;}
       .script-dialog__section-header h4{margin:0; font-size:16px;}
       .script-dialog__section-header p{margin:0; font-size:13px; color:var(--muted);}
+      .script-dialog__goal-grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(160px,1fr));}
+      .script-dialog__goal-grid .script-dialog__field{height:100%;}
       .script-dialog__preview{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ring); border-radius:12px; padding:12px; background:rgba(255,255,255,0.04);}
       .script-dialog__preview img{width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid var(--ring); background:rgba(255,255,255,0.04);}
       .script-dialog__preview h3{margin:0 0 4px; font-size:16px;}
@@ -1479,6 +1481,27 @@
                   <span>Script title</span>
                   <input id="scriptDialogCurrentTitle" type="text" placeholder="Give your script a name" autocomplete="off" />
                 </label>
+              </section>
+              <section class="script-dialog__section">
+                <div class="script-dialog__section-header">
+                  <h4>Project goals</h4>
+                  <p>Set your ideal scope so pacing stats stay aligned with what you have in mind.</p>
+                </div>
+                <div class="script-dialog__goal-grid">
+                  <label class="script-dialog__field" for="scriptDialogGoalPages">
+                    <span>Page goal</span>
+                    <input id="scriptDialogGoalPages" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 110" autocomplete="off" />
+                  </label>
+                  <label class="script-dialog__field" for="scriptDialogGoalRuntime">
+                    <span>Runtime goal (minutes)</span>
+                    <input id="scriptDialogGoalRuntime" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 105" autocomplete="off" />
+                  </label>
+                  <label class="script-dialog__field" for="scriptDialogGoalScenes">
+                    <span>Scene goal</span>
+                    <input id="scriptDialogGoalScenes" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 45" autocomplete="off" />
+                  </label>
+                </div>
+                <p class="script-dialog__hint">Goals are optional, but they help compare progress against your targets in the stats panel.</p>
               </section>
               <section class="script-dialog__section">
                 <div class="script-dialog__section-header">
@@ -2305,6 +2328,15 @@
       if (currentTitleInput) currentTitleInput.value = project?.title || '';
       const coverInput = document.getElementById('scriptDialogCoverUrl');
       if (coverInput) coverInput.value = getCoverImageUrl();
+      const goals = project?.settings?.goals || {};
+      const setGoalValue = (id, value)=>{
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.value = (typeof value === 'number' && value > 0) ? String(value) : '';
+      };
+      setGoalValue('scriptDialogGoalPages', goals.pageCount);
+      setGoalValue('scriptDialogGoalRuntime', goals.runtimeMinutes);
+      setGoalValue('scriptDialogGoalScenes', goals.sceneCount);
       updateCurrentCoverPreview(getCoverImageUrl());
       const select = document.getElementById('scriptSelect');
       const status = document.getElementById('scriptDialogStatus');
@@ -2753,6 +2785,42 @@
       return JSON.stringify({ title:p.title, notes:p.notes, settings:p.settings });
     }
 
+    function normalizeGoalNumber(value){
+      if (typeof value === 'string'){
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const parsed = Number(trimmed);
+        if (!Number.isFinite(parsed) || parsed <= 0) return null;
+        return Math.round(parsed);
+      }
+      if (typeof value === 'number'){
+        if (!Number.isFinite(value) || value <= 0) return null;
+        return Math.round(value);
+      }
+      return null;
+    }
+
+    function normalizeProjectGoals(goals){
+      const source = (goals && typeof goals === 'object') ? goals : {};
+      const normalized = {
+        pageCount: normalizeGoalNumber(
+          source.pageCount ?? source.pages ?? source.pageGoal ?? source.goalPages
+        ),
+        runtimeMinutes: normalizeGoalNumber(
+          source.runtimeMinutes ?? source.runtime ?? source.lengthMinutes ?? source.length ?? source.runtimeGoal ?? source.goalRuntime
+        ),
+        sceneCount: normalizeGoalNumber(
+          source.sceneCount ?? source.scenes ?? source.sceneTotal ?? source.sceneGoal ?? source.goalScenes
+        )
+      };
+      Object.keys(source).forEach(key => {
+        if (!(key in normalized)){
+          normalized[key] = source[key];
+        }
+      });
+      return normalized;
+    }
+
     function ensureProjectShape(){
       project.settings = project.settings || {};
       if (typeof project.settings.coverImageUrl !== 'string') project.settings.coverImageUrl = '';
@@ -2771,6 +2839,7 @@
       if (typeof project.settings.timelineDockPinned !== 'boolean'){
         project.settings.timelineDockPinned = true;
       }
+      project.settings.goals = normalizeProjectGoals(project.settings.goals);
       project.catalogs = project.catalogs || {};
       project.catalogs.characters = (project.catalogs.characters || []).map(item => {
         if (typeof item === 'string') return normalizeCharacter({ id: randomId(), name: item });
@@ -3001,6 +3070,7 @@
           theme: (typeof window.getSiteTheme === 'function' ? window.getSiteTheme() : (document.documentElement.dataset.theme || 'dark')),
           smartFormat: true,
           coverImageUrl: '',
+          goals: { pageCount: null, runtimeMinutes: null, sceneCount: null },
           pageWidth: 60,
           focus: false,
           timelineDockPinned: true,
@@ -3123,6 +3193,16 @@
       if (dialogTitleInput) dialogTitleInput.value = project.title || '';
       const dialogCurrentName = document.getElementById('scriptDialogCurrentName');
       if (dialogCurrentName) dialogCurrentName.textContent = project.title || 'Untitled Script';
+      const goals = project.settings.goals || {};
+      const updateGoalInput = (id, value)=>{
+        const input = document.getElementById(id);
+        if (!input) return;
+        if (document.activeElement === input) return;
+        input.value = (typeof value === 'number' && value > 0) ? String(value) : '';
+      };
+      updateGoalInput('scriptDialogGoalPages', goals.pageCount);
+      updateGoalInput('scriptDialogGoalRuntime', goals.runtimeMinutes);
+      updateGoalInput('scriptDialogGoalScenes', goals.sceneCount);
       document.getElementById('projectNotes').value = project.notes || '';
       const smartSel = document.getElementById('smartFormat');
       if (smartSel) smartSel.value = String(!!project.settings.smartFormat);
@@ -7137,6 +7217,35 @@
         bumpVersion(); scheduleSave(); scheduleBackup();
       });
     }
+    [
+      { id: 'scriptDialogGoalPages', key: 'pageCount' },
+      { id: 'scriptDialogGoalRuntime', key: 'runtimeMinutes' },
+      { id: 'scriptDialogGoalScenes', key: 'sceneCount' }
+    ].forEach(config => {
+      const input = document.getElementById(config.id);
+      if (!input) return;
+      const persistGoal = ()=>{
+        if (!project) return;
+        project.settings = project.settings || {};
+        const existing = (project.settings.goals && typeof project.settings.goals === 'object') ? project.settings.goals : {};
+        const prevValue = (typeof existing[config.key] === 'number' && existing[config.key] > 0) ? existing[config.key] : null;
+        const nextRaw = Object.assign({}, existing, { [config.key]: input.value });
+        const normalized = normalizeProjectGoals(nextRaw);
+        const nextValue = (typeof normalized[config.key] === 'number' && normalized[config.key] > 0) ? normalized[config.key] : null;
+        project.settings.goals = normalized;
+        if (nextValue !== prevValue){
+          bumpVersion();
+          scheduleSave();
+          scheduleBackup();
+        }
+      };
+      input.addEventListener('input', persistGoal);
+      input.addEventListener('blur', ()=>{
+        if (!project || !project.settings || !project.settings.goals) return;
+        const value = project.settings.goals[config.key];
+        input.value = (typeof value === 'number' && value > 0) ? String(value) : '';
+      });
+    });
     document.getElementById('projectNotes').addEventListener('input', e=>{
       project.notes = e.target.value; bumpVersion(); scheduleSave(); scheduleBackup();
     });
