@@ -1065,6 +1065,155 @@ function renderGoalList(goals, listElement, emptyState){
   listElement.appendChild(fragment);
 }
 
+function initQuestionnaireModal(){
+  const modal = document.querySelector('[data-questionnaire-modal]');
+  const triggers = Array.from(document.querySelectorAll('[data-questionnaire-open]'));
+  if (!modal || !triggers.length) return;
+  if (modal.dataset.questionnaireBound === 'true') return;
+  modal.dataset.questionnaireBound = 'true';
+
+  const dialog = modal.querySelector('.questionnaire-modal__dialog');
+  const overlay = modal.querySelector('.questionnaire-modal__overlay');
+  const closeTriggers = Array.from(modal.querySelectorAll('[data-questionnaire-close]'));
+  const form = modal.querySelector('[data-questionnaire-form]');
+  const successMessage = modal.querySelector('[data-questionnaire-success]');
+  const submitButton = form?.querySelector('.questionnaire-submit');
+
+  const focusableSelectors = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  let lastFocusedElement = null;
+
+  const focusElement = element => {
+    if (!(element instanceof HTMLElement)) return;
+    try {
+      element.focus({ preventScroll: true });
+    } catch (_error){
+      element.focus();
+    }
+  };
+
+  const getFocusableElements = () => {
+    return Array.from(modal.querySelectorAll(focusableSelectors)).filter(el => {
+      if (!(el instanceof HTMLElement)) return false;
+      if (el.hasAttribute('disabled')) return false;
+      if (el.getAttribute('aria-hidden') === 'true') return false;
+      const style = window.getComputedStyle(el);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+  };
+
+  const resetFormState = () => {
+    if (!(form instanceof HTMLFormElement)) return;
+    form.reset();
+    form.classList.remove('is-complete');
+    if (successMessage instanceof HTMLElement){
+      successMessage.hidden = true;
+    }
+    if (submitButton instanceof HTMLButtonElement){
+      submitButton.disabled = false;
+      submitButton.textContent = 'Send my answers';
+    }
+  };
+
+  const handleKeydown = event => {
+    if (event.key === 'Escape'){
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const focusable = getFocusableElements();
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey){
+      if (document.activeElement === first || !modal.contains(document.activeElement)){
+        event.preventDefault();
+        focusElement(last);
+      }
+    } else {
+      if (document.activeElement === last){
+        event.preventDefault();
+        focusElement(first);
+      }
+    }
+  };
+
+  const openModal = () => {
+    if (!modal.hidden) return;
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    resetFormState();
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('has-modal-open');
+    document.addEventListener('keydown', handleKeydown);
+
+    window.requestAnimationFrame(() => {
+      const focusable = getFocusableElements();
+      if (focusable.length){
+        focusElement(focusable[0]);
+      } else if (dialog instanceof HTMLElement){
+        focusElement(dialog);
+      }
+    });
+  };
+
+  const closeModal = ({ returnFocus = true } = {}) => {
+    if (modal.hidden) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('has-modal-open');
+    document.removeEventListener('keydown', handleKeydown);
+
+    if (returnFocus && lastFocusedElement instanceof HTMLElement){
+      focusElement(lastFocusedElement);
+    }
+
+    lastFocusedElement = null;
+  };
+
+  triggers.forEach(trigger => {
+    if (!(trigger instanceof HTMLElement)) return;
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      openModal();
+    });
+  });
+
+  closeTriggers.forEach(closeTrigger => {
+    if (!(closeTrigger instanceof HTMLElement)) return;
+    closeTrigger.addEventListener('click', event => {
+      event.preventDefault();
+      closeModal();
+    });
+  });
+
+  if (overlay instanceof HTMLElement){
+    overlay.addEventListener('click', () => {
+      closeModal();
+    });
+  }
+
+  if (form instanceof HTMLFormElement){
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      form.classList.add('is-complete');
+      if (submitButton instanceof HTMLButtonElement){
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitted';
+      }
+      if (successMessage instanceof HTMLElement){
+        successMessage.hidden = false;
+        window.requestAnimationFrame(() => {
+          focusElement(successMessage);
+        });
+      }
+    });
+  }
+}
+
 function initGoalPlanner(){
   const form = document.querySelector('[data-goal-form]');
   const list = document.querySelector('[data-goal-list]');
@@ -1304,6 +1453,7 @@ if (document.readyState === 'loading'){
     initWorkspaceLauncher();
     initDropdownMenus();
     initNotificationCenter();
+    initQuestionnaireModal();
     initGoalPlanner();
     initFinishStoryModal();
   }, { once: true });
@@ -1312,6 +1462,7 @@ if (document.readyState === 'loading'){
   initWorkspaceLauncher();
   initDropdownMenus();
   initNotificationCenter();
+  initQuestionnaireModal();
   initGoalPlanner();
   initFinishStoryModal();
 }

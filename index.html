@@ -47,15 +47,50 @@
 
 <main>
   <!-- HERO: story-first -->
-  <section class="hero">
+  <section class="hero hero--questions">
     <div class="hero__content">
       <span class="kicker">Story creation suite</span>
-      <h1>StudioOrganize</h1>
-      <p class="lead">Tools to create a story — from spark to schedule. <strong>Buy once, use forever</strong>. No costly subscriptions.</p>
+      <h1 class="hero__question">Where are you stuck in your story today?</h1>
+      <p class="lead">StudioOrganize guides you from spark to schedule. Tell us what you need help with and we’ll point you to the right workspace.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="/product/studioorganize.html">Start Story Workspace →</a>
+        <button class="btn btn-primary" type="button" data-questionnaire-open>Take the 2-minute questionnaire</button>
         <a class="btn btn-ghost" href="#modules">See modules</a>
       </div>
+    </div>
+    <div class="hero__media">
+      <div class="mockup-card">
+        <div class="mockup-bar"></div>
+        <img src="/assets/img/studioorganize_mock.png" alt="StudioOrganize story modules preview" />
+      </div>
+    </div>
+    <div class="hero__checks">
+      <p class="hero__checks-intro" id="hero-checks-title">Check where you’re stuck in five simple questions:</p>
+      <form class="hero__checks-form" aria-labelledby="hero-checks-title">
+        <fieldset>
+          <legend class="sr-only">Select the areas where you need story support</legend>
+          <label class="hero-check">
+            <input type="checkbox" name="story-roadblock" value="idea" />
+            I’m still shaping the core idea of my story.
+          </label>
+          <label class="hero-check">
+            <input type="checkbox" name="story-roadblock" value="characters" />
+            I need stronger characters or world-building.
+          </label>
+          <label class="hero-check">
+            <input type="checkbox" name="story-roadblock" value="outline" />
+            I’m stuck turning beats into a solid outline.
+          </label>
+          <label class="hero-check">
+            <input type="checkbox" name="story-roadblock" value="production" />
+            I’m planning scenes, schedules, or call sheets.
+          </label>
+          <label class="hero-check">
+            <input type="checkbox" name="story-roadblock" value="delivery" />
+            I need exports, revisions, or presentation-ready PDFs.
+          </label>
+        </fieldset>
+      </form>
+      <p class="hero__checks-note">Need deeper guidance? Launch the questionnaire and we’ll tailor a plan for you.</p>
       <ul class="hero__bullets">
         <li>Idea & concept playground with drag-and-drop prompts</li>
         <li>Character & world databases that link to scenes</li>
@@ -68,11 +103,60 @@
         <span>Instant delivery</span>
       </div>
     </div>
-    <div class="hero__media">
-      <div class="mockup-card">
-        <div class="mockup-bar"></div>
-        <img src="/assets/img/studioorganize_mock.png" alt="StudioOrganize story modules preview" />
+  </section>
+
+  <section class="section public-proof" aria-labelledby="public-proof-title">
+    <div class="proof-banner">
+      <div class="proof-banner__content">
+        <p class="proof-eyebrow">Public proof</p>
+        <h2 id="public-proof-title">Creators are building their stories in public with StudioOrganize</h2>
+        <p class="muted">Join hundreds of storytellers sharing their progress during live writing sprints, podcasts, and community showcases.</p>
       </div>
+      <div class="proof-banner__logos" role="list">
+        <span role="listitem">As seen in <strong>Story Artists Weekly</strong></span>
+        <span role="listitem">Featured on <strong>Indie Film Journal</strong></span>
+        <span role="listitem">Trusted by <strong>Creator Hub Live</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section trial-offer" aria-labelledby="trial-offer-title">
+    <div class="trial-card">
+      <h2 id="trial-offer-title">Create a free account</h2>
+      <p class="muted">Try StudioOrganize for 10 days with a 100% money-back guarantee. If it’s not for you, cancel and keep anything you’ve built.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://studioorganize.com/supabase-test.html">Start free for 10 days</a>
+        <a class="btn btn-ghost" href="/product/studioorganize.html">See what’s included</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section community-board" aria-labelledby="community-board-title">
+    <div class="community-board__grid">
+      <div class="community-board__content">
+        <span class="kicker">FinishThatStory.com</span>
+        <h2 id="community-board-title">Join the community creator board</h2>
+        <p class="lead">Share your progress, give support to fellow creators, and stay accountable by setting public goals.</p>
+        <ul class="community-board__features">
+          <li>Post milestones, drafts, and works-in-progress to celebrate momentum.</li>
+          <li>Offer thoughtful feedback and encouragement to storytellers across mediums.</li>
+          <li>Lock in public weekly goals so the community keeps you on track.</li>
+        </ul>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">Visit the community</a>
+          <a class="btn btn-ghost" href="https://finishthatstory.com/#community-board" target="_blank" rel="noopener noreferrer">See public goals in action</a>
+        </div>
+      </div>
+      <aside class="community-board__card" aria-labelledby="community-gifting-title">
+        <h3 id="community-gifting-title">Gift Funding &amp; Buy Me a Coffee</h3>
+        <p>Let fans and friends fuel your next creative sprint with one-time gifts or tip jars connected to your creator board.</p>
+        <ul>
+          <li>Enable gift funding on big milestones to rally your audience.</li>
+          <li>Add a “Buy me a coffee” button to celebrate each finished chapter.</li>
+          <li>Track supporter shout-outs alongside your public goals.</li>
+        </ul>
+        <a class="btn btn-primary" href="https://finishthatstory.com/support" target="_blank" rel="noopener noreferrer">Set up community support</a>
+      </aside>
     </div>
   </section>
 
@@ -191,6 +275,32 @@
     </div>
   </div>
 </footer>
+
+<div class="questionnaire-modal" data-questionnaire-modal hidden aria-hidden="true">
+  <div class="questionnaire-modal__overlay" data-questionnaire-close></div>
+  <div class="questionnaire-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="questionnaire-title">
+    <button class="questionnaire-modal__close" type="button" data-questionnaire-close aria-label="Close questionnaire">✕</button>
+    <h2 id="questionnaire-title">Quick Story Questionnaire</h2>
+    <p>Answer a few prompts and we’ll send a personalized roadmap to move your project forward.</p>
+    <form class="questionnaire-form" data-questionnaire-form>
+      <label>
+        <span>What are you working on right now?</span>
+        <input type="text" name="project" placeholder="Feature film, comic, podcast…" required />
+      </label>
+      <label>
+        <span>Where do you feel most blocked?</span>
+        <textarea name="blockers" rows="3" placeholder="Share a sentence or two about your next step" required></textarea>
+      </label>
+      <label>
+        <span>Your email</span>
+        <input type="email" name="email" placeholder="you@example.com" required />
+      </label>
+      <button class="btn btn-primary questionnaire-submit" type="submit">Send my answers</button>
+      <p class="questionnaire-form__note">We’ll follow up within one business day with recommendations tailored to your selections.</p>
+      <p class="questionnaire-form__success" data-questionnaire-success hidden tabindex="-1" role="status">Thanks! Check your inbox for the next steps.</p>
+    </form>
+  </div>
+</div>
 
 <script type="module" src="/assets/main.js"></script>
 </body>
