@@ -844,6 +844,11 @@ function initWorkspaceLauncher(){
     launcher.addEventListener('pointerenter', handlePointerEnter);
     launcher.addEventListener('pointerleave', handlePointerLeave);
 
+    if (panel instanceof HTMLElement){
+      panel.addEventListener('pointerenter', handlePointerEnter);
+      panel.addEventListener('pointerleave', handlePointerLeave);
+    }
+
     panel.addEventListener('mousedown', event => {
       event.stopPropagation();
     });
