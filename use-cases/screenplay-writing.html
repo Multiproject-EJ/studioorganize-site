@@ -744,10 +744,28 @@
       /* ==== Focus Mode ==== */
       body.focus-mode{ overflow:hidden; }
       body.focus-mode main.section{ min-height:100dvh; height:auto; }
-      body.focus-mode .app{ min-height:100dvh; height:auto; grid-template-rows:56px 1fr auto; }
-      body.focus-mode .layout{ grid-template-columns: 1fr; height:100%; }
+      body.focus-mode .app{
+        min-height:100dvh;
+        height:auto;
+        display:flex;
+        flex-direction:column;
+        grid-template-rows:none;
+      }
+      body.focus-mode .layout{
+        display:flex;
+        flex-direction:column;
+        grid-template-columns:1fr;
+        flex:1 1 auto;
+        min-height:0;
+      }
       body.focus-mode .layout .panel:first-child,
       body.focus-mode .layout .panel:last-child{ display:none !important; }
+      body.focus-mode .panel.editor{ flex:1 1 auto; }
+      body.focus-mode .editor-stage,
+      body.focus-mode .editor-scroll{
+        flex:1 1 auto;
+        min-height:0;
+      }
       body.focus-mode .editor-area{
         max-width: 68ch;
         margin: 0 auto;
@@ -757,6 +775,7 @@
       }
       body.focus-mode .editor-scroll{
         padding-bottom: 0;
+        overflow:auto;
       }
       body.focus-mode .topbar{ display:none; }
       body.focus-mode .topbar .non-essential{ display:none !important; }
