@@ -329,7 +329,30 @@
       .line.parenthetical{margin-left:30px; font-style:italic}
       .line.dialogue{margin-left:30px; max-width:60ch}
       .line.transition{text-align:right; letter-spacing:.2px}
-      .line.exposition{margin-left:30px; font-style:italic; color:var(--muted)}
+      .line.exposition{
+        margin-left:24px;
+        padding:8px 12px;
+        border-radius:12px;
+        border-left:3px solid rgba(126,58,242,0.55);
+        background:rgba(126,58,242,0.16);
+        font-style:italic;
+        color:var(--ink);
+        box-shadow:inset 0 0 0 1px rgba(126,58,242,0.18);
+      }
+      .editor-area[data-notes-visible="false"] .line.exposition{display:none;}
+      .notes-visibility{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px; border:1px solid var(--ring); border-radius:14px; background:var(--chip);}
+      .notes-visibility__text{display:flex; flex-direction:column; gap:4px;}
+      .notes-visibility__text h3{margin:0; font-size:12px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
+      .notes-visibility__text p{margin:0; font-size:12px; color:var(--muted);}
+      .notes-toggle-btn{flex:0 0 auto; border-radius:999px; border:1px solid var(--acc); background:var(--acc); color:var(--active-tab-text); font-size:11px; letter-spacing:.3px; text-transform:uppercase; padding:6px 14px; font-weight:600; cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;}
+      .notes-toggle-btn[aria-pressed="false"]{background:var(--chip); border-color:var(--ring); color:var(--ink);}
+      .notes-toggle-btn:not([disabled]):hover{box-shadow:0 10px 22px rgba(79,123,255,0.2);}
+      .notes-toggle-btn[disabled]{opacity:0.6; cursor:not-allowed; box-shadow:none;}
+      .notes-hidden-hint{margin:0; font-size:12px; color:var(--muted); border:1px dashed var(--ring); border-radius:12px; padding:8px 12px; background:var(--chip);}
+      .note-list{display:flex; flex-direction:column; gap:10px;}
+      .note-item{display:flex; flex-direction:column; gap:6px; border:1px solid var(--ring); border-radius:12px; padding:10px; background:var(--card);}
+      .note-item__label{font-size:11px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); font-weight:600;}
+      .note-item__textarea{resize:vertical; min-height:60px;}
       .line[data-tag-label]{padding-top:20px}
       .line[data-tag-label]::after{
         content: attr(data-tag-label);
@@ -1319,6 +1342,17 @@
             <div class="tab-panel" data-tab="notes" id="tabNotes">
               <h3>Notes &amp; Meta</h3>
               <div class="notes">
+                <div class="notes-visibility">
+                  <div class="notes-visibility__text">
+                    <h3>Scene Notes</h3>
+                    <p>Toggle inline notes without losing your thoughts.</p>
+                  </div>
+                  <button type="button" class="notes-toggle-btn" id="sceneNotesToggle" aria-pressed="true">Hide notes in script</button>
+                </div>
+                <p id="sceneNotesHiddenHint" class="notes-hidden-hint" hidden>Scene notes are hidden in the script view. They remain available below.</p>
+                <div id="sceneNotesList" class="note-list"></div>
+                <div class="tab-divider"></div>
+                <label class="sr-only" for="projectNotes">Project notes</label>
                 <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
                 <div class="row">
                   <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
@@ -2647,11 +2681,34 @@
       }
     }
 
+    function extractProjectPayload(raw){
+      if (!raw || typeof raw !== 'object') return null;
+      if (Array.isArray(raw.scenes)) return cloneValue(raw);
+      const nestedKeys = ['project', 'script', 'data', 'payload', 'project_json', 'projectJson'];
+      for (const key of nestedKeys){
+        if (!Object.prototype.hasOwnProperty.call(raw, key)) continue;
+        const candidate = raw[key];
+        if (!candidate || typeof candidate !== 'object') continue;
+        const extracted = extractProjectPayload(candidate);
+        if (extracted) return extracted;
+      }
+      return null;
+    }
+
     async function applyLoadedProject(nextProject, meta = {}){
       if (!nextProject || typeof nextProject !== 'object'){
         throw new Error('Invalid project payload');
       }
-      const loaded = cloneValue(nextProject);
+      const source = cloneValue(nextProject);
+      let loaded = extractProjectPayload(source) || source;
+      if (loaded !== source){
+        const overlayKeys = ['projectId','libraryEntryId','title','notes','format','settings','catalogs','characters','locations','createdAt','updatedAt','version'];
+        overlayKeys.forEach(key => {
+          if (typeof loaded[key] === 'undefined' && typeof source[key] !== 'undefined'){
+            loaded[key] = cloneValue(source[key]);
+          }
+        });
+      }
       loaded.projectId = loaded.projectId || meta.id || randomId();
       loaded.title = loaded.title || meta.name || 'Untitled Script';
       loaded.format = loaded.format || 'screenplay/v1';
@@ -2841,6 +2898,9 @@
       }
       if (typeof project.settings.scriptViewPage !== 'number' || !isFinite(project.settings.scriptViewPage)){
         project.settings.scriptViewPage = 0;
+      }
+      if (typeof project.settings.showSceneNotes !== 'boolean'){
+        project.settings.showSceneNotes = true;
       }
       if (typeof project.settings.timelineDockPinned !== 'boolean'){
         project.settings.timelineDockPinned = true;
@@ -3408,6 +3468,7 @@
       if (!scene){
         updateSceneColorUI(null);
         document.getElementById('editor').innerHTML = '';
+        applySceneNotesVisibility();
         applyScriptViewSettingsFromProject();
         updateCounters();
         updateHud();
@@ -3416,6 +3477,8 @@
         renderStoryboard();
         renderCatalogs();
         renderSoundList();
+        renderSceneNotesList();
+        updateSceneNotesToggleUI();
         renderSceneEmotionPicker();
         renderTimeline();
         updateDeleteSceneButton();
@@ -3456,12 +3519,15 @@
       });
 
       applyScriptViewSettingsFromProject();
+      applySceneNotesVisibility();
       updateCounters();
       updateHud();
       updatePomodoroUI();
       applyTheme();
       renderCatalogs();
       renderSoundList();
+      renderSceneNotesList();
+      updateSceneNotesToggleUI();
       renderSceneEmotionPicker();
       renderTimeline();
       updateDeleteSceneButton();
@@ -3772,6 +3838,9 @@
       updateSceneHash(scene);
       bumpVersion();
       updateCounters();
+      renderSceneNotesList();
+      updateSceneNotesToggleUI();
+      applySceneNotesVisibility();
       scheduleSave();
       scheduleBackup();
     }
@@ -3937,6 +4006,116 @@
         row.appendChild(btn);
         container.appendChild(row);
       });
+    }
+
+    function areSceneNotesVisible(){
+      if (!project || !project.settings) return true;
+      return project.settings.showSceneNotes !== false;
+    }
+
+    function applySceneNotesVisibility(){
+      if (!editorEl) return;
+      editorEl.dataset.notesVisible = areSceneNotesVisible() ? 'true' : 'false';
+    }
+
+    function updateSceneNotesToggleUI(){
+      if (!sceneNotesToggleBtn) return;
+      const scene = getActiveScene();
+      const visible = areSceneNotesVisible();
+      sceneNotesToggleBtn.disabled = !scene;
+      sceneNotesToggleBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+      sceneNotesToggleBtn.textContent = visible ? 'Hide notes in script' : 'Show notes in script';
+      sceneNotesToggleBtn.setAttribute('aria-label', visible ? 'Hide notes in script' : 'Show notes in script');
+      sceneNotesToggleBtn.title = visible ? 'Hide inline notes in the script editor' : 'Show inline notes in the script editor';
+    }
+
+    function renderSceneNotesList(){
+      if (!sceneNotesListEl) return;
+      const scene = getActiveScene();
+      const visible = areSceneNotesVisible();
+      if (sceneNotesHiddenHint){
+        sceneNotesHiddenHint.hidden = visible || !scene;
+      }
+      sceneNotesListEl.innerHTML = '';
+      if (!scene){
+        const empty = document.createElement('p');
+        empty.className = 'muted-text';
+        empty.textContent = 'Select a scene to manage notes.';
+        sceneNotesListEl.appendChild(empty);
+        return;
+      }
+      const elements = Array.isArray(scene.elements) ? scene.elements : [];
+      const noteEntries = elements
+        .map((element, index) => ({ element, index }))
+        .filter(item => item.element && item.element.t === 'exposition');
+      if (!noteEntries.length){
+        const empty = document.createElement('p');
+        empty.className = 'muted-text';
+        empty.textContent = 'Tag script lines as notes to keep revisions organized.';
+        sceneNotesListEl.appendChild(empty);
+        return;
+      }
+      noteEntries.forEach((item, position) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'note-item';
+        wrapper.dataset.sceneIndex = String(item.index);
+        const label = document.createElement('div');
+        label.className = 'note-item__label';
+        label.textContent = `Note ${position + 1}`;
+        const textarea = document.createElement('textarea');
+        textarea.className = 'note-item__textarea';
+        textarea.rows = Math.max(2, Math.min(8, (item.element.txt || '').split(/\n/).length || 1));
+        textarea.value = item.element.txt || '';
+        textarea.dataset.sceneIndex = String(item.index);
+        textarea.addEventListener('input', ()=>{
+          const activeScene = getActiveScene();
+          if (!activeScene) return;
+          const idx = parseInt(textarea.dataset.sceneIndex || '-1', 10);
+          if (!Number.isFinite(idx) || idx < 0) return;
+          const lineCount = (textarea.value || '').split(/\n/).length || 1;
+          textarea.rows = Math.max(2, Math.min(8, lineCount));
+          if (activeScene.elements[idx]){
+            activeScene.elements[idx].txt = textarea.value;
+          }
+          if (editorEl){
+            const line = editorEl.querySelectorAll('.line')[idx];
+            if (line){
+              if (textarea.value){
+                line.textContent = textarea.value;
+              } else {
+                line.innerHTML = '<br>';
+              }
+            }
+          }
+          updateSceneHash(activeScene);
+          bumpVersion();
+          updateCounters();
+          scheduleSave();
+          scheduleBackup();
+        });
+        wrapper.appendChild(label);
+        wrapper.appendChild(textarea);
+        sceneNotesListEl.appendChild(wrapper);
+      });
+    }
+
+    function setSceneNotesVisibility(nextVisible){
+      if (!project) return;
+      project.settings = project.settings || {};
+      const normalized = !!nextVisible;
+      const current = areSceneNotesVisible();
+      if (normalized === current) return;
+      project.settings.showSceneNotes = normalized;
+      applySceneNotesVisibility();
+      updateSceneNotesToggleUI();
+      if (sceneNotesHiddenHint){
+        const scene = getActiveScene();
+        sceneNotesHiddenHint.hidden = normalized || !scene;
+      }
+      updatePageViewControls({ skipScroll: pageViewMode !== 'pages' });
+      bumpVersion();
+      scheduleSave();
+      scheduleBackup();
     }
 
     function renderStoryboard(){
@@ -6230,6 +6409,15 @@
     const pageViewLabelEl = document.getElementById('pageViewLabel');
     const pageViewPrevBtn = document.getElementById('pageViewPrev');
     const pageViewNextBtn = document.getElementById('pageViewNext');
+    const sceneNotesToggleBtn = document.getElementById('sceneNotesToggle');
+    const sceneNotesHiddenHint = document.getElementById('sceneNotesHiddenHint');
+    const sceneNotesListEl = document.getElementById('sceneNotesList');
+
+    if (sceneNotesToggleBtn){
+      sceneNotesToggleBtn.addEventListener('click', ()=>{
+        setSceneNotesVisibility(!areSceneNotesVisible());
+      });
+    }
     const PAGE_VIEW_HEIGHT = Math.round((29.7 / 2.54) * 96);
     const PAGE_VIEW_WIDTH = Math.round((21 / 2.54) * 96);
     let pageViewMode = 'scroll';
