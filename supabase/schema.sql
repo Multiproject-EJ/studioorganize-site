@@ -179,6 +179,133 @@ create policy "Scenes are deletable by owners"
     using (auth.uid() = owner_id);
 
 -- ---------------------------------------------------------------------------
+-- Scene assets and AI generation tracking
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.assets (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    scene_id uuid references public.scenes (id) on delete set null,
+    kind text not null check (kind in ('reference', 'mask', 'render', 'upload')),
+    storage_path text not null,
+    metadata jsonb not null default '{}'::jsonb,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists assets_owner_idx on public.assets (owner_id);
+create index if not exists assets_scene_idx on public.assets (scene_id);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'assets_set_timestamp'
+          and tgrelid = 'public.assets'::regclass
+    ) then
+        create trigger assets_set_timestamp
+            before update on public.assets
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.assets enable row level security;
+
+drop policy if exists "Assets are viewable by owners" on public.assets;
+create policy "Assets are viewable by owners"
+    on public.assets
+    for select
+    using (auth.uid() = owner_id);
+
+drop policy if exists "Assets can be inserted by owners" on public.assets;
+create policy "Assets can be inserted by owners"
+    on public.assets
+    for insert
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Assets are editable by owners" on public.assets;
+create policy "Assets are editable by owners"
+    on public.assets
+    for update
+    using (auth.uid() = owner_id)
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Assets are deletable by owners" on public.assets;
+create policy "Assets are deletable by owners"
+    on public.assets
+    for delete
+    using (auth.uid() = owner_id);
+
+create table if not exists public.image_generations (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    scene_id uuid references public.scenes (id) on delete set null,
+    provider text not null,
+    prompt text not null,
+    negative_prompt text,
+    width integer,
+    height integer,
+    steps integer,
+    guidance numeric,
+    seed bigint,
+    status text not null default 'queued',
+    error text,
+    storage_path text,
+    asset_id uuid references public.assets (id) on delete set null,
+    metadata jsonb not null default '{}'::jsonb,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists image_generations_owner_idx on public.image_generations (owner_id);
+create index if not exists image_generations_scene_idx on public.image_generations (scene_id);
+create index if not exists image_generations_status_idx on public.image_generations (status);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'image_generations_set_timestamp'
+          and tgrelid = 'public.image_generations'::regclass
+    ) then
+        create trigger image_generations_set_timestamp
+            before update on public.image_generations
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.image_generations enable row level security;
+
+drop policy if exists "Image jobs viewable by owners" on public.image_generations;
+create policy "Image jobs viewable by owners"
+    on public.image_generations
+    for select
+    using (auth.uid() = owner_id);
+
+drop policy if exists "Image jobs insertable by owners" on public.image_generations;
+create policy "Image jobs insertable by owners"
+    on public.image_generations
+    for insert
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Image jobs updatable by owners" on public.image_generations;
+create policy "Image jobs updatable by owners"
+    on public.image_generations
+    for update
+    using (auth.uid() = owner_id)
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Image jobs deletable by owners" on public.image_generations;
+create policy "Image jobs deletable by owners"
+    on public.image_generations
+    for delete
+    using (auth.uid() = owner_id);
+
+-- ---------------------------------------------------------------------------
 -- Character catalog (Character Studio)
 -- ---------------------------------------------------------------------------
 

@@ -9,6 +9,7 @@
     content="Storyboard Pro timelines keep scenes, shots, and production teams aligned with the StudioOrganize writer."
   />
   <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="/storyboard/ai-generation.css" />
   <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
 </head>
 <body>
@@ -1025,6 +1026,93 @@
         </div>
       </div>
     </section>
+
+    <div
+      class="storyboard-ai-modal"
+      data-storyboard-ai-modal
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="storyboardAiModalTitle"
+      hidden
+    >
+      <div class="storyboard-ai-modal__backdrop" data-storyboard-ai-dismiss></div>
+      <div class="storyboard-ai-modal__dialog">
+        <header class="storyboard-ai-modal__header">
+          <h2 id="storyboardAiModalTitle" class="storyboard-ai-modal__title">Generate scene image</h2>
+          <button class="storyboard-ai-modal__close" type="button" data-storyboard-ai-dismiss aria-label="Close dialog">×</button>
+        </header>
+        <p class="storyboard-ai-status" data-storyboard-ai-status role="status" aria-live="polite">Select a scene to start.</p>
+        <form class="storyboard-ai-form" data-storyboard-ai-form>
+          <input type="hidden" data-storyboard-ai-scene />
+          <div class="storyboard-ai-form__group">
+            <div class="storyboard-ai-field">
+              <label for="storyboardAiPrompt">Prompt</label>
+              <textarea id="storyboardAiPrompt" data-storyboard-ai-prompt rows="6" placeholder="Describe the frame you want to render."></textarea>
+            </div>
+            <div class="storyboard-ai-field">
+              <label for="storyboardAiNegative">Negative prompt</label>
+              <textarea id="storyboardAiNegative" data-storyboard-ai-negative rows="3" placeholder="Details to avoid (optional)"></textarea>
+            </div>
+            <div class="storyboard-ai-options-grid">
+              <div class="storyboard-ai-option">
+                <label for="storyboardAiWidth">Width</label>
+                <input id="storyboardAiWidth" data-storyboard-ai-width type="number" min="256" max="1536" step="64" value="1024" />
+              </div>
+              <div class="storyboard-ai-option">
+                <label for="storyboardAiHeight">Height</label>
+                <input id="storyboardAiHeight" data-storyboard-ai-height type="number" min="256" max="1536" step="64" value="576" />
+              </div>
+              <div class="storyboard-ai-option">
+                <label for="storyboardAiSteps">Steps</label>
+                <input id="storyboardAiSteps" data-storyboard-ai-steps type="number" min="1" max="150" step="1" value="30" />
+              </div>
+              <div class="storyboard-ai-option">
+                <label for="storyboardAiGuidance">Guidance</label>
+                <input id="storyboardAiGuidance" data-storyboard-ai-guidance type="number" min="1" max="30" step="0.1" value="7" />
+              </div>
+              <div class="storyboard-ai-option">
+                <label for="storyboardAiSeed">Seed</label>
+                <input id="storyboardAiSeed" data-storyboard-ai-seed type="number" min="0" max="999999999" step="1" value="0" />
+              </div>
+            </div>
+          </div>
+          <div class="storyboard-ai-form__group">
+            <div class="storyboard-ai-field">
+              <label for="storyboardAiProvider">Provider</label>
+              <select id="storyboardAiProvider" data-storyboard-ai-provider>
+                <option value="auto">Auto select</option>
+                <option value="openai">OpenAI</option>
+                <option value="stability">Stability SDXL</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
+            </div>
+            <div class="storyboard-ai-upload">
+              <label for="storyboardAiReference">Reference image</label>
+              <select id="storyboardAiReference" data-storyboard-ai-reference>
+                <option value="">No reference</option>
+              </select>
+              <input id="storyboardAiReferenceUpload" data-storyboard-ai-reference-upload type="file" accept="image/*" />
+            </div>
+            <div class="storyboard-ai-upload">
+              <label for="storyboardAiMask">Mask (optional)</label>
+              <select id="storyboardAiMask" data-storyboard-ai-mask>
+                <option value="">No mask</option>
+              </select>
+              <input id="storyboardAiMaskUpload" data-storyboard-ai-mask-upload type="file" accept="image/*" />
+            </div>
+            <div class="storyboard-ai-history">
+              <strong>Recent renders</strong>
+              <div class="storyboard-ai-history__list" data-storyboard-ai-history></div>
+            </div>
+          </div>
+          <div class="storyboard-ai-form__actions">
+            <button class="storyboard-ai-button" type="button" data-storyboard-ai-dismiss>Cancel</button>
+            <button class="storyboard-ai-button storyboard-ai-button--primary" type="submit" data-storyboard-ai-submit>Generate</button>
+          </div>
+          <p class="storyboard-ai-error" data-storyboard-ai-error hidden></p>
+        </form>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -1045,6 +1133,8 @@
 
   <script>
     const trackToggles = document.querySelectorAll('[data-track-toggle]');
+    window.storyboardScenes = [];
+    window.storyboardActiveSceneId = null;
     const sceneListContainer = document.querySelector('[data-scene-list]');
     const sceneTitle = document.querySelector('[data-scene-title]');
     const sceneMeta = document.querySelector('[data-scene-meta]');
@@ -1437,7 +1527,29 @@
       description.className = 'muted';
       description.textContent = scene.description || '';
 
-      card.append(label, status, description);
+      const thumbnail = document.createElement('div');
+      thumbnail.className = 'scene-card-thumbnail';
+      const thumbnailImage = document.createElement('img');
+      thumbnailImage.loading = 'lazy';
+      thumbnailImage.alt = `${combinedLabel} storyboard preview`;
+      thumbnailImage.dataset.sceneThumbnail = scene.id;
+      if (scene.latestRenderUrl) {
+        thumbnailImage.src = scene.latestRenderUrl;
+      } else {
+        thumbnailImage.hidden = true;
+      }
+      thumbnail.appendChild(thumbnailImage);
+
+      const actions = document.createElement('div');
+      actions.className = 'scene-card-actions';
+      const generateBtn = document.createElement('button');
+      generateBtn.type = 'button';
+      generateBtn.className = 'scene-card-generate';
+      generateBtn.dataset.sceneGenerate = scene.id;
+      generateBtn.textContent = 'Generate image';
+      actions.appendChild(generateBtn);
+
+      card.append(label, status, description, thumbnail, actions);
 
       card.addEventListener('click', () => {
         if (card.classList.contains('editing')) return;
@@ -1529,6 +1641,12 @@
         if (sceneMeta) sceneMeta.textContent = 'Create a scene in the writer to sync it here.';
         sceneCards = [];
         sceneRows = [];
+        window.storyboardScenes = [];
+        document.dispatchEvent(
+          new CustomEvent('storyboard:scenes-rendered', {
+            detail: { scenes: [], activeSceneId: null },
+          })
+        );
         activeSceneId = null;
         renderTimelineDockScenes();
         updateStoryArcActiveState();
@@ -1543,6 +1661,12 @@
       });
       sceneListContainer.appendChild(fragment);
       sceneCards = Array.from(sceneListContainer.querySelectorAll('.scene-card'));
+      window.storyboardScenes = Array.isArray(sceneData) ? [...sceneData] : [];
+      document.dispatchEvent(
+        new CustomEvent('storyboard:scenes-rendered', {
+          detail: { scenes: window.storyboardScenes, activeSceneId },
+        })
+      );
 
       sceneData.forEach(scene => {
         timelineGrid.appendChild(createTimelineScene(scene));
@@ -1867,6 +1991,7 @@
     function activateScene(id, opts = { scroll: true }) {
       if (!id) return;
       activeSceneId = id;
+      window.storyboardActiveSceneId = id;
       sceneCards.forEach(card => {
         const isActive = card.dataset.scene === id;
         card.classList.toggle('active', isActive);
@@ -1887,6 +2012,11 @@
       });
       updateStoryArcActiveState();
       syncCardDialogSceneData();
+      document.dispatchEvent(
+        new CustomEvent('storyboard:scene-activated', {
+          detail: { sceneId: id },
+        })
+      );
     }
 
     function updateSceneName(card, newName) {
@@ -2687,5 +2817,6 @@
   </script>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
   <script type="module" src="/assets/main.js"></script>
+  <script type="module" src="/storyboard/ai-generation.js"></script>
 </body>
 </html>
