@@ -2681,11 +2681,34 @@
       }
     }
 
+    function extractProjectPayload(raw){
+      if (!raw || typeof raw !== 'object') return null;
+      if (Array.isArray(raw.scenes)) return cloneValue(raw);
+      const nestedKeys = ['project', 'script', 'data', 'payload', 'project_json', 'projectJson'];
+      for (const key of nestedKeys){
+        if (!Object.prototype.hasOwnProperty.call(raw, key)) continue;
+        const candidate = raw[key];
+        if (!candidate || typeof candidate !== 'object') continue;
+        const extracted = extractProjectPayload(candidate);
+        if (extracted) return extracted;
+      }
+      return null;
+    }
+
     async function applyLoadedProject(nextProject, meta = {}){
       if (!nextProject || typeof nextProject !== 'object'){
         throw new Error('Invalid project payload');
       }
-      const loaded = cloneValue(nextProject);
+      const source = cloneValue(nextProject);
+      let loaded = extractProjectPayload(source) || source;
+      if (loaded !== source){
+        const overlayKeys = ['projectId','libraryEntryId','title','notes','format','settings','catalogs','characters','locations','createdAt','updatedAt','version'];
+        overlayKeys.forEach(key => {
+          if (typeof loaded[key] === 'undefined' && typeof source[key] !== 'undefined'){
+            loaded[key] = cloneValue(source[key]);
+          }
+        });
+      }
       loaded.projectId = loaded.projectId || meta.id || randomId();
       loaded.title = loaded.title || meta.name || 'Untitled Script';
       loaded.format = loaded.format || 'screenplay/v1';
