@@ -4118,12 +4118,6 @@
       scheduleBackup();
     }
 
-    if (sceneNotesToggleBtn){
-      sceneNotesToggleBtn.addEventListener('click', ()=>{
-        setSceneNotesVisibility(!areSceneNotesVisible());
-      });
-    }
-
     function renderStoryboard(){
       const scene = getActiveScene();
       const viewer = document.getElementById('storyboardViewer');
@@ -6418,6 +6412,12 @@
     const sceneNotesToggleBtn = document.getElementById('sceneNotesToggle');
     const sceneNotesHiddenHint = document.getElementById('sceneNotesHiddenHint');
     const sceneNotesListEl = document.getElementById('sceneNotesList');
+
+    if (sceneNotesToggleBtn){
+      sceneNotesToggleBtn.addEventListener('click', ()=>{
+        setSceneNotesVisibility(!areSceneNotesVisible());
+      });
+    }
     const PAGE_VIEW_HEIGHT = Math.round((29.7 / 2.54) * 96);
     const PAGE_VIEW_WIDTH = Math.round((21 / 2.54) * 96);
     let pageViewMode = 'scroll';
