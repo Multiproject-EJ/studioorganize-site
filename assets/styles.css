@@ -77,18 +77,6 @@ img{max-width:100%;display:block}
 .brand__logo{display:block;inline-size:clamp(140px,20vw,220px);block-size:32px;background-image:var(--brand-logo-image);background-repeat:no-repeat;background-size:contain;background-position:left center}
 .brand-with-logo{display:flex;align-items:center;gap:10px;position:relative}
 .brand-with-logo__badge{height:32px;width:auto}
-.brand-with-logo__apps{display:inline-flex;align-items:center;justify-content:center;padding:0;border:none;background:transparent;cursor:pointer;border-radius:14px;line-height:0}
-.brand-with-logo__apps .brand-with-logo__badge{pointer-events:none}
-.brand-with-logo__apps:focus-visible,.brand-with-logo--menu-open .brand-with-logo__apps{outline:2px solid var(--acc);outline-offset:3px}
-.brand-with-logo__apps:hover{filter:brightness(1.05)}
-.creator-menu{position:absolute;top:calc(100% + 14px);left:0;display:flex;flex-direction:column;gap:16px;background:var(--panel);border:1px solid var(--ring);border-radius:18px;padding:18px;box-shadow:0 20px 48px rgba(8,15,28,.36);max-width:min(90vw,680px);width:max-content;z-index:30}
-.creator-menu[hidden]{display:none}
-.creator-menu__header h2{margin:0;font-size:18px;line-height:1.2;font-weight:700}
-.creator-menu__header p{margin:4px 0 0;font-size:14px;color:var(--muted);max-width:320px}
-.creator-menu__grid{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,200px));justify-content:center}
-.creator-menu__grid .app-card{max-width:200px}
-@media (max-width:900px){.creator-menu__grid{grid-template-columns:repeat(2,minmax(0,200px))}}
-@media (max-width:540px){.creator-menu__grid{grid-template-columns:minmax(0,200px);justify-items:center}}
 .menu{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .menu__link,.dropbtn,.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-weight:500;cursor:pointer;transition:color .12s ease,border-color .12s ease,background .12s ease,transform .12s ease;text-decoration:none}
 .menu__link:hover,.dropbtn:hover,.theme-toggle:hover{color:var(--text);border-color:var(--acc);background:var(--chip)}

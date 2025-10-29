@@ -484,148 +484,6 @@ function initNotificationCenter(){
   });
 }
 
-function initCreatorAppMenu(){
-  const header = document.querySelector('header.nav');
-  if (!header) return;
-
-  let container = header.querySelector('.brand-with-logo');
-  if (!container){
-    const brandLink = header.querySelector(':scope > .brand');
-    if (!brandLink) return;
-    container = document.createElement('div');
-    container.className = 'brand-with-logo';
-    header.insertBefore(container, brandLink);
-    container.appendChild(brandLink);
-  }
-
-  if (container.dataset.creatorMenuBound === 'true') return;
-  container.dataset.creatorMenuBound = 'true';
-
-  const existingTrigger = container.querySelector('[data-creator-menu-trigger]');
-  if (existingTrigger) return;
-
-  let badge = container.querySelector('.brand-with-logo__badge');
-
-  const trigger = document.createElement('button');
-  trigger.type = 'button';
-  trigger.className = 'brand-with-logo__apps';
-  trigger.setAttribute('aria-haspopup', 'true');
-  trigger.setAttribute('aria-expanded', 'false');
-  trigger.setAttribute('aria-controls', 'creatorAppMenu');
-  trigger.setAttribute('aria-label', 'Open Creator Apps menu');
-  trigger.title = 'Creator Apps';
-  trigger.dataset.creatorMenuTrigger = 'true';
-
-  if (badge){
-    trigger.appendChild(badge);
-  } else {
-    const img = document.createElement('img');
-    img.src = '/assets/img/studioorganize_mock.png';
-    img.alt = 'Creator Apps';
-    img.loading = 'lazy';
-    img.className = 'brand-with-logo__badge';
-    trigger.appendChild(img);
-  }
-
-  const srLabel = document.createElement('span');
-  srLabel.className = 'sr-only';
-  srLabel.textContent = 'Open Creator Apps menu';
-  trigger.appendChild(srLabel);
-
-  container.appendChild(trigger);
-
-  const menu = document.createElement('div');
-  menu.className = 'creator-menu';
-  menu.id = 'creatorAppMenu';
-  menu.hidden = true;
-  menu.setAttribute('aria-hidden', 'true');
-  menu.innerHTML = `
-    <div class="creator-menu__header">
-      <h2>Creator Apps</h2>
-      <p>Jump into the StudioOrganize workspace that fits your next project.</p>
-    </div>
-    <div class="creator-menu__grid">
-      <a class="app-card app-card--fit" href="/use-cases/screenplay-writing.html">
-        <img src="/assets/img/screenplay_writer1.webp" alt="Screenplay writing workspace" loading="lazy" />
-        <span class="app-card__label">Screenplay Writing</span>
-      </a>
-      <a class="app-card app-card--fit" href="/CharacterStudio.html">
-        <img src="/assets/img/studioorganize_mock.png" alt="Character design workspace preview" loading="lazy" />
-        <span class="app-card__label">Character Design</span>
-      </a>
-      <div class="app-card app-card--placeholder" role="presentation" aria-hidden="true">
-        <img src="/assets/img/studioorganize_mock.png" alt="Set design workspace placeholder" loading="lazy" />
-        <span class="app-card__label">Set Design</span>
-      </div>
-      <a class="app-card app-card--fit" href="/StoryboardPro.html">
-        <img src="/assets/img/studioorganize_mock.png" alt="Storyboarding workspace preview" loading="lazy" />
-        <span class="app-card__label">Storyboarding</span>
-      </a>
-      <div class="app-card app-card--placeholder" role="presentation" aria-hidden="true">
-        <img src="/assets/img/studioorganize_mock.png" alt="Sound design workspace placeholder" loading="lazy" />
-        <span class="app-card__label">Sound Design</span>
-      </div>
-      <div class="app-card app-card--placeholder" role="presentation" aria-hidden="true">
-        <img src="/assets/img/studioorganize_mock.png" alt="Editing suite workspace placeholder" loading="lazy" />
-        <span class="app-card__label">Editing Suite</span>
-      </div>
-    </div>
-  `;
-
-  container.appendChild(menu);
-
-  const closeMenu = () => {
-    if (menu.hidden) return;
-    menu.hidden = true;
-    menu.setAttribute('aria-hidden', 'true');
-    trigger.setAttribute('aria-expanded', 'false');
-    container.classList.remove('brand-with-logo--menu-open');
-  };
-
-  const openMenu = () => {
-    if (!menu.hidden) return;
-    menu.hidden = false;
-    menu.setAttribute('aria-hidden', 'false');
-    trigger.setAttribute('aria-expanded', 'true');
-    container.classList.add('brand-with-logo--menu-open');
-  };
-
-  trigger.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (menu.hidden){
-      openMenu();
-    } else {
-      closeMenu();
-    }
-  });
-
-  menu.addEventListener('click', event => {
-    const link = event.target instanceof HTMLElement ? event.target.closest('a') : null;
-    if (link){
-      closeMenu();
-      return;
-    }
-    event.stopPropagation();
-  });
-
-  menu.addEventListener('mousedown', event => {
-    event.stopPropagation();
-  });
-
-  document.addEventListener('click', event => {
-    if (!container.contains(event.target)){
-      closeMenu();
-    }
-  });
-
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape'){
-      closeMenu();
-    }
-  });
-}
-
 const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/screenplay_writer1.webp' },
   { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/studioorganize_mock.png' },
@@ -1660,7 +1518,6 @@ function initFinishStoryModal(){
 
 if (document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', () => {
-    initCreatorAppMenu();
     initWorkspaceLauncher();
     initDropdownMenus();
     initNotificationCenter();
@@ -1669,7 +1526,6 @@ if (document.readyState === 'loading'){
     initFinishStoryModal();
   }, { once: true });
 } else {
-  initCreatorAppMenu();
   initWorkspaceLauncher();
   initDropdownMenus();
   initNotificationCenter();
