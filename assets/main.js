@@ -626,7 +626,212 @@ function initCreatorAppMenu(){
   });
 }
 
+const WORKSPACE_LAUNCHER_MODULES = [
+  { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/screenplay_writer1.webp' },
+  { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/studioorganize_mock.png' },
+  { href: '/StoryboardPro.html', label: 'Storyboard Pro', image: '/assets/img/studioorganize_mock.png' },
+  { href: '/use-cases/generate-ideas.html', label: 'Idea Generator', image: '/assets/img/studioorganize_mock.png' },
+  { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/studioorganize_mock.png' },
+  { href: '/creative-hub.html', label: 'Creative Hub', image: '/assets/img/studioorganize_mock.png' },
+];
+
+function renderWorkspaceModuleLink({ href, label, image }){
+  const safeLabel = typeof label === 'string' ? label : '';
+  const safeAttr = safeLabel.replace(/"/g, '&quot;');
+  const safeHref = typeof href === 'string' ? href : '#';
+  const safeImage = typeof image === 'string' ? image : '/assets/img/studioorganize_mock.png';
+  return `
+    <a class="workspace-launcher__module" href="${safeHref}" data-label="${safeAttr}">
+      <span class="workspace-launcher__module-icon" aria-hidden="true">
+        <img src="${safeImage}" alt="" loading="lazy" />
+      </span>
+      <span class="sr-only">${safeLabel}</span>
+    </a>
+  `;
+}
+
+function ensureWorkspaceLauncherStructure(launcher){
+  if (!(launcher instanceof HTMLElement)) return;
+  if (launcher.dataset.workspaceLauncherPrepared === 'true') return;
+
+  const panel = launcher.querySelector('[data-workspace-panel]');
+  if (!(panel instanceof HTMLElement)) return;
+
+  let moduleStack = panel.querySelector('.workspace-launcher__module-stack');
+  if (!(moduleStack instanceof HTMLElement)){
+    moduleStack = document.createElement('div');
+    moduleStack.className = 'workspace-launcher__module-stack';
+    panel.appendChild(moduleStack);
+  }
+
+  let actions = panel.querySelector('.workspace-launcher__actions');
+  if (!(actions instanceof HTMLElement)){
+    actions = document.createElement('div');
+    actions.className = 'workspace-launcher__actions';
+    actions.innerHTML = `
+      <button type="button" class="workspace-launcher__script" data-workspace-script>
+        <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
+        <span>STORY</span>
+      </button>
+    `;
+  }
+  if (actions.parentElement !== moduleStack){
+    moduleStack.insertBefore(actions, moduleStack.firstChild);
+  }
+
+  let modules = panel.querySelector('.workspace-launcher__modules');
+  if (!(modules instanceof HTMLElement)){
+    modules = document.createElement('nav');
+    modules.className = 'workspace-launcher__modules';
+    modules.setAttribute('aria-label', 'Workspace modules');
+    moduleStack.appendChild(modules);
+  } else if (modules.parentElement !== moduleStack){
+    moduleStack.appendChild(modules);
+  }
+
+  if (!modules.children.length){
+    modules.innerHTML = WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join('');
+  }
+
+  let assistant = panel.querySelector('.workspace-launcher__assistant');
+  if (!(assistant instanceof HTMLElement)){
+    assistant = document.createElement('div');
+    assistant.className = 'workspace-launcher__assistant';
+    panel.insertBefore(assistant, moduleStack);
+  } else if (assistant.parentElement !== panel){
+    panel.insertBefore(assistant, moduleStack);
+  }
+
+  if (!assistant.querySelector('.workspace-launcher__assistant-header')){
+    assistant.insertAdjacentHTML('afterbegin', `
+      <div class="workspace-launcher__assistant-header">
+        <span class="workspace-launcher__assistant-avatar" aria-hidden="true">🤖</span>
+        <div>
+          <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
+          <p class="workspace-launcher__assistant-subtitle">Pick a prompt or chat to keep momentum going.</p>
+        </div>
+      </div>
+    `);
+  }
+
+  const chat = launcher.querySelector('[data-workspace-chat]');
+  let assistantActions = assistant.querySelector('.workspace-launcher__assistant-actions');
+  if (!(assistantActions instanceof HTMLElement)){
+    assistantActions = document.createElement('div');
+    assistantActions.className = 'workspace-launcher__assistant-actions';
+    assistantActions.innerHTML = `
+      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
+        <span>＋ Outline a new story</span>
+      </button>
+      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
+        <span>🎬 Prep today’s shoot</span>
+      </button>
+      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
+        <span>📝 Review my storyboard beats</span>
+      </button>
+    `;
+    if (chat instanceof HTMLElement && chat.parentElement === assistant){
+      assistant.insertBefore(assistantActions, chat);
+    } else {
+      assistant.appendChild(assistantActions);
+    }
+  }
+
+  if (chat instanceof HTMLElement){
+    chat.classList.add('workspace-launcher__chat--docked');
+    if (!assistant.contains(chat)){
+      assistant.appendChild(chat);
+    } else if (assistantActions instanceof HTMLElement){
+      assistant.appendChild(chat);
+    }
+    if (!chat.hasAttribute('hidden')){
+      chat.hidden = true;
+      chat.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  launcher.dataset.workspaceLauncherPrepared = 'true';
+}
+
+function injectGlobalWorkspaceLauncher(){
+  if (document.querySelector('[data-workspace-launcher]')) return;
+  if (!(document.body instanceof HTMLElement)) return;
+
+  const modulesMarkup = WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join('');
+  const template = document.createElement('div');
+  template.innerHTML = `
+    <div class="workspace-launcher" data-workspace-launcher data-global-workspace-launcher>
+      <div class="workspace-launcher__controls">
+        <div class="workspace-launcher__toggle-wrap">
+          <button class="workspace-launcher__toggle" type="button" aria-expanded="false" aria-label="Workspace menu" data-workspace-toggle>
+            <span class="sr-only">Workspace menu</span>
+            <span class="workspace-launcher__icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+      <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
+        <div class="workspace-launcher__assistant">
+          <div class="workspace-launcher__assistant-header">
+            <span class="workspace-launcher__assistant-avatar" aria-hidden="true">🤖</span>
+            <div>
+              <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
+              <p class="workspace-launcher__assistant-subtitle">Pick a prompt or chat to keep momentum going.</p>
+            </div>
+          </div>
+          <div class="workspace-launcher__assistant-actions">
+            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
+              <span>＋ Outline a new story</span>
+            </button>
+            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
+              <span>🎬 Prep today’s shoot</span>
+            </button>
+            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
+              <span>📝 Review my storyboard beats</span>
+            </button>
+          </div>
+          <div class="workspace-launcher__chat workspace-launcher__chat--docked" data-workspace-chat hidden aria-hidden="true">
+            <div class="workspace-launcher__chat-bubble">
+              <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
+                <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
+              </div>
+              <div class="workspace-launcher__chat-suggestions">
+                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let’s start a new story together</button>
+                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Help me plan today’s shoot</button>
+              </div>
+              <form class="workspace-launcher__chat-form" data-workspace-chat-form>
+                <div class="workspace-launcher__chat-input">
+                  <input type="text" placeholder="Ask StudioOrganize…" aria-label="Ask the workspace assistant" data-workspace-chat-input />
+                  <button type="submit" class="workspace-launcher__chat-send" aria-label="Send chat message">
+                    <span aria-hidden="true">➤</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="workspace-launcher__module-stack">
+          <div class="workspace-launcher__actions">
+            <button type="button" class="workspace-launcher__script" data-workspace-script>
+              <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
+              <span>STORY</span>
+            </button>
+          </div>
+          <nav class="workspace-launcher__modules" aria-label="Workspace modules">
+            ${modulesMarkup}
+          </nav>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const launcher = template.firstElementChild;
+  if (launcher instanceof HTMLElement){
+    document.body.appendChild(launcher);
+  }
+}
+
 function initWorkspaceLauncher(){
+  injectGlobalWorkspaceLauncher();
   const launchers = Array.from(document.querySelectorAll('[data-workspace-launcher]'));
   if (!launchers.length) return;
 
@@ -787,6 +992,7 @@ function initWorkspaceLauncher(){
 
   launchers.forEach((launcher, index) => {
     if (!(launcher instanceof HTMLElement)) return;
+    ensureWorkspaceLauncherStructure(launcher);
     if (launcher.dataset.workspaceLauncherBound === 'true') return;
     launcher.dataset.workspaceLauncherBound = 'true';
 
@@ -887,7 +1093,7 @@ function initWorkspaceLauncher(){
     const chatThread = chat?.querySelector('[data-workspace-chat-thread]') ?? null;
     const chatInput = chat?.querySelector('[data-workspace-chat-input]') ?? null;
     const chatForm = chat?.querySelector('[data-workspace-chat-form]') ?? null;
-    const chatSuggestions = chat ? Array.from(chat.querySelectorAll('[data-workspace-chat-suggestion]')) : [];
+    const chatSuggestions = Array.from(launcher.querySelectorAll('[data-workspace-chat-suggestion]'));
 
     const appendChatMessage = (role, message) => {
       if (!(chatThread instanceof HTMLElement)) return;
