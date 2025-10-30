@@ -775,3 +775,43 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
 .modules-grid .card h3{margin-top:6px}
 .module-icon{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--alt);border:1px solid var(--line);font-size:22px;margin-bottom:8px}
 
+/* auth portal */
+.auth-portal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-portal[hidden]{display:none}
+.auth-portal__backdrop{position:absolute;inset:0;background:rgba(6,12,22,.75);backdrop-filter:blur(12px)}
+.auth-portal__dialog{position:relative;z-index:1;width:min(420px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--panel);border:1px solid var(--ring);border-radius:20px;padding:28px;box-shadow:0 32px 80px rgba(8,15,28,.55);display:flex;flex-direction:column;gap:22px}
+.auth-portal__close{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--text);font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.auth-portal__close:hover,.auth-portal__close:focus-visible{background:var(--brand);color:var(--cta-text);outline:none}
+.auth-portal__header{display:flex;flex-direction:column;gap:10px;padding-right:36px}
+.auth-portal__eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--muted);margin:0}
+.auth-portal__title{margin:0;font-size:26px;line-height:1.2}
+.auth-portal__subtitle{margin:0;font-size:15px;color:var(--muted);line-height:1.6}
+.auth-portal__tabs{display:inline-flex;align-items:center;gap:8px;margin-top:6px;background:var(--hud);border:1px solid var(--line);border-radius:14px;padding:6px}
+.auth-portal__tab{border:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;padding:8px 14px;border-radius:12px;cursor:pointer;transition:color .16s ease,background .16s ease}
+.auth-portal__tab.is-active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text)}
+.auth-portal__tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.auth-portal__view{display:flex;flex-direction:column;gap:18px}
+.auth-portal__form{display:grid;gap:14px}
+.auth-portal__form.is-loading{opacity:.72}
+.auth-portal__field{display:grid;gap:6px;font-weight:600;font-size:14px}
+.auth-portal__field span{display:flex;align-items:center;gap:6px}
+.auth-portal__field small{font-weight:400;color:var(--muted);font-size:12px}
+.auth-portal__field input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text);font:inherit;transition:border-color .15s ease,box-shadow .15s ease}
+.auth-portal__field input:focus-visible{border-color:var(--acc);box-shadow:0 0 0 2px rgba(95,168,255,.32);outline:none}
+.auth-portal__checkbox{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted)}
+.auth-portal__checkbox input{margin-top:4px}
+.auth-portal__submit{font:inherit;font-weight:700;padding:12px 16px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);box-shadow:0 16px 36px rgba(8,15,28,.32);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}
+.auth-portal__submit:disabled{opacity:.65;cursor:not-allowed}
+.auth-portal__submit:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 20px 44px rgba(8,15,28,.38)}
+.auth-portal__hint{margin:0;font-size:13px;color:var(--muted)}
+.auth-portal__link{border:none;background:none;padding:0;font:inherit;color:var(--brand);font-weight:600;cursor:pointer;text-decoration:underline}
+.auth-portal__link:hover,.auth-portal__link:focus-visible{color:var(--brand-2);outline:none}
+.auth-portal__message{border:1px solid var(--ring);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;background:var(--hud);color:var(--text)}
+.auth-portal__message[data-auth-message-tone="error"]{border-color:rgba(235,87,87,.45);background:rgba(235,87,87,.16);color:#ffb8c2}
+.auth-portal__message[data-auth-message-tone="success"]{border-color:rgba(34,197,94,.38);background:rgba(34,197,94,.18);color:#73ffd3}
+@media (max-width:640px){
+  .auth-portal{padding:18px}
+  .auth-portal__dialog{width:100%;max-height:calc(100vh - 32px);padding:24px}
+  .auth-portal__header{padding-right:28px}
+}
+
