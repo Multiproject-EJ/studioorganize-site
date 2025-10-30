@@ -220,7 +220,7 @@ html.is-mobile-app .section{border-radius:24px;border:1px solid var(--ring);back
 html.is-mobile-app .cta-row{flex-direction:column;align-items:stretch;}
 html.is-mobile-app .grid.cards,html.is-mobile-app .modules-grid{grid-template-columns:1fr;}
 html.is-mobile-app .workspace-launcher{right:16px;bottom:calc(120px + env(safe-area-inset-bottom));}
-html.is-mobile-app .workspace-launcher__toggle-wrap{display:none;}
+html.is-mobile-app .workspace-launcher__toggle-wrap{display:grid;}
 html.is-mobile-app .workspace-launcher__panel{right:16px;left:16px;bottom:calc(120px + env(safe-area-inset-bottom));width:auto;max-width:none;}
 html.is-mobile-app .footer{margin:0 16px 24px;border-radius:24px;border:1px solid var(--ring);background:var(--panel);box-shadow:0 18px 40px rgba(8,15,28,.28);padding:24px;}
 html.is-mobile-app .footer__grid{grid-template-columns:1fr;gap:14px;}

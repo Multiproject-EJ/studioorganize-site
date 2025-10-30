@@ -1097,16 +1097,40 @@ function initDropdownMenus(){
     });
   };
 
+  const getAccountDestination = dropdown => {
+    const firstLink = dropdown?.querySelector('.dropdown-content a');
+    if (firstLink instanceof HTMLAnchorElement){
+      const href = firstLink.getAttribute('href');
+      if (href && href.trim()){
+        return href;
+      }
+    }
+    return '/account.html';
+  };
+
   dropdowns.forEach(dropdown => {
     const parts = getParts(dropdown);
     if (!parts) return;
     const { trigger, panel } = parts;
+    const isAccountMenu = dropdown.hasAttribute('data-account-menu');
 
     trigger.setAttribute('aria-haspopup', 'true');
     trigger.setAttribute('aria-expanded', 'false');
     panel.setAttribute('aria-hidden', 'true');
 
     trigger.addEventListener('click', event => {
+      if (isAccountMenu && document.documentElement.classList.contains('is-mobile-app')){
+        event.preventDefault();
+        event.stopPropagation();
+        const destination = getAccountDestination(dropdown);
+        closeAll();
+        closeMobileMenu();
+        if (destination){
+          window.location.assign(destination);
+        }
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       const isOpen = dropdown.classList.contains('is-open');
