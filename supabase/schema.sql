@@ -862,3 +862,68 @@ create policy "Scene links are deletable by owners"
               and s.owner_id = auth.uid()
         )
     );
+
+-- ---------------------------------------------------------------------------
+-- Story AI preferences
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.story_ai_preferences (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    project_id uuid,
+    scope text not null default 'project' check (scope in ('project','new_story_template')),
+    mode text not null check (mode in ('continue','new')),
+    story_length text check (story_length in ('short','medium','long')),
+    feature_flags jsonb not null default '{}'::jsonb,
+    bias_note text,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create unique index if not exists story_ai_preferences_owner_scope_idx
+    on public.story_ai_preferences (owner_id, coalesce(project_id, '00000000-0000-0000-0000-000000000000'::uuid), scope);
+
+create index if not exists story_ai_preferences_project_idx
+    on public.story_ai_preferences (project_id);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'story_ai_preferences_set_timestamp'
+          and tgrelid = 'public.story_ai_preferences'::regclass
+    ) then
+        create trigger story_ai_preferences_set_timestamp
+            before update on public.story_ai_preferences
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.story_ai_preferences enable row level security;
+
+drop policy if exists "AI prefs are viewable by owners" on public.story_ai_preferences;
+create policy "AI prefs are viewable by owners"
+    on public.story_ai_preferences
+    for select
+    using (auth.uid() = owner_id);
+
+drop policy if exists "AI prefs can be inserted by owners" on public.story_ai_preferences;
+create policy "AI prefs can be inserted by owners"
+    on public.story_ai_preferences
+    for insert
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "AI prefs are editable by owners" on public.story_ai_preferences;
+create policy "AI prefs are editable by owners"
+    on public.story_ai_preferences
+    for update
+    using (auth.uid() = owner_id)
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "AI prefs are deletable by owners" on public.story_ai_preferences;
+create policy "AI prefs are deletable by owners"
+    on public.story_ai_preferences
+    for delete
+    using (auth.uid() = owner_id);

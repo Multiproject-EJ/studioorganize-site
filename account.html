@@ -60,8 +60,9 @@
               <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
             </div>
             <div class="workspace-launcher__chat-suggestions">
-              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's start a new story together</button>
-              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let's analyze my story and improve</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="continue">Check my progress</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="new">Spin up something new</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="settings">How should you behave?</button>
             </div>
             <form class="workspace-launcher__chat-form" data-workspace-chat-form>
               <div class="workspace-launcher__chat-input">
@@ -381,6 +382,94 @@
             <span class="project-progress__action-copy">Map shot ideas and camera moves to prep your shoot.</span>
           </a>
         </div>
+      </div>
+    </section>
+
+    <section class="ai-preferences" aria-label="AI assistant preferences" data-ai-preferences>
+      <div class="ai-preferences__header">
+        <div>
+          <h3>AI Assistant Plan</h3>
+          <p class="muted">
+            Save how StudioOrganize AI should behave when it checks in from the workspace menu and inside Creator Hub.
+          </p>
+        </div>
+        <p class="ai-preferences__story muted" data-ai-scope-note>
+          <span data-ai-selected-copy>Selected story: <strong data-ai-story-name>your story</strong></span>
+          <span data-ai-empty-copy hidden>Select a story from the Story Goal Tracker to customize the assistant.</span>
+        </p>
+      </div>
+      <div class="ai-preferences__content">
+        <div class="ai-preferences__primer">
+          <h4>What happens next</h4>
+          <ol>
+            <li>First the assistant asks if you want to make progress on <em>your current story</em> or start something brand new.</li>
+            <li>If you choose a new story, pick between a short sprint, a medium arc, or a long-form journey.</li>
+            <li>Those choices are stored in Supabase so nudges, bias notes, and progress checks align with each script.</li>
+          </ol>
+          <p class="muted">
+            Updates sync once you sign in. If you are offline, changes stay local until the next session.
+          </p>
+        </div>
+        <form class="ai-preferences__form" data-ai-preferences-form novalidate>
+          <fieldset class="ai-preferences__fieldset">
+            <legend>Story focus</legend>
+            <label class="ai-preferences__option">
+              <input type="radio" name="ai-story-mode" value="continue" checked />
+              <span>Make progress on my existing story</span>
+            </label>
+            <label class="ai-preferences__option">
+              <input type="radio" name="ai-story-mode" value="new" />
+              <span>Start a fresh story</span>
+            </label>
+          </fieldset>
+          <fieldset class="ai-preferences__fieldset" data-ai-length-group>
+            <legend>New story size</legend>
+            <label class="ai-preferences__length">
+              <input type="radio" name="ai-story-length" value="short" />
+              <span>
+                <strong>Short sprint</strong>
+                <small>~15 beats to ship something fast</small>
+              </span>
+            </label>
+            <label class="ai-preferences__length">
+              <input type="radio" name="ai-story-length" value="medium" checked />
+              <span>
+                <strong>Medium arc</strong>
+                <small>Classic three-act structure</small>
+              </span>
+            </label>
+            <label class="ai-preferences__length">
+              <input type="radio" name="ai-story-length" value="long" />
+              <span>
+                <strong>Long-form journey</strong>
+                <small>Season-length or feature outline</small>
+              </span>
+            </label>
+          </fieldset>
+          <fieldset class="ai-preferences__fieldset">
+            <legend>Coaching style</legend>
+            <label class="ai-preferences__feature">
+              <input type="checkbox" value="progress_nudges" data-ai-feature checked />
+              <span>Send progress nudges when goals fall behind</span>
+            </label>
+            <label class="ai-preferences__feature">
+              <input type="checkbox" value="structure_spotlight" data-ai-feature />
+              <span>Highlight structure and milestone checkpoints</span>
+            </label>
+            <label class="ai-preferences__feature">
+              <input type="checkbox" value="tone_cheerleader" data-ai-feature />
+              <span>Keep the tone upbeat and encouraging</span>
+            </label>
+          </fieldset>
+          <label class="ai-preferences__field">
+            <span>Bias or voice notes</span>
+            <textarea data-ai-bias rows="3" placeholder="Example: focus on emotional stakes, avoid horror beats, keep feedback direct."></textarea>
+          </label>
+          <div class="ai-preferences__actions">
+            <button type="button" class="ai-preferences__save" data-ai-save>Save assistant plan</button>
+            <p class="ai-preferences__status muted" data-ai-status></p>
+          </div>
+        </form>
       </div>
     </section>
 
@@ -908,6 +997,13 @@
       } catch (_error){}
     }
 
+    function emitProjectSelection(project){
+      const detail = project
+        ? { projectId: project.id, projectTitle: project.title }
+        : { projectId: null, projectTitle: '' };
+      document.dispatchEvent(new CustomEvent('studioorganize:selected-project', { detail }));
+    }
+
     function clearTable(){
       if (tableBody){
         tableBody.textContent = '';
@@ -1160,6 +1256,7 @@
         } else if (detail){
           detail.hidden = true;
         }
+        emitProjectSelection(null);
         return;
       }
       selectedProjectId = project.id;
@@ -1167,6 +1264,7 @@
       persistLastProject(project.id);
       updateRowSelection();
       updateDetailPanel();
+      emitProjectSelection(project);
     }
 
     function setEmptyStateMessage(){
@@ -1205,6 +1303,7 @@
           if (emptyState) emptyState.hidden = false;
           clearTable();
           selectedProjectId = null;
+          emitProjectSelection(null);
           return;
         }
         if (emptyState) emptyState.hidden = true;
@@ -1278,6 +1377,333 @@
         });
       });
     }
+  })();
+</script>
+
+<script>
+  (function(){
+    const section = document.querySelector('[data-ai-preferences]');
+    if (!section) return;
+
+    const form = section.querySelector('[data-ai-preferences-form]');
+    const statusEl = section.querySelector('[data-ai-status]');
+    let storyNameEl = section.querySelector('[data-ai-story-name]');
+    const selectedCopy = section.querySelector('[data-ai-selected-copy]');
+    const emptyCopy = section.querySelector('[data-ai-empty-copy]');
+    const modeRadios = Array.from(section.querySelectorAll('input[name="ai-story-mode"]'));
+    const lengthGroup = section.querySelector('[data-ai-length-group]');
+    const lengthRadios = Array.from(section.querySelectorAll('input[name="ai-story-length"]'));
+    const featureCheckboxes = Array.from(section.querySelectorAll('[data-ai-feature]'));
+    const biasField = section.querySelector('[data-ai-bias]');
+    const saveButton = section.querySelector('[data-ai-save]');
+
+    const DEFAULT_PREF = {
+      mode: 'continue',
+      storyLength: 'medium',
+      featureFlags: {
+        progress_nudges: true,
+        structure_spotlight: false,
+        tone_cheerleader: false
+      },
+      biasNote: ''
+    };
+
+    let currentProjectId = null;
+    let currentProjectTitle = '';
+    let api = window.StudioOrganizeAI || null;
+    let loading = false;
+    let saving = false;
+    let dirty = false;
+
+    function getDefaultPreference(){
+      if (api && typeof api.getDefaultPreference === 'function'){
+        return api.getDefaultPreference();
+      }
+      return { ...DEFAULT_PREF };
+    }
+
+    function normalizePreference(pref){
+      if (api && typeof api.normalizePreference === 'function'){
+        return api.normalizePreference(pref);
+      }
+      const source = (pref && typeof pref === 'object') ? pref : {};
+      const mode = source.mode === 'new' ? 'new' : 'continue';
+      const length = typeof source.storyLength === 'string' && ['short', 'medium', 'long'].includes(source.storyLength)
+        ? source.storyLength
+        : 'medium';
+      const flagsSource = (source.featureFlags && typeof source.featureFlags === 'object') ? source.featureFlags : {};
+      return {
+        mode,
+        storyLength: mode === 'new' ? length : null,
+        featureFlags: {
+          progress_nudges: Boolean(flagsSource.progress_nudges ?? DEFAULT_PREF.featureFlags.progress_nudges),
+          structure_spotlight: Boolean(flagsSource.structure_spotlight ?? DEFAULT_PREF.featureFlags.structure_spotlight),
+          tone_cheerleader: Boolean(flagsSource.tone_cheerleader ?? DEFAULT_PREF.featureFlags.tone_cheerleader)
+        },
+        biasNote: typeof source.biasNote === 'string' ? source.biasNote : ''
+      };
+    }
+
+    function getSelectedMode(){
+      const checked = modeRadios.find(radio => radio.checked);
+      return checked ? checked.value : 'continue';
+    }
+
+    function getSelectedLength(){
+      const checked = lengthRadios.find(radio => radio.checked);
+      return checked ? checked.value : 'medium';
+    }
+
+    function setStatus(message, tone = 'muted'){
+      if (!statusEl) return;
+      statusEl.textContent = message || '';
+      if (message){
+        statusEl.dataset.status = tone;
+      } else {
+        delete statusEl.dataset.status;
+      }
+    }
+
+    function updateScopeView(){
+      if (!selectedCopy || !emptyCopy) return;
+      if (!currentProjectId){
+        selectedCopy.hidden = true;
+        emptyCopy.hidden = false;
+      } else {
+        selectedCopy.hidden = false;
+        emptyCopy.hidden = true;
+        storyNameEl = section.querySelector('[data-ai-story-name]');
+        if (storyNameEl){
+          storyNameEl.textContent = currentProjectTitle || 'your story';
+        }
+      }
+    }
+
+    function updateControlState(){
+      const disableAll = !currentProjectId || loading;
+      const mode = getSelectedMode();
+      section.dataset.aiDisabled = disableAll ? 'true' : 'false';
+      section.dataset.aiLoading = loading ? 'true' : 'false';
+      section.dataset.aiSaving = saving ? 'true' : 'false';
+      section.dataset.aiMode = mode;
+
+      modeRadios.forEach(radio => {
+        radio.disabled = disableAll || saving;
+      });
+
+      const disableLengths = disableAll || saving || mode !== 'new';
+      lengthRadios.forEach(radio => {
+        radio.disabled = disableLengths;
+        const wrapper = radio.closest('.ai-preferences__length');
+        if (wrapper){
+          wrapper.classList.toggle('ai-preferences__length--disabled', disableLengths);
+        }
+      });
+      if (lengthGroup){
+        lengthGroup.dataset.disabled = disableLengths ? 'true' : 'false';
+      }
+
+      featureCheckboxes.forEach(box => {
+        box.disabled = disableAll || saving;
+      });
+      if (biasField instanceof HTMLTextAreaElement){
+        biasField.disabled = disableAll || saving;
+      }
+      if (saveButton){
+        saveButton.disabled = disableAll || saving;
+      }
+    }
+
+    function applyPreference(pref){
+      const normalized = normalizePreference(pref || getDefaultPreference());
+      const modeValue = normalized.mode === 'new' ? 'new' : 'continue';
+      modeRadios.forEach(radio => {
+        radio.checked = radio.value === modeValue;
+      });
+      const targetLength = normalized.storyLength && ['short', 'medium', 'long'].includes(normalized.storyLength)
+        ? normalized.storyLength
+        : 'medium';
+      lengthRadios.forEach(radio => {
+        radio.checked = radio.value === targetLength;
+      });
+      featureCheckboxes.forEach(box => {
+        box.checked = Boolean(normalized.featureFlags?.[box.value]);
+      });
+      if (biasField instanceof HTMLTextAreaElement){
+        biasField.value = normalized.biasNote || '';
+      }
+      dirty = false;
+      section.dataset.aiDirty = 'false';
+      updateControlState();
+      return normalized;
+    }
+
+    function readForm(){
+      const mode = getSelectedMode();
+      const features = {};
+      featureCheckboxes.forEach(box => {
+        features[box.value] = box.checked;
+      });
+      const biasNote = biasField instanceof HTMLTextAreaElement ? biasField.value.trim() : '';
+      return normalizePreference({
+        mode,
+        storyLength: mode === 'new' ? getSelectedLength() : null,
+        featureFlags: features,
+        biasNote
+      });
+    }
+
+    function markDirty(){
+      if (saving || loading) return;
+      dirty = true;
+      section.dataset.aiDirty = 'true';
+      if (statusEl && (!statusEl.dataset.status || statusEl.dataset.status === 'success')){
+        setStatus('Unsaved changes', 'warning');
+      }
+    }
+
+    function ensureApi(){
+      if (api) return Promise.resolve(api);
+      if (window.StudioOrganizeAI){
+        api = window.StudioOrganizeAI;
+        return Promise.resolve(api);
+      }
+      return new Promise(resolve => {
+        const handler = () => {
+          api = window.StudioOrganizeAI || null;
+          resolve(api);
+        };
+        window.addEventListener('studioorganize-ai-ready', handler, { once: true });
+      });
+    }
+
+    async function loadPreferenceForProject(){
+      const apiClient = await ensureApi();
+      const fallback = getDefaultPreference();
+      if (!currentProjectId){
+        applyPreference(fallback);
+        updateControlState();
+        setStatus('Select a story from the Story Goal Tracker to customize the assistant.', 'warning');
+        return;
+      }
+      loading = true;
+      updateControlState();
+      setStatus('Loading preferences…', 'muted');
+      try {
+        const result = apiClient
+          ? await apiClient.loadPreference(currentProjectId)
+          : { success: false, preference: fallback, source: 'default' };
+        const preference = result?.preference || fallback;
+        applyPreference(preference);
+        if (result?.success){
+          if (result.source === 'supabase'){
+            setStatus('Preferences synced from your account.', 'success');
+          } else if (result.source === 'local'){
+            setStatus('Using locally saved plan. Sign in to sync everywhere.', 'warning');
+          } else {
+            setStatus('Preferences ready. Adjust anything you need.', 'muted');
+          }
+        } else {
+          setStatus('No saved plan yet—tune the assistant and hit save.', 'muted');
+        }
+      } catch (error){
+        console.error('Failed to load AI assistant preference', error);
+        applyPreference(fallback);
+        setStatus('Could not load preferences. Showing defaults instead.', 'error');
+      } finally {
+        loading = false;
+        updateControlState();
+      }
+    }
+
+    async function savePreferenceForProject(){
+      if (saving || !currentProjectId) return;
+      const apiClient = await ensureApi();
+      if (!apiClient){
+        setStatus('StudioOrganize AI is offline. Try again soon.', 'error');
+        return;
+      }
+      saving = true;
+      updateControlState();
+      setStatus('Saving…', 'muted');
+      const payload = readForm();
+      try {
+        const result = await apiClient.savePreference(currentProjectId, payload);
+        if (result.success){
+          applyPreference(result.preference);
+          if (result.source === 'supabase'){
+            setStatus('Assistant plan saved to your account.', 'success');
+          } else {
+            setStatus('Saved locally. Sign in to sync everywhere.', 'warning');
+          }
+        } else {
+          setStatus('Unable to save preferences right now.', 'error');
+        }
+      } catch (error){
+        console.error('Failed to save AI assistant preference', error);
+        setStatus('Something went wrong while saving. Try again.', 'error');
+      } finally {
+        saving = false;
+        updateControlState();
+      }
+    }
+
+    modeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        updateControlState();
+        markDirty();
+      });
+    });
+
+    lengthRadios.forEach(radio => {
+      radio.addEventListener('change', markDirty);
+    });
+
+    featureCheckboxes.forEach(box => {
+      box.addEventListener('change', markDirty);
+    });
+
+    if (biasField instanceof HTMLTextAreaElement){
+      biasField.addEventListener('input', markDirty);
+    }
+
+    if (saveButton){
+      saveButton.addEventListener('click', event => {
+        event.preventDefault();
+        if (!currentProjectId){
+          setStatus('Select a story from the Story Goal Tracker first.', 'warning');
+          return;
+        }
+        savePreferenceForProject();
+      });
+    }
+
+    function handleProjectSelection(detail){
+      const nextId = detail && detail.projectId ? detail.projectId : null;
+      const nextTitle = detail && typeof detail.projectTitle === 'string' ? detail.projectTitle : '';
+      const changed = nextId !== currentProjectId;
+      currentProjectId = nextId;
+      currentProjectTitle = nextTitle;
+      updateScopeView();
+      if (!currentProjectId){
+        applyPreference(getDefaultPreference());
+        setStatus('Select a story from the Story Goal Tracker to customize the assistant.', 'warning');
+        updateControlState();
+        return;
+      }
+      if (changed){
+        loadPreferenceForProject();
+      }
+    }
+
+    document.addEventListener('studioorganize:selected-project', event => {
+      handleProjectSelection(event.detail || {});
+    });
+
+    updateScopeView();
+    applyPreference(getDefaultPreference());
+    setStatus('Select a story from the Story Goal Tracker to customize the assistant.', 'warning');
+    ensureApi();
   })();
 </script>
 
