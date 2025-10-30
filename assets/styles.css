@@ -77,6 +77,22 @@ img{max-width:100%;display:block}
 .brand__logo{display:block;inline-size:clamp(140px,20vw,220px);block-size:32px;background-image:var(--brand-logo-image);background-repeat:no-repeat;background-size:contain;background-position:left center}
 .brand-with-logo{display:flex;align-items:center;gap:10px;position:relative}
 .brand-with-logo__badge{height:32px;width:auto}
+.topbar__badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  flex-shrink:0;
+}
+.topbar__badge img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:inherit;
+  display:block;
+}
 .menu{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .menu__link,.dropbtn,.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-weight:500;cursor:pointer;transition:color .12s ease,border-color .12s ease,background .12s ease,transform .12s ease;text-decoration:none}
 .menu__link:hover,.dropbtn:hover,.theme-toggle:hover{color:var(--text);border-color:var(--acc);background:var(--chip)}
