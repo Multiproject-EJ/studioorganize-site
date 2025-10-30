@@ -1094,8 +1094,6 @@
 
         <button class="btn non-essential" id="scriptBtn" type="button" onclick="openScriptDialog()">Script…</button>
 
-        <!-- Focus toggle -->
-        <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
       </div>
       <section class="timeline-showcase" aria-label="Storyboard timeline preview">
         <div class="timeline-dock pinned timeline-showcase__dock" id="timelineDock" data-timeline-dock="primary">
@@ -1218,6 +1216,7 @@
                 <button type="button" class="active" data-script-view-mode="scroll" aria-pressed="true">Scroll</button>
                 <button type="button" data-script-view-mode="pages" aria-pressed="false">Pages</button>
               </div>
+              <button class="btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
               <button type="button" id="exitFocusBtn" aria-label="Exit focus mode" title="Exit focus mode" onclick="if(document.body.classList.contains('focus-mode')) toggleFocus();">✕</button>
             </div>
           </div>
