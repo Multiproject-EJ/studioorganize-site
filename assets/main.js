@@ -416,29 +416,34 @@ try {
   console.error('Failed to initialize Supabase client', error);
 }
 
-const authLink = document.querySelector('[data-auth-link]');
+const authLinks = Array.from(document.querySelectorAll('[data-auth-link]'));
+const navAuthLink = authLinks.find(link => link.closest('.menu')) || null;
 const accountMenu = document.querySelector('[data-account-menu]');
 const accountButton = document.querySelector('[data-account-button]');
 const accountLogoutLink = document.querySelector('[data-account-logout]');
-const navHasAuthControls = Boolean(authLink || accountMenu || accountLogoutLink);
+const navHasAuthControls = Boolean(navAuthLink || accountMenu || accountLogoutLink);
 
 function toggleElementVisibility(element, shouldShow){
   if (!element) return;
-  if (shouldShow){
-    element.hidden = false;
-    element.removeAttribute('aria-hidden');
-    element.style.display = '';
-  } else {
-    element.hidden = true;
-    element.setAttribute('aria-hidden', 'true');
-    element.style.display = 'none';
-  }
+  const elements = Array.isArray(element) ? element : [element];
+  elements.forEach(item => {
+    if (!(item instanceof HTMLElement)) return;
+    if (shouldShow){
+      item.hidden = false;
+      item.removeAttribute('aria-hidden');
+      item.style.display = '';
+    } else {
+      item.hidden = true;
+      item.setAttribute('aria-hidden', 'true');
+      item.style.display = 'none';
+    }
+  });
 }
 
 function updateAccountUI(session){
   if (!navHasAuthControls) return;
   const isSignedIn = Boolean(session);
-  toggleElementVisibility(authLink, !isSignedIn);
+  toggleElementVisibility(navAuthLink, !isSignedIn);
   toggleElementVisibility(accountMenu, isSignedIn);
   if (accountButton){
     accountButton.textContent = 'Account';
@@ -449,6 +454,306 @@ function updateAccountUI(session){
       accountButton.removeAttribute('data-account-email');
     }
   }
+  if (isSignedIn){
+    closeAuthPortal();
+  }
+}
+
+let authPortal = null;
+let authPortalDialog = null;
+let authPortalMessage = null;
+let authPortalActiveView = 'signin';
+let authPortalLastFocus = null;
+
+function ensureAuthPortal(){
+  if (authPortal && authPortal.isConnected) return authPortal;
+
+  const template = document.createElement('template');
+  template.innerHTML = `
+    <div class="auth-portal" data-auth-portal hidden aria-hidden="true">
+      <div class="auth-portal__backdrop" data-auth-portal-close></div>
+      <div class="auth-portal__dialog" data-auth-dialog role="dialog" aria-modal="true" aria-labelledby="auth-portal-title" tabindex="-1">
+        <button class="auth-portal__close" type="button" aria-label="Close auth window" data-auth-portal-close>×</button>
+        <header class="auth-portal__header">
+          <p class="auth-portal__eyebrow">StudioOrganize</p>
+          <h2 class="auth-portal__title" id="auth-portal-title">Sign in to your studio</h2>
+          <p class="auth-portal__subtitle">Access the workspace, manage your subscription, and pick up where you left off.</p>
+          <div class="auth-portal__tabs" role="tablist">
+            <button type="button" class="auth-portal__tab" data-auth-tab="signin" role="tab" aria-selected="true">Sign in</button>
+            <button type="button" class="auth-portal__tab" data-auth-tab="signup" role="tab" aria-selected="false">Create account</button>
+          </div>
+        </header>
+        <section class="auth-portal__view" id="auth-portal-panel-signin" data-auth-view="signin" role="tabpanel" aria-labelledby="auth-portal-tab-signin">
+          <form class="auth-portal__form" data-auth-signin>
+            <label class="auth-portal__field">
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" required />
+            </label>
+            <label class="auth-portal__field">
+              <span>Password</span>
+              <input type="password" name="password" autocomplete="current-password" required />
+            </label>
+            <button class="auth-portal__submit" type="submit" data-auth-submit>Sign in</button>
+            <p class="auth-portal__hint">Need an account? <button type="button" class="auth-portal__link" data-auth-switch="signup">Create one</button></p>
+          </form>
+        </section>
+        <section class="auth-portal__view" id="auth-portal-panel-signup" data-auth-view="signup" role="tabpanel" aria-labelledby="auth-portal-tab-signup" hidden>
+          <form class="auth-portal__form" data-auth-signup>
+            <label class="auth-portal__field">
+              <span>Name <small>(optional)</small></span>
+              <input type="text" name="name" autocomplete="name" />
+            </label>
+            <label class="auth-portal__field">
+              <span>Email</span>
+              <input type="email" name="email" autocomplete="email" required />
+            </label>
+            <label class="auth-portal__field">
+              <span>Password</span>
+              <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+            </label>
+            <label class="auth-portal__checkbox">
+              <input type="checkbox" name="marketing_opt_out" value="yes" />
+              <span>Let me know about new StudioOrganize tools and resources.</span>
+            </label>
+            <button class="auth-portal__submit" type="submit" data-auth-submit>Create account</button>
+            <p class="auth-portal__hint">Already joined? <button type="button" class="auth-portal__link" data-auth-switch="signin">Sign in instead</button></p>
+          </form>
+        </section>
+        <div class="auth-portal__message" data-auth-message hidden role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  `;
+
+  authPortal = template.content.firstElementChild;
+  if (!authPortal) return null;
+  authPortalDialog = authPortal.querySelector('[data-auth-dialog]');
+  authPortalMessage = authPortal.querySelector('[data-auth-message]');
+
+  const closeElements = Array.from(authPortal.querySelectorAll('[data-auth-portal-close]'));
+  closeElements.forEach(btn => {
+    btn.addEventListener('click', () => closeAuthPortal());
+  });
+
+  authPortal.addEventListener('click', event => {
+    if (event.target === authPortal){
+      closeAuthPortal();
+    }
+  });
+
+  const tabs = Array.from(authPortal.querySelectorAll('[data-auth-tab]'));
+  tabs.forEach(tab => {
+    const view = tab.dataset.authTab || 'signin';
+    tab.id = tab.id || `auth-portal-tab-${view}`;
+    const panel = authPortal.querySelector(`[data-auth-view="${view}"]`);
+    if (panel && !panel.id){
+      panel.id = `auth-portal-panel-${view}`;
+    }
+    if (panel?.id){
+      tab.setAttribute('aria-controls', panel.id);
+    }
+    tab.addEventListener('click', () => {
+      setAuthPortalView(view);
+    });
+  });
+
+  const switchers = Array.from(authPortal.querySelectorAll('[data-auth-switch]'));
+  switchers.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.authSwitch || 'signin';
+      setAuthPortalView(target);
+    });
+  });
+
+  const signInForm = authPortal.querySelector('[data-auth-signin]');
+  if (signInForm){
+    signInForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!supabaseClient){
+        setAuthPortalMessage('Authentication is temporarily unavailable. Please try again later.', 'error');
+        return;
+      }
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      const email = (data.get('email') || '').toString().trim();
+      const password = (data.get('password') || '').toString();
+      if (!email || !password){
+        setAuthPortalMessage('Enter your email and password to continue.', 'error');
+        return;
+      }
+      setAuthPortalLoading(form, true, 'Signing in…');
+      try {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error){
+          setAuthPortalMessage(error.message || 'Sign-in failed. Please check your details and try again.', 'error');
+          return;
+        }
+        setAuthPortalMessage('Signed in! Loading your studio…', 'success');
+      } catch (error){
+        console.error('Unexpected sign-in error', error);
+        setAuthPortalMessage('We ran into a problem signing you in. Please try again.', 'error');
+      } finally {
+        setAuthPortalLoading(form, false);
+      }
+    });
+  }
+
+  const signUpForm = authPortal.querySelector('[data-auth-signup]');
+  if (signUpForm){
+    signUpForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!supabaseClient){
+        setAuthPortalMessage('Authentication is temporarily unavailable. Please try again later.', 'error');
+        return;
+      }
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      const name = (data.get('name') || '').toString().trim();
+      const email = (data.get('email') || '').toString().trim();
+      const password = (data.get('password') || '').toString();
+      if (!email || !password){
+        setAuthPortalMessage('Add your email and a password with at least 8 characters.', 'error');
+        return;
+      }
+      setAuthPortalLoading(form, true, 'Creating account…');
+      try {
+        const { data: result, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: name ? { full_name: name } : {}
+          }
+        });
+        if (error){
+          setAuthPortalMessage(error.message || 'Sign-up failed. Please try again.', 'error');
+          return;
+        }
+        form.reset();
+        setAuthPortalView('signin');
+        const needsConfirmation = !result.session;
+        const successMessage = needsConfirmation ?
+          'Check your inbox to confirm your email. Once verified you can sign in here.' :
+          'Account created! You can sign in now.';
+        setAuthPortalMessage(successMessage, 'success');
+      } catch (error){
+        console.error('Unexpected sign-up error', error);
+        setAuthPortalMessage('We ran into a problem creating your account. Please try again.', 'error');
+      } finally {
+        setAuthPortalLoading(form, false);
+      }
+    });
+  }
+
+  document.body.appendChild(authPortal);
+  setAuthPortalView('signin');
+  return authPortal;
+}
+
+function setAuthPortalView(view){
+  authPortalActiveView = view === 'signup' ? 'signup' : 'signin';
+  if (!authPortal) return;
+  const tabs = Array.from(authPortal.querySelectorAll('[data-auth-tab]'));
+  const panels = Array.from(authPortal.querySelectorAll('[data-auth-view]'));
+  tabs.forEach(tab => {
+    const isActive = (tab.dataset.authTab || 'signin') === authPortalActiveView;
+    tab.classList.toggle('is-active', isActive);
+    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    tab.setAttribute('tabindex', isActive ? '0' : '-1');
+  });
+  panels.forEach(panel => {
+    const isActive = (panel.dataset.authView || 'signin') === authPortalActiveView;
+    panel.hidden = !isActive;
+    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+  });
+  if (authPortalMessage){
+    setAuthPortalMessage('');
+  }
+  const activeForm = authPortal?.querySelector(`[data-auth-view="${authPortalActiveView}"] form`);
+  const focusTarget = activeForm?.querySelector('input');
+  if (!authPortal?.hidden && focusTarget instanceof HTMLElement){
+    focusTarget.focus();
+  }
+}
+
+function setAuthPortalMessage(message, tone = 'info'){
+  if (!authPortalMessage) return;
+  const trimmed = (message || '').toString().trim();
+  if (!trimmed){
+    authPortalMessage.hidden = true;
+    authPortalMessage.textContent = '';
+    authPortalMessage.removeAttribute('data-auth-message-tone');
+    return;
+  }
+  authPortalMessage.hidden = false;
+  authPortalMessage.textContent = trimmed;
+  authPortalMessage.setAttribute('data-auth-message-tone', tone);
+}
+
+function setAuthPortalLoading(form, loading, label){
+  if (!(form instanceof HTMLFormElement)) return;
+  const submit = form.querySelector('[data-auth-submit]');
+  if (submit instanceof HTMLButtonElement){
+    if (!submit.dataset.originalLabel){
+      submit.dataset.originalLabel = submit.textContent || '';
+    }
+    submit.disabled = Boolean(loading);
+    submit.textContent = loading ? (label || 'Please wait…') : submit.dataset.originalLabel;
+  }
+  form.classList.toggle('is-loading', Boolean(loading));
+}
+
+function openAuthPortal(initialView = 'signin'){
+  if (!ensureAuthPortal()) return;
+  if (authPortal && !authPortal.hidden){
+    setAuthPortalView(initialView);
+    return;
+  }
+  authPortalLastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  setAuthPortalView(initialView);
+  authPortal.hidden = false;
+  authPortal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  if (authPortalDialog instanceof HTMLElement){
+    authPortalDialog.focus();
+  }
+  document.addEventListener('keydown', handleAuthPortalEscape);
+}
+
+function closeAuthPortal(){
+  if (!authPortal || authPortal.hidden) return;
+  authPortal.hidden = true;
+  authPortal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', handleAuthPortalEscape);
+  if (authPortalLastFocus){
+    authPortalLastFocus.focus();
+    authPortalLastFocus = null;
+  }
+}
+
+function handleAuthPortalEscape(event){
+  if (event.key === 'Escape' && authPortal && !authPortal.hidden){
+    closeAuthPortal();
+  }
+}
+
+function bindAuthLinks(){
+  if (!authLinks.length) return;
+  authLinks.forEach(link => {
+    if (!(link instanceof HTMLElement)) return;
+    if (link.dataset.authLinkBound === 'true') return;
+    link.dataset.authLinkBound = 'true';
+    link.addEventListener('click', event => {
+      if (!supabaseClient){
+        return; // fall back to default navigation when auth is unavailable
+      }
+      event.preventDefault();
+      const normalizedText = (link.textContent || '').toLowerCase();
+      const defaultIntent = normalizedText.includes('sign up') || normalizedText.includes('create') ? 'signup' : 'signin';
+      const intent = link.dataset.authIntent || link.getAttribute('data-auth-switch') || defaultIntent;
+      const initialView = intent === 'signup' ? 'signup' : 'signin';
+      openAuthPortal(initialView);
+    });
+  });
 }
 
 async function refreshAccountSession(){
@@ -486,6 +791,8 @@ if (supabaseClient && navHasAuthControls){
   });
   refreshAccountSession();
 }
+
+bindAuthLinks();
 
 const STORY_SCOPE_PROJECT = 'project';
 const STORY_SCOPE_TEMPLATE = 'new_story_template';
