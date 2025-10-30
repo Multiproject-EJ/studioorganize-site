@@ -9,9 +9,18 @@
     content="Character Studio keeps every character's profile, arc, lookbook, and AI prompt in one dedicated workspace."
   />
   <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="/assets/css/so-mobile-shell.css" />
   <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+  <script src="/assets/js/so-mobile-shell.js" defer></script>
 </head>
 <body>
+  <div class="so-mobile-shell" data-page="character-studio">
+    <nav class="so-mobile-bottom-nav" aria-label="Character Studio mobile navigation">
+      <button type="button" data-target="characters" class="is-active">Characters</button>
+      <button type="button" data-target="backstories">Backstories</button>
+      <button type="button" data-target="relationships">Relations</button>
+    </nav>
+  </div>
   <header class="nav">
     <div class="brand-with-logo">
       <a class="brand brand--with-logo" href="/">

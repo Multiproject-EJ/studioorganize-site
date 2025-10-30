@@ -1,0 +1,43 @@
+@media (max-width: 900px) {
+  .so-mobile-shell {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  .so-mobile-bottom-nav {
+    pointer-events: auto;
+    display: flex;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,.08);
+  }
+
+  .so-mobile-bottom-nav button {
+    flex: 1 1 0;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+    border: 0;
+    background: none;
+  }
+
+  .so-mobile-bottom-nav button.is-active {
+    background: rgba(0,0,0,.04);
+    font-weight: 600;
+  }
+
+  /* generic mobile module behavior */
+  .so-mobile-module {
+    display: none;
+  }
+  .so-mobile-module.so-mobile-active {
+    display: block;
+  }
+
+  /* helper to hide big desktop panels on mobile if I add it manually */
+  .so-hide-on-mobile {
+    display: none !important;
+  }
+}
