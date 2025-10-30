@@ -18,7 +18,6 @@
         <span class="brand__logo" aria-hidden="true"></span>
         <span class="sr-only">StudioOrganize</span>
       </a>
-      <span class="brand-with-logo__badge brand-with-logo__badge--character" aria-hidden="true">CS</span>
     </div>
     <nav class="menu">
       <a class="menu__link menu__link--plain menu__link--icon" href="/">
@@ -159,6 +158,11 @@
         padding: 26px 30px;
         border-bottom: 1px solid var(--ring);
         background: var(--chip);
+      }
+      .character-studio-header-primary {
+        display: flex;
+        align-items: center;
+        gap: 18px;
       }
       .brand-with-logo__badge--character {
         width: 36px;
@@ -370,6 +374,7 @@
       @media (max-width: 640px) {
         .character-studio-app { padding: 16px 12px; }
         .character-studio-header { flex-direction: column; align-items: flex-start; }
+        .character-studio-header-primary { width: 100%; }
         .character-studio-header-actions { width: 100%; justify-content: space-between; }
       }
     </style>
@@ -377,9 +382,12 @@
     <div class="character-studio-app">
       <div class="character-studio-window">
         <div class="character-studio-header">
-          <div>
-            <h2>Character Studio</h2>
-            <p class="muted-text">Craft multidimensional characters with dedicated planners, lookbooks, and AI prompts.</p>
+          <div class="character-studio-header-primary">
+            <span class="topbar__badge brand-with-logo__badge--character" aria-hidden="true">CS</span>
+            <div>
+              <h2>Character Studio</h2>
+              <p class="muted-text">Craft multidimensional characters with dedicated planners, lookbooks, and AI prompts.</p>
+            </div>
           </div>
           <div class="character-studio-header-actions">
             <span class="character-studio-header-badge">Cast</span>
