@@ -142,6 +142,18 @@ const { data, error } = await supabase
 
 Follow-up inserts into `scene_beats`, `scene_elements`, `scene_sounds`, and `scene_links` should include the `scene_id` returned above so they inherit ownership permissions automatically.
 
+### Story AI preferences
+
+Run the Story AI preferences block inside [`supabase/schema.sql`](supabase/schema.sql) to create the `public.story_ai_preferences` table. Each row stores the assistant plan for a specific script (`scope = 'project'`) or the default template for brand-new stories (`scope = 'new_story_template'`). Rows are owned by the profile that created them, and RLS ensures only the owner can read or change the settings.
+
+Key columns:
+
+- `project_id` – nullable. When populated, the preferences apply to that script’s UUID. When null, the row represents the new-story template.
+- `mode` – either `continue` or `new`, indicating whether the assistant should focus on progress against existing goals or spin up a fresh outline.
+- `story_length` – `short`, `medium`, or `long` length hint saved when `mode = 'new'`.
+- `feature_flags` – JSON object describing coaching toggles such as progress nudges or structure check-ins.
+- `bias_note` – optional freeform guidance the UI surfaces whenever the assistant responds.
+
 ### Script library metadata
 
 The screenplay writer’s “Load Script” dialog pulls its list from a `public.project_data` table in Supabase. Each row should include a human-readable script name so the dropdown can surface more than the UUID. Use the following SQL in the Supabase SQL editor to provision the table with the expected columns (including `script_name`). Because the column is part of the `CREATE TABLE` statement, you do **not** need to run a separate `ALTER TABLE` afterward.

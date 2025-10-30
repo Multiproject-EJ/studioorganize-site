@@ -245,6 +245,275 @@ if (supabaseClient && navHasAuthControls){
   refreshAccountSession();
 }
 
+const STORY_SCOPE_PROJECT = 'project';
+const STORY_SCOPE_TEMPLATE = 'new_story_template';
+const AI_PREFERENCE_LOCAL_KEY = 'SO_AI_PREFERENCES';
+const AI_FEATURE_KEYS = ['progress_nudges', 'structure_spotlight', 'tone_cheerleader'];
+const LAST_PROJECT_STORAGE_KEY = 'SW_LAST_PROJECT_ID';
+
+const AI_DEFAULT_PREFERENCE = Object.freeze({
+  mode: 'continue',
+  storyLength: 'medium',
+  featureFlags: {
+    progress_nudges: true,
+    structure_spotlight: true,
+    tone_cheerleader: false
+  },
+  biasNote: ''
+});
+
+function getLastTrackedProjectId(){
+  try {
+    const value = localStorage.getItem(LAST_PROJECT_STORAGE_KEY);
+    return value || null;
+  } catch (_error){
+    return null;
+  }
+}
+
+function loadLocalAiPreferenceMap(){
+  try {
+    const raw = localStorage.getItem(AI_PREFERENCE_LOCAL_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch (_error){
+    return {};
+  }
+}
+
+function persistLocalAiPreferenceMap(map){
+  try {
+    localStorage.setItem(AI_PREFERENCE_LOCAL_KEY, JSON.stringify(map));
+  } catch (_error){
+    /* ignore storage quota errors */
+  }
+}
+
+function localPreferenceKey(projectId, scope){
+  const normalizedScope = scope === STORY_SCOPE_TEMPLATE ? STORY_SCOPE_TEMPLATE : STORY_SCOPE_PROJECT;
+  if (normalizedScope === STORY_SCOPE_PROJECT){
+    if (!projectId) return null;
+    return `${normalizedScope}:${projectId}`;
+  }
+  return `${normalizedScope}:global`;
+}
+
+function normalizeAiFeatureFlags(input){
+  const source = (input && typeof input === 'object') ? input : {};
+  const normalized = {};
+  AI_FEATURE_KEYS.forEach(key => {
+    normalized[key] = Boolean(source[key]);
+  });
+  return normalized;
+}
+
+function normalizeAiPreference(preference){
+  const source = (preference && typeof preference === 'object') ? preference : {};
+  const mode = source.mode === 'new' ? 'new' : 'continue';
+  const lengthCandidates = ['short', 'medium', 'long'];
+  const requestedLength = typeof source.storyLength === 'string' ? source.storyLength.toLowerCase() : null;
+  const storyLength = mode === 'new'
+    ? (lengthCandidates.includes(requestedLength) ? requestedLength : 'medium')
+    : null;
+  const biasNote = typeof source.biasNote === 'string'
+    ? source.biasNote.trim()
+    : (typeof source.bias === 'string' ? source.bias.trim() : '');
+  const normalized = {
+    mode,
+    storyLength: storyLength || (mode === 'new' ? 'medium' : null),
+    featureFlags: normalizeAiFeatureFlags(source.featureFlags || source.features || source),
+    biasNote
+  };
+  return normalized;
+}
+
+function readLocalPreference(projectId, scope){
+  const key = localPreferenceKey(projectId, scope);
+  if (!key) return null;
+  const map = loadLocalAiPreferenceMap();
+  const stored = map[key];
+  return stored ? normalizeAiPreference(stored) : null;
+}
+
+function writeLocalPreference(projectId, scope, preference){
+  const key = localPreferenceKey(projectId, scope);
+  if (!key) return;
+  const map = loadLocalAiPreferenceMap();
+  map[key] = normalizeAiPreference(preference);
+  persistLocalAiPreferenceMap(map);
+}
+
+async function fetchSupabaseUser(){
+  if (!supabaseClient) return null;
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error){
+      console.error('Failed to fetch Supabase session for AI preferences', error);
+      return null;
+    }
+    return data?.session?.user ?? null;
+  } catch (error){
+    console.error('Unexpected Supabase session error for AI preferences', error);
+    return null;
+  }
+}
+
+function mapPreferenceRow(row){
+  if (!row) return null;
+  return normalizeAiPreference({
+    mode: row.mode,
+    storyLength: row.story_length,
+    featureFlags: row.feature_flags,
+    biasNote: row.bias_note
+  });
+}
+
+async function fetchSupabasePreference(projectId, scope){
+  if (!supabaseClient) return null;
+  const user = await fetchSupabaseUser();
+  if (!user) return null;
+  try {
+    let query = supabaseClient
+      .from('story_ai_preferences')
+      .select('mode, story_length, feature_flags, bias_note, project_id, scope, updated_at')
+      .eq('scope', scope)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+    if (scope === STORY_SCOPE_PROJECT){
+      query = query.eq('project_id', projectId);
+    } else {
+      query = query.is('project_id', null);
+    }
+    const { data, error } = await query.maybeSingle();
+    if (error){
+      if (error.code !== 'PGRST116'){
+        console.error('Failed to load AI preference from Supabase', error);
+      }
+      return null;
+    }
+    if (!data) return null;
+    const normalized = mapPreferenceRow(data);
+    if (normalized){
+      writeLocalPreference(projectId ?? null, scope, normalized);
+    }
+    return normalized;
+  } catch (error){
+    console.error('Unexpected error loading AI preference from Supabase', error);
+    return null;
+  }
+}
+
+async function upsertSupabasePreference(projectId, scope, preference){
+  if (!supabaseClient) return { success: false, reason: 'no_client', preference: normalizeAiPreference(preference) };
+  const user = await fetchSupabaseUser();
+  if (!user) return { success: false, reason: 'not_signed_in', preference: normalizeAiPreference(preference) };
+  try {
+    const payload = {
+      owner_id: user.id,
+      project_id: scope === STORY_SCOPE_PROJECT ? projectId : null,
+      scope,
+      mode: preference.mode,
+      story_length: preference.mode === 'new' ? preference.storyLength : null,
+      feature_flags: preference.featureFlags,
+      bias_note: preference.biasNote || null
+    };
+    const { data, error } = await supabaseClient
+      .from('story_ai_preferences')
+      .upsert(payload, { onConflict: 'owner_id,project_id,scope' })
+      .select()
+      .maybeSingle();
+    if (error){
+      console.error('Failed to save AI preference to Supabase', error);
+      return { success: false, reason: 'request_failed', preference: normalizeAiPreference(preference) };
+    }
+    const normalized = mapPreferenceRow(data) || normalizeAiPreference(preference);
+    writeLocalPreference(projectId ?? null, scope, normalized);
+    return { success: true, source: 'supabase', preference: normalized };
+  } catch (error){
+    console.error('Unexpected error saving AI preference to Supabase', error);
+    return { success: false, reason: 'unexpected', preference: normalizeAiPreference(preference) };
+  }
+}
+
+function getDefaultAiPreference(){
+  return normalizeAiPreference(AI_DEFAULT_PREFERENCE);
+}
+
+async function loadAiPreference(projectId, { scope = STORY_SCOPE_PROJECT } = {}){
+  const normalizedScope = scope === STORY_SCOPE_TEMPLATE ? STORY_SCOPE_TEMPLATE : STORY_SCOPE_PROJECT;
+  if (normalizedScope === STORY_SCOPE_PROJECT && !projectId){
+    return {
+      success: false,
+      preference: getDefaultAiPreference(),
+      reason: 'missing_project',
+      source: 'default'
+    };
+  }
+
+  const local = readLocalPreference(projectId ?? null, normalizedScope);
+  try {
+    const remote = await fetchSupabasePreference(projectId ?? null, normalizedScope);
+    if (remote){
+      return { success: true, preference: remote, source: 'supabase' };
+    }
+  } catch (error){
+    console.error('AI preference Supabase fetch error', error);
+  }
+
+  if (local){
+    return { success: true, preference: local, source: 'local' };
+  }
+
+  return {
+    success: false,
+    preference: getDefaultAiPreference(),
+    reason: 'not_found',
+    source: 'default'
+  };
+}
+
+async function saveAiPreference(projectId, preference, { scope = STORY_SCOPE_PROJECT } = {}){
+  const normalizedScope = scope === STORY_SCOPE_TEMPLATE ? STORY_SCOPE_TEMPLATE : STORY_SCOPE_PROJECT;
+  if (normalizedScope === STORY_SCOPE_PROJECT && !projectId){
+    const normalizedPreference = normalizeAiPreference(preference);
+    return {
+      success: false,
+      preference: normalizedPreference,
+      reason: 'missing_project',
+      source: 'error'
+    };
+  }
+
+  const normalizedPreference = normalizeAiPreference(preference);
+  const result = await upsertSupabasePreference(projectId ?? null, normalizedScope, normalizedPreference);
+  if (result.success){
+    return result;
+  }
+
+  writeLocalPreference(projectId ?? null, normalizedScope, normalizedPreference);
+  return {
+    success: true,
+    preference: normalizedPreference,
+    source: 'local',
+    reason: result.reason ?? 'stored_locally'
+  };
+}
+
+const existingHelpers = window.StudioOrganizeAI || {};
+const aiHelperApi = {
+  getDefaultPreference: getDefaultAiPreference,
+  normalizePreference: normalizeAiPreference,
+  loadPreference: loadAiPreference,
+  savePreference: saveAiPreference,
+  getLastTrackedProjectId,
+  STORY_SCOPE_PROJECT,
+  STORY_SCOPE_TEMPLATE
+};
+
+window.StudioOrganizeAI = Object.assign(existingHelpers, aiHelperApi);
+window.dispatchEvent(new CustomEvent('studioorganize-ai-ready', { detail: { ready: true } }));
+
 function initDropdownMenus(){
   const dropdowns = Array.from(document.querySelectorAll('.dropdown'));
   if (!dropdowns.length) return;
@@ -566,7 +835,7 @@ function ensureWorkspaceLauncherStructure(launcher){
         <span class="workspace-launcher__assistant-avatar" aria-hidden="true">🤖</span>
         <div>
           <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
-          <p class="workspace-launcher__assistant-subtitle">Pick a prompt or chat to keep momentum going.</p>
+          <p class="workspace-launcher__assistant-subtitle">Tell me if we're continuing a story or starting fresh and I'll tailor the prompts.</p>
         </div>
       </div>
     `);
@@ -578,14 +847,14 @@ function ensureWorkspaceLauncherStructure(launcher){
     assistantActions = document.createElement('div');
     assistantActions.className = 'workspace-launcher__assistant-actions';
     assistantActions.innerHTML = `
-      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
-        <span>＋ Outline a new story</span>
+      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="continue">
+        <span>📚 Check in on my current story</span>
       </button>
-      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
-        <span>🎬 Prep today’s shoot</span>
+      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="new">
+        <span>✨ Start something new</span>
       </button>
-      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
-        <span>📝 Review my storyboard beats</span>
+      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="settings">
+        <span>⚙️ Adjust how you coach me</span>
       </button>
     `;
     if (chat instanceof HTMLElement && chat.parentElement === assistant){
@@ -633,18 +902,18 @@ function injectGlobalWorkspaceLauncher(){
             <span class="workspace-launcher__assistant-avatar" aria-hidden="true">🤖</span>
             <div>
               <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
-              <p class="workspace-launcher__assistant-subtitle">Pick a prompt or chat to keep momentum going.</p>
+              <p class="workspace-launcher__assistant-subtitle">Tell me if we're continuing a story or starting fresh and I'll tailor the prompts.</p>
             </div>
           </div>
           <div class="workspace-launcher__assistant-actions">
-            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
-              <span>＋ Outline a new story</span>
+            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="continue">
+              <span>📚 Check in on my current story</span>
             </button>
-            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
-              <span>🎬 Prep today’s shoot</span>
+            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="new">
+              <span>✨ Start something new</span>
             </button>
-            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion>
-              <span>📝 Review my storyboard beats</span>
+            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="settings">
+              <span>⚙️ Adjust how you coach me</span>
             </button>
           </div>
           <div class="workspace-launcher__chat workspace-launcher__chat--docked" data-workspace-chat hidden aria-hidden="true">
@@ -653,8 +922,9 @@ function injectGlobalWorkspaceLauncher(){
                 <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
               </div>
               <div class="workspace-launcher__chat-suggestions">
-                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Let’s start a new story together</button>
-                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion>Help me plan today’s shoot</button>
+                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="continue">Check my progress</button>
+                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="new">Spin up something new</button>
+                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="settings">How should you behave?</button>
               </div>
               <form class="workspace-launcher__chat-form" data-workspace-chat-form>
                 <div class="workspace-launcher__chat-input">
@@ -951,7 +1221,20 @@ function initWorkspaceLauncher(){
     const chatThread = chat?.querySelector('[data-workspace-chat-thread]') ?? null;
     const chatInput = chat?.querySelector('[data-workspace-chat-input]') ?? null;
     const chatForm = chat?.querySelector('[data-workspace-chat-form]') ?? null;
-    const chatSuggestions = Array.from(launcher.querySelectorAll('[data-workspace-chat-suggestion]'));
+    const suggestionsContainer = chat?.querySelector('[data-workspace-chat-suggestions]') ?? null;
+    const defaultSuggestionsMarkup = suggestionsContainer instanceof HTMLElement ? suggestionsContainer.innerHTML : '';
+
+    const LENGTH_OPTIONS = [
+      { value: 'short', label: 'Short story sprint', emoji: '⚡️' },
+      { value: 'medium', label: 'Medium story arc', emoji: '🎯' },
+      { value: 'long', label: 'Long-form journey', emoji: '🌌' }
+    ];
+
+    const LENGTH_DESCRIPTIONS = {
+      short: 'quick short-form sprint',
+      medium: 'balanced mid-length arc',
+      long: 'full-length epic arc'
+    };
 
     const appendChatMessage = (role, message) => {
       if (!(chatThread instanceof HTMLElement)) return;
@@ -965,43 +1248,177 @@ function initWorkspaceLauncher(){
 
     if (chatForm instanceof HTMLFormElement && chatForm.dataset.workspaceChatFormBound !== 'true'){
       chatForm.dataset.workspaceChatFormBound = 'true';
-      chatForm.addEventListener('submit', event => {
+      chatForm.addEventListener('submit', async event => {
         event.preventDefault();
         event.stopPropagation();
         if (!(chatInput instanceof HTMLInputElement)) return;
         const value = chatInput.value.trim();
         if (!value) return;
         appendChatMessage('user', value);
-        appendChatMessage('assistant', 'I\'ll keep that in mind! Try the STORY button or one of the workspaces to keep the momentum going.');
         chatInput.value = '';
+
+        const ai = window.StudioOrganizeAI || null;
+        if (!ai){
+          appendChatMessage('assistant', 'I’ll keep that in mind! Tap STORY or jump into a workspace when you’re ready.');
+          return;
+        }
+
+        const projectId = typeof ai.getLastTrackedProjectId === 'function' ? ai.getLastTrackedProjectId() : null;
+        const hasProject = Boolean(projectId);
+        const scope = hasProject ? ai.STORY_SCOPE_PROJECT : ai.STORY_SCOPE_TEMPLATE;
+        let preferenceResult;
+        try {
+          preferenceResult = await ai.loadPreference(hasProject ? projectId : null, { scope });
+        } catch (error){
+          console.error('Failed to load AI preference for chat response', error);
+        }
+
+        const preference = preferenceResult?.preference || ai.getDefaultPreference();
+        const pieces = [];
+        if (preference.mode === 'new'){
+          const length = preference.storyLength || 'medium';
+          pieces.push(`Let’s build a ${LENGTH_DESCRIPTIONS[length] || 'fresh outline'} to kick things off.`);
+        } else {
+          pieces.push('I’ll scan your saved goals and point out what still needs attention.');
+        }
+
+        const emphasis = [];
+        if (preference.featureFlags?.progress_nudges) emphasis.push('progress nudges');
+        if (preference.featureFlags?.structure_spotlight) emphasis.push('structure check-ins');
+        if (preference.featureFlags?.tone_cheerleader) emphasis.push('cheerleader energy');
+        if (emphasis.length){
+          if (emphasis.length === 1){
+            pieces.push(`Expect ${emphasis[0]} along the way.`);
+          } else if (emphasis.length === 2){
+            pieces.push(`Expect ${emphasis[0]} and ${emphasis[1]} as we go.`);
+          } else {
+            pieces.push(`Expect ${emphasis.slice(0, -1).join(', ')}, and ${emphasis.slice(-1)} as we go.`);
+          }
+        }
+
+        if (preference.biasNote){
+          pieces.push(`I’ll keep this pinned: “${preference.biasNote}”.`);
+        }
+
+        if (preferenceResult?.source === 'local'){
+          pieces.push('Sign in to sync this plan everywhere.');
+        }
+
+        const response = pieces.length
+          ? pieces.join(' ')
+          : 'Let me know when you want to jump into STORY and I’ll line up the next move.';
+        appendChatMessage('assistant', response);
       });
     }
 
-    chatSuggestions.forEach(button => {
-      if (!(button instanceof HTMLElement)) return;
-      if (button.dataset.workspaceChatSuggestionBound === 'true') return;
-      button.dataset.workspaceChatSuggestionBound = 'true';
-      button.addEventListener('click', event => {
+    const restoreDefaultSuggestions = () => {
+      if (!(suggestionsContainer instanceof HTMLElement)) return;
+      suggestionsContainer.innerHTML = defaultSuggestionsMarkup;
+    };
+
+    const renderLengthSuggestions = () => {
+      if (!(suggestionsContainer instanceof HTMLElement)) return;
+      const markup = LENGTH_OPTIONS.map(option => `
+        <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-length="${option.value}">
+          ${option.emoji} ${option.label}
+        </button>
+      `).join('');
+      suggestionsContainer.innerHTML = markup;
+    };
+
+    const getAiHelpers = () => window.StudioOrganizeAI || null;
+
+    const handleContinueAction = async label => {
+      appendChatMessage('user', label || 'Check in on my current story');
+      const ai = getAiHelpers();
+      if (!ai){
+        appendChatMessage('assistant', 'I can cheer you on right away—sign in when you want me to remember goals across sessions.');
+        return;
+      }
+      const projectId = typeof ai.getLastTrackedProjectId === 'function' ? ai.getLastTrackedProjectId() : null;
+      if (!projectId){
+        appendChatMessage('assistant', 'Open a script from the Creator Hub so I know which goals to compare against.');
+        return;
+      }
+      let existing;
+      try {
+        existing = await ai.loadPreference(projectId);
+      } catch (error){
+        console.error('Failed to load existing AI preference for continue action', error);
+      }
+      const baseline = existing?.preference || ai.getDefaultPreference();
+      const preference = { ...baseline, mode: 'continue', storyLength: null };
+      const result = await ai.savePreference(projectId, preference);
+      if (result.success && result.source === 'supabase'){
+        appendChatMessage('assistant', 'Locked in. I’ll cross-check your saved goals and nudge you on unfinished beats.');
+      } else if (result.success){
+        appendChatMessage('assistant', 'I’ll remember that here. Sign in next time to sync it everywhere.');
+      } else {
+        appendChatMessage('assistant', 'I couldn’t sync that plan, but let’s keep moving with the story you have open.');
+      }
+    };
+
+    const handleNewAction = label => {
+      appendChatMessage('user', label || 'Start something new');
+      appendChatMessage('assistant', 'Fresh canvas! Pick the scope and I’ll shape the outline.');
+      renderLengthSuggestions();
+    };
+
+    const handleSettingsAction = label => {
+      appendChatMessage('user', label || 'Adjust how you coach me');
+      appendChatMessage('assistant', 'Head to Creator Hub → AI Assistant Plan to set feature checkboxes, bias notes, and story length defaults. I’ll follow whatever you save there.');
+    };
+
+    const handleLengthSelection = async (length, label) => {
+      appendChatMessage('user', label || 'Set story length');
+      const ai = getAiHelpers();
+      if (!ai){
+        appendChatMessage('assistant', `I’ll aim for a ${LENGTH_DESCRIPTIONS[length] || 'fresh outline'}. Sign in to save this preference.`);
+        restoreDefaultSuggestions();
+        return;
+      }
+      let existing;
+      try {
+        existing = await ai.loadPreference(null, { scope: ai.STORY_SCOPE_TEMPLATE });
+      } catch (error){
+        console.error('Failed to load new story preference', error);
+      }
+      const baseline = existing?.preference || ai.getDefaultPreference();
+      const preference = { ...baseline, mode: 'new', storyLength: length };
+      const result = await ai.savePreference(null, preference, { scope: ai.STORY_SCOPE_TEMPLATE });
+      if (result.success && result.source === 'supabase'){
+        appendChatMessage('assistant', `Saved! I’ll prep a ${LENGTH_DESCRIPTIONS[length] || 'fresh outline'} whenever you start a new story.`);
+      } else if (result.success){
+        appendChatMessage('assistant', `Got it. I’ll map a ${LENGTH_DESCRIPTIONS[length] || 'fresh outline'} here—sign in to sync across devices.`);
+      } else {
+        appendChatMessage('assistant', `I’ll still guide you through a ${LENGTH_DESCRIPTIONS[length] || 'fresh outline'} even though the setting didn’t sync.`);
+      }
+      restoreDefaultSuggestions();
+    };
+
+    if (launcher.dataset.workspaceChatSuggestionsBound !== 'true'){
+      launcher.dataset.workspaceChatSuggestionsBound = 'true';
+      launcher.addEventListener('click', event => {
+        const target = event.target instanceof HTMLElement ? event.target.closest('[data-workspace-chat-suggestion]') : null;
+        if (!target) return;
         event.preventDefault();
         event.stopPropagation();
-        const suggestion = button.textContent?.trim();
-        if (!suggestion) return;
-        appendChatMessage('user', suggestion);
-        if (suggestion.toLowerCase().includes('analyze')){
-          appendChatMessage('assistant', 'Let\'s dig in! Share a scene or outline and I\'ll highlight beats to refine.');
-        } else {
-          appendChatMessage('assistant', 'Amazing! Tap STORY to spin up a fresh draft or jump into the Screenplay workspace.');
+        const length = target.getAttribute('data-workspace-chat-length');
+        const label = target.textContent?.trim() || '';
+        if (length){
+          handleLengthSelection(length, label);
+          return;
         }
-        if (chatInput instanceof HTMLInputElement){
-          chatInput.value = '';
-          try {
-            chatInput.focus({ preventScroll: true });
-          } catch (_error){
-            chatInput.focus();
-          }
+        const action = target.getAttribute('data-workspace-chat-action');
+        if (action === 'continue'){
+          handleContinueAction(label);
+        } else if (action === 'new'){
+          handleNewAction(label);
+        } else if (action === 'settings'){
+          handleSettingsAction(label);
         }
       });
-    });
+    }
   });
 
   if (document.documentElement.dataset.workspaceLauncherGlobalBound === 'true') return;
