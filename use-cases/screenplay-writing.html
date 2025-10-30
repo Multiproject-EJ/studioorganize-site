@@ -6,8 +6,18 @@
   <title>Screenplay Writing — StudioOrganize</title>
   <link rel="stylesheet" href="/assets/styles.css"/>
   <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp"/>
+  <link rel="manifest" href="/use-cases/manifest-screenwriter.json">
+  <meta name="theme-color" content="#101010">
 </head>
 <body>
+  <!-- Mobile shell for screenplay page (non-breaking) -->
+  <div class="so-mobile-shell" data-page="screenwriter">
+    <nav class="so-mobile-bottom-nav" aria-label="Screenwriter mobile navigation">
+      <button type="button" data-target="screenwriter" class="is-active">Write</button>
+      <button type="button" data-target="outline">Outline</button>
+      <button type="button" data-target="notes">Notes</button>
+    </nav>
+  </div>
   <header class="nav">
     <div class="brand-with-logo">
       <a class="brand brand--with-logo" href="/">
@@ -988,6 +998,58 @@
       .selection-type-menu{position:fixed; z-index:1450; background:var(--panel); border:1px solid var(--ring); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.35); padding:12px 14px; min-width:220px; display:flex; flex-direction:column; gap:12px}
       .selection-type-menu[hidden]{display:none !important}
       [data-theme="dark"] .selection-menu, [data-theme="dark"] .selection-type-menu{box-shadow:0 30px 70px rgba(8,15,28,0.72), 0 0 0 1px rgba(79,123,255,0.35), 0 0 22px rgba(79,123,255,0.3)}
+
+      @media (max-width: 900px) {
+        /* keep page usable on small screens */
+        body {
+          min-height: 100vh;
+        }
+
+        /* mobile shell fixed to bottom */
+        .so-mobile-shell {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 999;
+          pointer-events: none;
+        }
+
+        .so-mobile-bottom-nav {
+          pointer-events: auto;
+          display: flex;
+          gap: 0;
+          background: #ffffff;
+          border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .so-mobile-bottom-nav button {
+          flex: 1 1 0;
+          padding: 0.75rem 0.5rem;
+          font-size: 0.9rem;
+          border: 0;
+          background: none;
+        }
+
+        .so-mobile-bottom-nav button.is-active {
+          background: rgba(0, 0, 0, 0.04);
+          font-weight: 600;
+        }
+
+        /* mobile-only modules we create in JS */
+        .so-mobile-module {
+          display: none;
+        }
+
+        .so-mobile-module.so-mobile-active {
+          display: block;
+        }
+
+        /* optional: hide heavy desktop-only side areas if they exist */
+        .so-hide-on-mobile {
+          display: none !important;
+        }
+      }
     </style>
     <div class="workspace-launcher" data-workspace-launcher>
       <div class="workspace-launcher__toggle-wrap">
@@ -9130,6 +9192,143 @@
       </div>
     </div>
   </footer>
+  <script>
+(function () {
+  const nav = document.querySelector('.so-mobile-bottom-nav');
+  if (!nav) return;
+
+  const mq = window.matchMedia('(max-width: 900px)');
+
+  const shell = nav.closest('.so-mobile-shell');
+  if (shell) {
+    function syncShell() {
+      shell.style.display = mq.matches ? 'block' : 'none';
+    }
+    if (mq.addEventListener) {
+      mq.addEventListener('change', syncShell);
+    } else if (mq.addListener) {
+      mq.addListener(syncShell);
+    }
+    syncShell();
+  }
+
+  const screenwriterEl =
+    document.querySelector('#screenplay-editor') ||
+    document.querySelector('.screenplay-editor') ||
+    document.querySelector('[data-screenwriter]') ||
+    null;
+
+  function createMobileSection(id, text) {
+    const el = document.createElement('div');
+    el.id = id;
+    el.className = 'so-mobile-module';
+    el.textContent = text;
+    el.style.display = 'none';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  const outlineEl =
+    document.querySelector('#screenplay-outline') ||
+    createMobileSection('screenplay-outline', 'Outline (mobile) – coming soon');
+
+  const notesEl =
+    document.querySelector('#screenplay-notes') ||
+    createMobileSection('screenplay-notes', 'Notes (mobile) – coming soon');
+
+  if (screenwriterEl) {
+    screenwriterEl.classList.add('so-mobile-module');
+  }
+
+  const modules = {
+    screenwriter: screenwriterEl,
+    outline: outlineEl,
+    notes: notesEl
+  };
+
+  let currentTab = 'screenwriter';
+
+  function activate(id) {
+    Object.keys(modules).forEach((key) => {
+      const el = modules[key];
+      if (!el) return;
+      el.classList.remove('so-mobile-active');
+      if (mq.matches) {
+        if (el !== screenwriterEl) {
+          el.style.display = 'none';
+        }
+      } else {
+        if (el === screenwriterEl) {
+          el.style.display = '';
+        } else {
+          el.style.display = 'none';
+        }
+      }
+    });
+
+    const next = modules[id];
+    if (next) {
+      next.classList.add('so-mobile-active');
+      if (mq.matches) {
+        next.style.display = '';
+      }
+    }
+
+    nav.querySelectorAll('[data-target]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.target === id);
+    });
+
+    try {
+      localStorage.setItem('so:lastScreenwriterTab', id);
+    } catch (e) {}
+
+    currentTab = id;
+  }
+
+  nav.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-target]');
+    if (!btn) return;
+    activate(btn.dataset.target);
+  });
+
+  const initial =
+    (function () {
+      try {
+        return localStorage.getItem('so:lastScreenwriterTab');
+      } catch (e) {
+        return null;
+      }
+    })() || 'screenwriter';
+
+  activate(initial);
+
+  if (mq.addEventListener) {
+    mq.addEventListener('change', function () {
+      activate(currentTab);
+      if (shell) {
+        shell.style.display = mq.matches ? 'block' : 'none';
+      }
+    });
+  } else if (mq.addListener) {
+    mq.addListener(function () {
+      activate(currentTab);
+      if (shell) {
+        shell.style.display = mq.matches ? 'block' : 'none';
+      }
+    });
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/use-cases/sw-screenwriter.js')
+      .catch(function (err) {
+        console.warn('SW registration failed:', err);
+      });
+  }
+
+  window.StudioOrganizeMobile = { activate };
+})();
+</script>
   <script type="module" src="/assets/main.js"></script>
 </body>
 </html>
