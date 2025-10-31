@@ -123,15 +123,32 @@ function updateSceneThumbnail(sceneId, signedUrl) {
   if (signedUrl) {
     img.src = signedUrl;
     img.hidden = false;
+  } else {
+    img.hidden = true;
+    img.removeAttribute('src');
   }
 }
 
-function updateSceneMemory(sceneId, signedUrl) {
-  if (!sceneId || !signedUrl) return;
+function updateSceneMemory(sceneId, imageInput) {
+  if (!sceneId) return;
   const scenes = Array.isArray(window.storyboardScenes) ? window.storyboardScenes : [];
   const idx = scenes.findIndex(scene => scene.id === sceneId);
-  if (idx >= 0) {
-    scenes[idx].latestRenderUrl = signedUrl;
+  if (idx < 0) return;
+  const scene = scenes[idx];
+  if (!scene || typeof scene !== 'object') return;
+  const urls = Array.isArray(imageInput)
+    ? imageInput
+        .map(url => (typeof url === 'string' ? url.trim() : ''))
+        .filter(Boolean)
+    : imageInput
+    ? [String(imageInput).trim()].filter(Boolean)
+    : [];
+  if (urls.length) {
+    scene.latestRenderUrl = urls[0];
+    scene.previewImages = urls;
+  } else {
+    delete scene.latestRenderUrl;
+    scene.previewImages = [];
   }
 }
 
@@ -276,6 +293,13 @@ async function renderHistory(sceneId, assets) {
     ? assets.filter(asset => asset.kind === 'render').slice(0, 3)
     : [];
   if (!renders.length) {
+    updateSceneThumbnail(sceneId, '');
+    updateSceneMemory(sceneId, []);
+    document.dispatchEvent(
+      new CustomEvent('storyboard:scene-images-updated', {
+        detail: { sceneId, images: [] },
+      })
+    );
     const placeholder = document.createElement('p');
     placeholder.className = 'muted';
     placeholder.textContent = 'No renders yet. Generate an image to see history.';
@@ -287,27 +311,38 @@ async function renderHistory(sceneId, assets) {
     return { asset, url };
   });
   const withUrls = await Promise.all(urlPromises);
-  withUrls.forEach(({ asset, url }) => {
-    if (!url) return;
-    const item = document.createElement('div');
-    item.className = 'storyboard-ai-history__item';
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'Generated storyboard frame';
-    item.appendChild(img);
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = 'Use as reference';
-    button.addEventListener('click', async () => {
-      await handleUseAsReference(asset);
+  const validRenders = withUrls.filter(({ url }) => Boolean(url));
+  if (!validRenders.length) {
+    const placeholder = document.createElement('p');
+    placeholder.className = 'muted';
+    placeholder.textContent = 'No renders yet. Generate an image to see history.';
+    elements.history.appendChild(placeholder);
+  } else {
+    validRenders.forEach(({ asset, url }) => {
+      const item = document.createElement('div');
+      item.className = 'storyboard-ai-history__item';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Generated storyboard frame';
+      item.appendChild(img);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Use as reference';
+      button.addEventListener('click', async () => {
+        await handleUseAsReference(asset);
+      });
+      item.appendChild(button);
+      elements.history.appendChild(item);
     });
-    item.appendChild(button);
-    elements.history.appendChild(item);
-  });
-  if (withUrls[0]) {
-    updateSceneThumbnail(sceneId, withUrls[0].url);
-    updateSceneMemory(sceneId, withUrls[0].url);
   }
+  const imageUrls = validRenders.map(({ url }) => url);
+  updateSceneThumbnail(sceneId, imageUrls[0] || '');
+  updateSceneMemory(sceneId, imageUrls);
+  document.dispatchEvent(
+    new CustomEvent('storyboard:scene-images-updated', {
+      detail: { sceneId, images: imageUrls },
+    })
+  );
 }
 
 async function refreshSceneState(sceneId) {
