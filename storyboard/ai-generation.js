@@ -7,6 +7,7 @@ if (!modal) {
 }
 
 const supabase = window.supabaseClient || null;
+const WRITER_LAST_PROJECT_KEY = 'SW_LAST_PROJECT_ID';
 
 const elements = modal
   ? {
@@ -42,6 +43,80 @@ const state = {
   maskCache: [],
 };
 
+function getWriterProjectId() {
+  try {
+    return window.localStorage.getItem(WRITER_LAST_PROJECT_KEY) || null;
+  } catch (error) {
+    console.warn('Unable to read Writer project id', error);
+    return null;
+  }
+}
+
+function resolveActiveSceneId() {
+  if (state.currentSceneId) return state.currentSceneId;
+  const scenes = Array.isArray(window.storyboardScenes) ? window.storyboardScenes : [];
+  return scenes.length ? scenes[0].id : null;
+}
+
+function buildSceneAutoPrompt(scene, characterName, poseLabel) {
+  if (!scene) return `Render ${characterName || 'the character'} in a cinematic storyboard frame.`;
+  const parts = [scene.slug, scene.storyboardDescription, scene.description, scene.timelineMeta].filter(Boolean);
+  if (characterName) {
+    parts.push(`Feature ${characterName} on model.`);
+  }
+  if (poseLabel) {
+    parts.push(`Use the ${poseLabel} pose.`);
+  }
+  parts.push('Render as a cinematic storyboard frame with consistent character likeness.');
+  return parts.join('\n');
+}
+
+function getNextFrameIndex(sceneId) {
+  const assets = state.assetCache.get(sceneId) || [];
+  const renderCount = assets.filter(asset => asset.kind === 'render').length;
+  return renderCount + 1;
+}
+
+async function loadCharactersForProject(projectId) {
+  if (!supabase || !projectId) return [];
+  const { data, error } = await supabase
+    .from('characters')
+    .select('id, name, base_image_url, has_pose_library')
+    .eq('project_id', projectId)
+    .order('name', { ascending: true });
+  if (error) {
+    console.error('Failed to load characters for project', error);
+    return [];
+  }
+  return (data || []).filter(char => typeof char.base_image_url === 'string' && char.base_image_url.trim());
+}
+
+async function loadTopPoseForCharacter(characterId) {
+  if (!supabase || !characterId) return null;
+  const { data, error } = await supabase
+    .from('character_poses')
+    .select('id, pose_label, pose_description, generated_image_url, score, approved_for_scene')
+    .eq('character_id', characterId)
+    .order('approved_for_scene', { ascending: false })
+    .order('score', { ascending: false })
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error('Failed to load top pose for character', error);
+    return null;
+  }
+  if (!data) return null;
+  return {
+    id: data.id,
+    pose_label: data.pose_label || 'pose',
+    pose_description: data.pose_description || '',
+    generated_image_url: data.generated_image_url || '',
+    score: Number(data.score) || 0,
+    approved_for_scene: Boolean(data.approved_for_scene),
+  };
+}
+
 function getSceneData(sceneId) {
   const scenes = Array.isArray(window.storyboardScenes) ? window.storyboardScenes : [];
   return scenes.find(scene => scene.id === sceneId) || null;
@@ -61,6 +136,45 @@ function showError(message) {
 
 function clearError() {
   showError('');
+}
+
+function setButtonBusy(button, label) {
+  if (!(button instanceof HTMLButtonElement)) {
+    return () => {};
+  }
+  const original = button.dataset.originalLabel || button.textContent || '';
+  const existingTimer = button.dataset.feedbackTimerId ? Number(button.dataset.feedbackTimerId) : null;
+  if (existingTimer) {
+    window.clearTimeout(existingTimer);
+    delete button.dataset.feedbackTimerId;
+  }
+  button.dataset.originalLabel = original;
+  button.disabled = true;
+  button.dataset.loading = 'true';
+  button.setAttribute('aria-busy', 'true');
+  if (label) {
+    button.textContent = label;
+  }
+  return ({ message, delay = 0 } = {}) => {
+    button.disabled = false;
+    button.dataset.loading = 'false';
+    button.setAttribute('aria-busy', 'false');
+    const revertLabel = button.dataset.originalLabel || original;
+    if (message) {
+      button.textContent = message;
+      if (delay > 0) {
+        const timeoutId = window.setTimeout(() => {
+          button.textContent = revertLabel;
+          delete button.dataset.feedbackTimerId;
+        }, delay);
+        button.dataset.feedbackTimerId = String(timeoutId);
+      } else {
+        button.textContent = revertLabel;
+      }
+    } else {
+      button.textContent = revertLabel;
+    }
+  };
 }
 
 function toggleModal(open) {
@@ -168,6 +282,15 @@ function bindButtons() {
   });
 }
 
+function bindBestPoseButtons() {
+  document.querySelectorAll('[data-scene-best-pose]').forEach(button => {
+    if (!(button instanceof HTMLButtonElement)) return;
+    if (button.dataset.storyboardBestPoseBound === 'true') return;
+    button.dataset.storyboardBestPoseBound = 'true';
+    button.addEventListener('click', handleBestPoseClick);
+  });
+}
+
 async function ensureSession() {
   if (!supabase) {
     showError('Supabase client not available.');
@@ -179,6 +302,25 @@ async function ensureSession() {
     return null;
   }
   return data.session;
+}
+
+async function invokeImagePipeline(action, payload, session) {
+  if (!supabase) {
+    throw new Error('Supabase client not available.');
+  }
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error('Sign in to generate storyboard images.');
+  }
+  const body = { ...(payload || {}), action };
+  const { data, error } = await supabase.functions.invoke('ai-image-pipeline', {
+    body,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) {
+    throw new Error(error.message || 'AI image pipeline request failed');
+  }
+  return data;
 }
 
 async function fetchAssetUrl(asset) {
@@ -597,6 +739,90 @@ async function handleUseAsReference(asset) {
   }
 }
 
+async function handleBestPoseClick(event) {
+  const button = event?.currentTarget instanceof HTMLButtonElement ? event.currentTarget : null;
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const restoreButton = setButtonBusy(button, 'Preparing pose…');
+  try {
+    clearError();
+    const session = await ensureSession();
+    if (!session) {
+      restoreButton({ message: 'Sign in required', delay: 2000 });
+      return;
+    }
+    const sceneId = resolveActiveSceneId();
+    if (!sceneId) {
+      showError('Select a scene to generate a frame.');
+      restoreButton({ message: 'Select a scene', delay: 2200 });
+      return;
+    }
+    const projectId = getWriterProjectId();
+    if (!projectId) {
+      showError('Open your Writer project to load characters.');
+      restoreButton({ message: 'No story selected', delay: 2200 });
+      return;
+    }
+
+    setStatus('Selecting best pose…', 'loading');
+    const characters = await loadCharactersForProject(projectId);
+    if (!characters.length) {
+      showError('Create a character with a base PNG in Character Studio first.');
+      restoreButton({ message: 'No characters found', delay: 2400 });
+      return;
+    }
+    const eligible = characters.filter(char => Boolean(char.has_pose_library));
+    if (!eligible.length) {
+      showError('Generate poses for a character in Character Studio before using this shortcut.');
+      restoreButton({ message: 'No poses yet', delay: 2400 });
+      return;
+    }
+    const character = eligible[0];
+    const pose = await loadTopPoseForCharacter(character.id);
+    if (!pose) {
+      showError('No approved poses found for this character. Generate and approve poses in Character Studio.');
+      restoreButton({ message: 'No poses available', delay: 2400 });
+      return;
+    }
+    if (!pose.approved_for_scene) {
+      showError('Approve at least one pose for scene use in Character Studio.');
+      restoreButton({ message: 'Pose not approved', delay: 2400 });
+      return;
+    }
+
+    const scene = getSceneData(sceneId);
+    const prompt = buildSceneAutoPrompt(scene, character.name, pose.pose_label);
+    const frameIndex = getNextFrameIndex(sceneId);
+
+    setStatus('Generating scene from best pose…', 'loading');
+    state.currentSceneId = sceneId;
+    const response = await invokeImagePipeline(
+      'generate-scene',
+      {
+        scene_id: sceneId,
+        frame_index: frameIndex,
+        character_id: character.id,
+        pose_id: pose.id,
+        prompt,
+      },
+      session,
+    );
+    if (!response?.frame?.id) {
+      throw new Error('Scene generation returned an unexpected response.');
+    }
+    await refreshSceneState(sceneId);
+    setStatus('Scene generated from best pose', 'idle');
+    restoreButton({ message: 'Scene generated!', delay: 1800 });
+  } catch (error) {
+    console.error('Best pose generation failed', error);
+    const message = error instanceof Error ? error.message : 'Generation failed';
+    showError(message);
+    restoreButton({ message: 'Generation failed', delay: 2400 });
+  }
+}
+
 function setupEventListeners() {
   if (!modal) return;
   if (elements.dismissButtons) {
@@ -632,6 +858,7 @@ if (modal) {
   setupEventListeners();
   document.addEventListener('storyboard:scenes-rendered', () => {
     bindButtons();
+    bindBestPoseButtons();
   });
   document.addEventListener('storyboard:scene-activated', event => {
     const sceneId = event?.detail?.sceneId;
@@ -645,5 +872,8 @@ if (modal) {
     refreshSceneState(sceneId);
   });
   bindButtons();
+  bindBestPoseButtons();
   resumeActiveJobs();
 }
+
+bindBestPoseButtons();
