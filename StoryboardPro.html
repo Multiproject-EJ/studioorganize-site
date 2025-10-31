@@ -104,11 +104,11 @@
       .btn.btn-primary { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
       .topbar-group { display: flex; gap: 6px; align-items: center; }
       .scene-carousel-wrapper {
-        --scene-carousel-active-scale: 0.82;
-        --scene-carousel-adjacent-scale: 0.56;
-        --scene-carousel-far-scale: 0.42;
-        --scene-carousel-distant-scale: 0.34;
-        --scene-carousel-horizon-scale: 0.28;
+        --scene-carousel-active-scale: 0.96;
+        --scene-carousel-adjacent-scale: 0.68;
+        --scene-carousel-far-scale: 0.52;
+        --scene-carousel-distant-scale: 0.42;
+        --scene-carousel-horizon-scale: 0.34;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -117,11 +117,11 @@
         border-bottom: 1px solid var(--ring);
       }
       .scene-carousel-wrapper.scene-carousel--zoomed {
-        --scene-carousel-active-scale: 1;
-        --scene-carousel-adjacent-scale: 0.68;
-        --scene-carousel-far-scale: 0.54;
-        --scene-carousel-distant-scale: 0.44;
-        --scene-carousel-horizon-scale: 0.36;
+        --scene-carousel-active-scale: 1.04;
+        --scene-carousel-adjacent-scale: 0.78;
+        --scene-carousel-far-scale: 0.62;
+        --scene-carousel-distant-scale: 0.5;
+        --scene-carousel-horizon-scale: 0.4;
       }
       .scene-carousel-wrapper:focus-within { outline: 2px solid rgba(79,123,255,0.28); outline-offset: 6px; box-shadow: none; border-radius: 0; }
       .scene-carousel { display: flex; align-items: center; gap: 14px; }
@@ -129,7 +129,7 @@
       .scene-carousel__nav:hover { transform: translateY(-1px); border-color: var(--acc); background: linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); }
       .scene-carousel__nav:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
       .scene-carousel__nav:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; background: var(--chip); }
-      .scene-carousel__viewport { position: relative; flex: 1; overflow: visible; border-radius: 0; box-shadow: none; border: none; background: transparent; padding: 18px 0; perspective: 1400px; transform-style: preserve-3d; touch-action: pan-y; cursor: grab; }
+      .scene-carousel__viewport { position: relative; flex: 1; overflow: hidden; border-radius: 0; box-shadow: none; border: none; background: transparent; padding: 12px 0 8px; perspective: 1400px; transform-style: preserve-3d; touch-action: pan-y; cursor: grab; }
       .scene-carousel__viewport.is-dragging { cursor: grabbing; }
       .scene-carousel__track {
         position: relative;
@@ -139,24 +139,24 @@
         list-style: none;
         padding: 0;
         margin: 0;
-        min-height: clamp(480px, 75vw, 680px);
+        min-height: clamp(440px, 64vw, 640px);
         transform: translateX(var(--scene-carousel-drag-offset, 0));
         transition: transform var(--scene-carousel-drag-transition, .45s cubic-bezier(0.32, 0.72, 0, 1));
         will-change: transform;
         transform-style: preserve-3d;
       }
-      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__track { min-height: clamp(540px, 82vw, 760px); }
+      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__track { min-height: clamp(520px, 72vw, 720px); }
       .scene-carousel__slide { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; transform-style: preserve-3d; }
       .scene-carousel__slide-button { border: none; background: transparent; padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; cursor: pointer; text-align: left; color: inherit; pointer-events: auto; position: relative; transform-style: preserve-3d; transition: transform .45s ease; }
       .scene-carousel__slide-button:focus-visible { outline: none; }
-      .scene-carousel__figure { display: flex; flex-direction: column; align-items: center; gap: 12px; height: 100%; max-width: clamp(320px, 72vw, 580px); margin: 0 auto; background: transparent; border-radius: 0; overflow: visible; transform-origin: center center; transform: scale(var(--scene-carousel-horizon-scale)); opacity: 0.18; filter: saturate(0.7) blur(0.45px); box-shadow: none; transition: transform .45s ease, opacity .45s ease, filter .45s ease; }
-      .scene-carousel__image-wrapper { position: relative; border-radius: 20px; overflow: hidden; }
+      .scene-carousel__figure { display: flex; flex-direction: column; align-items: center; gap: 14px; height: 100%; max-width: clamp(520px, 82vw, 880px); margin: 0 auto; background: transparent; border-radius: 0; overflow: visible; transform-origin: center bottom; transform: scale(var(--scene-carousel-horizon-scale)); opacity: 0.18; filter: saturate(0.7) blur(0.45px); box-shadow: none; transition: transform .45s ease, opacity .45s ease, filter .45s ease; }
+      .scene-carousel__image-wrapper { position: relative; width: 100%; border-radius: 20px; overflow: hidden; }
       .scene-carousel__image { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border: none; transition: transform .3s ease; display: block; border-radius: 20px; box-shadow: none; }
       .scene-carousel__image-strip { position: absolute; right: 16px; bottom: 16px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.72); backdrop-filter: blur(12px); box-shadow: 0 10px 24px rgba(8,15,28,0.38); }
       .scene-carousel__thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 18px rgba(15,23,42,0.45); }
       .scene-carousel__thumb-count { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 38px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: .3px; color: rgba(255,255,255,0.92); background: rgba(79,123,255,0.55); border: 1px solid rgba(148,163,184,0.45); box-shadow: 0 8px 18px rgba(15,23,42,0.45); }
       .scene-carousel__thumb-count[aria-hidden="true"] { pointer-events: none; }
-      .scene-carousel__caption { margin: 0 auto; padding: 0; display: flex; flex-direction: column; gap: 6px; text-align: center; max-width: clamp(320px, 72vw, 620px); }
+      .scene-carousel__caption { margin: 0 auto; padding: 0; display: flex; flex-direction: column; gap: 6px; text-align: center; max-width: clamp(520px, 82vw, 880px); }
       .scene-carousel__title { font-size: 18px; font-weight: 600; letter-spacing: 0.2px; margin: 0; display: flex; gap: 10px; align-items: baseline; }
       .scene-carousel__title small { font-size: 12px; letter-spacing: .25px; text-transform: uppercase; color: var(--muted); }
       .scene-carousel__description { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -165,24 +165,24 @@
       .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__slide--active .scene-carousel__image { transform: scale(1.02); }
       .scene-carousel__slide--previous .scene-carousel__figure,
       .scene-carousel__slide--next .scene-carousel__figure { opacity: 0.48; filter: saturate(0.62) blur(0.55px); }
-      .scene-carousel__slide--previous .scene-carousel__figure { transform: translateX(92%) scale(var(--scene-carousel-adjacent-scale)) rotateY(14deg); }
-      .scene-carousel__slide--next .scene-carousel__figure { transform: translateX(-92%) scale(var(--scene-carousel-adjacent-scale)) rotateY(-14deg); }
+      .scene-carousel__slide--previous .scene-carousel__figure { transform: translateX(-82%) scale(var(--scene-carousel-adjacent-scale)) rotateY(-14deg); }
+      .scene-carousel__slide--next .scene-carousel__figure { transform: translateX(82%) scale(var(--scene-carousel-adjacent-scale)) rotateY(14deg); }
       .scene-carousel__slide--previous-2 .scene-carousel__figure,
       .scene-carousel__slide--next-2 .scene-carousel__figure { opacity: 0.24; filter: saturate(0.5) blur(0.9px); }
-      .scene-carousel__slide--previous-2 .scene-carousel__figure { transform: translateX(176%) scale(var(--scene-carousel-far-scale)) rotateY(20deg); }
-      .scene-carousel__slide--next-2 .scene-carousel__figure { transform: translateX(-176%) scale(var(--scene-carousel-far-scale)) rotateY(-20deg); }
+      .scene-carousel__slide--previous-2 .scene-carousel__figure { transform: translateX(-158%) scale(var(--scene-carousel-far-scale)) rotateY(-20deg); }
+      .scene-carousel__slide--next-2 .scene-carousel__figure { transform: translateX(158%) scale(var(--scene-carousel-far-scale)) rotateY(20deg); }
       .scene-carousel__slide--previous-3 .scene-carousel__figure,
       .scene-carousel__slide--next-3 .scene-carousel__figure { opacity: 0.16; filter: saturate(0.42) blur(1.3px); }
-      .scene-carousel__slide--previous-3 .scene-carousel__figure { transform: translateX(252%) scale(var(--scene-carousel-distant-scale)) rotateY(24deg); }
-      .scene-carousel__slide--next-3 .scene-carousel__figure { transform: translateX(-252%) scale(var(--scene-carousel-distant-scale)) rotateY(-24deg); }
+      .scene-carousel__slide--previous-3 .scene-carousel__figure { transform: translateX(-228%) scale(var(--scene-carousel-distant-scale)) rotateY(-24deg); }
+      .scene-carousel__slide--next-3 .scene-carousel__figure { transform: translateX(228%) scale(var(--scene-carousel-distant-scale)) rotateY(24deg); }
       .scene-carousel__slide--previous-4 .scene-carousel__figure,
       .scene-carousel__slide--next-4 .scene-carousel__figure { opacity: 0.12; filter: saturate(0.36) blur(1.7px); }
-      .scene-carousel__slide--previous-4 .scene-carousel__figure { transform: translateX(328%) scale(var(--scene-carousel-horizon-scale)) rotateY(28deg); }
-      .scene-carousel__slide--next-4 .scene-carousel__figure { transform: translateX(-328%) scale(var(--scene-carousel-horizon-scale)) rotateY(-28deg); }
+      .scene-carousel__slide--previous-4 .scene-carousel__figure { transform: translateX(-298%) scale(var(--scene-carousel-horizon-scale)) rotateY(-28deg); }
+      .scene-carousel__slide--next-4 .scene-carousel__figure { transform: translateX(298%) scale(var(--scene-carousel-horizon-scale)) rotateY(28deg); }
       .scene-carousel__slide--previous-5 .scene-carousel__figure,
       .scene-carousel__slide--next-5 .scene-carousel__figure { opacity: 0.08; filter: saturate(0.3) blur(2.1px); }
-      .scene-carousel__slide--previous-5 .scene-carousel__figure { transform: translateX(404%) scale(calc(var(--scene-carousel-horizon-scale) * 0.92)) rotateY(32deg); }
-      .scene-carousel__slide--next-5 .scene-carousel__figure { transform: translateX(-404%) scale(calc(var(--scene-carousel-horizon-scale) * 0.92)) rotateY(-32deg); }
+      .scene-carousel__slide--previous-5 .scene-carousel__figure { transform: translateX(-368%) scale(calc(var(--scene-carousel-horizon-scale) * 0.92)) rotateY(-32deg); }
+      .scene-carousel__slide--next-5 .scene-carousel__figure { transform: translateX(368%) scale(calc(var(--scene-carousel-horizon-scale) * 0.92)) rotateY(32deg); }
       .scene-carousel__slide--offscreen .scene-carousel__figure { opacity: 0; filter: saturate(0.2) blur(2.4px); transform: translateX(0) scale(calc(var(--scene-carousel-horizon-scale) * 0.8)); pointer-events: none; }
       .scene-carousel__slide-button:hover .scene-carousel__image { transform: scale(1.02); }
       .scene-carousel__slide-button:focus-visible .scene-carousel__image { transform: scale(1.02); }
@@ -314,14 +314,14 @@
       .timeline-stage header h2 { margin: 0; font-size: 15px; font-weight: 600; }
       .timeline-stage header span { font-size: 12px; color: var(--muted); }
       .timeline-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-      .timeline-wrapper { flex: 1; overflow: auto; padding-bottom: 16px; }
+      .timeline-wrapper { flex: 1; overflow: auto; padding-bottom: 16px; scroll-behavior: smooth; scroll-snap-type: y proximity; }
       .timeline-grid { display: grid; grid-template-columns: 200px 1fr; min-width: 680px; }
       .timeline-scale { grid-column: 1 / -1; padding: 12px 24px; border-bottom: 1px solid var(--ring); background: linear-gradient(135deg, rgba(79,123,255,0.12), rgba(79,123,255,0)); position: sticky; top: 0; z-index: 2; }
       .timeline-scale__header { font-size: 12px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: space-between; }
       .timeline-scale__ruler { position: relative; height: 28px; border-bottom: 1px dashed rgba(79,123,255,0.35); }
       .timeline-scale__ruler span { position: absolute; top: 8px; font-size: 11px; color: var(--muted); transform: translateX(-50%); }
       .timeline-scene { display: contents; }
-      .timeline-scene__label { padding: 20px 16px; border-right: 1px solid var(--ring); background: var(--panel); display: flex; flex-direction: column; gap: 6px; position: sticky; left: 0; z-index: 1; }
+      .timeline-scene__label { padding: 20px 16px; border-right: 1px solid var(--ring); background: var(--panel); display: flex; flex-direction: column; gap: 6px; position: sticky; left: 0; z-index: 1; scroll-snap-align: start; }
       .timeline-scene__label strong { font-size: 14px; letter-spacing: .2px; }
       .timeline-scene__label span { font-size: 13px; }
       .timeline-scene__label small { font-size: 12px; color: var(--muted); }
@@ -1271,6 +1271,7 @@
     const sceneTitle = document.querySelector('[data-scene-title]');
     const sceneMeta = document.querySelector('[data-scene-meta]');
     const timelineGrid = document.querySelector('[data-timeline-grid]');
+    const timelineWrapper = document.querySelector('.timeline-wrapper');
     const aiPromptInput = document.getElementById('aiShotPrompt');
     const aiFrameInput = document.getElementById('aiFrameCount');
     const aiProviderSelect = document.getElementById('aiProvider');
@@ -2639,8 +2640,16 @@
           if (sceneMeta) sceneMeta.textContent = row.dataset.sceneMeta || '';
           if (opts.scroll) {
             const label = row.querySelector('.timeline-scene__label');
-            if (label && typeof label.scrollIntoView === 'function') {
-              label.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (label) {
+              if (timelineWrapper && typeof timelineWrapper.scrollTo === 'function') {
+                const wrapperRect = timelineWrapper.getBoundingClientRect();
+                const labelRect = label.getBoundingClientRect();
+                const offsetTop = labelRect.top - wrapperRect.top + timelineWrapper.scrollTop;
+                const targetTop = Math.max(0, offsetTop - 12);
+                timelineWrapper.scrollTo({ top: targetTop, behavior: 'smooth' });
+              } else if (typeof label.scrollIntoView === 'function') {
+                label.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
             }
           }
         }
