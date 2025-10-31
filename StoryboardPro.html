@@ -105,8 +105,10 @@
       .topbar-group { display: flex; gap: 6px; align-items: center; }
       .scene-carousel-wrapper {
         --scene-carousel-active-scale: 0.82;
-        --scene-carousel-adjacent-scale: 0.6;
-        --scene-carousel-far-scale: 0.46;
+        --scene-carousel-adjacent-scale: 0.56;
+        --scene-carousel-far-scale: 0.42;
+        --scene-carousel-distant-scale: 0.34;
+        --scene-carousel-horizon-scale: 0.28;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -117,7 +119,9 @@
       .scene-carousel-wrapper.scene-carousel--zoomed {
         --scene-carousel-active-scale: 1;
         --scene-carousel-adjacent-scale: 0.68;
-        --scene-carousel-far-scale: 0.52;
+        --scene-carousel-far-scale: 0.54;
+        --scene-carousel-distant-scale: 0.44;
+        --scene-carousel-horizon-scale: 0.36;
       }
       .scene-carousel-wrapper:focus-within { box-shadow: inset 0 0 0 1px rgba(79,123,255,0.28); border-radius: 0 0 20px 20px; }
       .scene-carousel { display: flex; align-items: center; gap: 14px; }
@@ -130,7 +134,7 @@
       .scene-carousel__slide { flex: 0 0 100%; display: flex; justify-content: center; pointer-events: none; transform-style: preserve-3d; }
       .scene-carousel__slide-button { border: none; background: transparent; padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; cursor: pointer; text-align: left; color: inherit; pointer-events: auto; position: relative; transform-style: preserve-3d; transition: transform .45s ease; }
       .scene-carousel__slide-button:focus-visible { outline: none; }
-      .scene-carousel__figure { display: flex; flex-direction: column; height: 100%; max-width: clamp(240px, 52vw, 420px); margin: 0 auto; background: var(--panel); border-radius: 24px; overflow: hidden; transform-origin: center center; transform: scale(var(--scene-carousel-far-scale)); opacity: 0.24; filter: saturate(0.8) blur(0.35px); box-shadow: 0 16px 32px rgba(8,15,28,0.18); transition: transform .45s ease, opacity .45s ease, filter .45s ease, box-shadow .45s ease; }
+      .scene-carousel__figure { display: flex; flex-direction: column; height: 100%; max-width: clamp(220px, 48vw, 380px); margin: 0 auto; background: var(--panel); border-radius: 24px; overflow: hidden; transform-origin: center center; transform: scale(var(--scene-carousel-horizon-scale)); opacity: 0.18; filter: saturate(0.7) blur(0.45px); box-shadow: 0 16px 32px rgba(8,15,28,0.18); transition: transform .45s ease, opacity .45s ease, filter .45s ease, box-shadow .45s ease; }
       .scene-carousel__image-wrapper { position: relative; }
       .scene-carousel__image { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border: none; border-bottom: 1px solid rgba(0,0,0,0.06); transition: transform .3s ease; display: block; }
       .scene-carousel__image-strip { position: absolute; right: 16px; bottom: 16px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.72); backdrop-filter: blur(12px); box-shadow: 0 10px 24px rgba(8,15,28,0.38); }
@@ -145,13 +149,26 @@
       .scene-carousel__slide--active .scene-carousel__figure { transform: scale(var(--scene-carousel-active-scale)); opacity: 1; filter: none; box-shadow: 0 26px 54px rgba(8,15,28,0.3); }
       .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__slide--active .scene-carousel__image { transform: scale(1.02); }
       .scene-carousel__slide--previous .scene-carousel__figure,
-      .scene-carousel__slide--next .scene-carousel__figure { opacity: 0.42; filter: saturate(0.65) blur(0.6px); }
-      .scene-carousel__slide--previous .scene-carousel__figure { transform: translateX(140%) scale(var(--scene-carousel-adjacent-scale)) rotateY(16deg); }
-      .scene-carousel__slide--next .scene-carousel__figure { transform: translateX(-140%) scale(var(--scene-carousel-adjacent-scale)) rotateY(-16deg); }
+      .scene-carousel__slide--next .scene-carousel__figure { opacity: 0.48; filter: saturate(0.62) blur(0.55px); }
+      .scene-carousel__slide--previous .scene-carousel__figure { transform: translateX(92%) scale(var(--scene-carousel-adjacent-scale)) rotateY(14deg); }
+      .scene-carousel__slide--next .scene-carousel__figure { transform: translateX(-92%) scale(var(--scene-carousel-adjacent-scale)) rotateY(-14deg); }
       .scene-carousel__slide--previous-2 .scene-carousel__figure,
-      .scene-carousel__slide--next-2 .scene-carousel__figure { opacity: 0.12; filter: saturate(0.45) blur(1.2px); }
-      .scene-carousel__slide--previous-2 .scene-carousel__figure { transform: translateX(230%) scale(var(--scene-carousel-far-scale)) rotateY(24deg); }
-      .scene-carousel__slide--next-2 .scene-carousel__figure { transform: translateX(-230%) scale(var(--scene-carousel-far-scale)) rotateY(-24deg); }
+      .scene-carousel__slide--next-2 .scene-carousel__figure { opacity: 0.24; filter: saturate(0.5) blur(0.9px); }
+      .scene-carousel__slide--previous-2 .scene-carousel__figure { transform: translateX(176%) scale(var(--scene-carousel-far-scale)) rotateY(20deg); }
+      .scene-carousel__slide--next-2 .scene-carousel__figure { transform: translateX(-176%) scale(var(--scene-carousel-far-scale)) rotateY(-20deg); }
+      .scene-carousel__slide--previous-3 .scene-carousel__figure,
+      .scene-carousel__slide--next-3 .scene-carousel__figure { opacity: 0.16; filter: saturate(0.42) blur(1.3px); }
+      .scene-carousel__slide--previous-3 .scene-carousel__figure { transform: translateX(252%) scale(var(--scene-carousel-distant-scale)) rotateY(24deg); }
+      .scene-carousel__slide--next-3 .scene-carousel__figure { transform: translateX(-252%) scale(var(--scene-carousel-distant-scale)) rotateY(-24deg); }
+      .scene-carousel__slide--previous-4 .scene-carousel__figure,
+      .scene-carousel__slide--next-4 .scene-carousel__figure { opacity: 0.12; filter: saturate(0.36) blur(1.7px); }
+      .scene-carousel__slide--previous-4 .scene-carousel__figure { transform: translateX(328%) scale(var(--scene-carousel-horizon-scale)) rotateY(28deg); }
+      .scene-carousel__slide--next-4 .scene-carousel__figure { transform: translateX(-328%) scale(var(--scene-carousel-horizon-scale)) rotateY(-28deg); }
+      .scene-carousel__slide--previous-5 .scene-carousel__figure,
+      .scene-carousel__slide--next-5 .scene-carousel__figure { opacity: 0.08; filter: saturate(0.3) blur(2.1px); }
+      .scene-carousel__slide--previous-5 .scene-carousel__figure { transform: translateX(404%) scale(calc(var(--scene-carousel-horizon-scale) * 0.92)) rotateY(32deg); }
+      .scene-carousel__slide--next-5 .scene-carousel__figure { transform: translateX(-404%) scale(calc(var(--scene-carousel-horizon-scale) * 0.92)) rotateY(-32deg); }
+      .scene-carousel__slide--offscreen .scene-carousel__figure { opacity: 0; filter: saturate(0.2) blur(2.4px); transform: translateX(0) scale(calc(var(--scene-carousel-horizon-scale) * 0.8)); pointer-events: none; }
       .scene-carousel__slide-button:hover .scene-carousel__figure { box-shadow: 0 30px 66px rgba(79,123,255,0.26); }
       .scene-carousel__slide-button:focus-visible .scene-carousel__figure { box-shadow: 0 32px 72px rgba(79,123,255,0.36); }
       .scene-carousel__zoom { position: absolute; top: 12px; right: 12px; border: none; border-radius: 999px; background: rgba(12,19,33,0.58); color: var(--active-tab-text, #ffffff); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; cursor: pointer; transition: background .2s ease, transform .2s ease; }
@@ -1989,16 +2006,29 @@
         index = 0;
       }
 
+      const offsetClassMap = [
+        { offset: -1, className: 'scene-carousel__slide--previous' },
+        { offset: 1, className: 'scene-carousel__slide--next' },
+        { offset: -2, className: 'scene-carousel__slide--previous-2' },
+        { offset: 2, className: 'scene-carousel__slide--next-2' },
+        { offset: -3, className: 'scene-carousel__slide--previous-3' },
+        { offset: 3, className: 'scene-carousel__slide--next-3' },
+        { offset: -4, className: 'scene-carousel__slide--previous-4' },
+        { offset: 4, className: 'scene-carousel__slide--next-4' },
+        { offset: -5, className: 'scene-carousel__slide--previous-5' },
+        { offset: 5, className: 'scene-carousel__slide--next-5' },
+      ];
+
       sceneCarouselSlides.forEach((slide, slideIndex) => {
         const isActive = index >= 0 && slideIndex === index;
         const offset = index >= 0 ? slideIndex - index : 0;
         slide.classList.toggle('scene-carousel__slide--active', isActive);
-        slide.classList.toggle('scene-carousel__slide--previous', index >= 0 && offset === -1);
-        slide.classList.toggle('scene-carousel__slide--next', index >= 0 && offset === 1);
-        slide.classList.toggle('scene-carousel__slide--previous-2', index >= 0 && offset === -2);
-        slide.classList.toggle('scene-carousel__slide--next-2', index >= 0 && offset === 2);
+        offsetClassMap.forEach(({ offset: classOffset, className }) => {
+          slide.classList.toggle(className, index >= 0 && offset === classOffset);
+        });
+        slide.classList.toggle('scene-carousel__slide--offscreen', index >= 0 && Math.abs(offset) > 5);
         if (index >= 0) {
-          slide.style.zIndex = String(10 - Math.abs(offset));
+          slide.style.zIndex = String(20 - Math.abs(offset));
         } else {
           slide.style.zIndex = '';
         }
