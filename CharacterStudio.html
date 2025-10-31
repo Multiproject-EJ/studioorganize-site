@@ -159,6 +159,128 @@
         flex-direction: column;
         overflow: hidden;
       }
+      .character-studio-poses-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .character-studio-pose-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        align-items: start;
+      }
+      @media (max-width: 960px) {
+        .character-studio-pose-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .character-studio-pose-card {
+        background: var(--chip);
+        border: 1px solid var(--ring);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .character-studio-pose-preview {
+        position: relative;
+        background: var(--panel);
+        border: 1px dashed var(--ring);
+        border-radius: 12px;
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .character-studio-pose-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+      .character-studio-pose-placeholder {
+        font-size: 14px;
+        color: var(--muted);
+        text-align: center;
+        padding: 12px;
+      }
+      .character-studio-pose-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .character-studio-pose-actions button {
+        border: 1px solid var(--ring);
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .character-studio-pose-actions button:hover {
+        border-color: var(--acc);
+      }
+      .character-studio-pose-actions button:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
+      .character-studio-pose-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .character-studio-pose-form .character-studio-field {
+        width: 100%;
+      }
+      .character-studio-pose-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+      }
+      .character-studio-pose-list-item {
+        border: 1px solid var(--ring);
+        border-radius: 16px;
+        padding: 12px;
+        background: var(--panel);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .character-studio-pose-list-item img {
+        width: 100%;
+        border-radius: 10px;
+        background: var(--chip);
+        object-fit: contain;
+      }
+      .character-studio-pose-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .character-studio-pose-flag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 11px;
+        text-transform: uppercase;
+        background: rgba(79, 123, 255, 0.12);
+        color: var(--acc);
+        border: 1px solid rgba(79, 123, 255, 0.4);
+      }
+      .character-studio-small-note {
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--muted);
+      }
       .character-studio-header {
         display: flex;
         align-items: center;
@@ -455,6 +577,7 @@
         { id: 'background', label: 'Background & Family' },
         { id: 'arc', label: 'Character Arc' },
         { id: 'lookbook', label: 'Lookbook' },
+        { id: 'poses', label: 'Pose Library' },
         { id: 'ai', label: 'AI Concepting' }
       ];
 
@@ -522,7 +645,9 @@
         dirty: false,
         saveStatus: '',
         saveStatusState: '',
-        remoteIds: new Set(initialCharacters.map(char => char.id))
+        remoteIds: new Set(initialCharacters.map(char => char.id)),
+        signedUrlCache: new Map(),
+        poseCache: new Map()
       };
 
       const LOCAL_DB_NAME = 'sw_db_v1';
@@ -714,6 +839,50 @@
         return [];
       }
 
+      function parseStorageUrl(value){
+        if (typeof value !== 'string') return null;
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const [bucket, ...rest] = trimmed.split('/');
+        if (!bucket || !rest.length) return null;
+        return { bucket, path: rest.join('/') };
+      }
+
+      function invalidateSignedUrl(path){
+        if (!path || !state?.signedUrlCache) return;
+        state.signedUrlCache.delete(path);
+      }
+
+      async function getSignedUrlForPath(path){
+        if (!path || !state.supabase) return null;
+        if (state.signedUrlCache.has(path)){
+          return state.signedUrlCache.get(path);
+        }
+        const storage = parseStorageUrl(path);
+        if (!storage) return null;
+        try {
+          const { data, error } = await state.supabase.storage
+            .from(storage.bucket)
+            .createSignedUrl(storage.path, 3600);
+          if (error) throw error;
+          const url = data?.signedUrl || null;
+          if (url) state.signedUrlCache.set(path, url);
+          return url;
+        } catch (err){
+          console.warn('Character Studio failed to sign storage path', err);
+          return null;
+        }
+      }
+
+      function readFileAsDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = event => reject(event);
+          reader.readAsDataURL(file);
+        });
+      }
+
       function createId(){
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'){
           try { return crypto.randomUUID(); }
@@ -751,7 +920,9 @@
           stats: { scenes: 0, dialogue: 0, screenTime: 0 },
           arc: { setup: '', development: '', resolution: '' },
           looks: { portrait: '', turnarounds: [], expressions: [] },
-          ai: { prompt: '', notes: '' }
+          ai: { prompt: '', notes: '' },
+          baseImageUrl: '',
+          hasPoseLibrary: false
         };
       }
 
@@ -776,6 +947,8 @@
         normalized.looks.turnarounds = normalizeList(normalized.looks.turnarounds);
         normalized.looks.expressions = normalizeList(normalized.looks.expressions);
         normalized.ai = { ...base.ai, ...(item.ai || {}) };
+        normalized.baseImageUrl = typeof item.baseImageUrl === 'string' ? item.baseImageUrl : '';
+        normalized.hasPoseLibrary = Boolean(item.hasPoseLibrary);
         return normalized;
       }
 
@@ -813,7 +986,9 @@
           ai: {
             prompt: typeof row.ai_prompt === 'string' ? row.ai_prompt : '',
             notes: typeof row.ai_notes === 'string' ? row.ai_notes : ''
-          }
+          },
+          baseImageUrl: typeof row.base_image_url === 'string' ? row.base_image_url : '',
+          hasPoseLibrary: Boolean(row.has_pose_library)
         };
         return normalizeCharacter(normalized);
       }
@@ -850,6 +1025,8 @@
           look_portrait_url: normalized.looks?.portrait || null,
           look_turnaround_urls: turnarounds,
           look_expression_urls: expressions,
+          base_image_url: normalized.baseImageUrl || null,
+          has_pose_library: Boolean(normalized.hasPoseLibrary),
           ai_prompt: normalized.ai?.prompt || null,
           ai_notes: normalized.ai?.notes || null,
           updated_at: new Date().toISOString()
@@ -893,6 +1070,119 @@
           return `<img src="${escapeHtml(url)}" alt="${escapeHtml(`${name} ${label.toLowerCase()}`)}" />`;
         }
         return `<div class="character-studio-look-empty">Add a ${escapeHtml(label.toLowerCase())} URL to preview.</div>`;
+      }
+
+      async function fetchPoseLibraryForCharacter(characterId, { force = false } = {}){
+        if (!characterId) return [];
+        if (!state.supabase){
+          console.warn('Supabase client not ready for pose fetch');
+          return [];
+        }
+        if (!force && state.poseCache.has(characterId)){
+          return state.poseCache.get(characterId) || [];
+        }
+        const { data, error } = await state.supabase
+          .from('character_poses')
+          .select('id, pose_label, pose_description, scene_use_case, generated_image_url, score, approved_for_scene, updated_at')
+          .eq('character_id', characterId)
+          .order('approved_for_scene', { ascending: false })
+          .order('score', { ascending: false })
+          .order('updated_at', { ascending: false });
+        if (error){
+          throw error;
+        }
+        const list = Array.isArray(data) ? data : [];
+        const poses = [];
+        for (const entry of list){
+          const scoreValue = Number.isFinite(entry.score) ? Number(entry.score) : Number(entry.score || 0);
+          const signedUrl = await getSignedUrlForPath(entry.generated_image_url);
+          poses.push({
+            id: entry.id,
+            pose_label: entry.pose_label || 'Untitled pose',
+            pose_description: entry.pose_description || '',
+            scene_use_case: entry.scene_use_case || '',
+            generated_image_url: entry.generated_image_url || '',
+            score: Number.isFinite(scoreValue) ? scoreValue : 0,
+            approved_for_scene: Boolean(entry.approved_for_scene),
+            signedUrl: signedUrl || null,
+          });
+        }
+        state.poseCache.set(characterId, poses);
+        return poses;
+      }
+
+      async function refreshBasePreview(container, character){
+        if (!container) return;
+        const preview = container.querySelector('[data-character-base-preview]');
+        if (!preview) return;
+        const empty = preview.querySelector('[data-character-base-empty]');
+        const img = preview.querySelector('[data-character-base-image]');
+        if (!img || !empty) return;
+        const path = character?.baseImageUrl || '';
+        if (!path){
+          img.hidden = true;
+          img.removeAttribute('src');
+          empty.hidden = false;
+          return;
+        }
+        const signedUrl = await getSignedUrlForPath(path);
+        if (signedUrl){
+          img.src = signedUrl;
+          img.hidden = false;
+          empty.hidden = true;
+        } else {
+          img.hidden = true;
+          img.removeAttribute('src');
+          empty.hidden = false;
+        }
+      }
+
+      function renderPoseLibrary(container, character, poses){
+        if (!container) return;
+        const list = container.querySelector('[data-character-pose-list]');
+        if (!list) return;
+        list.innerHTML = '';
+        const safeName = character?.name || 'Character';
+        if (!poses || !poses.length){
+          const placeholder = document.createElement('div');
+          placeholder.className = 'character-studio-pose-placeholder';
+          placeholder.textContent = 'No poses generated yet. Generate a pose to populate this library.';
+          list.appendChild(placeholder);
+          return;
+        }
+        poses.forEach(pose => {
+          const item = document.createElement('div');
+          item.className = 'character-studio-pose-list-item';
+          if (pose.signedUrl){
+            const img = document.createElement('img');
+            img.src = pose.signedUrl;
+            img.alt = `${safeName} pose ${pose.pose_label}`;
+            img.loading = 'lazy';
+            item.appendChild(img);
+          }
+          const title = document.createElement('strong');
+          title.textContent = pose.pose_label || 'Untitled pose';
+          item.appendChild(title);
+          if (pose.pose_description){
+            const description = document.createElement('p');
+            description.className = 'character-studio-small-note';
+            description.textContent = pose.pose_description;
+            item.appendChild(description);
+          }
+          const meta = document.createElement('div');
+          meta.className = 'character-studio-pose-meta';
+          const score = document.createElement('span');
+          score.textContent = `Score ${(Number(pose.score) || 0).toFixed(2)}`;
+          meta.appendChild(score);
+          if (pose.approved_for_scene){
+            const flag = document.createElement('span');
+            flag.className = 'character-studio-pose-flag';
+            flag.textContent = 'Storyboard ready';
+            meta.appendChild(flag);
+          }
+          list.appendChild(item);
+          item.appendChild(meta);
+        });
       }
 
       function parseIntegerInput(value){
@@ -1203,6 +1493,56 @@
                     <span class="character-studio-look-label">Expressions</span>
                     <div data-look-content>
                       ${characterLookPreviewMarkup('expression', expressionPreview, active)}
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-poses" aria-labelledby="character-tab-poses" data-tab-panel="poses"${panelAttributes('poses')}>
+                <h3>Pose Library</h3>
+                <p class="muted-text">Lock in a transparent base PNG, then spin up labeled poses and expressions that stay true to this character.</p>
+                <div class="character-studio-poses-panel" data-character-poses-panel>
+                  <div class="character-studio-pose-grid">
+                    <div class="character-studio-pose-card">
+                      <h4>Base character PNG</h4>
+                      <div class="character-studio-pose-preview" data-character-base-preview>
+                        <div class="character-studio-pose-placeholder" data-character-base-empty>Upload a transparent PNG export to become the source of truth for this character.</div>
+                        <img src="" alt="${escapeHtml(active.name || 'Character')} base PNG" data-character-base-image hidden />
+                      </div>
+                      <div class="character-studio-pose-actions">
+                        <input type="file" accept="image/png" data-character-base-upload hidden />
+                        <button type="button" data-character-base-trigger>Upload PNG</button>
+                        <button type="button" data-character-base-refresh>Refresh</button>
+                      </div>
+                      <p class="character-studio-small-note">PNG should be at least 1024px on the long edge with no background. We store it privately in your Supabase project.</p>
+                    </div>
+                    <div class="character-studio-pose-card">
+                      <h4>Generate new pose or expression</h4>
+                      <form class="character-studio-pose-form" data-character-pose-form>
+                        <label class="character-studio-field">
+                          <span>Pose label</span>
+                          <input type="text" required data-character-pose-label placeholder="e.g. Hero landing" />
+                        </label>
+                        <label class="character-studio-field">
+                          <span>Description</span>
+                          <textarea required data-character-pose-description placeholder="Describe the action, expression, camera, and props."></textarea>
+                        </label>
+                        <label class="character-studio-field">
+                          <span>Scene use case (optional)</span>
+                          <input type="text" data-character-pose-use-case placeholder="Battle, dialog, close-up" />
+                        </label>
+                        <div class="character-studio-pose-actions">
+                          <button type="submit" data-character-pose-submit>Generate pose</button>
+                          <button type="button" data-character-pose-refresh>Reload library</button>
+                        </div>
+                        <span class="character-studio-status" data-character-pose-status></span>
+                      </form>
+                    </div>
+                  </div>
+                  <div>
+                    <h4>Saved poses</h4>
+                    <p class="character-studio-small-note">The highest scoring poses are automatically marked for Storyboard Pro.</p>
+                    <div class="character-studio-pose-list" data-character-pose-list>
+                      <div class="character-studio-pose-placeholder" data-character-pose-empty>No poses generated yet.</div>
                     </div>
                   </div>
                 </div>
@@ -1520,6 +1860,145 @@
           });
         }
 
+        const posePanel = container.querySelector('[data-character-poses-panel]');
+        const poseStatusEl = container.querySelector('[data-character-pose-status]');
+        const setPoseStatus = (message, state = '') => {
+          if (!poseStatusEl) return;
+          poseStatusEl.textContent = message || '';
+          if (state){
+            poseStatusEl.dataset.state = state;
+          } else {
+            poseStatusEl.removeAttribute('data-state');
+          }
+        };
+
+        const handlePoseLibraryRender = async (force = false) => {
+          if (!posePanel) return;
+          try {
+            if (force) setPoseStatus('Refreshing pose library…', 'saving');
+            const poses = await fetchPoseLibraryForCharacter(id, { force });
+            renderPoseLibrary(posePanel, active, poses);
+            if (force) setPoseStatus('Pose library synced.', 'ready');
+          } catch (err){
+            console.error('Character Studio pose library fetch failed', err);
+            renderPoseLibrary(posePanel, active, []);
+            setPoseStatus('Unable to load pose library.', 'error');
+          }
+        };
+
+        const baseUploadInput = container.querySelector('[data-character-base-upload]');
+        const baseTrigger = container.querySelector('[data-character-base-trigger]');
+        const baseRefresh = container.querySelector('[data-character-base-refresh]');
+        if (baseTrigger && baseUploadInput){
+          baseTrigger.addEventListener('click', () => baseUploadInput.click());
+        }
+        if (baseUploadInput){
+          baseUploadInput.addEventListener('change', async event => {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (file.type !== 'image/png'){
+              setPoseStatus('Upload a transparent PNG file.', 'warning');
+              baseUploadInput.value = '';
+              return;
+            }
+            try {
+              setPoseStatus('Uploading base PNG…', 'saving');
+              const dataUrl = await readFileAsDataUrl(file);
+              const result = await invokeImagePipeline('upload-base', { character_id: id, image: dataUrl });
+              const basePath = result?.base_image_url || '';
+              if (basePath){
+                invalidateSignedUrl(basePath);
+                updateCharacterField(id, 'baseImageUrl', basePath);
+                active.baseImageUrl = basePath;
+                if (result?.signed_url){
+                  state.signedUrlCache.set(basePath, result.signed_url);
+                }
+                state.poseCache.delete(id);
+                await refreshBasePreview(container, active);
+                setPoseStatus('Base PNG saved.', 'ready');
+              } else {
+                setPoseStatus('Upload succeeded but no image URL returned.', 'warning');
+              }
+            } catch (err){
+              console.error('Character Studio base PNG upload failed', err);
+              setPoseStatus('Upload failed. Try again.', 'error');
+            } finally {
+              baseUploadInput.value = '';
+            }
+          });
+        }
+        if (baseRefresh){
+          baseRefresh.addEventListener('click', () => {
+            if (active.baseImageUrl) invalidateSignedUrl(active.baseImageUrl);
+            refreshBasePreview(container, active);
+          });
+        }
+
+        const poseForm = container.querySelector('[data-character-pose-form]');
+        const poseSubmit = poseForm ? poseForm.querySelector('[data-character-pose-submit]') : null;
+        if (poseForm){
+          poseForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const labelInput = poseForm.querySelector('[data-character-pose-label]');
+            const descriptionInput = poseForm.querySelector('[data-character-pose-description]');
+            const useCaseInput = poseForm.querySelector('[data-character-pose-use-case]');
+            const label = labelInput ? labelInput.value.trim() : '';
+            const description = descriptionInput ? descriptionInput.value.trim() : '';
+            const useCase = useCaseInput ? useCaseInput.value.trim() : '';
+            if (!active.baseImageUrl){
+              setPoseStatus('Upload a base PNG before generating poses.', 'warning');
+              return;
+            }
+            if (!label || !description){
+              setPoseStatus('Add a label and description for the pose.', 'warning');
+              return;
+            }
+            try {
+              setPoseStatus('Generating pose…', 'saving');
+              if (poseSubmit) poseSubmit.disabled = true;
+              const response = await invokeImagePipeline('generate-poses', {
+                character_id: id,
+                poses: [{ label, description, scene_use_case: useCase || undefined }],
+              });
+              const generated = Array.isArray(response?.poses) ? response.poses : [];
+              if (generated.length){
+                const poses = generated.map(item => ({
+                  id: item.id,
+                  pose_label: item.pose_label,
+                  pose_description: item.pose_description,
+                  scene_use_case: item.scene_use_case || '',
+                  generated_image_url: item.generated_image_url,
+                  score: Number(item.score) || 0,
+                  approved_for_scene: Boolean(item.approved_for_scene),
+                  signedUrl: item.signed_url || null,
+                }));
+                state.poseCache.set(id, poses);
+                updateCharacterField(id, 'hasPoseLibrary', true);
+                active.hasPoseLibrary = true;
+                renderPoseLibrary(posePanel, active, poses);
+                poseForm.reset();
+                setPoseStatus('Pose generated! Review the library below.', 'ready');
+              } else {
+                setPoseStatus('Pose generation completed without new results.', 'warning');
+              }
+            } catch (err){
+              console.error('Character Studio pose generation failed', err);
+              setPoseStatus('Pose generation failed. Try again.', 'error');
+            } finally {
+              if (poseSubmit) poseSubmit.disabled = false;
+            }
+          });
+        }
+
+        container.querySelectorAll('[data-character-pose-refresh]').forEach(button => {
+          button.addEventListener('click', () => {
+            handlePoseLibraryRender(true);
+          });
+        });
+
+        refreshBasePreview(container, active);
+        handlePoseLibraryRender(false);
+
         const deleteBtn = container.querySelector('[data-character-delete]');
         if (deleteBtn){
           deleteBtn.addEventListener('click', () => {
@@ -1559,6 +2038,22 @@
           console.error('Character Studio failed to fetch Supabase session', err);
           return null;
         }
+      }
+
+      async function invokeImagePipeline(action, payload){
+        if (!state.supabase){
+          throw new Error('Supabase client not ready');
+        }
+        if (!state.session?.access_token){
+          throw new Error('Sign in to generate AI assets.');
+        }
+        const body = { ...(payload || {}), action };
+        const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
+          body,
+          headers: { Authorization: `Bearer ${state.session.access_token}` },
+        });
+        if (error) throw error;
+        return data;
       }
 
       async function loadProjectMetadata(){
@@ -1601,12 +2096,13 @@
         try {
           const { data, error } = await state.supabase
             .from('characters')
-            .select('id, name, role, archetype, pronouns, age, summary, background, family_tree, traits, stats_scenes, stats_dialogue, stats_screen_time, arc_setup, arc_development, arc_resolution, look_portrait_url, look_turnaround_urls, look_expression_urls, ai_prompt, ai_notes, created_at')
+            .select('id, name, role, archetype, pronouns, age, summary, background, family_tree, traits, stats_scenes, stats_dialogue, stats_screen_time, arc_setup, arc_development, arc_resolution, look_portrait_url, look_turnaround_urls, look_expression_urls, base_image_url, has_pose_library, ai_prompt, ai_notes, created_at')
             .eq('project_id', state.projectId)
             .order('created_at', { ascending: true });
           if (error) throw error;
           const list = Array.isArray(data) ? data.map(supabaseRowToCharacter) : [];
           state.characters = list;
+          state.poseCache.clear();
           state.activeId = list.length ? list[0].id : null;
           state.remoteIds = new Set(list.map(char => char.id));
           state.dirty = false;

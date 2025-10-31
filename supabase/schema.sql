@@ -331,6 +331,8 @@ create table if not exists public.characters (
     look_portrait_url text,
     look_turnaround_urls text[] not null default '{}'::text[],
     look_expression_urls text[] not null default '{}'::text[],
+    base_image_url text,
+    has_pose_library boolean not null default false,
     ai_prompt text,
     ai_notes text,
     created_at timestamptz default timezone('utc', now()) not null,
@@ -407,6 +409,68 @@ create policy "Characters are editable by owners"
 drop policy if exists "Characters are deletable by owners" on public.characters;
 create policy "Characters are deletable by owners"
     on public.characters
+    for delete
+    using (auth.uid() = owner_id);
+
+create table if not exists public.character_poses (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    character_id uuid not null references public.characters (id) on delete cascade,
+    pose_label text not null,
+    pose_description text,
+    scene_use_case text,
+    input_image_url text,
+    generated_image_url text,
+    score numeric default 0,
+    approved_for_scene boolean not null default false,
+    metadata jsonb not null default '{}'::jsonb,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists character_poses_character_idx on public.character_poses (character_id);
+create index if not exists character_poses_owner_idx on public.character_poses (owner_id);
+create index if not exists character_poses_approved_idx on public.character_poses (character_id, approved_for_scene);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'character_poses_set_timestamp'
+          and tgrelid = 'public.character_poses'::regclass
+    ) then
+        create trigger character_poses_set_timestamp
+            before update on public.character_poses
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.character_poses enable row level security;
+
+drop policy if exists "Character poses are viewable by owners" on public.character_poses;
+create policy "Character poses are viewable by owners"
+    on public.character_poses
+    for select
+    using (auth.uid() = owner_id);
+
+drop policy if exists "Character poses can be inserted by owners" on public.character_poses;
+create policy "Character poses can be inserted by owners"
+    on public.character_poses
+    for insert
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Character poses are editable by owners" on public.character_poses;
+create policy "Character poses are editable by owners"
+    on public.character_poses
+    for update
+    using (auth.uid() = owner_id)
+    with check (auth.uid() = owner_id);
+
+drop policy if exists "Character poses are deletable by owners" on public.character_poses;
+create policy "Character poses are deletable by owners"
+    on public.character_poses
     for delete
     using (auth.uid() = owner_id);
 
@@ -669,6 +733,106 @@ create policy "Scene sounds are editable by owners"
 drop policy if exists "Scene sounds are deletable by owners" on public.scene_sounds;
 create policy "Scene sounds are deletable by owners"
     on public.scene_sounds
+    for delete
+    using (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+create table if not exists public.scene_frames (
+    id uuid primary key default gen_random_uuid(),
+    owner_id uuid not null references public.profiles (id) on delete cascade,
+    scene_id uuid not null references public.scenes (id) on delete cascade,
+    frame_index integer not null check (frame_index > 0),
+    character_id uuid references public.characters (id) on delete set null,
+    pose_id uuid references public.character_poses (id) on delete set null,
+    input_images jsonb not null default '[]'::jsonb,
+    prompt_used text,
+    output_image_url text,
+    variant_group_id uuid,
+    variant_index integer,
+    selected boolean not null default false,
+    metadata jsonb not null default '{}'::jsonb,
+    created_at timestamptz default timezone('utc', now()) not null,
+    updated_at timestamptz default timezone('utc', now()) not null
+);
+
+create index if not exists scene_frames_scene_idx on public.scene_frames (scene_id);
+create index if not exists scene_frames_owner_idx on public.scene_frames (owner_id);
+create index if not exists scene_frames_character_idx on public.scene_frames (character_id);
+create index if not exists scene_frames_variant_idx on public.scene_frames (variant_group_id);
+
+do $$
+begin
+    if not exists (
+        select 1
+        from pg_trigger
+        where tgname = 'scene_frames_set_timestamp'
+          and tgrelid = 'public.scene_frames'::regclass
+    ) then
+        create trigger scene_frames_set_timestamp
+            before update on public.scene_frames
+            for each row execute function public.set_current_timestamp();
+    end if;
+end;
+$$;
+
+alter table public.scene_frames enable row level security;
+
+drop policy if exists "Scene frames are viewable by owners" on public.scene_frames;
+create policy "Scene frames are viewable by owners"
+    on public.scene_frames
+    for select
+    using (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+drop policy if exists "Scene frames can be inserted by owners" on public.scene_frames;
+create policy "Scene frames can be inserted by owners"
+    on public.scene_frames
+    for insert
+    with check (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+drop policy if exists "Scene frames are editable by owners" on public.scene_frames;
+create policy "Scene frames are editable by owners"
+    on public.scene_frames
+    for update
+    using (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    )
+    with check (
+        exists (
+            select 1
+            from public.scenes s
+            where s.id = scene_id
+              and s.owner_id = auth.uid()
+        )
+    );
+
+drop policy if exists "Scene frames are deletable by owners" on public.scene_frames;
+create policy "Scene frames are deletable by owners"
+    on public.scene_frames
     for delete
     using (
         exists (
