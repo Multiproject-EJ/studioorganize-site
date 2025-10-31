@@ -6,6 +6,7 @@ const y = document.getElementById('y');
 if (y) y.textContent = new Date().getFullYear();
 
 const THEME_KEY = 'SO_THEME_PREF';
+const CONSTRUCTION_KEY = 'SO_SEEN_CONSTRUCTION';
 const MOBILE_APP_MEDIA_QUERY = '(max-width: 768px)';
 const THEME_COLORS = {
   dark: '#0b0f14',
@@ -102,6 +103,34 @@ function getStoredTheme(){
 function storeTheme(theme){
   try { localStorage.setItem(THEME_KEY, theme); }
   catch (err){ /* ignore private mode errors */ }
+}
+
+function markConstructionClass(){
+  document.documentElement.classList.add('construction-overlay-dismissed');
+}
+
+function getConstructionDismissed(){
+  try {
+    if (localStorage.getItem(CONSTRUCTION_KEY) === '1') return true;
+  } catch (_error){ /* ignore private mode errors */ }
+  try {
+    if (sessionStorage.getItem(CONSTRUCTION_KEY) === '1') return true;
+  } catch (_error){ /* ignore private mode errors */ }
+  return false;
+}
+
+function markConstructionDismissed(){
+  let stored = false;
+  try {
+    localStorage.setItem(CONSTRUCTION_KEY, '1');
+    stored = true;
+  } catch (_error){ /* ignore private mode errors */ }
+  if (!stored){
+    try {
+      sessionStorage.setItem(CONSTRUCTION_KEY, '1');
+    } catch (_error){ /* ignore private mode errors */ }
+  }
+  markConstructionClass();
 }
 
 function themeToggles(){
@@ -2506,6 +2535,60 @@ function initFinishStoryModal(){
   });
 }
 
+function initConstructionOverlay(){
+  const overlay = document.querySelector('[data-construction-overlay]');
+  if (!(overlay instanceof HTMLElement)) return;
+
+  const continueLink = overlay.querySelector('[data-construction-continue]');
+  const dismissed = getConstructionDismissed();
+
+  const removeOverlay = () => {
+    overlay.remove();
+  };
+
+  const hideOverlay = () => {
+    overlay.classList.add('construction-overlay--hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.addEventListener('transitionend', removeOverlay, { once: true });
+  };
+
+  if (dismissed){
+    overlay.classList.add('construction-overlay--hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    markConstructionClass();
+    requestAnimationFrame(removeOverlay);
+    return;
+  }
+
+  document.documentElement.classList.remove('construction-overlay-dismissed');
+
+  if (continueLink instanceof HTMLElement){
+    const dismiss = event => {
+      event.preventDefault();
+      markConstructionDismissed();
+      hideOverlay();
+    };
+    continueLink.addEventListener('click', dismiss);
+    continueLink.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' '){
+        dismiss(event);
+      }
+    });
+    try {
+      continueLink.focus({ preventScroll: true });
+    } catch (_error){
+      continueLink.focus();
+    }
+  }
+
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape'){
+      markConstructionDismissed();
+      hideOverlay();
+    }
+  });
+}
+
 if (document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', () => {
     initWorkspaceLauncher();
@@ -2515,6 +2598,7 @@ if (document.readyState === 'loading'){
     initQuestionnaireModal();
     initGoalPlanner();
     initFinishStoryModal();
+    initConstructionOverlay();
   }, { once: true });
 } else {
   initWorkspaceLauncher();
@@ -2524,4 +2608,5 @@ if (document.readyState === 'loading'){
   initQuestionnaireModal();
   initGoalPlanner();
   initFinishStoryModal();
+  initConstructionOverlay();
 }
