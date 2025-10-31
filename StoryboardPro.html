@@ -129,9 +129,24 @@
       .scene-carousel__nav:hover { transform: translateY(-1px); border-color: var(--acc); background: linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); }
       .scene-carousel__nav:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
       .scene-carousel__nav:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; background: var(--chip); }
-      .scene-carousel__viewport { position: relative; flex: 1; overflow: hidden; border-radius: 20px; box-shadow: 0 18px 42px rgba(8,15,28,0.22); border: 1px solid rgba(79,123,255,0.18); background: transparent; padding: 26px 0; perspective: 1400px; transform-style: preserve-3d; }
-      .scene-carousel__track { position: relative; display: flex; width: 100%; list-style: none; padding: 0; margin: 0; transition: transform .45s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; align-items: center; transform-style: preserve-3d; }
-      .scene-carousel__slide { flex: 0 0 100%; display: flex; justify-content: center; pointer-events: none; transform-style: preserve-3d; }
+      .scene-carousel__viewport { position: relative; flex: 1; overflow: hidden; border-radius: 20px; box-shadow: 0 18px 42px rgba(8,15,28,0.22); border: 1px solid rgba(79,123,255,0.18); background: transparent; padding: 26px 0; perspective: 1400px; transform-style: preserve-3d; touch-action: pan-y; cursor: grab; }
+      .scene-carousel__viewport.is-dragging { cursor: grabbing; }
+      .scene-carousel__track {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 100%;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        min-height: clamp(320px, 60vw, 460px);
+        transform: translateX(var(--scene-carousel-drag-offset, 0));
+        transition: transform var(--scene-carousel-drag-transition, .45s cubic-bezier(0.32, 0.72, 0, 1));
+        will-change: transform;
+        transform-style: preserve-3d;
+      }
+      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__track { min-height: clamp(360px, 68vw, 520px); }
+      .scene-carousel__slide { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; transform-style: preserve-3d; }
       .scene-carousel__slide-button { border: none; background: transparent; padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; cursor: pointer; text-align: left; color: inherit; pointer-events: auto; position: relative; transform-style: preserve-3d; transition: transform .45s ease; }
       .scene-carousel__slide-button:focus-visible { outline: none; }
       .scene-carousel__figure { display: flex; flex-direction: column; height: 100%; max-width: clamp(220px, 48vw, 380px); margin: 0 auto; background: var(--panel); border-radius: 24px; overflow: hidden; transform-origin: center center; transform: scale(var(--scene-carousel-horizon-scale)); opacity: 0.18; filter: saturate(0.7) blur(0.45px); box-shadow: 0 16px 32px rgba(8,15,28,0.18); transition: transform .45s ease, opacity .45s ease, filter .45s ease, box-shadow .45s ease; }
@@ -1306,6 +1321,7 @@
     const storage = createScopedStorage('storyboard');
     const TIMELINE_STORAGE_KEYS = { dockPinned: 'timelineDockPinned' };
     const TIMELINE_HIDE_DELAY = 3500;
+    const SCENE_CAROUSEL_SWIPE_THRESHOLD = 48;
     let timelinePinned = true;
     let timelineHideTimer = null;
     let timelineHovering = false;
@@ -1327,6 +1343,7 @@
     let sceneCarouselDotsList = [];
     let activeSceneId = null;
     let sceneCarouselZoomed = false;
+    let sceneCarouselDragState = null;
 
     setSceneCarouselZoom(false);
 
@@ -1769,6 +1786,12 @@
       return row;
     }
 
+    function clearSceneCarouselDragStyles() {
+      if (!sceneCarouselTrack) return;
+      sceneCarouselTrack.style.removeProperty('--scene-carousel-drag-offset');
+      sceneCarouselTrack.style.removeProperty('--scene-carousel-drag-transition');
+    }
+
     function renderSceneCarousel() {
       if (!sceneCarouselTrack) return;
       sceneCarouselTrack.innerHTML = '';
@@ -1776,6 +1799,8 @@
       sceneCarouselSlides = [];
       sceneCarouselDotsList = [];
       if (sceneCarouselDots) sceneCarouselDots.innerHTML = '';
+      clearSceneCarouselDragStyles();
+      if (sceneCarouselViewport) sceneCarouselViewport.classList.remove('is-dragging');
 
       const scenes = Array.isArray(sceneData) ? sceneData : [];
       if (!scenes.length) {
@@ -1786,7 +1811,7 @@
         empty.textContent = 'Add scenes to view storyboard previews.';
         slide.appendChild(empty);
         sceneCarouselTrack.appendChild(slide);
-        sceneCarouselTrack.style.transform = 'translateX(0)';
+        clearSceneCarouselDragStyles();
         if (sceneCarouselPrev) sceneCarouselPrev.disabled = true;
         if (sceneCarouselNext) sceneCarouselNext.disabled = true;
         updateSceneCarouselZoomAvailability(false);
@@ -2040,16 +2065,13 @@
         dot.tabIndex = isActive ? 0 : -1;
       });
 
-      if (hasScenes && index >= 0) {
-        sceneCarouselTrack.style.transform = `translateX(-${index * 100}%)`;
-      } else {
-        sceneCarouselTrack.style.transform = 'translateX(0)';
-      }
-
       const atStart = index <= 0;
       const atEnd = !hasScenes || index >= sceneCarouselOrder.length - 1;
       if (sceneCarouselPrev) sceneCarouselPrev.disabled = atStart;
       if (sceneCarouselNext) sceneCarouselNext.disabled = atEnd;
+      if (!sceneCarouselDragState) {
+        clearSceneCarouselDragStyles();
+      }
     }
 
     function renderScenes() {
@@ -2456,6 +2478,79 @@
       }
     }
 
+    function getSceneCarouselSwipeThreshold() {
+      if (!sceneCarouselViewport) return SCENE_CAROUSEL_SWIPE_THRESHOLD;
+      const width = sceneCarouselViewport.clientWidth || 0;
+      if (!width) return SCENE_CAROUSEL_SWIPE_THRESHOLD;
+      return Math.max(SCENE_CAROUSEL_SWIPE_THRESHOLD, Math.min(320, width * 0.2));
+    }
+
+    function handleSceneCarouselPointerDown(event) {
+      if (!sceneCarouselViewport || !sceneCarouselTrack) return;
+      if (sceneCarouselDragState) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      sceneCarouselDragState = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startTime: typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now(),
+        isDragging: false,
+      };
+      if (typeof sceneCarouselViewport.setPointerCapture === 'function') {
+        try {
+          sceneCarouselViewport.setPointerCapture(event.pointerId);
+        } catch (err) {
+          // ignore capture errors
+        }
+      }
+      sceneCarouselViewport.classList.remove('is-dragging');
+      sceneCarouselTrack.style.setProperty('--scene-carousel-drag-transition', '0s');
+      sceneCarouselTrack.style.setProperty('--scene-carousel-drag-offset', '0px');
+    }
+
+    function handleSceneCarouselPointerMove(event) {
+      if (!sceneCarouselDragState || event.pointerId !== sceneCarouselDragState.pointerId) return;
+      if (!sceneCarouselViewport || !sceneCarouselTrack) return;
+      const delta = event.clientX - sceneCarouselDragState.startX;
+      if (!sceneCarouselDragState.isDragging && Math.abs(delta) > 8) {
+        sceneCarouselDragState.isDragging = true;
+        sceneCarouselViewport.classList.add('is-dragging');
+      }
+      if (sceneCarouselDragState.isDragging) {
+        event.preventDefault();
+        sceneCarouselTrack.style.setProperty('--scene-carousel-drag-offset', `${delta}px`);
+      }
+    }
+
+    function finishSceneCarouselPointerInteraction(event, cancelled = false) {
+      if (!sceneCarouselDragState || event.pointerId !== sceneCarouselDragState.pointerId) return;
+      const state = sceneCarouselDragState;
+      sceneCarouselDragState = null;
+      if (sceneCarouselViewport) {
+        sceneCarouselViewport.classList.remove('is-dragging');
+        if (typeof sceneCarouselViewport.releasePointerCapture === 'function') {
+          try {
+            sceneCarouselViewport.releasePointerCapture(event.pointerId);
+          } catch (err) {
+            // ignore release errors
+          }
+        }
+      }
+      clearSceneCarouselDragStyles();
+      if (cancelled) return;
+
+      const delta = event.clientX - state.startX;
+      const elapsed = (typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now()) - state.startTime;
+      const threshold = getSceneCarouselSwipeThreshold();
+      const quickSwipe = elapsed < 250 && Math.abs(delta) > 24;
+      if (Math.abs(delta) > threshold || quickSwipe) {
+        activateAdjacentScene(delta < 0 ? 1 : -1);
+      }
+    }
+
     if (sceneCarouselPrev) {
       sceneCarouselPrev.addEventListener('click', () => activateAdjacentScene(-1));
     }
@@ -2465,6 +2560,11 @@
     }
 
     if (sceneCarouselViewport) {
+      sceneCarouselViewport.addEventListener('pointerdown', handleSceneCarouselPointerDown);
+      sceneCarouselViewport.addEventListener('pointermove', handleSceneCarouselPointerMove);
+      sceneCarouselViewport.addEventListener('pointerup', event => finishSceneCarouselPointerInteraction(event, false));
+      sceneCarouselViewport.addEventListener('pointercancel', event => finishSceneCarouselPointerInteraction(event, true));
+      sceneCarouselViewport.addEventListener('pointerleave', event => finishSceneCarouselPointerInteraction(event, true));
       sceneCarouselViewport.addEventListener('keydown', event => {
         if (event.key === 'ArrowLeft') {
           event.preventDefault();
