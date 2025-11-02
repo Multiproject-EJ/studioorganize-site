@@ -2813,30 +2813,37 @@ function initConstructionOverlay(){
   document.documentElement.classList.remove('construction-overlay-dismissed');
 
   if (continueLink instanceof HTMLElement){
-    const dismiss = event => {
-      event.preventDefault();
-      markConstructionDismissed();
-      hideOverlay();
-    };
-    continueLink.addEventListener('click', dismiss);
-    continueLink.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' '){
-        dismiss(event);
+    const alreadyBound = continueLink.dataset.constructionOverlayBound === 'true';
+    if (!alreadyBound){
+      continueLink.dataset.constructionOverlayBound = 'true';
+      const dismiss = event => {
+        event.preventDefault();
+        markConstructionDismissed();
+        hideOverlay();
+      };
+      continueLink.addEventListener('click', dismiss);
+      continueLink.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' '){
+          dismiss(event);
+        }
+      });
+      try {
+        continueLink.focus({ preventScroll: true });
+      } catch (_error){
+        continueLink.focus();
       }
-    });
-    try {
-      continueLink.focus({ preventScroll: true });
-    } catch (_error){
-      continueLink.focus();
     }
   }
 
-  overlay.addEventListener('keydown', event => {
-    if (event.key === 'Escape'){
-      markConstructionDismissed();
-      hideOverlay();
-    }
-  });
+  if (overlay.dataset.constructionOverlayKeydownBound !== 'true'){
+    overlay.dataset.constructionOverlayKeydownBound = 'true';
+    overlay.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        markConstructionDismissed();
+        hideOverlay();
+      }
+    });
+  }
 }
 
 if (document.readyState === 'loading'){
