@@ -425,6 +425,31 @@ function initTheme(){
 
 initTheme();
 
+const currentWorkspaceModule = workspaceThemes.getModuleForPath(window.location.pathname);
+if (currentWorkspaceModule){
+  let suppressNextThemeSave = false;
+  workspaceThemes.subscribe(snapshot => {
+    const desiredTheme = snapshot?.[currentWorkspaceModule];
+    if (!desiredTheme) return;
+    const currentTheme = typeof window.getSiteTheme === 'function'
+      ? window.getSiteTheme()
+      : (document.documentElement.dataset.theme || 'dark');
+    if (currentTheme === desiredTheme) return;
+    suppressNextThemeSave = true;
+    applySiteTheme(desiredTheme, false);
+  });
+  workspaceThemes.loadRemote();
+  document.addEventListener('themechange', event => {
+    const theme = event?.detail?.theme;
+    if (!theme) return;
+    if (suppressNextThemeSave){
+      suppressNextThemeSave = false;
+      return;
+    }
+    workspaceThemes.savePreference(currentWorkspaceModule, theme);
+  });
+}
+
 // Smooth scroll for in-page anchors
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
   a.addEventListener('click', e=>{
@@ -452,6 +477,11 @@ const accountButton = document.querySelector('[data-account-button]');
 const accountLogoutLink = document.querySelector('[data-account-logout]');
 const navHasAuthControls = Boolean(navAuthLink || accountMenu || accountLogoutLink);
 
+const workspaceThemes = createWorkspaceThemeManager();
+window.StudioOrganize = window.StudioOrganize || {};
+window.StudioOrganize.workspaceThemes = workspaceThemes;
+document.dispatchEvent(new CustomEvent('studioorganize:workspace-themes-ready', { detail: { workspaceThemes } }));
+
 function toggleElementVisibility(element, shouldShow){
   if (!element) return;
   const elements = Array.isArray(element) ? element : [element];
@@ -467,6 +497,216 @@ function toggleElementVisibility(element, shouldShow){
       item.style.display = 'none';
     }
   });
+}
+
+function createWorkspaceThemeManager(){
+  const STORAGE_KEY = 'SO_WORKSPACE_THEME_PREFS';
+  const DEFAULT_THEME = 'light';
+  const MODULES = Object.freeze([
+    { id: 'script_writer', label: 'Script Writer', paths: [/screenplay-writing/] },
+    { id: 'storyboard', label: 'Storyboard', paths: [/storyboardpro/, /storyboard\//] }
+  ]);
+
+  let local = loadLocal();
+  let remote = null;
+  let loadingPromise = null;
+  let lastSessionUserId = null;
+  const listeners = new Set();
+
+  function normalizeTheme(theme){
+    return theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function loadLocal(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return {};
+      const map = {};
+      Object.entries(parsed).forEach(([moduleId, theme]) => {
+        map[moduleId] = normalizeTheme(theme);
+      });
+      return map;
+    } catch (_error){
+      return {};
+    }
+  }
+
+  function persistLocal(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
+    } catch (_error){
+      /* ignore */
+    }
+  }
+
+  function getPreference(moduleId){
+    if (!moduleId) return DEFAULT_THEME;
+    const remoteTheme = remote && remote[moduleId];
+    if (remoteTheme) return normalizeTheme(remoteTheme);
+    const localTheme = local && local[moduleId];
+    if (localTheme) return normalizeTheme(localTheme);
+    return DEFAULT_THEME;
+  }
+
+  function getSnapshot(){
+    const snapshot = {};
+    MODULES.forEach(module => {
+      snapshot[module.id] = getPreference(module.id);
+    });
+    return snapshot;
+  }
+
+  function notify(){
+    const snapshot = getSnapshot();
+    listeners.forEach(listener => {
+      try {
+        listener(snapshot);
+      } catch (error){
+        console.error('Workspace theme listener failed', error);
+      }
+    });
+  }
+
+  function subscribe(listener){
+    if (typeof listener !== 'function') return () => {};
+    listeners.add(listener);
+    try {
+      listener(getSnapshot());
+    } catch (error){
+      console.error('Workspace theme subscriber threw on init', error);
+    }
+    return () => {
+      listeners.delete(listener);
+    };
+  }
+
+  function setLocalPreference(moduleId, theme){
+    if (!moduleId) return DEFAULT_THEME;
+    const normalized = normalizeTheme(theme);
+    local = { ...(local || {}), [moduleId]: normalized };
+    persistLocal();
+    return normalized;
+  }
+
+  async function savePreference(moduleId, theme){
+    const normalized = setLocalPreference(moduleId, theme);
+    notify();
+    if (!moduleId) return { success: false, reason: 'invalid_module', theme: normalized };
+    if (!supabaseClient) return { success: false, reason: 'no_client', theme: normalized };
+    try {
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError){
+        console.error('Failed to fetch Supabase session for workspace theme preference', sessionError);
+        return { success: false, reason: 'session_error', theme: normalized };
+      }
+      const user = sessionData?.session?.user;
+      lastSessionUserId = user?.id || null;
+      if (!user){
+        return { success: false, reason: 'not_signed_in', theme: normalized };
+      }
+      const { data, error } = await supabaseClient
+        .from('workspace_theme_preferences')
+        .upsert({ owner_id: user.id, module: moduleId, theme: normalized }, { onConflict: 'owner_id,module' })
+        .select('module, theme')
+        .maybeSingle();
+      if (error){
+        console.error('Failed to save workspace theme preference', error);
+        return { success: false, reason: 'request_failed', theme: normalized };
+      }
+      const savedModule = data?.module || moduleId;
+      const savedTheme = data?.theme || normalized;
+      remote = { ...(remote || {}), [savedModule]: normalizeTheme(savedTheme) };
+      notify();
+      return { success: true, source: 'supabase', theme: normalizeTheme(savedTheme) };
+    } catch (error){
+      console.error('Unexpected error saving workspace theme preference', error);
+      return { success: false, reason: 'unexpected', theme: normalized };
+    }
+  }
+
+  async function loadRemote(){
+    if (!supabaseClient) return { success: false, reason: 'no_client' };
+    if (loadingPromise) return loadingPromise;
+    loadingPromise = (async () => {
+      try {
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError){
+          console.error('Failed to fetch Supabase session for workspace theme preferences', sessionError);
+          return { success: false, reason: 'session_error' };
+        }
+        const user = sessionData?.session?.user;
+        lastSessionUserId = user?.id || null;
+        if (!user){
+          remote = null;
+          notify();
+          return { success: false, reason: 'not_signed_in' };
+        }
+        const { data, error } = await supabaseClient
+          .from('workspace_theme_preferences')
+          .select('module, theme');
+        if (error){
+          console.error('Failed to load workspace theme preferences', error);
+          return { success: false, reason: 'request_failed' };
+        }
+        const map = {};
+        (data || []).forEach(row => {
+          if (row && typeof row.module === 'string'){
+            map[row.module] = normalizeTheme(row.theme);
+          }
+        });
+        remote = map;
+        notify();
+        return { success: true, preferences: { ...map } };
+      } catch (error){
+        console.error('Unexpected error loading workspace theme preferences', error);
+        return { success: false, reason: 'unexpected' };
+      } finally {
+        loadingPromise = null;
+      }
+    })();
+    return loadingPromise;
+  }
+
+  function handleSessionChange(session){
+    const nextUserId = session?.user?.id || null;
+    lastSessionUserId = nextUserId;
+    if (!nextUserId){
+      remote = null;
+      notify();
+      return;
+    }
+    loadRemote();
+  }
+
+  function getModuleForPath(pathname){
+    const normalizedPath = (pathname || window.location.pathname || '').toLowerCase();
+    const module = MODULES.find(entry => (entry.paths || []).some(pattern => pattern.test(normalizedPath)));
+    return module ? module.id : null;
+  }
+
+  function applyModuleTheme(moduleId){
+    if (!moduleId) return;
+    const theme = getPreference(moduleId);
+    applySiteTheme(theme, false);
+  }
+
+  function isSignedIn(){
+    return Boolean(lastSessionUserId);
+  }
+
+  return {
+    MODULES,
+    getPreference,
+    subscribe,
+    savePreference,
+    loadRemote,
+    handleSessionChange,
+    getModuleForPath,
+    applyModuleTheme,
+    isSignedIn,
+  };
 }
 
 function updateAccountUI(session){
@@ -788,14 +1028,18 @@ function bindAuthLinks(){
 }
 
 async function refreshAccountSession(){
-  if (!supabaseClient || !navHasAuthControls) return;
+  if (!supabaseClient) return;
   try {
     const { data, error } = await supabaseClient.auth.getSession();
     if (error){
       console.error('Failed to fetch Supabase session', error);
       return;
     }
-    updateAccountUI(data.session ?? null);
+    const session = data.session ?? null;
+    if (navHasAuthControls){
+      updateAccountUI(session);
+    }
+    workspaceThemes.handleSessionChange(session);
   } catch (error){
     console.error('Unexpected error while checking Supabase session', error);
   }
@@ -816,9 +1060,13 @@ if (accountLogoutLink && !accountLogoutLink.dataset.logoutBound && supabaseClien
   });
 }
 
-if (supabaseClient && navHasAuthControls){
+if (supabaseClient){
   supabaseClient.auth.onAuthStateChange((_event, session) => {
-    updateAccountUI(session ?? null);
+    const resolvedSession = session ?? null;
+    if (navHasAuthControls){
+      updateAccountUI(resolvedSession);
+    }
+    workspaceThemes.handleSessionChange(resolvedSession);
   });
   refreshAccountSession();
 }
