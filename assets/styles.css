@@ -800,7 +800,9 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
 .auth-portal__tab{border:none;background:transparent;color:var(--muted);font:inherit;font-weight:600;padding:8px 14px;border-radius:12px;cursor:pointer;transition:color .16s ease,background .16s ease}
 .auth-portal__tab.is-active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text)}
 .auth-portal__tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.auth-portal__content{display:flex;flex-direction:column;gap:18px}
 .auth-portal__view{display:flex;flex-direction:column;gap:18px}
+.auth-portal__view[hidden]{display:none}
 .auth-portal__form{display:grid;gap:14px}
 .auth-portal__form.is-loading{opacity:.72}
 .auth-portal__field{display:grid;gap:6px;font-weight:600;font-size:14px}

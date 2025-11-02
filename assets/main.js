@@ -504,7 +504,7 @@ function ensureAuthPortal(){
       <div class="auth-portal__dialog" data-auth-dialog role="dialog" aria-modal="true" aria-labelledby="auth-portal-title" tabindex="-1">
         <button class="auth-portal__close" type="button" aria-label="Close auth window" data-auth-portal-close>×</button>
         <header class="auth-portal__header">
-          <p class="auth-portal__eyebrow">StudioOrganize</p>
+          <p class="auth-portal__eyebrow">STUDIOORGANIZE</p>
           <h2 class="auth-portal__title" id="auth-portal-title">Sign in to your studio</h2>
           <p class="auth-portal__subtitle">Access the workspace, manage your subscription, and pick up where you left off.</p>
           <div class="auth-portal__tabs" role="tablist">
@@ -512,42 +512,44 @@ function ensureAuthPortal(){
             <button type="button" class="auth-portal__tab" data-auth-tab="signup" role="tab" aria-selected="false">Create account</button>
           </div>
         </header>
-        <section class="auth-portal__view" id="auth-portal-panel-signin" data-auth-view="signin" role="tabpanel" aria-labelledby="auth-portal-tab-signin">
-          <form class="auth-portal__form" data-auth-signin>
-            <label class="auth-portal__field">
-              <span>Email</span>
-              <input type="email" name="email" autocomplete="email" required />
-            </label>
-            <label class="auth-portal__field">
-              <span>Password</span>
-              <input type="password" name="password" autocomplete="current-password" required />
-            </label>
-            <button class="auth-portal__submit" type="submit" data-auth-submit>Sign in</button>
-            <p class="auth-portal__hint">Need an account? <button type="button" class="auth-portal__link" data-auth-switch="signup">Create one</button></p>
-          </form>
-        </section>
-        <section class="auth-portal__view" id="auth-portal-panel-signup" data-auth-view="signup" role="tabpanel" aria-labelledby="auth-portal-tab-signup" hidden>
-          <form class="auth-portal__form" data-auth-signup>
-            <label class="auth-portal__field">
-              <span>Name <small>(optional)</small></span>
-              <input type="text" name="name" autocomplete="name" />
-            </label>
-            <label class="auth-portal__field">
-              <span>Email</span>
-              <input type="email" name="email" autocomplete="email" required />
-            </label>
-            <label class="auth-portal__field">
-              <span>Password</span>
-              <input type="password" name="password" autocomplete="new-password" minlength="8" required />
-            </label>
-            <label class="auth-portal__checkbox">
-              <input type="checkbox" name="marketing_opt_out" value="yes" />
-              <span>Let me know about new StudioOrganize tools and resources.</span>
-            </label>
-            <button class="auth-portal__submit" type="submit" data-auth-submit>Create account</button>
-            <p class="auth-portal__hint">Already joined? <button type="button" class="auth-portal__link" data-auth-switch="signin">Sign in instead</button></p>
-          </form>
-        </section>
+        <div class="auth-portal__content">
+          <section class="auth-portal__view" id="auth-portal-panel-signin" data-auth-view="signin" role="tabpanel" aria-labelledby="auth-portal-tab-signin">
+            <form class="auth-portal__form" data-auth-signin>
+              <label class="auth-portal__field">
+                <span>Email</span>
+                <input type="email" name="email" autocomplete="email" required />
+              </label>
+              <label class="auth-portal__field">
+                <span>Password</span>
+                <input type="password" name="password" autocomplete="current-password" required />
+              </label>
+              <button class="auth-portal__submit" type="submit" data-auth-submit>Sign in</button>
+              <p class="auth-portal__hint">Need an account? <button type="button" class="auth-portal__link" data-auth-switch="signup">Create one</button></p>
+            </form>
+          </section>
+          <section class="auth-portal__view" id="auth-portal-panel-signup" data-auth-view="signup" role="tabpanel" aria-labelledby="auth-portal-tab-signup" hidden>
+            <form class="auth-portal__form" data-auth-signup>
+              <label class="auth-portal__field">
+                <span>Name <small>(optional)</small></span>
+                <input type="text" name="name" autocomplete="name" />
+              </label>
+              <label class="auth-portal__field">
+                <span>Email</span>
+                <input type="email" name="email" autocomplete="email" required />
+              </label>
+              <label class="auth-portal__field">
+                <span>Password</span>
+                <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+              </label>
+              <label class="auth-portal__checkbox">
+                <input type="checkbox" name="marketing_opt_out" value="yes" />
+                <span>Let me know about new StudioOrganize tools and resources.</span>
+              </label>
+              <button class="auth-portal__submit" type="submit" data-auth-submit>Create account</button>
+              <p class="auth-portal__hint">Already joined? <button type="button" class="auth-portal__link" data-auth-switch="signin">Sign in instead</button></p>
+            </form>
+          </section>
+        </div>
         <div class="auth-portal__message" data-auth-message hidden role="status" aria-live="polite"></div>
       </div>
     </div>
