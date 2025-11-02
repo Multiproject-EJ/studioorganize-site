@@ -473,6 +473,42 @@
       </div>
     </section>
 
+    <section class="creator-theme" aria-label="Workspace theme preferences" data-workspace-theme-preferences>
+      <div class="creator-theme__header">
+        <h3>Workspace themes</h3>
+        <p>Select the look that feels right for each workspace. Themes are stored with your account and load whenever you open the module.</p>
+      </div>
+      <div class="creator-theme__grid" data-workspace-theme-list>
+        <div class="creator-theme__item" data-workspace-theme-item="script_writer">
+          <div>
+            <h4>Script Writer</h4>
+            <p class="muted">Applies to the Screenplay Writing workspace.</p>
+          </div>
+          <label class="creator-theme__select">
+            <span class="sr-only">Script Writer theme</span>
+            <select data-workspace-theme-select="script_writer">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </div>
+        <div class="creator-theme__item" data-workspace-theme-item="storyboard">
+          <div>
+            <h4>Storyboard</h4>
+            <p class="muted">Applies to Storyboard Pro and related storyboard tools.</p>
+          </div>
+          <label class="creator-theme__select">
+            <span class="sr-only">Storyboard theme</span>
+            <select data-workspace-theme-select="storyboard">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <p class="creator-theme__status" data-workspace-theme-status>Sign in to sync themes across devices.</p>
+    </section>
+
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
         <h3>Challenge Badges</h3>
@@ -1704,6 +1740,113 @@
     applyPreference(getDefaultPreference());
     setStatus('Select a story from the Story Goal Tracker to customize the assistant.', 'warning');
     ensureApi();
+  })();
+</script>
+
+<script>
+  (function(){
+    const section = document.querySelector('[data-workspace-theme-preferences]');
+    if (!section) return;
+
+    const statusEl = section.querySelector('[data-workspace-theme-status]');
+    const selects = Array.from(section.querySelectorAll('[data-workspace-theme-select]'));
+
+    function setStatus(message, tone = 'muted'){
+      if (!statusEl) return;
+      statusEl.textContent = message;
+      statusEl.dataset.tone = tone;
+    }
+
+    function attach(workspaceThemes){
+      if (!workspaceThemes){
+        selects.forEach(select => {
+          if (select instanceof HTMLSelectElement){
+            select.disabled = true;
+          }
+        });
+        setStatus('Theme controls are offline right now.', 'error');
+        return;
+      }
+
+      let saving = false;
+      const selectMap = new Map();
+      selects.forEach(select => {
+        if (!(select instanceof HTMLSelectElement)) return;
+        const moduleId = select.dataset.workspaceThemeSelect || '';
+        selectMap.set(moduleId, select);
+      });
+
+      workspaceThemes.subscribe(snapshot => {
+        Object.entries(snapshot || {}).forEach(([moduleId, theme]) => {
+          const select = selectMap.get(moduleId);
+          if (!(select instanceof HTMLSelectElement)) return;
+          const normalized = theme === 'dark' ? 'dark' : 'light';
+          if (select.value !== normalized){
+            select.value = normalized;
+          }
+        });
+        if (!saving){
+          if (workspaceThemes.isSignedIn()){
+            setStatus('Themes are synced with your account.', 'success');
+          } else {
+            setStatus('Sign in to sync themes across devices.', 'warning');
+          }
+        }
+      });
+
+      workspaceThemes.loadRemote().then(result => {
+        if (result?.success){
+          setStatus('Themes are synced with your account.', 'success');
+        } else if (result?.reason === 'not_signed_in'){
+          setStatus('Sign in to sync themes across devices.', 'warning');
+        } else if (result?.reason && result.reason !== 'no_client'){
+          setStatus('Themes saved locally. Reconnect to sync changes.', 'warning');
+        }
+      });
+
+      selects.forEach(select => {
+        if (!(select instanceof HTMLSelectElement)) return;
+        select.addEventListener('change', async () => {
+          const moduleId = select.dataset.workspaceThemeSelect;
+          if (!moduleId) return;
+          const value = select.value === 'dark' ? 'dark' : 'light';
+          saving = true;
+          setStatus('Saving theme…');
+          const result = await workspaceThemes.savePreference(moduleId, value);
+          saving = false;
+          if (result?.success){
+            setStatus('Theme saved for your workspace.', 'success');
+          } else if (result?.reason === 'not_signed_in'){
+            setStatus('Saved locally. Sign in to sync everywhere.', 'warning');
+          } else if (result?.reason === 'no_client'){
+            setStatus('Theme saved locally while offline.', 'warning');
+          } else {
+            setStatus('Unable to save theme right now. We will retry next time.', 'error');
+          }
+        });
+      });
+    }
+
+    const immediate = window.StudioOrganize && window.StudioOrganize.workspaceThemes;
+    if (immediate){
+      attach(immediate);
+    } else {
+      setStatus('Loading theme preferences…');
+      document.addEventListener('studioorganize:workspace-themes-ready', event => {
+        const themes = event?.detail?.workspaceThemes;
+        attach(themes || null);
+      }, { once: true });
+      setTimeout(() => {
+        if (!window.StudioOrganize || !window.StudioOrganize.workspaceThemes){
+          setStatus('Theme controls are offline right now.', 'error');
+          selects.forEach(select => {
+            if (select instanceof HTMLSelectElement){
+              select.disabled = true;
+            }
+          });
+        }
+      }, 4000);
+    }
   })();
 </script>
 
