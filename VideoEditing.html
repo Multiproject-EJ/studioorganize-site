@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Storyboard Pro — StudioOrganize</title>
+  <title>Video &amp; Editing — StudioOrganize</title>
   <meta
     name="description"
-    content="Storyboard Pro timelines keep scenes, shots, and production teams aligned with the StudioOrganize writer."
+    content="Video &amp; Editing timelines keep beats, audio, and storyboard previews aligned with the StudioOrganize writer."
   />
   <link rel="stylesheet" href="/assets/styles.css" />
   <link rel="stylesheet" href="/storyboard/ai-generation.css" />
@@ -345,31 +345,6 @@
       .ai-panel header { padding: 16px; border-bottom: 1px solid rgba(79,123,255,0.25); }
       .ai-panel header h2 { margin: 0; font-size: 15px; font-weight: 600; }
       .ai-panel header p { margin: 6px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
-      .storyboard-gallery { padding: 48px 24px 60px; display: flex; flex-direction: column; gap: 24px; }
-      .storyboard-gallery__header { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
-      .storyboard-gallery__header h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.2px; }
-      .storyboard-gallery__grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-      .storyboard-gallery__item { display: flex; flex-direction: column; gap: 10px; }
-      .storyboard-gallery__preview {
-        aspect-ratio: 4 / 3;
-        border-radius: 18px;
-        background: linear-gradient(135deg, rgba(79,123,255,0.22), rgba(34,211,238,0.16));
-        border: 1px solid rgba(79,123,255,0.25);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
-        position: relative;
-        overflow: hidden;
-      }
-      .storyboard-gallery__preview::after {
-        content: '';
-        position: absolute;
-        inset: 12%;
-        border-radius: 14px;
-        border: 1px dashed rgba(255,255,255,0.45);
-        background: linear-gradient(135deg, rgba(255,255,255,0.22), transparent);
-        box-shadow: 0 12px 28px rgba(15,23,42,0.18);
-        mix-blend-mode: screen;
-      }
-      .storyboard-gallery__item figcaption { font-size: 14px; color: var(--muted); font-weight: 500; }
       .timeline-controls__actions { display: inline-flex; gap: 8px; align-items: center; margin-left: auto; }
       .timeline-controls__actions .btn svg { stroke-width: 1.8; }
       .card-dialog { border: none; padding: 0; background: rgba(15,23,42,0.6); color: #0f172a; }
@@ -778,9 +753,9 @@
 
     <div class="app">
       <div class="topbar">
-        <span class="topbar__badge brand-with-logo__badge--storyboard" aria-hidden="true">SB</span>
-        <h1>Storyboard Pro</h1>
-        <span class="badge">Scene-synced timelines</span>
+        <span class="topbar__badge brand-with-logo__badge--storyboard" aria-hidden="true">VE</span>
+        <h1>Video &amp; Editing</h1>
+        <span class="badge">Scene-locked edit prep</span>
         <div class="spacer"></div>
         <div class="topbar-group" role="group" aria-label="Timeline track visibility">
           <button class="btn active" type="button" data-track-toggle="cards" aria-pressed="true">
@@ -818,62 +793,349 @@
         <div class="scene-carousel__dots" role="tablist" aria-label="Select scene preview" data-scene-carousel-dots></div>
       </section>
 
-      <section class="storyboard-gallery" aria-labelledby="storyboardGalleryTitle">
-        <div class="storyboard-gallery__header">
-          <h2 id="storyboardGalleryTitle">Storyboard lookbook</h2>
-          <p class="muted">Collect visual inspiration and pin reference frames as you build your scenes.</p>
+      <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
+        <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
+        <div class="timeline-dock__shell">
+          <div class="timeline-dock__content">
+            <div class="story-arc-layout">
+              <div class="story-arc-columns">
+                <div class="story-arc-timeline" aria-label="Story arc timeline">
+                  <div class="story-arc-container">
+                    <ol class="story-arc-track" role="list">
+                      <li class="story-arc-step" role="listitem">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">Opening</span>
+                        </div>
+                      </li>
+                      <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">Middle</span>
+                        </div>
+                      </li>
+                      <li class="story-arc-step" role="listitem">
+                        <div class="story-arc-pill">
+                          <span class="story-arc-label">End</span>
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+                <div class="story-arc-scenes" aria-label="Scene timeline">
+                  <div class="story-arc-scenes__container">
+                    <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
+                  </div>
+                </div>
+              </div>
+              <div class="story-arc-actions" aria-label="Story timeline actions">
+                <div class="story-arc-action story-arc-action--menu">
+                  <button class="story-arc-action-btn" type="button" aria-haspopup="true" aria-label="Choose story arc template" title="Choose story arc template">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                      <path d="M10.5 4v6.5H17"></path>
+                      <path d="M17 3v4"></path>
+                      <path d="M19 5h-4"></path>
+                      <path d="M17 10.5l4.5-4.5"></path>
+                    </svg>
+                  </button>
+                  <div class="story-arc-menu" role="menu">
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Choose Story Arc · Opening, Middle, End</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Story Arc 2 · Build up</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Hero's Journey</button>
+                    <button class="story-arc-menu__item" type="button" role="menuitem">Conflict resolution</button>
+                  </div>
+                </div>
+                <button class="story-arc-action-btn" type="button" aria-label="Story timeline bookmarks" title="Story timeline bookmarks">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M9 4h6a2 2 0 0 1 2 2v15l-5-3-5 3V6a2 2 0 0 1 2-2z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="storyboard-gallery__grid">
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Atmospheric establishing shot</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Character close-up</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Action beat snapshot</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Lighting reference</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Storyboard thumbnail</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Storyboard motion study</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Location concept</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Storyboard beat detail</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Previz frame</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Color script panel</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Audio cue marker</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Director's note overlay</figcaption>
-          </figure>
+      </div>
+
+      <div class="layout">
+        <aside class="panel">
+          <h2>Scenes</h2>
+          <div class="panel-body">
+            <div class="scene-list" data-scene-list></div>
+          </div>
+        </aside>
+
+        <section class="panel timeline-panel">
+          <div class="timeline-stage">
+            <header>
+              <div>
+                <h2 data-scene-title>Scene 13 · Rooftop chase</h2>
+                <span data-scene-meta>Linked to draft v4 · 00:45 runtime · 8 frames</span>
+              </div>
+              <div class="timeline-controls">
+                <span class="muted">Timeline synced to script page 47</span>
+                <div class="timeline-controls__actions">
+                  <button class="btn" type="button" data-card-dialog-open aria-haspopup="dialog" aria-controls="cardDialog">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                      <path d="M8 9h8"></path>
+                      <path d="M8 13h5"></path>
+                    </svg>
+                    Card dialog
+                  </button>
+                </div>
+              </div>
+            </header>
+            <div class="timeline-wrapper">
+              <div class="timeline-grid" data-timeline-grid>
+                <div class="timeline-scale" aria-hidden="true">
+                  <div class="timeline-scale__header">
+                    <span>Scene timeline (minutes)</span>
+                    <span>Drag & drop clips to re-time</span>
+                  </div>
+                  <div class="timeline-scale__ruler">
+                    <span style="left:0%">0:00</span>
+                    <span style="left:12.5%">0:05</span>
+                    <span style="left:25%">0:10</span>
+                    <span style="left:37.5%">0:15</span>
+                    <span style="left:50%">0:20</span>
+                    <span style="left:62.5%">0:25</span>
+                    <span style="left:75%">0:30</span>
+                    <span style="left:87.5%">0:35</span>
+                    <span style="left:100%">0:40</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel ai-panel">
+          <header>
+            <h2>Storyboard AI Companion</h2>
+            <p>Feed scene context and characters to draft new frames that stay aligned with your script timing.</p>
+          </header>
+          <form class="ai-form">
+            <div>
+              <label for="aiShotPrompt">Shot prompt</label>
+              <textarea id="aiShotPrompt" placeholder="Wide aerial reveals the neon skyline before pushing into the rooftop chase."></textarea>
+            </div>
+            <div>
+              <label for="aiProvider">Image model</label>
+              <select id="aiProvider">
+                <option value="gemini">Gemini image</option>
+                <option value="soara">Soara images</option>
+              </select>
+            </div>
+            <div>
+              <label for="aiFrameCount">Frame count</label>
+              <input id="aiFrameCount" type="number" min="1" max="12" value="4" />
+            </div>
+            <p class="ai-hint">Character tokens and lighting notes auto-sync from the writer so your frames stay on model. Select a provider and store API keys to render previews.</p>
+            <div class="ai-actions">
+              <button class="btn" type="button" data-api-manager>Manage API keys</button>
+              <span class="ai-status" data-ai-status>Ready</span>
+              <button class="btn btn-primary" type="button" data-ai-generate>Generate preview</button>
+            </div>
+            <div class="ai-result" data-ai-result aria-live="polite"></div>
+          </form>
+        </aside>
+      </div>
+    </div>
+
+    <dialog class="api-dialog" data-api-dialog aria-labelledby="apiDialogTitle">
+      <form class="api-dialog__container" method="dialog" data-api-form>
+        <div class="api-dialog__header">
+          <h2 id="apiDialogTitle">AI API manager</h2>
+          <button class="api-dialog__close" type="button" data-api-close aria-label="Close API manager">×</button>
         </div>
-      </section>
+        <div class="api-dialog__body">
+          <p>Store your Gemini and Soara API keys locally to test storyboard image generation. Keys are saved to this browser only.</p>
+          <div>
+            <label for="apiGeminiKey">Gemini API key</label>
+            <input id="apiGeminiKey" type="password" placeholder="AIz..." autocomplete="off" data-api-gemini />
+            <p class="api-dialog__hint">Create a key in Google AI Studio and enable the Gemini image endpoint.</p>
+          </div>
+          <div>
+            <label for="apiSoaraKey">Soara API key</label>
+            <input id="apiSoaraKey" type="password" placeholder="soara_..." autocomplete="off" data-api-soara />
+            <p class="api-dialog__hint">Use your Soara developer dashboard to generate a token with image permissions.</p>
+          </div>
+        </div>
+        <div class="api-dialog__actions">
+          <span class="api-dialog__feedback" data-api-feedback role="status" aria-live="polite"></span>
+          <button class="btn" type="button" data-api-close>Cancel</button>
+          <button class="btn btn-primary" type="submit">Save keys</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="card-dialog" id="cardDialog" data-card-dialog aria-labelledby="cardDialogTitle">
+      <div class="card-dialog__surface" role="document">
+        <header class="card-dialog__header">
+          <div>
+            <p class="card-dialog__eyebrow">Cards workspace</p>
+            <h2 id="cardDialogTitle">Beat card generator</h2>
+            <p class="card-dialog__scene" data-card-dialog-scene>Scene 13 · Rooftop chase</p>
+            <p class="card-dialog__hint" data-card-dialog-meta>Linked to draft v4 · 00:45 runtime · 8 frames</p>
+          </div>
+          <div class="card-dialog__header-actions">
+            <span class="card-dialog__chip card-dialog__chip--accent">ChatGPT image creator</span>
+            <button class="card-dialog__close" type="button" data-card-dialog-close aria-label="Close card dialog">×</button>
+          </div>
+        </header>
+        <div class="card-dialog__body">
+          <aside class="card-dialog__sidebar">
+            <section class="card-dialog__section card-dialog__section--tabs">
+              <div class="card-dialog__section-header">
+                <h3>Assets &amp; frames</h3>
+                <div class="card-dialog__tabs" role="tablist" aria-label="Card sources">
+                  <button class="card-dialog__tab card-dialog__tab--active" type="button" role="tab" aria-selected="true" data-card-tab="assets" data-card-dialog-initial-focus>Assets</button>
+                  <button class="card-dialog__tab" type="button" role="tab" aria-selected="false" data-card-tab="frames" tabindex="-1">Frames</button>
+                </div>
+              </div>
+              <div class="card-dialog__panel-group">
+                <div class="card-dialog__panel" data-card-panel="assets" role="tabpanel" tabindex="-1">
+                  <div class="card-dialog__cta-grid">
+                    <button class="card-dialog__cta" type="button">
+                      <span>＋</span>
+                      Create character
+                      <span class="card-dialog__hint">Draft a new hero in ChatGPT image creator.</span>
+                    </button>
+                    <button class="card-dialog__cta" type="button">
+                      <span>⇪</span>
+                      Upload image
+                      <span class="card-dialog__hint">Keep hand-drawn concepts in the asset locker.</span>
+                    </button>
+                  </div>
+                  <h4>Recent</h4>
+                  <div class="card-dialog__asset-strip">
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Designer gesture sketches" data-card-meta="Sketchbook · synced 2m ago" data-card-preview="linear-gradient(135deg, #bae6fd, #c3ddff)" data-card-prompt="Designer and creative director reviewing rooftop chase beats around a lightboard, cinematic storyboard style.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">CD</span>
+                      <span class="card-dialog__asset-name">Designer sketching</span>
+                      <span class="card-dialog__asset-meta">Sketchbook · synced 2m ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Client reference moodboard" data-card-meta="Moodboard · synced 5m ago" data-card-preview="linear-gradient(135deg, #fde68a, #fbcfe8)" data-card-prompt="Reference board pinned to a studio wall with neon rooftop lighting studies, cinematic notes in margins.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">MB</span>
+                      <span class="card-dialog__asset-name">Moodboard slices</span>
+                      <span class="card-dialog__asset-meta">Moodboard · synced 5m ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Rooftop chase 3D blockout" data-card-meta="Previz · synced 11m ago" data-card-preview="linear-gradient(135deg, #bbf7d0, #bef264)" data-card-prompt="Grey box 3D previz of a rooftop chase with dramatic overhead lighting and hero silhouettes.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">3D</span>
+                      <span class="card-dialog__asset-name">Previz pass</span>
+                      <span class="card-dialog__asset-meta">Previz · synced 11m ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                  </div>
+                  <h4>All assets</h4>
+                  <div class="card-dialog__asset-grid">
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Storyboard thumbnails" data-card-meta="Artist upload · yesterday" data-card-preview="linear-gradient(135deg, #ddd6fe, #f5d0fe)" data-card-prompt="Hand-drawn storyboard thumbnails of the rooftop chase with motion arrows and timing notes.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">SB</span>
+                      <span class="card-dialog__asset-name">Storyboard thumbnails</span>
+                      <span class="card-dialog__asset-meta">Artist upload · yesterday</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Lighting reference plates" data-card-meta="Look dev · 2 days ago" data-card-preview="linear-gradient(135deg, #bae6ff, #7dd3fc)" data-card-prompt="Lighting plates captured at night with neon reflections, foggy rain atmosphere on rooftops.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">LX</span>
+                      <span class="card-dialog__asset-name">Lighting plates</span>
+                      <span class="card-dialog__asset-meta">Look dev · 2 days ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Shot list annotations" data-card-meta="Director notes · 3 days ago" data-card-preview="linear-gradient(135deg, #fca5a5, #fef08a)" data-card-prompt="Shot list annotated with camera moves and emotional beats for the rooftop escape.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">DR</span>
+                      <span class="card-dialog__asset-name">Director notes</span>
+                      <span class="card-dialog__asset-meta">Director notes · 3 days ago</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Costume swatches" data-card-meta="Wardrobe · this week" data-card-preview="linear-gradient(135deg, #fed7aa, #fecdd3)" data-card-prompt="Wardrobe swatches pinned beside rooftop reference photos, hero jacket and antagonist cape.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">WD</span>
+                      <span class="card-dialog__asset-name">Costume palette</span>
+                      <span class="card-dialog__asset-meta">Wardrobe · this week</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Animatic still" data-card-meta="Edit review · last week" data-card-preview="linear-gradient(135deg, #cbd5f5, #e0f2fe)" data-card-prompt="Animatic still of the hero leaping between rooftops with motion blur and city glow.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">AN</span>
+                      <span class="card-dialog__asset-name">Animatic still</span>
+                      <span class="card-dialog__asset-meta">Edit review · last week</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                    <button class="card-dialog__asset" type="button" data-card-asset aria-pressed="false" data-card-label="Location photos" data-card-meta="Scout · last month" data-card-preview="linear-gradient(135deg, #bbf7d0, #86efac)" data-card-prompt="Location scout photos of rain-slicked rooftops with emergency lighting and puddles.">
+                      <span class="card-dialog__asset-thumb" aria-hidden="true">SC</span>
+                      <span class="card-dialog__asset-name">Location plates</span>
+                      <span class="card-dialog__asset-meta">Scout · last month</span>
+                      <span class="card-dialog__asset-badge">Use as image input</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-dialog__panel" data-card-panel="frames" role="tabpanel" tabindex="-1" hidden>
+                  <p class="card-dialog__hint">Storyboard frames generated for this beat will appear here.</p>
+                  <div class="card-dialog__frame-list" data-card-dialog-frames></div>
+                </div>
+              </div>
+            </section>
+          </aside>
+          <section class="card-dialog__main">
+            <section class="card-dialog__section">
+              <div class="card-dialog__section-header">
+                <h3>Generate with ChatGPT</h3>
+                <span class="card-dialog__chip card-dialog__chip--accent">Use as image input</span>
+              </div>
+              <p class="card-dialog__hint">Send script context to ChatGPT’s image creator for consistent storyboard cards.</p>
+              <label class="card-dialog__label" for="cardDialogPrompt">Prompt</label>
+              <textarea id="cardDialogPrompt" class="card-dialog__textarea" rows="4" placeholder="Describe the beat to render a frame…" data-card-dialog-prompt></textarea>
+              <div class="card-dialog__form-grid">
+                <label class="card-dialog__label">Style
+                  <select data-card-dialog-style>
+                    <option>Cinematic storyboard linework</option>
+                    <option>Flat animation storyboard</option>
+                    <option>Graphic novel noir</option>
+                  </select>
+                </label>
+                <label class="card-dialog__label">Aspect ratio
+                  <select data-card-dialog-aspect>
+                    <option value="16:9">16:9</option>
+                    <option value="2.39:1">2.39:1</option>
+                    <option value="1:1">1:1</option>
+                  </select>
+                </label>
+              </div>
+              <div class="card-dialog__actions">
+                <button class="btn" type="button" data-card-dialog-generate>Preview with ChatGPT</button>
+              </div>
+              <p class="card-dialog__status" data-card-dialog-status role="status" aria-live="polite">Ready to generate with ChatGPT image creator.</p>
+            </section>
+            <section class="card-dialog__section">
+              <div class="card-dialog__section-header">
+                <h3>Text fields</h3>
+                <span class="card-dialog__hint">Cards, notes, and director cues synced live from Writer.</span>
+              </div>
+              <p class="card-dialog__summary" data-card-dialog-summary>Bring in your scene summary to seed prompts.</p>
+              <div class="card-dialog__text-stack" data-card-dialog-text></div>
+            </section>
+          </section>
+          <aside class="card-dialog__preview">
+            <div class="card-dialog__section card-dialog__preview-card">
+              <div class="card-dialog__preview-meta">
+                <span class="card-dialog__preview-label">Selected asset</span>
+                <strong data-card-dialog-preview-label>Designer sketching</strong>
+                <span class="card-dialog__preview-sub" data-card-dialog-preview-meta>Sketchbook · synced 2m ago</span>
+              </div>
+              <div class="card-dialog__preview-figure" data-card-dialog-preview-figure></div>
+              <div class="card-dialog__preview-notes">
+                <strong>Scene context</strong>
+                <p data-card-dialog-meta-preview>Linked to draft v4 · 00:45 runtime · 8 frames</p>
+              </div>
+              <div class="card-dialog__preview-tags" data-card-dialog-preview-tags></div>
+            </div>
+          </aside>
+        </div>
+        <footer class="card-dialog__footer">
+          <button class="btn" type="button" data-card-dialog-close>Close</button>
+          <button class="btn btn-primary" type="button" data-card-dialog-generate>Generate 4 frames</button>
+        </footer>
+      </div>
+    </dialog>
 
     <section class="feature-section">
       <h2>Storyboard Pro keeps every department locked to the same scene timeline.</h2>
