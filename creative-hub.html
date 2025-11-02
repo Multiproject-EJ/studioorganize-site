@@ -67,182 +67,6 @@
       outline: 2px solid rgba(45,212,191,0.75);
       outline-offset: 3px;
     }
-    .ch-section {
-      width: 100%;
-      max-width: 960px;
-      margin: 3rem auto 0;
-      padding: 2.5rem;
-      background: #ffffff;
-      color: #0f172a;
-      border-radius: 1.5rem;
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
-      text-align: left;
-    }
-    .ch-section__header {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      text-align: left;
-      margin-bottom: 1.75rem;
-    }
-    .ch-section__header h2 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #111827;
-    }
-    .ch-section__header p {
-      font-size: 0.95rem;
-      color: #475569;
-    }
-    .ch-tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-    }
-    .idea-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      padding: 1.5rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 1rem;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .idea-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 30px rgba(15, 23, 42, 0.12);
-    }
-    .idea-card h3 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #0f172a;
-    }
-    .idea-card small {
-      font-size: 0.75rem;
-      color: #64748b;
-    }
-    .ch-btn {
-      align-self: flex-start;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.5rem 1.1rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #0f172a;
-      background: #e2e8f0;
-      border: 1px solid #cbd5f5;
-      border-radius: 9999px;
-      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-      cursor: pointer;
-    }
-    .ch-btn:hover {
-      background: #cbd5f5;
-      color: #0b1120;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
-    }
-    .ch-btn--primary {
-      background: #0ea5e9;
-      border-color: #0ea5e9;
-      color: #f8fafc;
-    }
-    .ch-btn--primary:hover {
-      background: #0284c7;
-      border-color: #0284c7;
-      color: #f8fafc;
-    }
-    .ig-modal {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      z-index: 80;
-    }
-    .ig-modal[aria-hidden="false"] {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .ig-modal__backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(2px);
-    }
-    .ig-modal__content {
-      position: relative;
-      width: min(480px, calc(100% - 2rem));
-      background: #ffffff;
-      color: #0f172a;
-      border-radius: 1.25rem;
-      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
-      padding: 1.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      z-index: 1;
-    }
-    .ig-modal__header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-    .ig-modal__header h3 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin: 0;
-    }
-    .ig-modal__body {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-height: 50vh;
-      overflow-y: auto;
-      padding-right: 0.25rem;
-    }
-    .ig-modal__footer {
-      display: flex;
-      justify-content: flex-end;
-    }
-    .ig-close {
-      border: none;
-      background: transparent;
-      font-size: 1.5rem;
-      line-height: 1;
-      cursor: pointer;
-      color: #64748b;
-    }
-    .ig-close:hover {
-      color: #1f2937;
-    }
-    .ig-step {
-      padding: 1rem;
-      border-radius: 0.85rem;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    }
-    .ig-step-title {
-      font-weight: 600;
-      color: #0f172a;
-      margin-bottom: 0.25rem;
-    }
-    .ig-step-helper {
-      font-size: 0.85rem;
-      color: #475569;
-    }
-    @media (max-width: 768px) {
-      .ch-section {
-        padding: 1.75rem;
-        border-radius: 1.25rem;
-      }
-    }
   </style>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -313,9 +137,181 @@
       { mode: "block", label: "Unblock", icon: "🕯", tag: "freewrite, seed" },
     ];
 
+    const STORY_IDEA_APPS = [
+      {
+        id: "brainboard",
+        title: "Brain Board & Keywords",
+        goal: "Dump plot, emotions, characters.",
+        steps: [
+          { id: "drop", title: "Drop tags", helper: "Drag plot/emotion/character tags." },
+          { id: "cluster", title: "Cluster", helper: "Group by act or POV." },
+          { id: "label", title: "Label", helper: "Name clusters (Cold open, Main arc...)" },
+        ],
+      },
+      {
+        id: "seasonmapper",
+        title: "Season / Episode Mapper",
+        goal: "Title → season → episode.",
+        steps: [
+          { id: "name-seasons", title: "Name seasons", helper: "Give S1 a working title." },
+          { id: "add-episodes", title: "Add episodes", helper: "1-line logline each." },
+          { id: "pace", title: "Check flow", helper: "Spread reveals across eps." },
+        ],
+      },
+      {
+        id: "emotiondial",
+        title: "Emotion & Tone Dial",
+        goal: "Make it feel like one show.",
+        steps: [
+          { id: "pick-default", title: "Pick default tone", helper: "70% of the time." },
+          { id: "annotate-episodes", title: "Tag episodes", helper: "Warm, eerie, heroic..." },
+          { id: "consistency-check", title: "Consistency", helper: "Flag odd episodes." },
+        ],
+      },
+      {
+        id: "conflict",
+        title: "Conflict / Stakes Builder",
+        goal: "Add friction to every episode.",
+        steps: [
+          { id: "pick-antagonist", title: "Antagonist", helper: "Person/system/nature/inner" },
+          { id: "add-obstacle", title: "Obstacle", helper: "What slows them down?" },
+          { id: "add-twist", title: "Twist", helper: "Small twist every 1–2 eps" },
+        ],
+      },
+      {
+        id: "scenemachine",
+        title: "Scene Machine (beats)",
+        goal: "Test 3–5 scenes fast.",
+        steps: [
+          { id: "setup", title: "Setup", helper: "Who and what do they want?" },
+          { id: "trouble", title: "Trouble", helper: "Something blocks it." },
+          { id: "turn", title: "Turn", helper: "New info or flip." },
+          { id: "payoff", title: "Payoff", helper: "What changed?" },
+        ],
+      },
+    ];
+
     const ANALYTICS = (name, payload = {}) => {
       console.info(`[analytics] ${name}`, payload);
     };
+
+    function IdeaGameModal({ app, onClose }) {
+      useEffect(() => {
+        if (!app) return;
+        const handler = (event) => {
+          if (event.key === 'Escape') {
+            onClose();
+          }
+        };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+      }, [app, onClose]);
+
+      if (!app) return null;
+
+      const sendToStoryboard = () => {
+        alert("Send this mini-app’s data to Storyboard / Character Studio");
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur" onClick={onClose} />
+          <div
+            className="relative z-10 w-full max-w-lg mx-4 rounded-3xl border border-slate-700 bg-slate-900/95 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.45)]"
+            role="dialog"
+            aria-modal="true"
+            aria-label={app.title}
+          >
+            <header className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold text-slate-100">{app.title}</h3>
+                <p className="mt-1 text-sm text-slate-400">{app.goal}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-2xl leading-none text-slate-500 transition hover:text-slate-200"
+                aria-label="Close story game"
+              >
+                ×
+              </button>
+            </header>
+            <ul className="mt-6 space-y-3 max-h-64 overflow-y-auto pr-1">
+              {app.steps.map((step) => (
+                <li
+                  key={step.id}
+                  className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-inner shadow-slate-950/40"
+                >
+                  <div className="text-sm font-semibold text-slate-100">{step.title}</div>
+                  <div className="mt-1 text-sm text-slate-400">{step.helper}</div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={onClose}
+                className="rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-slate-100"
+              >
+                Close
+              </button>
+              <button
+                onClick={sendToStoryboard}
+                className="rounded-full bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-teal-400"
+              >
+                Send to Storyboard
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function IdeaPhaseSection() {
+      const [selectedApp, setSelectedApp] = useState(null);
+
+      useEffect(() => {
+        if (!selectedApp) return;
+        ANALYTICS('idea_game_viewed', { id: selectedApp.id });
+      }, [selectedApp]);
+
+      const openApp = (app) => {
+        setSelectedApp(app);
+        ANALYTICS('idea_game_opened', { id: app.id });
+      };
+
+      return (
+        <>
+          <section className="mt-16 w-full max-w-5xl text-left" id="idea-phase">
+            <header className="mb-8">
+              <h2 className="text-3xl font-semibold text-slate-100">Idea Phase — Story Games</h2>
+              <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                Run these before you open Storyboard Pro or Character Studio.
+              </p>
+            </header>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {STORY_IDEA_APPS.map((app) => (
+                <button
+                  key={app.id}
+                  type="button"
+                  onClick={() => openApp(app)}
+                  className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 px-6 py-6 text-left transition transform hover:-translate-y-1 hover:border-teal-400 hover:shadow-glowteal focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+                >
+                  <span className="text-xs uppercase tracking-wide text-teal-300/70">{app.steps.length} steps</span>
+                  <h3 className="mt-3 text-lg font-semibold text-slate-100">{app.title}</h3>
+                  <p className="mt-3 text-sm text-slate-400">{app.goal}</p>
+                  <span className="mt-6 inline-flex items-center text-sm font-medium text-teal-300">
+                    Open
+                    <span className="ml-2 text-base transition-transform group-hover:translate-x-0.5">↗</span>
+                  </span>
+                  <div className="pointer-events-none absolute -bottom-12 right-0 h-32 w-32 rounded-full bg-teal-500/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
+                </button>
+              ))}
+            </div>
+          </section>
+          <IdeaGameModal app={selectedApp} onClose={() => setSelectedApp(null)} />
+        </>
+      );
+    }
 
     function detectIntent(text) {
       const value = (text || "").toLowerCase();
@@ -647,13 +643,7 @@
               <p className="absolute bottom-5 text-xs text-slate-400">Spontaneous • Bold</p>
             </button>
           </div>
-          <section className="ch-section" id="idea-phase">
-            <header className="ch-section__header">
-              <h2>Idea Phase — Story Games</h2>
-              <p>Run these before you open Storyboard Pro or Character Studio.</p>
-            </header>
-            <div className="ch-tools-grid" id="idea-games-grid"></div>
-          </section>
+          <IdeaPhaseSection />
         </div>
       );
     }
@@ -1203,157 +1193,6 @@
     }
 
     ReactDOM.createRoot(document.getElementById('app')).render(<App />);
-  </script>
-  <div id="ideaGameModal" class="ig-modal" aria-hidden="true">
-    <div class="ig-modal__backdrop"></div>
-    <div class="ig-modal__content" role="dialog" aria-modal="true">
-      <header class="ig-modal__header">
-        <h3 id="ig-title">Mini app</h3>
-        <button id="ig-close" class="ig-close">×</button>
-      </header>
-      <div class="ig-modal__body" id="ig-body"></div>
-      <footer class="ig-modal__footer">
-        <button id="ig-export" class="ch-btn ch-btn--primary">Send to Storyboard</button>
-      </footer>
-    </div>
-  </div>
-  <script>
-    const STORY_IDEA_CONFIG = {
-      appSet: "story-idea-phase-v1",
-      apps: [
-        {
-          id: "brainboard",
-          title: "Brain Board & Keywords",
-          goal: "Dump plot, emotions, characters.",
-          steps: [
-            { id: "drop", title: "Drop tags", helper: "Drag plot/emotion/character tags." },
-            { id: "cluster", title: "Cluster", helper: "Group by act or POV." },
-            { id: "label", title: "Label", helper: "Name clusters (Cold open, Main arc...)" }
-          ]
-        },
-        {
-          id: "seasonmapper",
-          title: "Season / Episode Mapper",
-          goal: "Title → season → episode.",
-          steps: [
-            { id: "name-seasons", title: "Name seasons", helper: "Give S1 a working title." },
-            { id: "add-episodes", title: "Add episodes", helper: "1-line logline each." },
-            { id: "pace", title: "Check flow", helper: "Spread reveals across eps." }
-          ]
-        },
-        {
-          id: "emotiondial",
-          title: "Emotion & Tone Dial",
-          goal: "Make it feel like one show.",
-          steps: [
-            { id: "pick-default", title: "Pick default tone", helper: "70% of the time." },
-            { id: "annotate-episodes", title: "Tag episodes", helper: "Warm, eerie, heroic..." },
-            { id: "consistency-check", title: "Consistency", helper: "Flag odd episodes." }
-          ]
-        },
-        {
-          id: "conflict",
-          title: "Conflict / Stakes Builder",
-          goal: "Add friction to every episode.",
-          steps: [
-            { id: "pick-antagonist", title: "Antagonist", helper: "Person/system/nature/inner" },
-            { id: "add-obstacle", title: "Obstacle", helper: "What slows them down?" },
-            { id: "add-twist", title: "Twist", helper: "Small twist every 1–2 eps" }
-          ]
-        },
-        {
-          id: "scenemachine",
-          title: "Scene Machine (beats)",
-          goal: "Test 3–5 scenes fast.",
-          steps: [
-            { id: "setup", title: "Setup", helper: "Who and what do they want?" },
-            { id: "trouble", title: "Trouble", helper: "Something blocks it." },
-            { id: "turn", title: "Turn", helper: "New info or flip." },
-            { id: "payoff", title: "Payoff", helper: "What changed?" }
-          ]
-        }
-      ]
-    };
-
-    (function () {
-      function mountIdeaPhase() {
-        const grid = document.getElementById("idea-games-grid");
-        if (!grid || grid.dataset.igMounted === "true") return;
-        grid.dataset.igMounted = "true";
-
-        STORY_IDEA_CONFIG.apps.forEach(app => {
-          const card = document.createElement("article");
-          card.className = "idea-card";
-          card.innerHTML = `
-      <h3>${app.title}</h3>
-      <p style="font-size:0.72rem;color:#475569;">${app.goal}</p>
-      <small>${app.steps.length} steps</small>
-      <button class="ch-btn" data-idea-app="${app.id}">Open</button>
-    `;
-          grid.appendChild(card);
-        });
-
-        const modal = document.getElementById("ideaGameModal");
-        const modalTitle = document.getElementById("ig-title");
-        const modalBody = document.getElementById("ig-body");
-        const modalClose = document.getElementById("ig-close");
-        const modalExport = document.getElementById("ig-export");
-
-        function openIdeaApp(appId) {
-          const app = STORY_IDEA_CONFIG.apps.find(a => a.id === appId);
-          if (!app) return;
-          modalTitle.textContent = app.title;
-          modalBody.innerHTML = app.steps.map(step => `
-      <div class="ig-step">
-        <div class="ig-step-title">${step.title}</div>
-        <div class="ig-step-helper">${step.helper}</div>
-      </div>
-    `).join("");
-          modal.setAttribute("aria-hidden", "false");
-        }
-
-        grid.addEventListener("click", function (e) {
-          const btn = e.target.closest("[data-idea-app]");
-          if (!btn) return;
-          openIdeaApp(btn.getAttribute("data-idea-app"));
-        });
-
-        function closeModal() {
-          modal.setAttribute("aria-hidden", "true");
-        }
-        if (modal.dataset.igBound !== "true") {
-          modal.dataset.igBound = "true";
-          modalClose.addEventListener("click", closeModal);
-          modal.addEventListener("click", function (e) {
-            if (e.target.classList.contains("ig-modal__backdrop")) closeModal();
-          });
-          document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") closeModal();
-          });
-
-          // placeholder → connect to existing Storyboard tool
-          modalExport.addEventListener("click", function () {
-            alert("Send this mini-app’s data to Storyboard / Character Studio");
-            closeModal();
-          });
-        }
-      }
-
-      function init() {
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", mountIdeaPhase, { once: true });
-        } else {
-          mountIdeaPhase();
-        }
-
-        const observer = new MutationObserver(() => {
-          mountIdeaPhase();
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-      }
-
-      init();
-    })();
   </script>
   <script type="module" src="/assets/main.js"></script>
 </body>
