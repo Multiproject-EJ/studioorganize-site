@@ -1007,6 +1007,18 @@ function handleAuthPortalEscape(event){
   }
 }
 
+function handleAuthLinkIntent(link){
+  if (!(link instanceof HTMLElement)) return;
+  const normalizedText = (link.textContent || '').toLowerCase();
+  const defaultIntent = normalizedText.includes('sign up') || normalizedText.includes('create') ? 'signup' : 'signin';
+  const intent = link.dataset.authIntent || link.getAttribute('data-auth-switch') || defaultIntent;
+  const initialView = intent === 'signup' ? 'signup' : 'signin';
+  openAuthPortal(initialView);
+  if (!supabaseClient){
+    setAuthPortalMessage('Authentication is temporarily unavailable. Please try again later.', 'error');
+  }
+}
+
 function bindAuthLinks(){
   if (!authLinks.length) return;
   authLinks.forEach(link => {
@@ -1015,17 +1027,18 @@ function bindAuthLinks(){
     link.dataset.authLinkBound = 'true';
     link.addEventListener('click', event => {
       event.preventDefault();
-      const normalizedText = (link.textContent || '').toLowerCase();
-      const defaultIntent = normalizedText.includes('sign up') || normalizedText.includes('create') ? 'signup' : 'signin';
-      const intent = link.dataset.authIntent || link.getAttribute('data-auth-switch') || defaultIntent;
-      const initialView = intent === 'signup' ? 'signup' : 'signin';
-      openAuthPortal(initialView);
-      if (!supabaseClient){
-        setAuthPortalMessage('Authentication is temporarily unavailable. Please try again later.', 'error');
-      }
+      handleAuthLinkIntent(link);
     });
   });
 }
+
+document.addEventListener('click', event => {
+  if (event.defaultPrevented) return;
+  const target = event.target instanceof HTMLElement ? event.target.closest('[data-auth-link]') : null;
+  if (!target) return;
+  event.preventDefault();
+  handleAuthLinkIntent(target);
+});
 
 async function refreshAccountSession(){
   if (!supabaseClient) return;
