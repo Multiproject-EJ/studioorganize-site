@@ -1014,15 +1014,15 @@ function bindAuthLinks(){
     if (link.dataset.authLinkBound === 'true') return;
     link.dataset.authLinkBound = 'true';
     link.addEventListener('click', event => {
-      if (!supabaseClient){
-        return; // fall back to default navigation when auth is unavailable
-      }
       event.preventDefault();
       const normalizedText = (link.textContent || '').toLowerCase();
       const defaultIntent = normalizedText.includes('sign up') || normalizedText.includes('create') ? 'signup' : 'signin';
       const intent = link.dataset.authIntent || link.getAttribute('data-auth-switch') || defaultIntent;
       const initialView = intent === 'signup' ? 'signup' : 'signin';
       openAuthPortal(initialView);
+      if (!supabaseClient){
+        setAuthPortalMessage('Authentication is temporarily unavailable. Please try again later.', 'error');
+      }
     });
   });
 }

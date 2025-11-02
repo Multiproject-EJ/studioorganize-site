@@ -228,9 +228,11 @@ This documentation should give you everything needed to wire the frontend forms 
 
 ## Frontend integration in this repo
 
-The legacy modal-based signup and login flow has been removed. All “Sign up / Log in” buttons now link directly to [`supabase-test.html`](supabase-test.html), which hosts the standalone Supabase authentication experience. Update that page if you need to adjust copy, styling, or add new flows such as password resets.
+Authentication is handled by the **auth portal overlay** that lives in [`assets/main.js`](assets/main.js). Any element with `data-auth-link` will open the modal and switch to either the sign-in or create-account tab depending on the optional `data-auth-intent` value.
 
-If you introduce additional requirements (for example hCaptcha or multi-factor flows), build them straight into `supabase-test.html`. The rest of the site simply routes visitors there and no longer manages authentication state client-side.
+Each trigger keeps a regular `href` attribute pointing to [`supabase-test.html`](supabase-test.html) so the experience still works when JavaScript fails. Update that fallback page if you need to add password reset flows or other recovery tooling.
+
+If you make structural changes to the auth portal, edit the template literal in `ensureAuthPortal()` within `assets/main.js`. Remember to keep form field names aligned with the Supabase client calls in the same module.
 
 ## Best practices for memberships and Stripe subscriptions
 
