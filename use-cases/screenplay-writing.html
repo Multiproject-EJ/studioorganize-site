@@ -731,9 +731,10 @@
       .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; align-items:start; flex:1; min-height:0; overflow:auto; padding-right:4px;}
       .script-dialog__column{display:flex; flex-direction:column; gap:12px; align-self:stretch;}
       .script-dialog__column-title{margin:0; font-size:15px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
-      .script-dialog__column-card{display:flex; flex-direction:column; gap:20px; border:1px solid var(--ring); border-radius:16px; padding:20px; background:var(--chip); transition:border-color .2s ease, box-shadow .2s ease; flex:1;}
-      .script-dialog__column-card:hover,
-      .script-dialog__column-card:focus-within{border-color:var(--acc); box-shadow:0 0 0 3px rgba(79,123,255,0.25);}
+      .script-dialog__column-card{display:flex; flex-direction:column; gap:20px; border:1px solid var(--ring); border-radius:16px; padding:20px; background:var(--chip); transition:border-color .2s ease, box-shadow .2s ease, opacity .2s ease, filter .2s ease; flex:1; opacity:0.55; filter:saturate(0.75);}
+      .script-dialog__column-card.is-active{border-color:var(--acc); box-shadow:0 0 0 3px rgba(79,123,255,0.25); opacity:1; filter:none;}
+      .script-dialog__column-card:not(.is-active):hover{opacity:0.7;}
+      .script-dialog__column-card:not(.is-active):focus-within{opacity:0.8;}
       .script-dialog__field{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--ink);}
       .script-dialog__field > span:first-child{font-size:11px; letter-spacing:.32px; text-transform:uppercase; font-weight:600; color:var(--muted);}
       .script-dialog__field select,
@@ -766,6 +767,16 @@
       .script-dialog__column-footer{margin-top:auto; padding-top:20px; border-top:1px solid var(--ring); display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__hint{margin:0; font-size:12px; color:var(--muted);}
       .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px; flex-shrink:0;}
+      .script-dialog__goal-trigger{align-self:flex-start;}
+      .script-dialog__goal-modal{position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:30; padding:24px;}
+      .script-dialog__goal-modal.open{display:flex;}
+      .script-dialog__goal-modal-backdrop{position:absolute; inset:0; background:rgba(15,23,42,0.7);}
+      .script-dialog__goal-modal-panel{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:24px; max-width:420px; width:min(100%, 420px); display:flex; flex-direction:column; gap:16px; box-shadow:0 20px 60px rgba(15,23,42,0.45);}
+      .script-dialog__goal-modal-header{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+      .script-dialog__goal-modal-header h3{margin:0; font-size:18px;}
+      .script-dialog__goal-modal-close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
+      .script-dialog__goal-modal-body{display:flex; flex-direction:column; gap:16px;}
+      .script-dialog__goal-modal-description{margin:0; font-size:13px; color:var(--muted);}
       @media (min-width: 720px){
         .script-dialog__body{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
@@ -777,6 +788,8 @@
         .script-dialog__panel{width:100%; padding:20px;}
         .script-dialog__body{grid-template-columns:1fr;}
         .script-dialog__preview{flex-direction:column; align-items:center; text-align:center;}
+        .script-dialog__goal-modal{padding:16px;}
+        .script-dialog__goal-modal-panel{width:100%; padding:20px;}
       }
       @media (max-width: 900px){
         .timeline-dock{padding:12px 14px 6px;}
@@ -1598,21 +1611,7 @@
                   <h4>Project goals</h4>
                   <p>Set your ideal scope so pacing stats stay aligned with what you have in mind.</p>
                 </div>
-                <div class="script-dialog__goal-grid">
-                  <label class="script-dialog__field" for="scriptDialogGoalPages">
-                    <span>Page goal</span>
-                    <input id="scriptDialogGoalPages" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 110" autocomplete="off" />
-                  </label>
-                  <label class="script-dialog__field" for="scriptDialogGoalRuntime">
-                    <span>Runtime goal (minutes)</span>
-                    <input id="scriptDialogGoalRuntime" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 105" autocomplete="off" />
-                  </label>
-                  <label class="script-dialog__field" for="scriptDialogGoalScenes">
-                    <span>Scene goal</span>
-                    <input id="scriptDialogGoalScenes" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 45" autocomplete="off" />
-                  </label>
-                </div>
-                <p class="script-dialog__hint">Goals are optional, but they help compare progress against your targets in the stats panel.</p>
+                <button type="button" class="btn script-dialog__goal-trigger" id="scriptDialogGoalTrigger" aria-haspopup="dialog" aria-controls="scriptDialogGoalModal">Set project goals</button>
               </section>
               <section class="script-dialog__section">
                 <div class="script-dialog__section-header">
@@ -1687,6 +1686,33 @@
               <div class="script-dialog__column-footer">
                 <button type="button" class="btn" id="scriptDialogCreate">Create</button>
               </div>
+            </div>
+          </div>
+        </div>
+        <div id="scriptDialogGoalModal" class="script-dialog__goal-modal" aria-hidden="true" hidden>
+          <div class="script-dialog__goal-modal-backdrop" data-goal-close></div>
+          <div class="script-dialog__goal-modal-panel" role="dialog" aria-modal="true" aria-labelledby="scriptDialogGoalTitle" aria-describedby="scriptDialogGoalDescription" tabindex="-1">
+            <div class="script-dialog__goal-modal-header">
+              <h3 id="scriptDialogGoalTitle">Project goals</h3>
+              <button type="button" class="script-dialog__goal-modal-close" id="scriptDialogGoalClose" aria-label="Close project goals">✕</button>
+            </div>
+            <div class="script-dialog__goal-modal-body">
+              <p id="scriptDialogGoalDescription" class="script-dialog__goal-modal-description">Set your ideal scope so pacing stats stay aligned with what you have in mind.</p>
+              <div class="script-dialog__goal-grid">
+                <label class="script-dialog__field" for="scriptDialogGoalPages">
+                  <span>Page goal</span>
+                  <input id="scriptDialogGoalPages" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 110" autocomplete="off" />
+                </label>
+                <label class="script-dialog__field" for="scriptDialogGoalRuntime">
+                  <span>Runtime goal (minutes)</span>
+                  <input id="scriptDialogGoalRuntime" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 105" autocomplete="off" />
+                </label>
+                <label class="script-dialog__field" for="scriptDialogGoalScenes">
+                  <span>Scene goal</span>
+                  <input id="scriptDialogGoalScenes" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 45" autocomplete="off" />
+                </label>
+              </div>
+              <p class="script-dialog__hint">Goals are optional, but they help compare progress against your targets in the stats panel.</p>
             </div>
           </div>
         </div>
@@ -2244,6 +2270,84 @@
     let scriptDialogLoading = false;
     let scriptDialogSaving = false;
     let scriptDialogCreating = false;
+    let scriptDialogGoalModalFocusReturn = null;
+
+    function setActiveScriptDialogCard(card){
+      const cards = document.querySelectorAll('.script-dialog__column-card');
+      cards.forEach(item => {
+        item.classList.toggle('is-active', item === card);
+      });
+    }
+
+    function ensureActiveScriptDialogCard(){
+      const cards = document.querySelectorAll('.script-dialog__column-card');
+      if (!cards.length) return;
+      const active = Array.from(cards).some(card => card.classList.contains('is-active'));
+      if (active) return;
+      setActiveScriptDialogCard(cards[0]);
+    }
+
+    function handleGoalModalKeydown(event){
+      const modal = document.getElementById('scriptDialogGoalModal');
+      if (!modal || !modal.classList.contains('open')) return;
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        event.stopPropagation();
+        closeScriptDialogGoalModal();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement;
+      if (event.shiftKey){
+        if (current === first){
+          event.preventDefault();
+          event.stopPropagation();
+          last.focus();
+        }
+        return;
+      }
+      if (current === last){
+        event.preventDefault();
+        event.stopPropagation();
+        first.focus();
+      }
+    }
+
+    function openScriptDialogGoalModal(){
+      const modal = document.getElementById('scriptDialogGoalModal');
+      if (!modal || modal.classList.contains('open')) return;
+      scriptDialogGoalModalFocusReturn = document.activeElement;
+      modal.classList.add('open');
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      const firstInput = modal.querySelector('input:not([disabled])');
+      const panel = modal.querySelector('.script-dialog__goal-modal-panel');
+      const target = firstInput || panel;
+      if (target && typeof target.focus === 'function') target.focus();
+    }
+
+    function closeScriptDialogGoalModal(options = {}){
+      const { restoreFocus = true } = options;
+      const modal = document.getElementById('scriptDialogGoalModal');
+      if (!modal) return;
+      if (!modal.classList.contains('open')){
+        if (!restoreFocus) scriptDialogGoalModalFocusReturn = null;
+        return;
+      }
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      if (!modal.hasAttribute('hidden')) modal.setAttribute('hidden', '');
+      const panel = modal.querySelector('.script-dialog__goal-modal-panel');
+      if (panel && typeof panel.blur === 'function') panel.blur();
+      if (restoreFocus && scriptDialogGoalModalFocusReturn && typeof scriptDialogGoalModalFocusReturn.focus === 'function'){
+        scriptDialogGoalModalFocusReturn.focus();
+      }
+      scriptDialogGoalModalFocusReturn = null;
+    }
 
     function updateCachedCoverImage(url){
       if (!Array.isArray(scriptOptionsCache) || !project) return;
@@ -2430,9 +2534,11 @@
     async function openScriptDialog(){
       const dialog = document.getElementById('scriptDialog');
       if (!dialog || dialog.classList.contains('open')) return;
+      closeScriptDialogGoalModal({ restoreFocus: false });
       dialog.classList.add('open');
       dialog.setAttribute('aria-hidden', 'false');
       document.body.classList.add('script-dialog-open');
+      ensureActiveScriptDialogCard();
       const currentNameEl = document.getElementById('scriptDialogCurrentName');
       if (currentNameEl) currentNameEl.textContent = project?.title || 'Untitled Script';
       const currentTitleInput = document.getElementById('scriptDialogCurrentTitle');
@@ -2514,6 +2620,7 @@
       dialog.classList.remove('open');
       dialog.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('script-dialog-open');
+      closeScriptDialogGoalModal({ restoreFocus: false });
       scriptDialogSelectedId = null;
       scriptDialogLoading = false;
       scriptDialogSaving = false;
@@ -7468,6 +7575,32 @@
           handleApplyScriptCoverImage();
         }
       });
+    }
+
+    const scriptDialogGoalTrigger = document.getElementById('scriptDialogGoalTrigger');
+    if (scriptDialogGoalTrigger){
+      scriptDialogGoalTrigger.addEventListener('click', ()=> openScriptDialogGoalModal());
+    }
+    const scriptDialogGoalClose = document.getElementById('scriptDialogGoalClose');
+    if (scriptDialogGoalClose){
+      scriptDialogGoalClose.addEventListener('click', ()=> closeScriptDialogGoalModal());
+    }
+    const scriptDialogGoalModal = document.getElementById('scriptDialogGoalModal');
+    if (scriptDialogGoalModal){
+      const backdrop = scriptDialogGoalModal.querySelector('[data-goal-close]');
+      if (backdrop){
+        backdrop.addEventListener('click', ()=> closeScriptDialogGoalModal());
+      }
+      scriptDialogGoalModal.addEventListener('keydown', handleGoalModalKeydown);
+    }
+
+    const scriptDialogCards = document.querySelectorAll('.script-dialog__column-card');
+    if (scriptDialogCards.length){
+      scriptDialogCards.forEach(card => {
+        card.addEventListener('click', ()=> setActiveScriptDialogCard(card));
+        card.addEventListener('focusin', ()=> setActiveScriptDialogCard(card));
+      });
+      ensureActiveScriptDialogCard();
     }
 
     applyActiveTabUI();
