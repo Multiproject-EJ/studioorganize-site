@@ -36,8 +36,73 @@
     </div>
     <h2 class="construction-overlay__title" id="construction-title">Pardon the dust</h2>
     <p class="construction-overlay__body" id="construction-description">We&apos;re putting the finishing touches on StudioOrganize. Take a peek if you&apos;d like to look around.</p>
-  </div>
 </div>
+</div>
+<script>
+  (function(){
+    const CONSTRUCTION_KEY = 'SO_SEEN_CONSTRUCTION';
+    const overlay = document.querySelector('[data-construction-overlay]');
+    if (!(overlay instanceof HTMLElement)) return;
+
+    const markDismissed = () => {
+      let stored = false;
+      try {
+        localStorage.setItem(CONSTRUCTION_KEY, '1');
+        stored = true;
+      } catch (_error){ /* ignore private mode errors */ }
+      if (!stored){
+        try {
+          sessionStorage.setItem(CONSTRUCTION_KEY, '1');
+        } catch (_error){ /* ignore private mode errors */ }
+      }
+      document.documentElement.classList.add('construction-overlay-dismissed');
+    };
+
+    const hideOverlay = () => {
+      overlay.classList.add('construction-overlay--hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.addEventListener('transitionend', () => {
+        overlay.remove();
+      }, { once: true });
+    };
+
+    if (document.documentElement.classList.contains('construction-overlay-dismissed')){
+      requestAnimationFrame(() => overlay.remove());
+      return;
+    }
+
+    const trigger = overlay.querySelector('[data-construction-continue]');
+    if (trigger instanceof HTMLElement && trigger.dataset.constructionOverlayBound !== 'true'){
+      trigger.dataset.constructionOverlayBound = 'true';
+      const dismiss = event => {
+        event.preventDefault();
+        markDismissed();
+        hideOverlay();
+      };
+      trigger.addEventListener('click', dismiss);
+      trigger.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' '){
+          dismiss(event);
+        }
+      });
+      try {
+        trigger.focus({ preventScroll: true });
+      } catch (_error){
+        trigger.focus();
+      }
+    }
+
+    if (overlay.dataset.constructionOverlayKeydownBound !== 'true'){
+      overlay.dataset.constructionOverlayKeydownBound = 'true';
+      overlay.addEventListener('keydown', event => {
+        if (event.key === 'Escape'){
+          markDismissed();
+          hideOverlay();
+        }
+      });
+    }
+  }());
+</script>
 <header class="nav">
   <a class="brand brand--with-logo" href="/">
     <span class="brand__logo" aria-hidden="true"></span>
