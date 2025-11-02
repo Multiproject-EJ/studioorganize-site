@@ -425,6 +425,11 @@ function initTheme(){
 
 initTheme();
 
+const workspaceThemes = createWorkspaceThemeManager();
+window.StudioOrganize = window.StudioOrganize || {};
+window.StudioOrganize.workspaceThemes = workspaceThemes;
+document.dispatchEvent(new CustomEvent('studioorganize:workspace-themes-ready', { detail: { workspaceThemes } }));
+
 const currentWorkspaceModule = workspaceThemes.getModuleForPath(window.location.pathname);
 if (currentWorkspaceModule){
   let suppressNextThemeSave = false;
@@ -476,11 +481,6 @@ const accountMenu = document.querySelector('[data-account-menu]');
 const accountButton = document.querySelector('[data-account-button]');
 const accountLogoutLink = document.querySelector('[data-account-logout]');
 const navHasAuthControls = Boolean(navAuthLink || accountMenu || accountLogoutLink);
-
-const workspaceThemes = createWorkspaceThemeManager();
-window.StudioOrganize = window.StudioOrganize || {};
-window.StudioOrganize.workspaceThemes = workspaceThemes;
-document.dispatchEvent(new CustomEvent('studioorganize:workspace-themes-ready', { detail: { workspaceThemes } }));
 
 function toggleElementVisibility(element, shouldShow){
   if (!element) return;
@@ -1627,6 +1627,50 @@ const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/creative-hub.html', label: 'Creative Hub', image: '/assets/img/studioorganize_mock.png' },
 ];
 
+let workspaceLauncherObserver = null;
+let workspaceLauncherObserverScheduled = false;
+let workspaceLauncherGlobalInjectionScheduled = false;
+
+function scheduleWorkspaceLauncherRefresh(){
+  if (workspaceLauncherObserverScheduled) return;
+  workspaceLauncherObserverScheduled = true;
+  Promise.resolve().then(() => {
+    workspaceLauncherObserverScheduled = false;
+    initWorkspaceLauncher({ fromObserver: true });
+  });
+}
+
+function scheduleGlobalWorkspaceLauncherInjection(){
+  if (workspaceLauncherGlobalInjectionScheduled) return;
+  workspaceLauncherGlobalInjectionScheduled = true;
+  window.requestAnimationFrame(() => {
+    workspaceLauncherGlobalInjectionScheduled = false;
+    if (document.querySelector('[data-workspace-launcher]')) return;
+    injectGlobalWorkspaceLauncher();
+    initWorkspaceLauncher({ fromObserver: true });
+  });
+}
+
+function observeWorkspaceLaunchers(){
+  if (workspaceLauncherObserver) return;
+  if (!(document.body instanceof HTMLElement)){
+    document.addEventListener('DOMContentLoaded', observeWorkspaceLaunchers, { once: true });
+    return;
+  }
+  workspaceLauncherObserver = new MutationObserver(mutations => {
+    for (const mutation of mutations){
+      for (const node of mutation.addedNodes){
+        if (!(node instanceof HTMLElement)) continue;
+        if (node.matches('[data-workspace-launcher]') || node.querySelector('[data-workspace-launcher]')){
+          scheduleWorkspaceLauncherRefresh();
+          return;
+        }
+      }
+    }
+  });
+  workspaceLauncherObserver.observe(document.body, { childList: true, subtree: true });
+}
+
 function renderWorkspaceModuleLink({ href, label, image }){
   const safeLabel = typeof label === 'string' ? label : '';
   const safeAttr = safeLabel.replace(/"/g, '&quot;');
@@ -1823,10 +1867,30 @@ function injectGlobalWorkspaceLauncher(){
   }
 }
 
-function initWorkspaceLauncher(){
-  injectGlobalWorkspaceLauncher();
+function initWorkspaceLauncher({ fromObserver = false } = {}){
+  if (!fromObserver){
+    observeWorkspaceLaunchers();
+  }
+
   const launchers = Array.from(document.querySelectorAll('[data-workspace-launcher]'));
-  if (!launchers.length) return;
+  if (!launchers.length){
+    if (!fromObserver){
+      scheduleGlobalWorkspaceLauncherInjection();
+    }
+    return;
+  }
+
+  const globalLaunchers = launchers.filter(launcher => launcher.hasAttribute('data-global-workspace-launcher'));
+  const customLaunchers = launchers.filter(launcher => !launcher.hasAttribute('data-global-workspace-launcher'));
+  if (customLaunchers.length && globalLaunchers.length){
+    globalLaunchers.forEach(launcher => {
+      if (launcher instanceof HTMLElement){
+        launcher.remove();
+      }
+    });
+    initWorkspaceLauncher({ fromObserver: true });
+    return;
+  }
 
   const OPEN_CLASS = 'workspace-launcher--open';
   const CHAT_VISIBLE_CLASS = 'workspace-launcher__chat--visible';
