@@ -28,21 +28,14 @@
 <body>
 <div class="construction-overlay" data-construction-overlay aria-hidden="false">
   <div class="construction-overlay__dialog" role="dialog" aria-modal="true" aria-labelledby="construction-title" aria-describedby="construction-description">
-    <svg class="construction-overlay__icon" role="img" aria-labelledby="construction-icon-title" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
-      <title id="construction-icon-title">Under construction icon</title>
-      <defs>
-        <linearGradient id="construction-icon-gradient" x1="18" y1="12" x2="78" y2="84" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#7DD3FC" />
-          <stop offset="1" stop-color="#38BDF8" />
-        </linearGradient>
-      </defs>
-      <circle cx="48" cy="48" r="44" fill="rgba(9, 13, 20, 0.9)" stroke="url(#construction-icon-gradient)" stroke-width="4" />
-      <path d="M48 20a6 6 0 0 1 5.92 5.05l5.6 33.62a6 6 0 0 1-11.82 2l-4.7-28.23-4.7 28.23a6 6 0 1 1-11.82-2l5.6-33.62A6 6 0 0 1 48 20Z" fill="url(#construction-icon-gradient)" />
-      <circle cx="48" cy="72" r="6" fill="url(#construction-icon-gradient)" />
-    </svg>
+    <div class="construction-overlay__media">
+      <a class="construction-overlay__secret" href="#" data-construction-continue>
+        <span class="sr-only">Enter the StudioOrganize site</span>
+      </a>
+      <img class="construction-overlay__image" src="/assets/img/screenplay_writer1.webp" alt="Illustration of a filmmaker outlining a scene." />
+    </div>
     <h2 class="construction-overlay__title" id="construction-title">Pardon the dust</h2>
     <p class="construction-overlay__body" id="construction-description">We&apos;re putting the finishing touches on StudioOrganize. Take a peek if you&apos;d like to look around.</p>
-    <a class="construction-overlay__continue" href="#" data-construction-continue>Continue →</a>
   </div>
 </div>
 <header class="nav">
