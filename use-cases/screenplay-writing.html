@@ -2029,11 +2029,16 @@
     const BACKUP_IDLE_MS = 120000;   // 2 min idle → auto backup
     const FULL_SNAPSHOT_EVERY = 10;  // every 10 deltas
     const MAX_DELTA_BYTES = 128 * 1024;
+    const GOAL_SYNC_DEBOUNCE_MS = 1500;
 
     let backupTimer = null;
     let lastSerializedMetaHash = '';
     let supabaseSession = null;
     let supabaseSessionBound = false;
+    let goalSyncTimer = null;
+    let goalSyncPending = false;
+    let projectGoalsTableAvailable = true;
+    let lastSyncedGoalsSignature = '';
     const storyboardIndexState = new Map();
     const STORYBOARD_INDEX_DELIMITER = '::';
 
@@ -2080,10 +2085,22 @@
       });
     }
 
-    if (window.supabaseClient) bindSupabaseSessionClient(window.supabaseClient);
+    if (window.supabaseClient){
+      bindSupabaseSessionClient(window.supabaseClient);
+      hydrateProjectGoalsFromSupabase(window.supabaseClient);
+      if (goalSyncPending){
+        syncProjectGoalsToSupabase().catch(err => console.error('Project goal sync error:', err));
+      }
+    }
     window.addEventListener('auth:ready', e => {
-      if (supabaseSessionBound && supabaseSession) return;
-      bindSupabaseSessionClient(e.detail?.supabase);
+      const supabase = e.detail?.supabase;
+      if (!supabaseSessionBound || !supabaseSession){
+        bindSupabaseSessionClient(supabase);
+      }
+      hydrateProjectGoalsFromSupabase(supabase);
+      if (goalSyncPending){
+        syncProjectGoalsToSupabase().catch(err => console.error('Project goal sync error:', err));
+      }
     });
 
     async function getSupabaseSession(client){
@@ -2093,6 +2110,182 @@
       if (error) throw error;
       supabaseSession = data?.session || null;
       return supabaseSession;
+    }
+
+    function goalSignatureFromNormalized(goals){
+      const safe = (goals && typeof goals === 'object') ? goals : {};
+      return JSON.stringify({
+        pageCount: (typeof safe.pageCount === 'number' && safe.pageCount > 0) ? safe.pageCount : null,
+        runtimeMinutes: (typeof safe.runtimeMinutes === 'number' && safe.runtimeMinutes > 0) ? safe.runtimeMinutes : null,
+        sceneCount: (typeof safe.sceneCount === 'number' && safe.sceneCount > 0) ? safe.sceneCount : null
+      });
+    }
+
+    function goalSignature(goals){
+      return goalSignatureFromNormalized(normalizeProjectGoals(goals));
+    }
+
+    function hasAnyGoal(normalizedGoals){
+      const safe = (normalizedGoals && typeof normalizedGoals === 'object') ? normalizedGoals : {};
+      return (
+        (typeof safe.pageCount === 'number' && safe.pageCount > 0) ||
+        (typeof safe.runtimeMinutes === 'number' && safe.runtimeMinutes > 0) ||
+        (typeof safe.sceneCount === 'number' && safe.sceneCount > 0)
+      );
+    }
+
+    async function persistProjectGoalsRow(supabase, ownerId, projectId, normalizedGoals){
+      if (!supabase || !ownerId || !projectId || !projectGoalsTableAvailable) return false;
+      const payload = {
+        owner_id: ownerId,
+        project_id: projectId,
+        script_id: projectId,
+        page_goal: (typeof normalizedGoals?.pageCount === 'number' && normalizedGoals.pageCount > 0)
+          ? normalizedGoals.pageCount
+          : null,
+        runtime_goal_minutes: (typeof normalizedGoals?.runtimeMinutes === 'number' && normalizedGoals.runtimeMinutes > 0)
+          ? normalizedGoals.runtimeMinutes
+          : null,
+        scene_goal: (typeof normalizedGoals?.sceneCount === 'number' && normalizedGoals.sceneCount > 0)
+          ? normalizedGoals.sceneCount
+          : null,
+        updated_at: new Date().toISOString()
+      };
+      try {
+        if (hasAnyGoal(normalizedGoals)){
+          const { error } = await supabase
+            .from('project_goals')
+            .upsert(payload, { onConflict: 'owner_id,project_id' });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('project_goals')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('project_id', projectId);
+          if (error) throw error;
+        }
+        return true;
+      } catch (error){
+        if (isTableMissingError(error)){
+          projectGoalsTableAvailable = false;
+          return false;
+        }
+        throw error;
+      }
+    }
+
+    async function syncProjectGoalsToSupabase({ force = false } = {}){
+      if (goalSyncTimer){
+        clearTimeout(goalSyncTimer);
+        goalSyncTimer = null;
+      }
+      if (!project || !project.projectId){
+        goalSyncPending = false;
+        return false;
+      }
+      if (!projectGoalsTableAvailable){
+        goalSyncPending = false;
+        return false;
+      }
+      const supabase = window.supabaseClient;
+      if (!supabase){
+        goalSyncPending = true;
+        return false;
+      }
+      let session;
+      try {
+        session = await getSupabaseSession(supabase);
+      } catch (error){
+        console.warn('Supabase session fetch failed for goal sync:', error);
+        goalSyncPending = true;
+        return false;
+      }
+      if (!session || !session.user){
+        goalSyncPending = true;
+        return false;
+      }
+      const normalized = normalizeProjectGoals(project.settings?.goals);
+      const signature = goalSignatureFromNormalized(normalized);
+      if (!force && signature === lastSyncedGoalsSignature){
+        goalSyncPending = false;
+        return true;
+      }
+      try {
+        const success = await persistProjectGoalsRow(supabase, session.user.id, project.projectId, normalized);
+        if (success){
+          lastSyncedGoalsSignature = signature;
+          goalSyncPending = false;
+          return true;
+        }
+        if (!projectGoalsTableAvailable){
+          goalSyncPending = false;
+        } else {
+          goalSyncPending = true;
+        }
+        return success;
+      } catch (error){
+        console.error('Supabase goal sync failed:', error);
+        goalSyncPending = true;
+        return false;
+      }
+    }
+
+    function scheduleProjectGoalSync(){
+      if (!project || !project.projectId) return;
+      goalSyncPending = true;
+      if (goalSyncTimer){
+        clearTimeout(goalSyncTimer);
+      }
+      goalSyncTimer = setTimeout(()=>{
+        syncProjectGoalsToSupabase().catch(err => console.error('Project goal sync error:', err));
+      }, GOAL_SYNC_DEBOUNCE_MS);
+    }
+
+    async function hydrateProjectGoalsFromSupabase(client){
+      if (!project || !project.projectId || goalSyncPending || !projectGoalsTableAvailable) return;
+      const supabase = client || window.supabaseClient;
+      if (!supabase) return;
+      let session;
+      try {
+        session = await getSupabaseSession(supabase);
+      } catch (error){
+        console.warn('Supabase session fetch failed for goal fetch:', error);
+        return;
+      }
+      if (!session || !session.user) return;
+      try {
+        const { data, error } = await supabase
+          .from('project_goals')
+          .select('page_goal, runtime_goal_minutes, scene_goal')
+          .eq('owner_id', session.user.id)
+          .eq('project_id', project.projectId)
+          .maybeSingle();
+        if (error){
+          if (isTableMissingError(error)){
+            projectGoalsTableAvailable = false;
+            return;
+          }
+          throw error;
+        }
+        const remoteNormalized = data
+          ? normalizeProjectGoals({
+              pageCount: data.page_goal,
+              runtimeMinutes: data.runtime_goal_minutes,
+              sceneCount: data.scene_goal
+            })
+          : normalizeProjectGoals(null);
+        const remoteSignature = goalSignatureFromNormalized(remoteNormalized);
+        const localNormalized = normalizeProjectGoals(project.settings?.goals);
+        const localSignature = goalSignatureFromNormalized(localNormalized);
+        lastSyncedGoalsSignature = remoteSignature;
+        if (remoteSignature === localSignature) return;
+        project.settings.goals = remoteNormalized;
+        render();
+        scheduleSave();
+      } catch (error){
+        console.warn('Supabase goal fetch failed:', error);
+      }
     }
 
     function cloneValue(value){
@@ -2689,6 +2882,20 @@
       if (!ownerId) throw new Error('Owner ID required');
       if (!project) throw new Error('No project loaded');
       ensureProjectShape();
+      const normalizedGoals = normalizeProjectGoals(project.settings?.goals);
+      const goalSignatureValue = goalSignatureFromNormalized(normalizedGoals);
+      if (goalSignatureValue !== lastSyncedGoalsSignature || goalSyncPending){
+        try {
+          const goalsSaved = await persistProjectGoalsRow(supabase, ownerId, project.projectId, normalizedGoals);
+          if (goalsSaved){
+            lastSyncedGoalsSignature = goalSignatureValue;
+            goalSyncPending = false;
+          }
+        } catch (goalError){
+          goalSyncPending = true;
+          console.warn('Supabase goal sync failed during library save:', goalError);
+        }
+      }
       const payload = buildProjectLibraryPayload();
       if (!payload) throw new Error('Nothing to save');
       const scriptName = (project.title || '').trim() || 'Untitled Script';
@@ -2899,6 +3106,8 @@
       }
       project = loaded;
       ensureProjectShape();
+      lastSyncedGoalsSignature = goalSignature(project.settings.goals);
+      goalSyncPending = false;
       if (!project.settings.coverImageUrl){
         const metaCover = typeof meta.image_url === 'string' ? meta.image_url : (typeof meta.thumbnail_url === 'string' ? meta.thumbnail_url : '');
         const normalizedMetaCover = metaCover ? normalizeStoryboardUrl(metaCover) : null;
@@ -2944,6 +3153,7 @@
         console.error('Failed to persist loaded script locally:', err);
       }
       scheduleBackup();
+      hydrateProjectGoalsFromSupabase();
     }
 
     function normalizeForComparison(value){
@@ -3340,6 +3550,8 @@
         _lastBackedUpVersion: 0,
         _deltaCountSinceFull: 0
       };
+      lastSyncedGoalsSignature = goalSignature(project.settings.goals);
+      goalSyncPending = false;
       project.scenes.forEach(s => { project._hashes.scene[s.id] = hashString(stableSceneString(s)); });
       activeSceneId = project.scenes[0].id;
       scenePopoverOpenId = null;
@@ -7635,6 +7847,7 @@
           bumpVersion();
           scheduleSave();
           scheduleBackup();
+          scheduleProjectGoalSync();
         }
       };
       input.addEventListener('input', persistGoal);
@@ -8461,6 +8674,20 @@
         }
         const ownerId = session.user.id;
         ensureProjectShape();
+        const normalizedGoals = normalizeProjectGoals(project.settings?.goals);
+        const goalSignatureValue = goalSignatureFromNormalized(normalizedGoals);
+        if (goalSignatureValue !== lastSyncedGoalsSignature || goalSyncPending){
+          try {
+            const goalsSaved = await persistProjectGoalsRow(supabase, ownerId, project.projectId, normalizedGoals);
+            if (goalsSaved){
+              lastSyncedGoalsSignature = goalSignatureValue;
+              goalSyncPending = false;
+            }
+          } catch (goalError){
+            goalSyncPending = true;
+            console.warn('Supabase goal sync failed during backup:', goalError);
+          }
+        }
         const scenes = project.scenes.map((scene, index) => sceneToSupabaseRow(scene, index, ownerId));
         const storyboardRows = project.scenes.flatMap(scene => sceneStoryboardsToRows(scene, ownerId));
 
