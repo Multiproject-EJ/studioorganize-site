@@ -89,6 +89,29 @@ html.construction-overlay-dismissed .construction-overlay{display:none;}
 .brand--with-logo{display:inline-flex;align-items:center;gap:0;line-height:0}
 .brand__logo{display:block;inline-size:clamp(140px,20vw,220px);block-size:32px;background-image:var(--brand-logo-image);background-repeat:no-repeat;background-size:contain;background-position:left center}
 .brand-with-logo{display:flex;align-items:center;gap:10px;position:relative}
+.landing-intro{position:relative;display:flex;flex-direction:column;min-height:100vh;background:#000;overflow:hidden}
+.landing-intro__parallax{flex:1 1 70%;background-color:#000;background-image:url('/assets/img/darkSOlogo.webp');background-repeat:no-repeat;background-size:min(62vw,440px);background-position:center;background-attachment:fixed;box-shadow:inset 0 -120px 180px rgba(0,0,0,.85)}
+.landing-intro__steps{flex:0 0 auto;padding:clamp(24px,5vw,48px);background:linear-gradient(180deg,rgba(0,0,0,.92),rgba(0,0,0,.98));display:flex;justify-content:center}
+.landing-intro__step-list{display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:clamp(16px,3vw,28px);margin:0;padding:0;list-style:none;width:min(1100px,100%)}
+.landing-intro__step{flex:1 1 clamp(140px,18vw,220px);display:flex;flex-direction:column;gap:8px;padding:clamp(14px,2.4vw,20px);border-radius:18px;border:1px solid rgba(125,211,252,.18);background:rgba(255,255,255,.02);backdrop-filter:blur(6px);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.landing-intro__step-title{font-size:clamp(1rem,2.2vw,1.25rem);font-weight:700;letter-spacing:.02em;color:#f8fafc}
+.landing-intro__step-subtitle{font-size:clamp(.65rem,1.4vw,.85rem);line-height:1.5;font-style:italic;color:rgba(226,232,240,.8)}
+.landing-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;padding:clamp(18px,4vw,32px);height:min(90vh,720px);background:radial-gradient(circle at top,#111827,#020202);align-items:stretch}
+.landing-grid__cell{position:relative;background:rgba(15,23,42,.62);border:1px solid rgba(125,211,252,.12);border-radius:22px;display:grid;place-items:center;box-shadow:0 24px 60px rgba(2,6,23,.52);overflow:hidden}
+.landing-grid__cell span{font-size:clamp(3rem,14vw,8rem);font-weight:800;color:rgba(148,163,184,.85);text-shadow:0 18px 36px rgba(2,6,23,.58)}
+@media (max-width:960px){
+  .landing-intro{min-height:90vh}
+  .landing-intro__parallax{background-size:min(68vw,380px);background-attachment:scroll}
+  .landing-intro__step{flex-basis:clamp(160px,45%,240px)}
+  .landing-grid{height:auto;grid-template-columns:1fr;grid-template-rows:none}
+  .landing-grid__cell{min-height:220px}
+}
+@media (max-width:600px){
+  .landing-intro__steps{padding:clamp(20px,8vw,32px)}
+  .landing-intro__step{flex-basis:100%;padding:clamp(16px,6vw,22px)}
+  .landing-grid{gap:16px}
+  .landing-grid__cell span{font-size:clamp(3rem,20vw,6rem)}
+}
 .brand-with-logo__badge{height:32px;width:auto}
 .topbar__badge{
   display:inline-flex;
