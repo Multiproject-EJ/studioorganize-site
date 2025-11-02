@@ -67,6 +67,182 @@
       outline: 2px solid rgba(45,212,191,0.75);
       outline-offset: 3px;
     }
+    .ch-section {
+      width: 100%;
+      max-width: 960px;
+      margin: 3rem auto 0;
+      padding: 2.5rem;
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+      text-align: left;
+    }
+    .ch-section__header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      margin-bottom: 1.75rem;
+    }
+    .ch-section__header h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    .ch-section__header p {
+      font-size: 0.95rem;
+      color: #475569;
+    }
+    .ch-tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+    .idea-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 1.5rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .idea-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 30px rgba(15, 23, 42, 0.12);
+    }
+    .idea-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .idea-card small {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .ch-btn {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: #e2e8f0;
+      border: 1px solid #cbd5f5;
+      border-radius: 9999px;
+      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .ch-btn:hover {
+      background: #cbd5f5;
+      color: #0b1120;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    }
+    .ch-btn--primary {
+      background: #0ea5e9;
+      border-color: #0ea5e9;
+      color: #f8fafc;
+    }
+    .ch-btn--primary:hover {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: #f8fafc;
+    }
+    .ig-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 80;
+    }
+    .ig-modal[aria-hidden="false"] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .ig-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(2px);
+    }
+    .ig-modal__content {
+      position: relative;
+      width: min(480px, calc(100% - 2rem));
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 1.25rem;
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      z-index: 1;
+    }
+    .ig-modal__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .ig-modal__header h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    .ig-modal__body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 50vh;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    .ig-modal__footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .ig-close {
+      border: none;
+      background: transparent;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .ig-close:hover {
+      color: #1f2937;
+    }
+    .ig-step {
+      padding: 1rem;
+      border-radius: 0.85rem;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+    .ig-step-title {
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+    }
+    .ig-step-helper {
+      font-size: 0.85rem;
+      color: #475569;
+    }
+    @media (max-width: 768px) {
+      .ch-section {
+        padding: 1.75rem;
+        border-radius: 1.25rem;
+      }
+    }
   </style>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -471,6 +647,13 @@
               <p className="absolute bottom-5 text-xs text-slate-400">Spontaneous • Bold</p>
             </button>
           </div>
+          <section className="ch-section" id="idea-phase">
+            <header className="ch-section__header">
+              <h2>Idea Phase — Story Games</h2>
+              <p>Run these before you open Storyboard Pro or Character Studio.</p>
+            </header>
+            <div className="ch-tools-grid" id="idea-games-grid"></div>
+          </section>
         </div>
       );
     }
@@ -1020,6 +1203,157 @@
     }
 
     ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+  </script>
+  <div id="ideaGameModal" class="ig-modal" aria-hidden="true">
+    <div class="ig-modal__backdrop"></div>
+    <div class="ig-modal__content" role="dialog" aria-modal="true">
+      <header class="ig-modal__header">
+        <h3 id="ig-title">Mini app</h3>
+        <button id="ig-close" class="ig-close">×</button>
+      </header>
+      <div class="ig-modal__body" id="ig-body"></div>
+      <footer class="ig-modal__footer">
+        <button id="ig-export" class="ch-btn ch-btn--primary">Send to Storyboard</button>
+      </footer>
+    </div>
+  </div>
+  <script>
+    const STORY_IDEA_CONFIG = {
+      appSet: "story-idea-phase-v1",
+      apps: [
+        {
+          id: "brainboard",
+          title: "Brain Board & Keywords",
+          goal: "Dump plot, emotions, characters.",
+          steps: [
+            { id: "drop", title: "Drop tags", helper: "Drag plot/emotion/character tags." },
+            { id: "cluster", title: "Cluster", helper: "Group by act or POV." },
+            { id: "label", title: "Label", helper: "Name clusters (Cold open, Main arc...)" }
+          ]
+        },
+        {
+          id: "seasonmapper",
+          title: "Season / Episode Mapper",
+          goal: "Title → season → episode.",
+          steps: [
+            { id: "name-seasons", title: "Name seasons", helper: "Give S1 a working title." },
+            { id: "add-episodes", title: "Add episodes", helper: "1-line logline each." },
+            { id: "pace", title: "Check flow", helper: "Spread reveals across eps." }
+          ]
+        },
+        {
+          id: "emotiondial",
+          title: "Emotion & Tone Dial",
+          goal: "Make it feel like one show.",
+          steps: [
+            { id: "pick-default", title: "Pick default tone", helper: "70% of the time." },
+            { id: "annotate-episodes", title: "Tag episodes", helper: "Warm, eerie, heroic..." },
+            { id: "consistency-check", title: "Consistency", helper: "Flag odd episodes." }
+          ]
+        },
+        {
+          id: "conflict",
+          title: "Conflict / Stakes Builder",
+          goal: "Add friction to every episode.",
+          steps: [
+            { id: "pick-antagonist", title: "Antagonist", helper: "Person/system/nature/inner" },
+            { id: "add-obstacle", title: "Obstacle", helper: "What slows them down?" },
+            { id: "add-twist", title: "Twist", helper: "Small twist every 1–2 eps" }
+          ]
+        },
+        {
+          id: "scenemachine",
+          title: "Scene Machine (beats)",
+          goal: "Test 3–5 scenes fast.",
+          steps: [
+            { id: "setup", title: "Setup", helper: "Who and what do they want?" },
+            { id: "trouble", title: "Trouble", helper: "Something blocks it." },
+            { id: "turn", title: "Turn", helper: "New info or flip." },
+            { id: "payoff", title: "Payoff", helper: "What changed?" }
+          ]
+        }
+      ]
+    };
+
+    (function () {
+      function mountIdeaPhase() {
+        const grid = document.getElementById("idea-games-grid");
+        if (!grid || grid.dataset.igMounted === "true") return;
+        grid.dataset.igMounted = "true";
+
+        STORY_IDEA_CONFIG.apps.forEach(app => {
+          const card = document.createElement("article");
+          card.className = "idea-card";
+          card.innerHTML = `
+      <h3>${app.title}</h3>
+      <p style="font-size:0.72rem;color:#475569;">${app.goal}</p>
+      <small>${app.steps.length} steps</small>
+      <button class="ch-btn" data-idea-app="${app.id}">Open</button>
+    `;
+          grid.appendChild(card);
+        });
+
+        const modal = document.getElementById("ideaGameModal");
+        const modalTitle = document.getElementById("ig-title");
+        const modalBody = document.getElementById("ig-body");
+        const modalClose = document.getElementById("ig-close");
+        const modalExport = document.getElementById("ig-export");
+
+        function openIdeaApp(appId) {
+          const app = STORY_IDEA_CONFIG.apps.find(a => a.id === appId);
+          if (!app) return;
+          modalTitle.textContent = app.title;
+          modalBody.innerHTML = app.steps.map(step => `
+      <div class="ig-step">
+        <div class="ig-step-title">${step.title}</div>
+        <div class="ig-step-helper">${step.helper}</div>
+      </div>
+    `).join("");
+          modal.setAttribute("aria-hidden", "false");
+        }
+
+        grid.addEventListener("click", function (e) {
+          const btn = e.target.closest("[data-idea-app]");
+          if (!btn) return;
+          openIdeaApp(btn.getAttribute("data-idea-app"));
+        });
+
+        function closeModal() {
+          modal.setAttribute("aria-hidden", "true");
+        }
+        if (modal.dataset.igBound !== "true") {
+          modal.dataset.igBound = "true";
+          modalClose.addEventListener("click", closeModal);
+          modal.addEventListener("click", function (e) {
+            if (e.target.classList.contains("ig-modal__backdrop")) closeModal();
+          });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") closeModal();
+          });
+
+          // placeholder → connect to existing Storyboard tool
+          modalExport.addEventListener("click", function () {
+            alert("Send this mini-app’s data to Storyboard / Character Studio");
+            closeModal();
+          });
+        }
+      }
+
+      function init() {
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", mountIdeaPhase, { once: true });
+        } else {
+          mountIdeaPhase();
+        }
+
+        const observer = new MutationObserver(() => {
+          mountIdeaPhase();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      init();
+    })();
   </script>
   <script type="module" src="/assets/main.js"></script>
 </body>
