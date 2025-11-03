@@ -293,6 +293,30 @@
       .layout { display: grid; grid-template-columns: 280px 1fr 320px; gap: 12px; padding: 16px; min-height: 0; }
       .panel { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
       .panel h2 { font-size: 13px; font-weight: 600; letter-spacing: .4px; color: var(--muted); margin: 12px 16px 8px; text-transform: uppercase; }
+      .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+      .scene-overview { padding: 24px 20px; display: flex; flex-direction: column; gap: 12px; }
+      .scene-overview__heading { font-size: 13px; letter-spacing: 0.4px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin: 0; }
+      .scene-overview__title { display: flex; gap: 8px; align-items: baseline; }
+      .scene-overview__scene-number { font-size: 20px; font-weight: 600; letter-spacing: 0.2px; color: var(--ink); }
+      .scene-overview__separator { color: var(--muted); font-size: 16px; letter-spacing: 0.4px; }
+      .scene-overview__slug { font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: 0.4px; text-transform: uppercase; }
+      .scene-overview__details { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+      .scene-overview__details strong { color: var(--ink); font-weight: 600; }
+      .image-selection { display: flex; flex-direction: column; gap: 16px; padding: 24px 20px 28px; }
+      .image-selection__header { display: flex; flex-direction: column; gap: 12px; }
+      .image-selection__title { font-size: 18px; font-weight: 600; letter-spacing: 0.2px; color: var(--ink); text-transform: uppercase; }
+      .image-selection__meta { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 13px; color: var(--muted); }
+      .image-selection__meta strong { color: var(--ink); font-weight: 600; }
+      .image-selection__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+      .image-selection__item { position: relative; border: none; padding: 0; background: none; border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; box-shadow: 0 8px 20px rgba(15,23,42,0.08); }
+      .image-selection__item:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .image-selection__item:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(15,23,42,0.18); }
+      .image-selection__item img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+      .image-selection__label { position: absolute; left: 12px; bottom: 12px; padding: 6px 10px; background: rgba(15,23,42,0.78); color: rgba(255,255,255,0.92); font-size: 12px; font-weight: 500; border-radius: 999px; letter-spacing: 0.3px; text-transform: uppercase; }
+      @media (max-width: 960px) {
+        .image-selection { padding: 20px 16px 24px; }
+        .image-selection__grid { gap: 12px; }
+      }
       .panel-body { flex: 1; padding: 0 16px 16px; overflow: auto; }
       .scene-list { display: flex; flex-direction: column; gap: 10px; }
       .scene-card { background: var(--card); border: 1px solid var(--ring); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: border-color .2s ease, transform .2s ease; outline: none; position: relative; }
@@ -880,15 +904,97 @@
       </div>
 
       <div class="layout">
-        <aside class="panel">
-          <h2>Scenes</h2>
-          <div class="panel-body">
-            <div class="scene-list" data-scene-list></div>
+        <aside class="panel scene-overview-panel">
+          <div class="scene-overview">
+            <h2 class="scene-overview__heading">SCENES</h2>
+            <div class="scene-overview__title">
+              <span class="scene-overview__scene-number">Scene 1</span>
+              <span class="scene-overview__separator" aria-hidden="true">·</span>
+              <span class="scene-overview__slug">EXT. ALLEY - NIGHT</span>
+            </div>
+            <div class="scene-overview__details">
+              <span><strong>Storyboard locked · 12 frames</strong></span>
+              <span>Lighting cues synced</span>
+            </div>
+            <div class="visually-hidden" data-scene-list></div>
           </div>
         </aside>
 
         <section class="panel timeline-panel">
-          <div class="timeline-stage">
+          <div class="image-selection">
+            <div class="image-selection__header">
+              <h2 class="image-selection__title">SCENE 1 · EXT. ALLEY - NIGHT</h2>
+              <div class="image-selection__meta">
+                <span>Storyboard locked · 12 frames</span>
+                <span>ALLEY · NIGHT</span>
+                <span>Demo data — open Writer to sync live scenes.</span>
+              </div>
+              <div class="image-selection__meta">
+                <span><strong>Timeline synced to script page 47</strong></span>
+                <span>Card dialog</span>
+              </div>
+              <div class="image-selection__meta">
+                <span>SCENE TIMELINE (MINUTES)</span>
+                <span>DRAG &amp; DROP CLIPS TO RE-TIME</span>
+                <span>0:00 · 0:05 · 0:10 · 0:15 · 0:20 · 0:25 · 0:30 · 0:35 · 0:40</span>
+              </div>
+              <div class="image-selection__meta">
+                <span>Scene 1</span>
+                <span>EXT. ALLEY - NIGHT</span>
+              </div>
+            </div>
+            <div class="image-selection__grid">
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%231d4ed8%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%230ea5e9%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2001%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 01" loading="lazy" />
+  <span class="image-selection__label">Option 01</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%237c3aed%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23ec4899%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2002%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 02" loading="lazy" />
+  <span class="image-selection__label">Option 02</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%230f172a%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%231e293b%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2003%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 03" loading="lazy" />
+  <span class="image-selection__label">Option 03</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23ef4444%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23f97316%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2004%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 04" loading="lazy" />
+  <span class="image-selection__label">Option 04</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%2314b8a6%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%230ea5e9%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2005%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 05" loading="lazy" />
+  <span class="image-selection__label">Option 05</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23f59e0b%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23f97316%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2006%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 06" loading="lazy" />
+  <span class="image-selection__label">Option 06</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23a855f7%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%236366f1%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2007%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 07" loading="lazy" />
+  <span class="image-selection__label">Option 07</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%232563eb%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%234338ca%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2008%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 08" loading="lazy" />
+  <span class="image-selection__label">Option 08</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%230ea5e9%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2322d3ee%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2009%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 09" loading="lazy" />
+  <span class="image-selection__label">Option 09</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%236366f1%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2322d3ee%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2010%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 10" loading="lazy" />
+  <span class="image-selection__label">Option 10</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23f43f5e%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23f97316%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2011%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 11" loading="lazy" />
+  <span class="image-selection__label">Option 11</span>
+</button>
+<button class="image-selection__item" type="button">
+  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%231e293b%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2364748b%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2012%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 12" loading="lazy" />
+  <span class="image-selection__label">Option 12</span>
+</button>
+            </div>
+          </div>
+          <div class="timeline-stage timeline-stage--legacy visually-hidden" aria-hidden="true">
             <header>
               <div>
                 <h2 data-scene-title>Scene 13 · Rooftop chase</h2>
