@@ -535,6 +535,71 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
   gap:14px;
 }
 
+.sd-form--project{
+  background:var(--alt);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.sd-form--project select{
+  min-height:42px;
+}
+
+.sd-project-hint{
+  margin:0;
+  font-size:0.85rem;
+}
+
+.sd-sync{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 18px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--alt);
+  flex-wrap:wrap;
+}
+
+.sd-sync__copy{flex:1 1 220px;}
+
+.sd-sync__status{
+  margin:0;
+  font-weight:600;
+}
+
+.sd-sync__detail{
+  margin:4px 0 0;
+  font-size:0.85rem;
+  color:var(--muted);
+}
+
+.sd-sync__actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.sd-sync[data-state="loading"]{
+  border-style:dashed;
+}
+
+.sd-sync[data-state="warning"]{
+  border-color:rgba(248,113,113,.6);
+  box-shadow:0 0 0 1px rgba(248,113,113,.18);
+}
+
+.sd-sync[data-state="success"]{
+  border-color:rgba(74,222,128,.45);
+  box-shadow:0 0 0 1px rgba(74,222,128,.18);
+}
+
 .sd-form label{
   display:flex;
   flex-direction:column;

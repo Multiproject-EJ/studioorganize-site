@@ -90,6 +90,26 @@
           <h2>Scene roster</h2>
           <p class="muted">Capture each storyboard beat the art department must support.</p>
         </header>
+        <div class="sd-sync" data-sync-banner>
+          <div class="sd-sync__copy">
+            <p class="sd-sync__status" data-sync-status>Offline workspace</p>
+            <p class="sd-sync__detail" data-sync-detail>Scenes are stored in this browser. Sign in to sync with Supabase.</p>
+          </div>
+          <div class="sd-sync__actions">
+            <button class="btn btn-primary" type="button" data-sync-save hidden>Sync to Supabase</button>
+            <button class="btn btn-ghost" type="button" data-sync-refresh hidden>Refresh</button>
+            <button class="btn btn-ghost" type="button" data-sync-signin hidden>Sign in</button>
+          </div>
+        </div>
+        <div class="sd-form sd-form--project">
+          <label>
+            <span>Active script</span>
+            <select data-project-select>
+              <option value="local">Offline workspace</option>
+            </select>
+          </label>
+          <p class="muted sd-project-hint" data-project-hint>Choose a script to connect sets with Storyboard Pro.</p>
+        </div>
         <form class="sd-form" data-scene-form>
           <label>
             <span>Scene title</span>
