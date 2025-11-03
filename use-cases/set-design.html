@@ -51,36 +51,184 @@
   <a href="/">Home</a> · <a href="/use-cases/">Use Cases</a> · Set / Production Design
 </nav>
 
-<main class="section">
-  <div class="grid two">
-    <article>
-      <h1>Set / Production Design — keep art & logistics in sync</h1>
-      <p class="muted">Organize locations, build dressing lists, and sync needs with scenes and shots.</p>
-
-      <h2>Key tabs</h2>
-      <ul class="checks">
-        <li>Locations DB (photos, access, power, noise, contacts)</li>
-        <li>Props & Dressing (status, owner, storage, continuity notes)</li>
-        <li>Shot Needs (pulls items per scene/shot)</li>
+<main class="section section--wide">
+  <div class="set-hero">
+    <div class="set-hero__copy">
+      <p class="eyebrow">AI Production Toolkit</p>
+      <h1>AI Set Designer &amp; Scene Organizer</h1>
+      <p class="lead">Describe the world, watch concept boards auto-generate, and keep every prop, elevation, and lighting study tethered to Storyboard Pro and Character Studio.</p>
+      <ul class="set-hero__features">
+        <li><strong>Prompt once, branch fast:</strong> natural language briefs generate master shots, elevations, prop boards, and lighting moods in parallel.</li>
+        <li><strong>Scene graph aware:</strong> link sets to storyboard IDs and character beats so departments stay synced as the script evolves.</li>
+        <li><strong>Library ready:</strong> lock final frames, props, and sourcing notes into a searchable vault that your crew can share.</li>
       </ul>
-
-      <h2>How it flows</h2>
-      <ol>
-        <li>Tag scenes with location + time of day → stripboard groups them.</li>
-        <li>Shot list references Props/Locations → auto-pull needs.</li>
-        <li>Call sheets include location info and priority props.</li>
-      </ol>
-    </article>
-
-    <aside>
-      <div class="mockup-card"><div class="mockup-bar"></div>
-        <img src="/assets/img/studioorganize_mock.png" alt="Set design mockup">
-      </div>
-      <div class="callout" style="margin-top:12px">
-        <a class="btn btn-primary" href="/product/studioorganize.html">Run this pipeline →</a>
-      </div>
+    </div>
+    <aside class="set-hero__panel" aria-label="Live generation recap">
+      <h2>Live design run</h2>
+      <dl>
+        <div>
+          <dt>Concept plates</dt>
+          <dd>Master • Elevation • Lighting • Prop grid</dd>
+        </div>
+        <div>
+          <dt>Connected scene</dt>
+          <dd>Storyboard 08B &mdash; Alleyway Chase</dd>
+        </div>
+        <div>
+          <dt>Shared with</dt>
+          <dd>Art • Construction • VFX • Camera</dd>
+        </div>
+      </dl>
+      <p class="muted">Ready to try it? Define your first scene below and generate production packets in minutes.</p>
     </aside>
   </div>
+
+  <section class="set-designer" data-set-designer-app>
+    <div class="set-designer__layout">
+      <section class="sd-panel sd-panel--scenes">
+        <header class="sd-panel__header">
+          <h2>Scene roster</h2>
+          <p class="muted">Capture each storyboard beat the art department must support.</p>
+        </header>
+        <div class="sd-sync" data-sync-banner>
+          <div class="sd-sync__copy">
+            <p class="sd-sync__status" data-sync-status>Offline workspace</p>
+            <p class="sd-sync__detail" data-sync-detail>Scenes are stored in this browser. Sign in to sync with Supabase.</p>
+          </div>
+          <div class="sd-sync__actions">
+            <button class="btn btn-primary" type="button" data-sync-save hidden>Sync to Supabase</button>
+            <button class="btn btn-ghost" type="button" data-sync-refresh hidden>Refresh</button>
+            <button class="btn btn-ghost" type="button" data-sync-signin hidden>Sign in</button>
+          </div>
+        </div>
+        <div class="sd-form sd-form--project">
+          <label>
+            <span>Active script</span>
+            <select data-project-select>
+              <option value="local">Offline workspace</option>
+            </select>
+          </label>
+          <p class="muted sd-project-hint" data-project-hint>Choose a script to connect sets with Storyboard Pro.</p>
+        </div>
+        <form class="sd-form" data-scene-form>
+          <label>
+            <span>Scene title</span>
+            <input type="text" name="title" placeholder="eg. Alleyway Chase" required />
+          </label>
+          <label>
+            <span>Storyboard reference</span>
+            <input type="text" name="storyboard" placeholder="Storyboard ID or frame range" />
+          </label>
+          <label>
+            <span>Scene brief</span>
+            <textarea name="brief" rows="3" placeholder="Key beats, tone, and visual goals"></textarea>
+          </label>
+          <div class="sd-form__actions">
+            <button class="btn btn-primary" type="submit">Add scene</button>
+            <button class="btn btn-ghost" type="button" data-reset-designer>Reset designer</button>
+          </div>
+        </form>
+        <div class="sd-list" data-scene-list aria-live="polite"></div>
+      </section>
+
+      <section class="sd-panel sd-panel--builder">
+        <header class="sd-panel__header">
+          <h2>Generate sets</h2>
+          <p class="muted">Outline intent, materials, and mood. The AI assistant will branch concept images instantly.</p>
+        </header>
+        <div class="sd-empty" data-builder-empty>
+          <p>Select or create a scene to start designing sets.</p>
+        </div>
+        <div class="sd-builder" data-builder-content hidden>
+          <h3>Designing for <span data-active-scene-name></span></h3>
+          <form class="sd-form" data-set-form>
+            <label>
+              <span>Set name</span>
+              <input type="text" name="setName" placeholder="eg. Rooftop Safehouse" required />
+            </label>
+            <label>
+              <span>Narrative intent</span>
+              <textarea name="intent" rows="3" placeholder="What must the audience feel or understand?" required></textarea>
+            </label>
+            <div class="sd-form__row">
+              <label>
+                <span>Environment</span>
+                <input type="text" name="environment" placeholder="Location, architecture, terrain" />
+              </label>
+              <label>
+                <span>Visual style</span>
+                <select name="style">
+                  <option value="cinematic realism">Cinematic realism</option>
+                  <option value="neo-noir">Neo-noir</option>
+                  <option value="retro futurism">Retro futurism</option>
+                  <option value="art deco theatrical">Art deco theatrical</option>
+                  <option value="expressionist stagecraft">Expressionist stagecraft</option>
+                  <option value="hand-painted storybook">Hand-painted storybook</option>
+                  <option value="custom">Custom blend (describe below)</option>
+                </select>
+              </label>
+            </div>
+            <div class="sd-form__row">
+              <label>
+                <span>Lighting call</span>
+                <input type="text" name="lighting" placeholder="eg. sodium vapor pools, cyan rim" />
+              </label>
+              <label>
+                <span>Palette</span>
+                <input type="text" name="palette" placeholder="eg. rust, petrol blue, wet asphalt" />
+              </label>
+            </div>
+            <label>
+              <span>Material &amp; mood details</span>
+              <textarea name="details" rows="3" placeholder="Textures, construction notes, surfaces, atmosphere"></textarea>
+            </label>
+            <label>
+              <span>Camera &amp; blocking notes</span>
+              <input type="text" name="camera" placeholder="eg. Steadicam chase with overhead drone cap" />
+            </label>
+            <label>
+              <span>Storyboard beats &amp; character tie-ins</span>
+              <textarea name="beats" rows="3" placeholder="Shots, character entrances, callouts to Character Studio references"></textarea>
+            </label>
+            <div class="sd-form__row sd-form__row--tight">
+              <label>
+                <span>Concept frames</span>
+                <select name="frameCount">
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </label>
+              <label>
+                <span>Prop spotlight prompt (optional)</span>
+                <input type="text" name="propFocus" placeholder="eg. hero grappling hook, neon signage" />
+              </label>
+            </div>
+            <button class="btn btn-primary" type="submit">Generate concept pack</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="sd-panel sd-panel--library">
+        <header class="sd-panel__header">
+          <h2>Scene library &amp; exports</h2>
+          <p class="muted">Approve looks, manage props, and send packets to Storyboard Pro.</p>
+        </header>
+        <div class="sd-empty" data-library-empty>
+          <p>No sets yet. Generate a concept pack to populate the library.</p>
+        </div>
+        <div class="sd-library" data-set-list></div>
+        <div class="sd-export" data-export-block hidden>
+          <div class="sd-export__actions">
+            <button class="btn btn-primary" type="button" data-export-json>Generate storyboard packet</button>
+            <button class="btn btn-ghost" type="button" data-copy-export hidden>Copy JSON</button>
+            <button class="btn btn-ghost" type="button" data-download-export hidden>Download .json</button>
+          </div>
+          <textarea class="sd-export__output" data-export-output rows="10" readonly hidden></textarea>
+        </div>
+      </section>
+    </div>
+  </section>
 </main>
 
 <footer class="footer">
@@ -93,5 +241,6 @@
   </div>
 </footer>
 <script type="module" src="/assets/main.js"></script>
+<script type="module" src="/assets/js/set-designer.js"></script>
 </body>
 </html>
