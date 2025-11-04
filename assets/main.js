@@ -1619,11 +1619,11 @@ function initNotificationCenter(){
 }
 
 const WORKSPACE_LAUNCHER_MODULES = [
-  { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/screenplay_writer1.webp' },
-  { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/studioorganize_mock.png' },
-  { href: '/StoryboardPro.html', label: 'Storyboard Pro', image: '/assets/img/studioorganize_mock.png' },
-  { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/studioorganize_mock.png' },
-  { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/studioorganize_mock.png' },
+  { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/IMG_6892.webp' },
+  { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/IMG_6894.webp' },
+  { href: '/StoryboardPro.html', label: 'Storyboard Pro', image: '/assets/img/IMG_6893.webp' },
+  { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/IMG_6896.webp' },
+  { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/IMG_6903.webp' },
   { href: '/creative-hub.html', label: 'Creative Hub', image: '/assets/img/studioorganize_mock.png' },
 ];
 
