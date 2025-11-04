@@ -797,6 +797,10 @@
       .script-dialog__goal-modal-close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
       .script-dialog__goal-modal-body{display:flex; flex-direction:column; gap:16px;}
       .script-dialog__goal-modal-description{margin:0; font-size:13px; color:var(--muted);}
+      :root[data-script-dialog-embed="true"] body{background:transparent; overflow:hidden;}
+      :root[data-script-dialog-embed="true"] body > *:not(#scriptDialog):not(script){display:none !important;}
+      :root[data-script-dialog-embed="true"] .script-dialog{background:transparent;}
+      :root[data-script-dialog-embed="true"] .script-dialog__panel{max-height:100vh; box-shadow:none;}
       @media (min-width: 720px){
         .script-dialog__body{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
@@ -1776,6 +1780,45 @@
     }
     syncNavHeight();
     window.addEventListener('resize', syncNavHeight);
+
+    const SCRIPT_DIALOG_MESSAGE_TYPE = 'so-script-dialog';
+    const isScriptDialogEmbedded = (() => {
+      try {
+        return window.self !== window.top && new URLSearchParams(window.location.search).get('embed') === 'script-dialog';
+      } catch (_error){
+        return false;
+      }
+    })();
+    if (isScriptDialogEmbedded){
+      document.documentElement.setAttribute('data-script-dialog-embed', 'true');
+    }
+
+    function postScriptDialogMessage(action){
+      if (!isScriptDialogEmbedded) return;
+      try {
+        window.parent.postMessage({ type: SCRIPT_DIALOG_MESSAGE_TYPE, action }, '*');
+      } catch (_error){}
+    }
+
+    if (isScriptDialogEmbedded){
+      window.addEventListener('message', event => {
+        if (event.source !== window.parent) return;
+        if (event.origin && event.origin !== window.location.origin && event.origin !== 'null') return;
+        const data = event.data;
+        if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) return;
+        if (data.action === 'open'){
+          openScriptDialog();
+        } else if (data.action === 'close'){
+          closeScriptDialog();
+        }
+      });
+      const notifyReady = () => postScriptDialogMessage('ready');
+      if (document.readyState === 'complete' || document.readyState === 'interactive'){
+        notifyReady();
+      } else {
+        document.addEventListener('DOMContentLoaded', notifyReady, { once: true });
+      }
+    }
 
     /* =========================
      * IndexedDB minimal wrapper
@@ -2906,6 +2949,7 @@
       if (newTitleInput) newTitleInput.value = '';
       const newCoverInput = document.getElementById('scriptDialogNewCoverUrl');
       if (newCoverInput) newCoverInput.value = '';
+      postScriptDialogMessage('closed');
       updateScriptDialogLoadState();
     }
 
