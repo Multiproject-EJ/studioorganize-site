@@ -78,24 +78,29 @@ img{max-width:100%;display:block}
   align-items:center;
   justify-content:center;
   background-color:#000;
-  background-image:url('/assets/img/darkSOlogo.webp');
-  background-repeat:no-repeat;
-  background-position:center;
-  background-size:min(90vw,1200px);
-  background-attachment:fixed;
   overflow:hidden;
-}
-
-@media (prefers-reduced-motion: reduce){
-  .landing-parallax{background-attachment:scroll;}
 }
 
 @media (max-width: 768px){
   .landing-parallax{
     min-height:80vh;
-    background-attachment:scroll;
-    background-size:min(120vw,1100px);
   }
+}
+
+.landing-parallax__media{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.landing-parallax__image{
+  height:100%;
+  max-height:100%;
+  width:auto;
+  max-width:min(92vw,1200px);
+  object-fit:contain;
+  filter:drop-shadow(0 20px 40px rgba(0,0,0,.45));
 }
 
 .landing-steps{
