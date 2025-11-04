@@ -9663,7 +9663,11 @@
       }
 
       project.settings = project.settings || {};
-      if (typeof project.settings.focus === 'undefined') project.settings.focus = false;
+      if (typeof project.settings.focus === 'undefined') {
+        // Auto-enable focus mode on mobile devices
+        const isMobile = window.innerWidth <= 768;
+        project.settings.focus = isMobile;
+      }
       if (typeof project.settings.focusHudPinned === 'undefined') project.settings.focusHudPinned = false;
       if (typeof project.settings.timelineDockPinned === 'undefined') project.settings.timelineDockPinned = true;
 

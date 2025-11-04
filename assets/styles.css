@@ -377,6 +377,7 @@ html.construction-overlay-dismissed .construction-overlay{display:none;}
 html.is-mobile-app body{background:var(--alt);padding-bottom:calc(120px + env(safe-area-inset-bottom));}
 html.is-mobile-app .nav{position:sticky;top:0;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;gap:12px;flex-wrap:wrap;border:none;border-radius:0 0 24px 24px;box-shadow:0 18px 40px rgba(8,15,28,.35);background:var(--nav-bg);backdrop-filter:blur(16px);z-index:170;}
 html.is-mobile-app .menu__toggle{display:inline-flex;position:relative;z-index:170;}
+html.is-mobile-app .menu__toggle-label{display:none;}
 html.is-mobile-app .menu{position:fixed;top:calc(env(safe-area-inset-top) + 74px);left:16px;right:16px;display:none;flex-direction:column;align-items:stretch;gap:10px;padding:18px;border-radius:22px;border:1px solid var(--ring);background:var(--panel);box-shadow:0 24px 54px rgba(8,15,28,.45);max-height:calc(100vh - (env(safe-area-inset-top) + 140px));overflow:auto;z-index:160;}
 html.is-mobile-app.is-mobile-menu-open .menu{display:flex;}
 html.is-mobile-app .menu__link,html.is-mobile-app .dropbtn,html.is-mobile-app .theme-toggle{width:100%;justify-content:center;}
