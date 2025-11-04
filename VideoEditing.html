@@ -247,7 +247,7 @@
         .scene-carousel__nav { transition: none; }
         .scene-carousel__dot { transition: none; }
       }
-      .timeline-dock { position: relative; z-index: 1200; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px 20px 6px; background: linear-gradient(180deg, var(--bg) 0%, transparent 90%); }
+      .timeline-dock { position: relative; z-index: var(--timeline-dock-layer, 4); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px 20px 6px; background: linear-gradient(180deg, var(--bg) 0%, transparent 90%); }
       .timeline-dock.floating { position: sticky; top: 0; }
       .timeline-dock__handle { order: 2; width: clamp(64px, 18vw, 110px); height: 10px; border-radius: 999px; border: none; padding: 0; background: var(--ring); cursor: pointer; transition: width .35s ease, background .3s ease, box-shadow .3s ease, opacity .2s ease, height .3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
       .timeline-dock__handle:hover { background: var(--acc); }
