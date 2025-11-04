@@ -92,8 +92,8 @@ create policy "Profiles are editable by owners"
 -- The insert policy above ensures authenticated users can create their row
 -- while still scoping access to their own profile only.
 
--- Helper view for admin dashboards (requires service role)
-create or replace view public.member_directory as
+drop view if exists public.member_directory;
+create view public.member_directory as
 select
     p.id,
     p.email,
