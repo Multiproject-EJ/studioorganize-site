@@ -519,8 +519,8 @@ function initTheme(){
   const existing = document.documentElement.dataset.theme;
   let initial = stored || existing;
   if (!initial){
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    initial = prefersDark ? 'dark' : 'light';
+    // Default to dark mode for first-time visitors
+    initial = 'dark';
   }
   applySiteTheme(initial, Boolean(stored));
 
@@ -2502,6 +2502,119 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
   });
 }
 
+// Stuff Menu - Mobile only circular menu
+const STUFF_MENU_ITEMS = [
+  { icon: '🎬', label: 'Placeholder 1', action: () => console.log('Item 1 clicked') },
+  { icon: '🎨', label: 'Placeholder 2', action: () => console.log('Item 2 clicked') },
+  { icon: '📝', label: 'Placeholder 3', action: () => console.log('Item 3 clicked') },
+  { icon: '⚙️', label: 'Placeholder 4', action: () => console.log('Item 4 clicked') },
+  { icon: '📊', label: 'Placeholder 5', action: () => console.log('Item 5 clicked') },
+];
+
+function createStuffMenu(){
+  const container = document.createElement('div');
+  container.className = 'stuff-menu';
+  container.setAttribute('data-stuff-menu', '');
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'stuff-menu__toggle';
+  toggle.setAttribute('aria-label', 'Stuff menu');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.innerHTML = '⚡';
+
+  const panel = document.createElement('div');
+  panel.className = 'stuff-menu__panel';
+  panel.setAttribute('hidden', '');
+  panel.setAttribute('aria-hidden', 'true');
+
+  const items = document.createElement('div');
+  items.className = 'stuff-menu__items';
+
+  STUFF_MENU_ITEMS.forEach(item => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'stuff-menu__item';
+    button.setAttribute('aria-label', item.label);
+    button.innerHTML = item.icon;
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      item.action();
+    });
+    items.appendChild(button);
+  });
+
+  panel.appendChild(items);
+  container.appendChild(toggle);
+  container.appendChild(panel);
+
+  let isOpen = false;
+
+  const openMenu = () => {
+    if (isOpen) return;
+    isOpen = true;
+    container.classList.add('stuff-menu--open');
+    toggle.setAttribute('aria-expanded', 'true');
+    panel.removeAttribute('hidden');
+    panel.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeMenu = () => {
+    if (!isOpen) return;
+    isOpen = false;
+    container.classList.remove('stuff-menu--open');
+    toggle.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('hidden', '');
+    panel.setAttribute('aria-hidden', 'true');
+  };
+
+  const toggleMenu = () => {
+    if (isOpen) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  };
+
+  toggle.addEventListener('click', event => {
+    event.stopPropagation();
+    toggleMenu();
+  });
+
+  document.addEventListener('click', event => {
+    if (isOpen && !container.contains(event.target)){
+      closeMenu();
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && isOpen){
+      closeMenu();
+    }
+  });
+
+  return container;
+}
+
+function initStuffMenu(){
+  // Only initialize on specific pages
+  const currentPath = window.location.pathname;
+  const shouldShowMenu =
+    currentPath.includes('screenplay-writing.html') ||
+    currentPath.includes('StoryboardPro.html') ||
+    currentPath.includes('VideoEditing.html') ||
+    currentPath.includes('CharacterStudio.html');
+
+  if (!shouldShowMenu) return;
+
+  // Check if stuff menu already exists
+  if (document.querySelector('[data-stuff-menu]')) return;
+
+  // Create and append stuff menu
+  const stuffMenu = createStuffMenu();
+  document.body.appendChild(stuffMenu);
+}
+
 const GOALS_STORAGE_KEY = 'SO_ACCOUNT_GOALS';
 
 function parseStoredGoals(value){
@@ -3061,6 +3174,7 @@ function initConstructionOverlay(){
 if (document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', () => {
     initWorkspaceLauncher();
+    initStuffMenu();
     initDropdownMenus();
     initNotificationCenter();
     initMobileAppExperience();
@@ -3071,6 +3185,7 @@ if (document.readyState === 'loading'){
   }, { once: true });
 } else {
   initWorkspaceLauncher();
+  initStuffMenu();
   initDropdownMenus();
   initNotificationCenter();
   initMobileAppExperience();
