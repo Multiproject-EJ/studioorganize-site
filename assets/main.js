@@ -95,6 +95,140 @@ ensureAppleStatusBarMeta();
 updateThemeColor(document.documentElement.dataset.theme || 'dark');
 initServiceWorker();
 
+const SCRIPT_DIALOG_MESSAGE_TYPE = 'so-script-dialog';
+let scriptDialogOverlayController = null;
+
+function ensureScriptDialogOverlayController(){
+  if (scriptDialogOverlayController) return scriptDialogOverlayController;
+  if (!document.body) return null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'script-dialog-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.hidden = true;
+  overlay.innerHTML = `
+    <div class="script-dialog-overlay__backdrop" data-script-dialog-overlay-close></div>
+    <div class="script-dialog-overlay__panel" role="dialog" aria-modal="true" aria-label="Script library dialog">
+      <button type="button" class="script-dialog-overlay__close" data-script-dialog-overlay-close aria-label="Close script dialog">✕</button>
+      <iframe class="script-dialog-overlay__frame" title="Script dialog" loading="lazy" allow="clipboard-write"></iframe>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const iframe = overlay.querySelector('iframe');
+  const closeTriggers = overlay.querySelectorAll('[data-script-dialog-overlay-close]');
+  const resolvedOrigin = window.location?.origin;
+  const messageOrigin = resolvedOrigin && resolvedOrigin !== 'null' ? resolvedOrigin : '*';
+  let frameReady = false;
+  let pendingOpen = false;
+
+  const postToFrame = action => {
+    if (!frameReady || !(iframe?.contentWindow)) return;
+    try {
+      iframe.contentWindow.postMessage({ type: SCRIPT_DIALOG_MESSAGE_TYPE, action }, messageOrigin);
+    } catch (_error){
+      iframe.contentWindow.postMessage({ type: SCRIPT_DIALOG_MESSAGE_TYPE, action }, '*');
+    }
+  };
+
+  const handleKeydown = event => {
+    if (event.key === 'Escape'){
+      event.preventDefault();
+      controller.close();
+    }
+  };
+
+  const controller = {
+    open(){
+      if (!iframe) return;
+      if (!iframe.src){
+        iframe.src = '/use-cases/screenplay-writing.html?embed=script-dialog';
+      }
+      pendingOpen = true;
+      overlay.hidden = false;
+      overlay.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => {
+        overlay.classList.add('is-open');
+      });
+      document.documentElement.classList.add('script-dialog-overlay-open');
+      window.addEventListener('keydown', handleKeydown);
+      if (frameReady){
+        postToFrame('open');
+      }
+      setTimeout(() => {
+        try { iframe.focus(); } catch (_error){}
+      }, 150);
+    },
+    close({ notifyChild = true } = {}){
+      if (!overlay.classList.contains('is-open')) return;
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.hidden = true;
+      pendingOpen = false;
+      document.documentElement.classList.remove('script-dialog-overlay-open');
+      window.removeEventListener('keydown', handleKeydown);
+      if (notifyChild){
+        postToFrame('close');
+      }
+    },
+    notifyReady(){
+      frameReady = true;
+      if (pendingOpen){
+        postToFrame('open');
+      }
+    },
+    isOpen(){
+      return overlay.classList.contains('is-open');
+    }
+  };
+
+  closeTriggers.forEach(trigger => {
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      controller.close();
+    });
+  });
+
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay){
+      controller.close();
+    }
+  });
+
+  window.addEventListener('message', event => {
+    if (!iframe || event.source !== iframe.contentWindow) return;
+    if (messageOrigin !== '*' && event.origin && event.origin !== messageOrigin && event.origin !== 'null') return;
+    const data = event.data;
+    if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) return;
+    if (data.action === 'ready'){
+      frameReady = true;
+      controller.notifyReady();
+    } else if (data.action === 'closed'){
+      controller.close({ notifyChild: false });
+    }
+  });
+
+  scriptDialogOverlayController = controller;
+  return controller;
+}
+
+function setupScriptDialogFallback(){
+  if (typeof window.openScriptDialog === 'function') return;
+  if (document.getElementById('scriptDialog')) return;
+  const controller = ensureScriptDialogOverlayController();
+  if (!controller) return;
+  window.openScriptDialog = () => controller.open();
+  window.closeScriptDialog = () => controller.close();
+}
+
+if (typeof window.openScriptDialog !== 'function'){
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', setupScriptDialogFallback, { once: true });
+  } else {
+    setupScriptDialogFallback();
+  }
+}
+
 function getStoredTheme(){
   try { return localStorage.getItem(THEME_KEY); }
   catch (err){ return null; }
@@ -2132,7 +2266,8 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         closeAll();
 
         const dialog = document.getElementById('scriptDialog');
-        const isOpen = dialog instanceof HTMLElement && dialog.classList.contains('open');
+        const overlayOpen = document.documentElement.classList.contains('script-dialog-overlay-open');
+        const isOpen = (dialog instanceof HTMLElement && dialog.classList.contains('open')) || overlayOpen;
 
         if (typeof window.openScriptDialog === 'function'){
           if (isOpen && typeof window.closeScriptDialog === 'function'){

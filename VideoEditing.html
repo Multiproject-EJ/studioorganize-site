@@ -196,10 +196,41 @@
       .scene-carousel__dot:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
       .scene-carousel__empty { min-height: 220px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px; font-size: 14px; color: var(--muted); }
       .scene-carousel__nav-icon { font-size: 24px; line-height: 1; }
+      .scene-carousel-wrapper--compact {
+        --scene-carousel-active-scale: 0.82;
+        --scene-carousel-adjacent-scale: 0.58;
+        --scene-carousel-far-scale: 0.46;
+        --scene-carousel-distant-scale: 0.38;
+        --scene-carousel-horizon-scale: 0.3;
+        padding: 12px 14px 10px;
+        border: 1px solid var(--ring);
+        border-radius: 14px;
+        background: var(--card);
+        box-shadow: 0 14px 32px rgba(8,15,28,0.22);
+        border-bottom: none;
+      }
+      .scene-carousel-wrapper--compact .scene-carousel { gap: 8px; }
+      .scene-carousel-wrapper--compact .scene-carousel__nav { width: 32px; height: 32px; box-shadow: none; }
+      .scene-carousel-wrapper--compact .scene-carousel__track { min-height: 180px; }
+      .scene-carousel-wrapper--compact.scene-carousel--zoomed .scene-carousel__track { min-height: 220px; }
+      .scene-carousel-wrapper--compact .scene-carousel__figure { max-width: 280px; gap: 10px; }
+      .scene-carousel-wrapper--compact .scene-carousel__image-wrapper { border-radius: 12px; }
+      .scene-carousel-wrapper--compact .scene-carousel__image { border-radius: 12px; }
+      .scene-carousel-wrapper--compact .scene-carousel__caption { max-width: 260px; gap: 4px; font-size: 12px; }
+      .scene-carousel-wrapper--compact .scene-carousel__title { font-size: 14px; }
+      .scene-carousel-wrapper--compact .scene-carousel__description { font-size: 12px; -webkit-line-clamp: 2; }
+      .scene-carousel-wrapper--compact .scene-carousel__meta { font-size: 11px; }
+      .scene-carousel-wrapper--compact .scene-carousel__thumb { width: 36px; height: 36px; }
+      .scene-carousel-wrapper--compact .scene-carousel__thumb-count { min-width: 32px; height: 32px; font-size: 11px; }
+      .scene-carousel-wrapper--compact .scene-carousel__zoom { display: none; }
+      .scene-carousel-wrapper--compact .scene-carousel__dots { justify-content: flex-end; padding-bottom: 0; padding-top: 6px; }
+      .story-arc-columns > .scene-carousel-wrapper--compact { width: 100%; flex: 1 1 auto; }
       @media (max-width: 920px) {
         .scene-carousel-wrapper { padding: 16px 16px 10px; }
+        .scene-carousel-wrapper--compact { padding: 12px 12px 8px; }
         .scene-carousel { gap: 10px; }
         .scene-carousel__nav { width: 38px; height: 38px; }
+        .scene-carousel-wrapper--compact .scene-carousel__nav { width: 32px; height: 32px; }
         .scene-carousel__caption { padding: 16px 16px 18px; }
         .scene-carousel__image-strip { right: 12px; bottom: 12px; }
       }
@@ -208,6 +239,8 @@
         .scene-carousel__nav { order: -1; align-self: flex-end; }
         .scene-carousel__nav--prev { align-self: flex-start; }
         .scene-carousel__viewport { border-radius: 0; }
+        .scene-carousel-wrapper--compact .scene-carousel { flex-direction: row; align-items: center; }
+        .scene-carousel-wrapper--compact .scene-carousel__nav { order: 0; align-self: center; }
       }
       @media (prefers-reduced-motion: reduce) {
         .scene-carousel__track { transition: none; }
@@ -774,25 +807,6 @@
         <button class="btn btn-primary" type="button" data-scene-best-pose>Use character + best pose</button>
       </div>
 
-      <section class="scene-carousel-wrapper" aria-label="Scene previews" data-scene-carousel-container>
-        <div class="scene-carousel">
-          <button class="scene-carousel__nav scene-carousel__nav--prev" type="button" aria-label="Previous scene" data-scene-carousel-prev>
-            <span class="scene-carousel__nav-icon" aria-hidden="true">‹</span>
-          </button>
-          <div class="scene-carousel__viewport" data-scene-carousel-viewport tabindex="0" role="group" aria-label="Storyboard scene preview">
-            <button class="scene-carousel__zoom" type="button" data-scene-carousel-zoom aria-pressed="false">
-              <span class="scene-carousel__zoom-icon" aria-hidden="true">⤢</span>
-              <span data-scene-carousel-zoom-label>Zoom in</span>
-            </button>
-            <ul class="scene-carousel__track" data-scene-carousel-track></ul>
-          </div>
-          <button class="scene-carousel__nav scene-carousel__nav--next" type="button" aria-label="Next scene" data-scene-carousel-next>
-            <span class="scene-carousel__nav-icon" aria-hidden="true">›</span>
-          </button>
-        </div>
-        <div class="scene-carousel__dots" role="tablist" aria-label="Select scene preview" data-scene-carousel-dots></div>
-      </section>
-
       <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
         <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
         <div class="timeline-dock__shell">
@@ -820,6 +834,24 @@
                     </ol>
                   </div>
                 </div>
+                <section class="scene-carousel-wrapper scene-carousel-wrapper--compact" aria-label="Scene previews" data-scene-carousel-container>
+                  <div class="scene-carousel">
+                    <button class="scene-carousel__nav scene-carousel__nav--prev" type="button" aria-label="Previous scene" data-scene-carousel-prev>
+                      <span class="scene-carousel__nav-icon" aria-hidden="true">‹</span>
+                    </button>
+                    <div class="scene-carousel__viewport" data-scene-carousel-viewport tabindex="0" role="group" aria-label="Storyboard scene preview">
+                      <button class="scene-carousel__zoom" type="button" data-scene-carousel-zoom aria-pressed="false">
+                        <span class="scene-carousel__zoom-icon" aria-hidden="true">⤢</span>
+                        <span data-scene-carousel-zoom-label>Zoom in</span>
+                      </button>
+                      <ul class="scene-carousel__track" data-scene-carousel-track></ul>
+                    </div>
+                    <button class="scene-carousel__nav scene-carousel__nav--next" type="button" aria-label="Next scene" data-scene-carousel-next>
+                      <span class="scene-carousel__nav-icon" aria-hidden="true">›</span>
+                    </button>
+                  </div>
+                  <div class="scene-carousel__dots" role="tablist" aria-label="Select scene preview" data-scene-carousel-dots></div>
+                </section>
                 <div class="story-arc-scenes" aria-label="Scene timeline">
                   <div class="story-arc-scenes__container">
                     <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
