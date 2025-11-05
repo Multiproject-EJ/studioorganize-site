@@ -1763,24 +1763,12 @@ const WORKSPACE_LAUNCHER_MODULES = [
 
 let workspaceLauncherObserver = null;
 let workspaceLauncherObserverScheduled = false;
-let workspaceLauncherGlobalInjectionScheduled = false;
 
 function scheduleWorkspaceLauncherRefresh(){
   if (workspaceLauncherObserverScheduled) return;
   workspaceLauncherObserverScheduled = true;
   Promise.resolve().then(() => {
     workspaceLauncherObserverScheduled = false;
-    initWorkspaceLauncher({ fromObserver: true });
-  });
-}
-
-function scheduleGlobalWorkspaceLauncherInjection(){
-  if (workspaceLauncherGlobalInjectionScheduled) return;
-  workspaceLauncherGlobalInjectionScheduled = true;
-  window.requestAnimationFrame(() => {
-    workspaceLauncherGlobalInjectionScheduled = false;
-    if (document.querySelector('[data-workspace-launcher]')) return;
-    injectGlobalWorkspaceLauncher();
     initWorkspaceLauncher({ fromObserver: true });
   });
 }
@@ -1827,18 +1815,48 @@ function ensureWorkspaceLauncherStructure(launcher){
   const panel = launcher.querySelector('[data-workspace-panel]');
   if (!(panel instanceof HTMLElement)) return;
 
+  let moduleStack = panel.querySelector('.workspace-launcher__module-stack');
+  if (!(moduleStack instanceof HTMLElement)){
+    moduleStack = document.createElement('div');
+    moduleStack.className = 'workspace-launcher__module-stack';
+    panel.appendChild(moduleStack);
+  }
+
+  let actions = panel.querySelector('.workspace-launcher__actions');
+  if (!(actions instanceof HTMLElement)){
+    actions = document.createElement('div');
+    actions.className = 'workspace-launcher__actions';
+    actions.innerHTML = `
+      <button type="button" class="workspace-launcher__script" data-workspace-script>
+        <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
+        <span>STORY</span>
+      </button>
+    `;
+  }
+  if (actions.parentElement !== moduleStack){
+    moduleStack.insertBefore(actions, moduleStack.firstChild);
+  }
+
   let modules = panel.querySelector('.workspace-launcher__modules');
   if (!(modules instanceof HTMLElement)){
     modules = document.createElement('nav');
     modules.className = 'workspace-launcher__modules';
     modules.setAttribute('aria-label', 'Workspace modules');
-    panel.appendChild(modules);
+    moduleStack.appendChild(modules);
+  } else if (modules.parentElement !== moduleStack){
+    moduleStack.appendChild(modules);
   }
 
-  // Ensure save and story buttons exist at the start of modules
-  let saveButton = modules.querySelector('[data-workspace-save]');
-  if (!saveButton){
-    const saveButtonHTML = `
+  const ensureButton = (selector, html) => {
+    let button = modules.querySelector(selector);
+    if (!button){
+      modules.insertAdjacentHTML('beforeend', html);
+      button = modules.querySelector(selector);
+    }
+    return button instanceof HTMLElement ? button : null;
+  };
+
+  const saveButton = ensureButton('[data-workspace-save]', `
       <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
         <span class="workspace-launcher__module-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1849,13 +1867,9 @@ function ensureWorkspaceLauncherStructure(launcher){
         </span>
         <span class="sr-only">Save Progress</span>
       </button>
-    `;
-    modules.insertAdjacentHTML('afterbegin', saveButtonHTML);
-  }
+    `);
 
-  let storyButton = modules.querySelector('[data-workspace-script]');
-  if (!storyButton){
-    const storyButtonHTML = `
+  const storyButton = ensureButton('[data-workspace-script]', `
       <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
         <span class="workspace-launcher__module-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1865,18 +1879,17 @@ function ensureWorkspaceLauncherStructure(launcher){
         </span>
         <span class="sr-only">New Story</span>
       </button>
-    `;
-    const saveBtn = modules.querySelector('[data-workspace-save]');
-    if (saveBtn){
-      saveBtn.insertAdjacentHTML('afterend', storyButtonHTML);
-    } else {
-      modules.insertAdjacentHTML('afterbegin', storyButtonHTML);
-    }
-  }
+    `);
 
   if (modules.querySelectorAll('a.workspace-launcher__module').length === 0){
-    modules.insertAdjacentHTML('beforeend', WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join(''));
+    modules.insertAdjacentHTML('afterbegin', WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join(''));
   }
+
+  [saveButton, storyButton].forEach(button => {
+    if (button instanceof HTMLElement){
+      modules.appendChild(button);
+    }
+  });
 
   let assistant = panel.querySelector('.workspace-launcher__assistant');
   if (!(assistant instanceof HTMLElement)){
@@ -1996,6 +2009,7 @@ function injectGlobalWorkspaceLauncher(){
           </div>
         </div>
         <nav class="workspace-launcher__modules" aria-label="Workspace modules">
+          ${modulesMarkup}
           <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
             <span class="workspace-launcher__module-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2015,7 +2029,6 @@ function injectGlobalWorkspaceLauncher(){
             </span>
             <span class="sr-only">New Story</span>
           </button>
-          ${modulesMarkup}
         </nav>
       </div>
     </div>
@@ -2035,7 +2048,8 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
   const launchers = Array.from(document.querySelectorAll('[data-workspace-launcher]'));
   if (!launchers.length){
     if (!fromObserver){
-      scheduleGlobalWorkspaceLauncherInjection();
+      injectGlobalWorkspaceLauncher();
+      initWorkspaceLauncher({ fromObserver: true });
     }
     return;
   }
