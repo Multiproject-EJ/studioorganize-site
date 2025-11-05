@@ -2326,8 +2326,9 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 
         // Trigger save functionality
         console.log('Save progress clicked');
-        // TODO: Implement actual save functionality here
-        // For now, just show a visual feedback
+        // TODO: Implement actual save functionality
+        // Should save current workspace state to localStorage/IndexedDB
+        // and sync to Supabase if user is authenticated
       });
     }
 
