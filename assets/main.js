@@ -1827,40 +1827,55 @@ function ensureWorkspaceLauncherStructure(launcher){
   const panel = launcher.querySelector('[data-workspace-panel]');
   if (!(panel instanceof HTMLElement)) return;
 
-  let moduleStack = panel.querySelector('.workspace-launcher__module-stack');
-  if (!(moduleStack instanceof HTMLElement)){
-    moduleStack = document.createElement('div');
-    moduleStack.className = 'workspace-launcher__module-stack';
-    panel.appendChild(moduleStack);
-  }
-
-  let actions = panel.querySelector('.workspace-launcher__actions');
-  if (!(actions instanceof HTMLElement)){
-    actions = document.createElement('div');
-    actions.className = 'workspace-launcher__actions';
-    actions.innerHTML = `
-      <button type="button" class="workspace-launcher__script" data-workspace-script>
-        <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
-        <span>STORY</span>
-      </button>
-    `;
-  }
-  if (actions.parentElement !== moduleStack){
-    moduleStack.insertBefore(actions, moduleStack.firstChild);
-  }
-
   let modules = panel.querySelector('.workspace-launcher__modules');
   if (!(modules instanceof HTMLElement)){
     modules = document.createElement('nav');
     modules.className = 'workspace-launcher__modules';
     modules.setAttribute('aria-label', 'Workspace modules');
-    moduleStack.appendChild(modules);
-  } else if (modules.parentElement !== moduleStack){
-    moduleStack.appendChild(modules);
+    panel.appendChild(modules);
   }
 
-  if (!modules.children.length){
-    modules.innerHTML = WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join('');
+  // Ensure save and story buttons exist at the start of modules
+  let saveButton = modules.querySelector('[data-workspace-save]');
+  if (!saveButton){
+    const saveButtonHTML = `
+      <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
+        <span class="workspace-launcher__module-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </span>
+        <span class="sr-only">Save Progress</span>
+      </button>
+    `;
+    modules.insertAdjacentHTML('afterbegin', saveButtonHTML);
+  }
+
+  let storyButton = modules.querySelector('[data-workspace-script]');
+  if (!storyButton){
+    const storyButtonHTML = `
+      <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
+        <span class="workspace-launcher__module-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </span>
+        <span class="sr-only">New Story</span>
+      </button>
+    `;
+    const saveBtn = modules.querySelector('[data-workspace-save]');
+    if (saveBtn){
+      saveBtn.insertAdjacentHTML('afterend', storyButtonHTML);
+    } else {
+      modules.insertAdjacentHTML('afterbegin', storyButtonHTML);
+    }
+  }
+
+  if (modules.querySelectorAll('a.workspace-launcher__module').length === 0){
+    modules.insertAdjacentHTML('beforeend', WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join(''));
   }
 
   let assistant = panel.querySelector('.workspace-launcher__assistant');
@@ -1980,17 +1995,28 @@ function injectGlobalWorkspaceLauncher(){
             </div>
           </div>
         </div>
-        <div class="workspace-launcher__module-stack">
-          <div class="workspace-launcher__actions">
-            <button type="button" class="workspace-launcher__script" data-workspace-script>
-              <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
-              <span>STORY</span>
-            </button>
-          </div>
-          <nav class="workspace-launcher__modules" aria-label="Workspace modules">
-            ${modulesMarkup}
-          </nav>
-        </div>
+        <nav class="workspace-launcher__modules" aria-label="Workspace modules">
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+            </span>
+            <span class="sr-only">Save Progress</span>
+          </button>
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </span>
+            <span class="sr-only">New Story</span>
+          </button>
+          ${modulesMarkup}
+        </nav>
       </div>
     </div>
   `;
@@ -2253,6 +2279,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     panel.addEventListener('click', event => {
       if (!(event.target instanceof HTMLElement)) return;
       if (event.target.closest('[data-workspace-script]')) return;
+      if (event.target.closest('[data-workspace-save]')) return;
       event.stopPropagation();
     });
 
@@ -2278,6 +2305,30 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         } else {
           window.location.href = '/use-cases/screenplay-writing.html';
         }
+      });
+    }
+
+    const saveButton = panel.querySelector('[data-workspace-save]');
+    if (saveButton instanceof HTMLElement && saveButton.dataset.workspaceSaveBound !== 'true'){
+      saveButton.dataset.workspaceSaveBound = 'true';
+      saveButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Add the saving animation class
+        saveButton.classList.add('is-saving');
+
+        // Remove the class after animation completes
+        const animationDuration = 600; // matches the CSS animation duration
+        setTimeout(() => {
+          saveButton.classList.remove('is-saving');
+        }, animationDuration);
+
+        // Trigger save functionality
+        console.log('Save progress clicked');
+        // TODO: Implement actual save functionality
+        // Should save current workspace state to localStorage/IndexedDB
+        // and sync to Supabase if user is authenticated
       });
     }
 
