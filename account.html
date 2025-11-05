@@ -181,6 +181,20 @@
       </div>
       <p class="creator-overview__streak-note">Three more sessions unlock the Momentum badge.</p>
     </div>
+    <button type="button" class="creator-overview__goals" data-goals-trigger>
+      <div class="creator-overview__goals-header">
+        <span class="creator-overview__goals-icon" aria-hidden="true">🎯</span>
+        <div>
+          <p class="creator-overview__goals-title">Story Goals</p>
+          <p class="creator-overview__goals-subtitle">Track your script progress.</p>
+        </div>
+      </div>
+      <div class="creator-overview__goals-stats">
+        <span class="creator-overview__goals-count" data-goals-count>—</span>
+        <span class="creator-overview__goals-label">overall progress</span>
+      </div>
+      <p class="creator-overview__goals-note">Click to view detailed story metrics and milestones.</p>
+    </button>
   </section>
 
   <div class="app-menu" data-app-menu>
@@ -280,110 +294,6 @@
         Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
       </p>
     </div>
-
-    <section class="project-progress" aria-label="Story goal overview" data-project-progress>
-      <div class="project-progress__header">
-        <div>
-          <h3>Story Goal Tracker</h3>
-          <p class="muted">
-            See the targets you set while loading scripts, compare them against your latest draft, and choose the next creative move in a single click.
-          </p>
-        </div>
-        <button type="button" class="project-progress__refresh" data-project-progress-refresh>
-          <span aria-hidden="true">⟳</span>
-          <span data-project-progress-refresh-label>Refresh goals</span>
-        </button>
-      </div>
-
-      <p class="project-progress__empty muted" data-project-progress-empty>
-        Set page, runtime, or scene goals from the Screenplay workspace to see your story progression here.
-      </p>
-
-      <div class="project-progress__table-wrap" data-project-progress-table hidden>
-        <table class="project-progress__table">
-          <thead>
-            <tr>
-              <th scope="col">Story</th>
-              <th scope="col">Pages</th>
-              <th scope="col">Runtime</th>
-              <th scope="col">Scenes</th>
-            </tr>
-          </thead>
-          <tbody data-project-progress-rows></tbody>
-        </table>
-      </div>
-
-      <div class="project-progress__detail" data-project-detail hidden>
-        <div class="project-progress__detail-header">
-          <div>
-            <span class="project-progress__detail-kicker">Spotlight story</span>
-            <h4 data-project-detail-title>Untitled Script</h4>
-            <p class="project-progress__detail-summary muted" data-project-detail-summary></p>
-          </div>
-        </div>
-        <div class="project-progress__detail-meta">
-          <span data-project-detail-updated></span>
-          <span data-project-detail-characters></span>
-        </div>
-        <div class="project-progress__detail-grid">
-          <div class="project-progress__metric" data-project-metric="pages">
-            <p class="project-progress__metric-label">Pages</p>
-            <p class="project-progress__metric-value">
-              <span data-metric-value>0</span>
-              <span data-metric-goal></span>
-            </p>
-            <div class="project-progress__metric-progress">
-              <div class="project-progress__bar" data-metric-bar></div>
-              <span class="project-progress__metric-percent" data-metric-percent></span>
-            </div>
-          </div>
-          <div class="project-progress__metric" data-project-metric="runtime">
-            <p class="project-progress__metric-label">Runtime</p>
-            <p class="project-progress__metric-value">
-              <span data-metric-value>0</span>
-              <span data-metric-goal></span>
-            </p>
-            <div class="project-progress__metric-progress">
-              <div class="project-progress__bar" data-metric-bar></div>
-              <span class="project-progress__metric-percent" data-metric-percent></span>
-            </div>
-          </div>
-          <div class="project-progress__metric" data-project-metric="scenes">
-            <p class="project-progress__metric-label">Scenes</p>
-            <p class="project-progress__metric-value">
-              <span data-metric-value>0</span>
-              <span data-metric-goal></span>
-            </p>
-            <div class="project-progress__metric-progress">
-              <div class="project-progress__bar" data-metric-bar></div>
-              <span class="project-progress__metric-percent" data-metric-percent></span>
-            </div>
-          </div>
-        </div>
-        <div class="project-progress__notes" data-project-note hidden>
-          <h5>Latest project note</h5>
-          <p data-project-note-text></p>
-        </div>
-        <div class="project-progress__actions" role="group" aria-label="Quick actions for the selected story">
-          <button type="button" class="project-progress__action project-progress__action--primary" data-project-action="open-script">
-            <span class="project-progress__action-title">Let's jump into this script</span>
-            <span class="project-progress__action-copy">Open the Screenplay workspace and pick up exactly where you left off.</span>
-          </button>
-          <a class="project-progress__action" data-project-action="character" href="/CharacterStudio.html">
-            <span class="project-progress__action-title">Develop a character</span>
-            <span class="project-progress__action-copy">Shape motivations, relationships, and arcs in Character Studio.</span>
-          </a>
-          <a class="project-progress__action" data-project-action="set" href="/use-cases/set-design.html">
-            <span class="project-progress__action-title">Plan your next set</span>
-            <span class="project-progress__action-copy">Lay out props, lighting, and mood boards for the upcoming scene.</span>
-          </a>
-          <a class="project-progress__action" data-project-action="storyboard" href="/StoryboardPro.html">
-            <span class="project-progress__action-title">Storyboard the next sequence</span>
-            <span class="project-progress__action-copy">Map shot ideas and camera moves to prep your shoot.</span>
-          </a>
-        </div>
-      </div>
-    </section>
 
     <section class="ai-preferences" aria-label="AI assistant preferences" data-ai-preferences>
       <div class="ai-preferences__header">
@@ -595,6 +505,128 @@
             </div>
           </li>
         </ul>
+      </div>
+    </div>
+
+    <div
+      class="story-goals-modal"
+      id="storyGoalsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="storyGoalsModalTitle"
+      hidden
+      data-story-goals-modal
+    >
+      <div class="story-goals-modal__overlay" data-goals-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="storyGoalsModalTitle">Story Goal Tracker</h3>
+            <p class="muted">See the targets you set while loading scripts, compare them against your latest draft, and choose the next creative move in a single click.</p>
+          </div>
+          <button type="button" class="story-goals-modal__close" aria-label="Close story goals" data-goals-close>
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="project-progress" aria-label="Story goal overview" data-project-progress>
+            <div class="project-progress__header">
+              <button type="button" class="project-progress__refresh" data-project-progress-refresh>
+                <span aria-hidden="true">⟳</span>
+                <span data-project-progress-refresh-label>Refresh goals</span>
+              </button>
+            </div>
+
+            <p class="project-progress__empty muted" data-project-progress-empty>
+              Set page, runtime, or scene goals from the Screenplay workspace to see your story progression here.
+            </p>
+
+            <div class="project-progress__table-wrap" data-project-progress-table hidden>
+              <table class="project-progress__table">
+                <thead>
+                  <tr>
+                    <th scope="col">Story</th>
+                    <th scope="col">Pages</th>
+                    <th scope="col">Runtime</th>
+                    <th scope="col">Scenes</th>
+                  </tr>
+                </thead>
+                <tbody data-project-progress-rows></tbody>
+              </table>
+            </div>
+
+            <div class="project-progress__detail" data-project-detail hidden>
+              <div class="project-progress__detail-header">
+                <div>
+                  <span class="project-progress__detail-kicker">Spotlight story</span>
+                  <h4 data-project-detail-title>Untitled Script</h4>
+                  <p class="project-progress__detail-summary muted" data-project-detail-summary></p>
+                </div>
+              </div>
+              <div class="project-progress__detail-meta">
+                <span data-project-detail-updated></span>
+                <span data-project-detail-characters></span>
+              </div>
+              <div class="project-progress__detail-grid">
+                <div class="project-progress__metric" data-project-metric="pages">
+                  <p class="project-progress__metric-label">Pages</p>
+                  <p class="project-progress__metric-value">
+                    <span data-metric-value>0</span>
+                    <span data-metric-goal></span>
+                  </p>
+                  <div class="project-progress__metric-progress">
+                    <div class="project-progress__bar" data-metric-bar></div>
+                    <span class="project-progress__metric-percent" data-metric-percent></span>
+                  </div>
+                </div>
+                <div class="project-progress__metric" data-project-metric="runtime">
+                  <p class="project-progress__metric-label">Runtime</p>
+                  <p class="project-progress__metric-value">
+                    <span data-metric-value>0</span>
+                    <span data-metric-goal></span>
+                  </p>
+                  <div class="project-progress__metric-progress">
+                    <div class="project-progress__bar" data-metric-bar></div>
+                    <span class="project-progress__metric-percent" data-metric-percent></span>
+                  </div>
+                </div>
+                <div class="project-progress__metric" data-project-metric="scenes">
+                  <p class="project-progress__metric-label">Scenes</p>
+                  <p class="project-progress__metric-value">
+                    <span data-metric-value>0</span>
+                    <span data-metric-goal></span>
+                  </p>
+                  <div class="project-progress__metric-progress">
+                    <div class="project-progress__bar" data-metric-bar></div>
+                    <span class="project-progress__metric-percent" data-metric-percent></span>
+                  </div>
+                </div>
+              </div>
+              <div class="project-progress__notes" data-project-note hidden>
+                <h5>Latest project note</h5>
+                <p data-project-note-text></p>
+              </div>
+              <div class="project-progress__actions" role="group" aria-label="Quick actions for the selected story">
+                <button type="button" class="project-progress__action project-progress__action--primary" data-project-action="open-script">
+                  <span class="project-progress__action-title">Let's jump into this script</span>
+                  <span class="project-progress__action-copy">Open the Screenplay workspace and pick up exactly where you left off.</span>
+                </button>
+                <a class="project-progress__action" data-project-action="character" href="/CharacterStudio.html">
+                  <span class="project-progress__action-title">Develop a character</span>
+                  <span class="project-progress__action-copy">Shape motivations, relationships, and arcs in Character Studio.</span>
+                </a>
+                <a class="project-progress__action" data-project-action="set" href="/use-cases/set-design.html">
+                  <span class="project-progress__action-title">Plan your next set</span>
+                  <span class="project-progress__action-copy">Lay out props, lighting, and mood boards for the upcoming scene.</span>
+                </a>
+                <a class="project-progress__action" data-project-action="storyboard" href="/StoryboardPro.html">
+                  <span class="project-progress__action-title">Storyboard the next sequence</span>
+                  <span class="project-progress__action-copy">Map shot ideas and camera moves to prep your shoot.</span>
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -1955,6 +1987,87 @@
     });
 
     closeMenu();
+  })();
+</script>
+<script>
+  (function(){
+    const modal = document.querySelector('[data-story-goals-modal]');
+    if (!modal) return;
+
+    const trigger = document.querySelector('[data-goals-trigger]');
+    const closeButton = modal.querySelector('[data-goals-close]');
+    const overlay = modal.querySelector('[data-goals-overlay]');
+    const goalsCount = document.querySelector('[data-goals-count]');
+
+    if (!trigger) return;
+
+    function openModal(){
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger?.focus();
+    }
+
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    // Update the goals count in the card when project selection changes
+    document.addEventListener('studioorganize:selected-project', event => {
+      const detail = event?.detail;
+      if (!detail || !detail.projectId) {
+        if (goalsCount) goalsCount.textContent = '—';
+        return;
+      }
+
+      // We'll update this once we have project data
+      const container = document.querySelector('[data-project-progress]');
+      if (container) {
+        // Wait for the project data to load
+        setTimeout(() => {
+          const detailPanel = container.querySelector('[data-project-detail]');
+          if (detailPanel && !detailPanel.hidden) {
+            // Calculate overall progress from the loaded project
+            const metrics = container.querySelectorAll('[data-metric-percent]');
+            const percentages = Array.from(metrics)
+              .map(el => {
+                const text = el.textContent?.trim();
+                if (!text || text === '—') return null;
+                const num = parseInt(text, 10);
+                return isNaN(num) ? null : num;
+              })
+              .filter(n => n !== null);
+
+            if (percentages.length > 0 && goalsCount) {
+              const avg = Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length);
+              goalsCount.textContent = `${avg}%`;
+            } else if (goalsCount) {
+              goalsCount.textContent = '—';
+            }
+          }
+        }, 100);
+      }
+    });
+
+    closeModal();
   })();
 </script>
 <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
