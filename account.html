@@ -213,6 +213,23 @@
     </button>
   </section>
 
+  <section class="creator-goals-tile" aria-label="AI assistant plan">
+    <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
+      <div class="creator-overview__goals-header">
+        <span class="creator-overview__goals-icon" aria-hidden="true">🤖</span>
+        <div>
+          <p class="creator-overview__goals-title">AI Assistant Plan</p>
+          <p class="creator-overview__goals-subtitle">Configure how the AI should behave.</p>
+        </div>
+      </div>
+      <div class="creator-overview__goals-stats">
+        <span class="creator-overview__goals-count" data-ai-plan-status>—</span>
+        <span class="creator-overview__goals-label">saved plan</span>
+      </div>
+      <p class="creator-overview__goals-note">Click to customize AI behavior and coaching style.</p>
+    </button>
+  </section>
+
   <div class="app-menu" data-app-menu>
     <button
       class="app-menu__toggle"
@@ -310,94 +327,6 @@
         Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
       </p>
     </div>
-
-    <section class="ai-preferences" aria-label="AI assistant preferences" data-ai-preferences>
-      <div class="ai-preferences__header">
-        <div>
-          <h3>AI Assistant Plan</h3>
-          <p class="muted">
-            Save how StudioOrganize AI should behave when it checks in from the workspace menu and inside Creator Hub.
-          </p>
-        </div>
-        <p class="ai-preferences__story muted" data-ai-scope-note>
-          <span data-ai-selected-copy>Selected story: <strong data-ai-story-name>your story</strong></span>
-          <span data-ai-empty-copy hidden>Select a story from the Story Goal Tracker to customize the assistant.</span>
-        </p>
-      </div>
-      <div class="ai-preferences__content">
-        <div class="ai-preferences__primer">
-          <h4>What happens next</h4>
-          <ol>
-            <li>First the assistant asks if you want to make progress on <em>your current story</em> or start something brand new.</li>
-            <li>If you choose a new story, pick between a short sprint, a medium arc, or a long-form journey.</li>
-            <li>Those choices are stored in Supabase so nudges, bias notes, and progress checks align with each script.</li>
-          </ol>
-          <p class="muted">
-            Updates sync once you sign in. If you are offline, changes stay local until the next session.
-          </p>
-        </div>
-        <form class="ai-preferences__form" data-ai-preferences-form novalidate>
-          <fieldset class="ai-preferences__fieldset">
-            <legend>Story focus</legend>
-            <label class="ai-preferences__option">
-              <input type="radio" name="ai-story-mode" value="continue" checked />
-              <span>Make progress on my existing story</span>
-            </label>
-            <label class="ai-preferences__option">
-              <input type="radio" name="ai-story-mode" value="new" />
-              <span>Start a fresh story</span>
-            </label>
-          </fieldset>
-          <fieldset class="ai-preferences__fieldset" data-ai-length-group>
-            <legend>New story size</legend>
-            <label class="ai-preferences__length">
-              <input type="radio" name="ai-story-length" value="short" />
-              <span>
-                <strong>Short sprint</strong>
-                <small>~15 beats to ship something fast</small>
-              </span>
-            </label>
-            <label class="ai-preferences__length">
-              <input type="radio" name="ai-story-length" value="medium" checked />
-              <span>
-                <strong>Medium arc</strong>
-                <small>Classic three-act structure</small>
-              </span>
-            </label>
-            <label class="ai-preferences__length">
-              <input type="radio" name="ai-story-length" value="long" />
-              <span>
-                <strong>Long-form journey</strong>
-                <small>Season-length or feature outline</small>
-              </span>
-            </label>
-          </fieldset>
-          <fieldset class="ai-preferences__fieldset">
-            <legend>Coaching style</legend>
-            <label class="ai-preferences__feature">
-              <input type="checkbox" value="progress_nudges" data-ai-feature checked />
-              <span>Send progress nudges when goals fall behind</span>
-            </label>
-            <label class="ai-preferences__feature">
-              <input type="checkbox" value="structure_spotlight" data-ai-feature />
-              <span>Highlight structure and milestone checkpoints</span>
-            </label>
-            <label class="ai-preferences__feature">
-              <input type="checkbox" value="tone_cheerleader" data-ai-feature />
-              <span>Keep the tone upbeat and encouraging</span>
-            </label>
-          </fieldset>
-          <label class="ai-preferences__field">
-            <span>Bias or voice notes</span>
-            <textarea data-ai-bias rows="3" placeholder="Example: focus on emotional stakes, avoid horror beats, keep feedback direct."></textarea>
-          </label>
-          <div class="ai-preferences__actions">
-            <button type="button" class="ai-preferences__save" data-ai-save>Save assistant plan</button>
-            <p class="ai-preferences__status muted" data-ai-status></p>
-          </div>
-        </form>
-      </div>
-    </section>
 
     <section class="creator-theme" aria-label="Workspace theme preferences" data-workspace-theme-preferences>
       <div class="creator-theme__header">
@@ -640,6 +569,110 @@
                   <span class="project-progress__action-copy">Map shot ideas and camera moves to prep your shoot.</span>
                 </a>
               </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="story-goals-modal"
+      id="aiAssistantPlanModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="aiAssistantPlanModalTitle"
+      hidden
+      data-ai-plan-modal
+    >
+      <div class="story-goals-modal__overlay" data-ai-plan-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="aiAssistantPlanModalTitle">AI Assistant Plan</h3>
+            <p class="muted">Save how StudioOrganize AI should behave when it checks in from the workspace menu and inside Creator Hub.</p>
+          </div>
+          <button type="button" class="story-goals-modal__close" aria-label="Close AI assistant plan" data-ai-plan-close>
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="ai-preferences" aria-label="AI assistant preferences" data-ai-preferences>
+            <p class="ai-preferences__story muted" data-ai-scope-note>
+              <span data-ai-selected-copy>Selected story: <strong data-ai-story-name>Mega Museum - The Legacy of the Founders Stone</strong></span>
+              <span data-ai-empty-copy hidden>Select a story from the Story Goal Tracker to customize the assistant.</span>
+            </p>
+            <div class="ai-preferences__content">
+              <div class="ai-preferences__primer">
+                <h4>What happens next</h4>
+                <ol>
+                  <li>First the assistant asks if you want to make progress on <em>your current story</em> or start something brand new.</li>
+                  <li>If you choose a new story, pick between a short sprint, a medium arc, or a long-form journey.</li>
+                  <li>Those choices are stored in Supabase so nudges, bias notes, and progress checks align with each script.</li>
+                </ol>
+                <p class="muted">
+                  Updates sync once you sign in. If you are offline, changes stay local until the next session.
+                </p>
+              </div>
+              <form class="ai-preferences__form" data-ai-preferences-form novalidate>
+                <fieldset class="ai-preferences__fieldset">
+                  <legend>Story focus</legend>
+                  <label class="ai-preferences__option">
+                    <input type="radio" name="ai-story-mode" value="continue" checked />
+                    <span>Make progress on my existing story</span>
+                  </label>
+                  <label class="ai-preferences__option">
+                    <input type="radio" name="ai-story-mode" value="new" />
+                    <span>Start a fresh story</span>
+                  </label>
+                </fieldset>
+                <fieldset class="ai-preferences__fieldset" data-ai-length-group>
+                  <legend>New story size</legend>
+                  <label class="ai-preferences__length">
+                    <input type="radio" name="ai-story-length" value="short" />
+                    <span>
+                      <strong>Short sprint</strong>
+                      <small>~15 beats to ship something fast</small>
+                    </span>
+                  </label>
+                  <label class="ai-preferences__length">
+                    <input type="radio" name="ai-story-length" value="medium" checked />
+                    <span>
+                      <strong>Medium arc</strong>
+                      <small>Classic three-act structure</small>
+                    </span>
+                  </label>
+                  <label class="ai-preferences__length">
+                    <input type="radio" name="ai-story-length" value="long" />
+                    <span>
+                      <strong>Long-form journey</strong>
+                      <small>Season-length or feature outline</small>
+                    </span>
+                  </label>
+                </fieldset>
+                <fieldset class="ai-preferences__fieldset">
+                  <legend>Coaching style</legend>
+                  <label class="ai-preferences__feature">
+                    <input type="checkbox" value="progress_nudges" data-ai-feature checked />
+                    <span>Send progress nudges when goals fall behind</span>
+                  </label>
+                  <label class="ai-preferences__feature">
+                    <input type="checkbox" value="structure_spotlight" data-ai-feature />
+                    <span>Highlight structure and milestone checkpoints</span>
+                  </label>
+                  <label class="ai-preferences__feature">
+                    <input type="checkbox" value="tone_cheerleader" data-ai-feature />
+                    <span>Keep the tone upbeat and encouraging</span>
+                  </label>
+                </fieldset>
+                <label class="ai-preferences__field">
+                  <span>Bias or voice notes</span>
+                  <textarea data-ai-bias rows="3" placeholder="Example: focus on emotional stakes, avoid horror beats, keep feedback direct."></textarea>
+                </label>
+                <div class="ai-preferences__actions">
+                  <button type="button" class="ai-preferences__save" data-ai-save>Save assistant plan</button>
+                  <p class="ai-preferences__status muted" data-ai-status>No saved plan yet—tune the assistant and hit save.</p>
+                </div>
+              </form>
             </div>
           </section>
         </div>
@@ -2080,6 +2113,65 @@
             }
           }
         }, 100);
+      }
+    });
+
+    closeModal();
+  })();
+</script>
+<script>
+  (function(){
+    const modal = document.querySelector('[data-ai-plan-modal]');
+    if (!modal) return;
+
+    const trigger = document.querySelector('[data-ai-plan-trigger]');
+    const closeButton = modal.querySelector('[data-ai-plan-close]');
+    const overlay = modal.querySelector('[data-ai-plan-overlay]');
+    const aiPlanStatus = document.querySelector('[data-ai-plan-status]');
+
+    if (!trigger) return;
+
+    function openModal(){
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger?.focus();
+    }
+
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    // Update the status in the card when a plan is saved
+    document.addEventListener('studioorganize:ai-plan-saved', event => {
+      if (aiPlanStatus) {
+        aiPlanStatus.textContent = 'Saved';
+      }
+    });
+
+    // Update status based on project selection
+    document.addEventListener('studioorganize:selected-project', event => {
+      const detail = event?.detail;
+      if (!detail || !detail.projectId) {
+        if (aiPlanStatus) aiPlanStatus.textContent = '—';
       }
     });
 
