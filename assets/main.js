@@ -2308,12 +2308,19 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 
         const dialog = document.getElementById('scriptDialog');
         const overlayOpen = document.documentElement.classList.contains('script-dialog-overlay-open');
-        const isOpen = (dialog instanceof HTMLElement && dialog.classList.contains('open')) || overlayOpen;
+        const hasInlineDialog = dialog instanceof HTMLElement;
+        const inlineOpen = hasInlineDialog && dialog.classList.contains('open');
 
         if (typeof window.openScriptDialog === 'function'){
-          if (isOpen && typeof window.closeScriptDialog === 'function'){
-            window.closeScriptDialog();
-          } else {
+          if (hasInlineDialog){
+            if (inlineOpen && typeof window.closeScriptDialog === 'function'){
+              window.closeScriptDialog();
+              return;
+            }
+            window.openScriptDialog();
+            return;
+          }
+          if (!overlayOpen){
             window.openScriptDialog();
           }
         } else {
