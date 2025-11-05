@@ -230,9 +230,37 @@
       .btn-menu-list a{background:var(--chip); border:1px solid var(--ring); border-radius:10px; padding:8px 10px; text-align:left; color:var(--ink); cursor:pointer; text-decoration:none; display:block}
       .btn-menu-list button:hover,
       .btn-menu-list a:hover{border-color:var(--acc)}
-      .layout{display:grid; grid-template-columns:280px 1fr 320px; gap:10px; padding:10px; min-height:0}
+      .layout{
+        --scene-panel-expanded-width: 280px;
+        --scene-panel-handle-width: 36px;
+        --scene-panel-track: var(--scene-panel-expanded-width);
+        display:grid;
+        grid-template-columns:minmax(0, var(--scene-panel-track)) minmax(0, 1fr) minmax(0, 320px);
+        gap:10px;
+        padding:10px;
+        min-height:0;
+        transition:grid-template-columns .35s ease;
+      }
+      .layout.scene-panel-collapsed{--scene-panel-track: var(--scene-panel-handle-width);}
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
+      .panel--scenes{position:relative; width:var(--scene-panel-expanded-width); transition:transform .35s ease, box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.32); z-index:2;}
+      .panel--scenes[data-open="false"]{box-shadow:none;}
+      .layout.scene-panel-collapsed .panel--scenes{transform:translateX(calc(-100% + var(--scene-panel-handle-width)));}
+      .scene-panel-slot{position:relative; width:var(--scene-panel-expanded-width); transition:width .35s ease; min-height:0; overflow:visible;}
+      .layout.scene-panel-collapsed .scene-panel-slot{width:var(--scene-panel-handle-width);}
+      .scene-panel__header{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px 0;}
+      .scene-panel__header h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted);}
+      .scene-panel__pin-toggle{margin:4px 12px 10px; background:var(--chip); color:var(--muted); border:1px solid var(--ring); border-radius:999px; padding:4px 12px; font-size:11px; letter-spacing:.3px; text-transform:uppercase; display:inline-flex; align-items:center; gap:6px; cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;}
+      .scene-panel__pin-toggle::before{content:'📌'; font-size:14px;}
+      .scene-panel__pin-toggle:hover{border-color:var(--acc); color:var(--ink);}
+      .scene-panel__pin-toggle:focus-visible{outline:2px solid var(--acc); outline-offset:3px;}
+      .scene-panel__pin-toggle[aria-pressed="true"]{background:linear-gradient(135deg, rgba(79,123,255,0.22), rgba(79,123,255,0.08)); border-color:var(--acc); color:var(--ink); box-shadow:0 10px 22px rgba(79,123,255,0.18);}
+      .scene-panel__pin-toggle[aria-pressed="true"]::before{content:'📍';}
+      .scene-panel__handle{position:absolute; top:50%; right:calc(-0.5 * var(--scene-panel-handle-width)); transform:translateY(-50%); width:var(--scene-panel-handle-width); height:120px; border:none; border-radius:16px; background:linear-gradient(180deg, rgba(79,123,255,0.95), rgba(79,123,255,0.65)); color:var(--active-tab-text); font-size:10px; letter-spacing:.3em; text-transform:uppercase; writing-mode:vertical-rl; text-orientation:mixed; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 12px 30px rgba(79,123,255,0.35); transition:transform .3s ease, box-shadow .3s ease, opacity .3s ease; z-index:3;}
+      .scene-panel__handle:hover{box-shadow:0 16px 36px rgba(79,123,255,0.45); transform:translateY(-50%) scale(1.02);}
+      .scene-panel__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px;}
+      .layout.scene-panel-collapsed .scene-panel__handle{opacity:0.9;}
       .scenes{overflow:auto; padding:8px}
       .scene-card{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; display:flex; flex-direction:column; gap:6px; overflow:visible; transition:opacity .25s ease, filter .25s ease, transform .2s ease}
       .scene-card:not(.active):not(.editing){opacity:0.55; filter:saturate(0.7)}
@@ -1301,13 +1329,20 @@
         </div>
       </div>
 
-      <div class="layout">
-        <div class="panel">
-          <h2 style="display:flex;align-items:center;justify-content:space-between;margin-right:8px">
-            Scenes
-            <button class="btn" style="padding:4px 8px" onclick="addScene()">+ Scene</button>
-          </h2>
-          <div id="sceneList" class="scenes"></div>
+      <div class="layout scene-panel-collapsed" id="screenplayLayout">
+        <div class="scene-panel-slot" id="scenePanelSlot">
+          <div class="panel panel--scenes" id="scenePanel" data-open="false" data-pinned="false">
+            <div class="scene-panel__header">
+              <h2>Scenes</h2>
+              <button class="btn" type="button" style="padding:4px 8px" onclick="addScene()">+ Scene</button>
+            </div>
+            <button class="scene-panel__pin-toggle" type="button" id="scenePanelPin" aria-pressed="false">Pin me</button>
+            <div id="sceneList" class="scenes"></div>
+            <button class="scene-panel__handle" type="button" id="scenePanelHandle" aria-expanded="false" aria-controls="scenePanel">
+              <span aria-hidden="true">Scenes</span>
+              <span class="sr-only">Toggle Scenes panel</span>
+            </button>
+          </div>
         </div>
 
         <div class="panel editor">
@@ -1819,6 +1854,103 @@
         document.addEventListener('DOMContentLoaded', notifyReady, { once: true });
       }
     }
+
+    const layoutEl = document.getElementById('screenplayLayout');
+    const scenePanel = document.getElementById('scenePanel');
+    const scenePanelSlot = document.getElementById('scenePanelSlot');
+    const scenePanelHandle = document.getElementById('scenePanelHandle');
+    const scenePanelPin = document.getElementById('scenePanelPin');
+
+    const scenePanelState = {
+      open: false,
+      pinned: false,
+      closeTimer: null,
+    };
+
+    function clearScenePanelCloseTimer(){
+      if (scenePanelState.closeTimer){
+        clearTimeout(scenePanelState.closeTimer);
+        scenePanelState.closeTimer = null;
+      }
+    }
+
+    function setScenePanelOpen(open, { force = false } = {}){
+      if (!layoutEl || !scenePanel || !scenePanelHandle) return;
+      if (!open && scenePanelState.pinned && !force){
+        open = true;
+      }
+      if (!force && scenePanelState.open === open) return;
+      scenePanelState.open = open;
+      layoutEl.classList.toggle('scene-panel-collapsed', !open);
+      scenePanel.dataset.open = open ? 'true' : 'false';
+      scenePanelHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function updateScenePanelPinLabel(){
+      if (!scenePanelPin) return;
+      scenePanelPin.textContent = scenePanelState.pinned ? 'Pinned' : 'Pin me';
+    }
+
+    function setScenePanelPinned(pinned){
+      if (!scenePanel) return;
+      scenePanelState.pinned = !!pinned;
+      scenePanel.dataset.pinned = scenePanelState.pinned ? 'true' : 'false';
+      if (scenePanelPin){
+        scenePanelPin.setAttribute('aria-pressed', scenePanelState.pinned ? 'true' : 'false');
+      }
+      updateScenePanelPinLabel();
+      if (scenePanelState.pinned){
+        clearScenePanelCloseTimer();
+        setScenePanelOpen(true, { force: true });
+      } else {
+        const shouldStayOpen = (scenePanelSlot && (scenePanelSlot.matches(':hover') || scenePanelSlot.contains(document.activeElement)));
+        setScenePanelOpen(!!shouldStayOpen, { force: true });
+      }
+    }
+
+    function scheduleScenePanelClose(){
+      if (scenePanelState.pinned) return;
+      clearScenePanelCloseTimer();
+      scenePanelState.closeTimer = setTimeout(() => {
+        setScenePanelOpen(false);
+      }, 220);
+    }
+
+    if (scenePanelSlot){
+      scenePanelSlot.addEventListener('mouseenter', () => {
+        clearScenePanelCloseTimer();
+        setScenePanelOpen(true);
+      });
+      scenePanelSlot.addEventListener('mouseleave', scheduleScenePanelClose);
+      scenePanelSlot.addEventListener('focusin', () => {
+        clearScenePanelCloseTimer();
+        setScenePanelOpen(true);
+      });
+      scenePanelSlot.addEventListener('focusout', event => {
+        if (scenePanelSlot.contains(event.relatedTarget)) return;
+        scheduleScenePanelClose();
+      });
+    }
+
+    if (scenePanelHandle){
+      scenePanelHandle.addEventListener('click', () => {
+        clearScenePanelCloseTimer();
+        if (scenePanelState.open && !scenePanelState.pinned){
+          setScenePanelOpen(false, { force: true });
+        } else {
+          setScenePanelOpen(true, { force: true });
+        }
+      });
+    }
+
+    if (scenePanelPin){
+      scenePanelPin.addEventListener('click', () => {
+        setScenePanelPinned(!scenePanelState.pinned);
+      });
+    }
+
+    updateScenePanelPinLabel();
+    setScenePanelOpen(false, { force: true });
 
     /* =========================
      * IndexedDB minimal wrapper
