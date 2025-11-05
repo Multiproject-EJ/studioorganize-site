@@ -294,7 +294,7 @@ function ensureVideoLessonDialogController(){
 
   const renderVideoCard = lesson => {
     const videoId = extractVideoId(lesson.url);
-    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
+    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${escapeHtml(videoId)}/mqdefault.jpg` : '';
     const tags = Array.isArray(lesson.tags) ? lesson.tags : [];
     const tagsMarkup = tags.map(tag => `<span class="video-lesson__tag">${escapeHtml(tag)}</span>`).join('');
     const safeTitle = escapeHtml(lesson.title);
@@ -305,7 +305,7 @@ function ensureVideoLessonDialogController(){
     return `
       <div class="video-lesson__card" data-video-lesson-id="${safeId}" data-video-url="${safeUrl}">
         <div class="video-lesson__thumbnail">
-          ${thumbnailUrl ? `<img src="${escapeHtml(thumbnailUrl)}" alt="${safeTitle}" loading="lazy" />` : ''}
+          ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${safeTitle}" loading="lazy" />` : ''}
           <button type="button" class="video-lesson__play" data-video-play aria-label="Play ${safeTitle}">▶</button>
         </div>
         <div class="video-lesson__info">
@@ -360,10 +360,9 @@ function ensureVideoLessonDialogController(){
       <iframe 
         width="100%" 
         height="100%" 
-        src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+        src="https://www.youtube.com/embed/${videoId}" 
         title="YouTube video player" 
-        style="border: none;" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
         allowfullscreen
       ></iframe>
     `;
