@@ -583,6 +583,14 @@
 
       const initialCharacters = [];
 
+      const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+      function isValidUuid(value){
+        if (typeof value !== 'string') return false;
+        const trimmed = value.trim();
+        return UUID_V4_REGEX.test(trimmed);
+      }
+
       function normalizeProjectId(value){
         if (typeof value !== 'string') return null;
         const trimmed = value.trim();
@@ -758,6 +766,7 @@
             : [];
           if (!list.length) return;
           state.characters = list;
+          ensureStateCharacterIds();
           if (!list.some(char => char.id === state.activeId)){
             state.activeId = list.length ? list[0].id : null;
           }
@@ -822,6 +831,32 @@
         } else {
           setSaveStatus('Unsaved changes (sign in to sync)', 'warning');
         }
+      }
+
+      function ensureStateCharacterIds(){
+        let updated = false;
+        const replacements = new Map();
+        state.characters.forEach(character => {
+          if (!character || typeof character !== 'object') return;
+          const rawId = typeof character.id === 'string' ? character.id.trim() : '';
+          if (isValidUuid(rawId)) return;
+          const nextId = createId();
+          const previousId = rawId;
+          character.id = nextId;
+          replacements.set(previousId, nextId);
+          updated = true;
+        });
+        if (!updated) return false;
+        replacements.forEach((nextId, previousId) => {
+          if (state.remoteIds?.has(previousId)){
+            state.remoteIds.delete(previousId);
+          }
+          if (state.activeId === previousId){
+            state.activeId = nextId;
+          }
+        });
+        markDirty();
+        return true;
       }
 
       function escapeHtml(value){
@@ -930,7 +965,12 @@
         const base = createCharacterData(item?.name || 'Untitled Character');
         if (!item || typeof item !== 'object') return base;
         const normalized = { ...base, ...item };
-        normalized.id = item.id || base.id;
+        const rawId = typeof item.id === 'string' ? item.id.trim() : '';
+        const hasValidId = isValidUuid(rawId);
+        normalized.id = hasValidId ? rawId : base.id;
+        if (!hasValidId && item && typeof item === 'object'){
+          item.id = normalized.id;
+        }
         normalized.name = typeof item.name === 'string' ? item.name : base.name;
         normalized.role = typeof item.role === 'string' ? item.role : '';
         normalized.archetype = typeof item.archetype === 'string' ? item.archetype : '';
@@ -2102,6 +2142,7 @@
           if (error) throw error;
           const list = Array.isArray(data) ? data.map(supabaseRowToCharacter) : [];
           state.characters = list;
+          ensureStateCharacterIds();
           state.poseCache.clear();
           state.activeId = list.length ? list[0].id : null;
           state.remoteIds = new Set(list.map(char => char.id));
@@ -2169,6 +2210,7 @@
           setSaveStatus('Open your story in the Writer to link characters.', 'warning');
           return;
         }
+        ensureStateCharacterIds();
         if (!state.dirty){
           setSaveStatus('Everything is up to date.', 'ready');
           return;
