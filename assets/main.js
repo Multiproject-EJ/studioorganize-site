@@ -98,7 +98,6 @@ initServiceWorker();
 const SCRIPT_DIALOG_MESSAGE_TYPE = 'so-script-dialog';
 let scriptDialogOverlayController = null;
 
-const VIDEO_LESSON_MESSAGE_TYPE = 'so-video-lesson-dialog';
 let videoLessonDialogController = null;
 
 // Video lesson library data
@@ -286,21 +285,32 @@ function ensureVideoLessonDialogController(){
     return match ? match[1] : null;
   };
 
+  const escapeHtml = str => {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
   const renderVideoCard = lesson => {
     const videoId = extractVideoId(lesson.url);
     const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
     const tags = Array.isArray(lesson.tags) ? lesson.tags : [];
-    const tagsMarkup = tags.map(tag => `<span class="video-lesson__tag">${tag}</span>`).join('');
+    const tagsMarkup = tags.map(tag => `<span class="video-lesson__tag">${escapeHtml(tag)}</span>`).join('');
+    const safeTitle = escapeHtml(lesson.title);
+    const safeType = escapeHtml(lesson.lessonType);
+    const safeUrl = escapeHtml(lesson.url);
+    const safeId = escapeHtml(lesson.id);
     
     return `
-      <div class="video-lesson__card" data-video-lesson-id="${lesson.id}" data-video-url="${lesson.url}">
+      <div class="video-lesson__card" data-video-lesson-id="${safeId}" data-video-url="${safeUrl}">
         <div class="video-lesson__thumbnail">
-          ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${lesson.title}" loading="lazy" />` : ''}
-          <button type="button" class="video-lesson__play" data-video-play aria-label="Play ${lesson.title}">▶</button>
+          ${thumbnailUrl ? `<img src="${escapeHtml(thumbnailUrl)}" alt="${safeTitle}" loading="lazy" />` : ''}
+          <button type="button" class="video-lesson__play" data-video-play aria-label="Play ${safeTitle}">▶</button>
         </div>
         <div class="video-lesson__info">
-          <h3 class="video-lesson__title">${lesson.title}</h3>
-          <p class="video-lesson__type">${lesson.lessonType}</p>
+          <h3 class="video-lesson__title">${safeTitle}</h3>
+          <p class="video-lesson__type">${safeType}</p>
           <div class="video-lesson__tags">${tagsMarkup}</div>
         </div>
       </div>
@@ -352,7 +362,7 @@ function ensureVideoLessonDialogController(){
         height="100%" 
         src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
         title="YouTube video player" 
-        frameborder="0" 
+        style="border: none;" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
         allowfullscreen
       ></iframe>
@@ -377,6 +387,7 @@ function ensureVideoLessonDialogController(){
   }
 
   overlay.addEventListener('click', event => {
+    // Handle play button clicks
     const playButton = event.target instanceof HTMLElement ? event.target.closest('[data-video-play]') : null;
     if (playButton){
       event.preventDefault();
@@ -385,6 +396,12 @@ function ensureVideoLessonDialogController(){
       if (videoUrl){
         showPlayer(videoUrl);
       }
+      return;
+    }
+    
+    // Handle backdrop clicks to close
+    if (event.target === overlay){
+      controller.close();
     }
   });
 
@@ -421,12 +438,6 @@ function ensureVideoLessonDialogController(){
       event.preventDefault();
       controller.close();
     });
-  });
-
-  overlay.addEventListener('click', event => {
-    if (event.target === overlay){
-      controller.close();
-    }
   });
 
   videoLessonDialogController = controller;
