@@ -113,7 +113,7 @@ const VIDEO_LESSONS = [
   {
     id: 'lesson-2',
     title: 'Building Story Tension',
-    url: 'https://youtu.be/dQw4w9WgXcQ',
+    url: 'https://youtu.be/jV2OP2YEZII',
     lessonType: 'Plot Structure',
     tags: ['tension', 'pacing', 'plot']
   },
