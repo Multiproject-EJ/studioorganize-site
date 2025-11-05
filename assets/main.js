@@ -356,16 +356,19 @@ function ensureVideoLessonDialogController(){
     const videoId = extractVideoId(videoUrl);
     if (!videoId || !embedContainer || !playerContainer || !grid) return;
 
-    embedContainer.innerHTML = `
-      <iframe 
-        width="100%" 
-        height="100%" 
-        src="https://www.youtube.com/embed/${videoId}" 
-        title="YouTube video player" 
-        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-        allowfullscreen
-      ></iframe>
-    `;
+    // Clear previous content
+    embedContainer.innerHTML = '';
+    
+    // Create iframe using DOM methods to prevent XSS
+    const iframe = document.createElement('iframe');
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+    iframe.title = 'YouTube video player';
+    iframe.setAttribute('allow', 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    iframe.setAttribute('allowfullscreen', '');
+    
+    embedContainer.appendChild(iframe);
 
     grid.hidden = true;
     playerContainer.hidden = false;
