@@ -2536,37 +2536,49 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
       event.stopPropagation();
     });
 
-    const scriptButton = panel.querySelector('[data-workspace-script]');
-    if (scriptButton instanceof HTMLElement && scriptButton.dataset.workspaceScriptBound !== 'true'){
-      scriptButton.dataset.workspaceScriptBound = 'true';
-      scriptButton.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
+    const handleScriptTriggerClick = event => {
+      event.preventDefault();
+      event.stopPropagation();
 
-        closeAll();
+      closeAll();
 
-        const dialog = document.getElementById('scriptDialog');
-        const overlayOpen = document.documentElement.classList.contains('script-dialog-overlay-open');
-        const hasInlineDialog = dialog instanceof HTMLElement;
-        const inlineOpen = hasInlineDialog && dialog.classList.contains('open');
+      const dialog = document.getElementById('scriptDialog');
+      const overlayOpen = document.documentElement.classList.contains('script-dialog-overlay-open');
+      const hasInlineDialog = dialog instanceof HTMLElement;
+      const inlineOpen = hasInlineDialog && dialog.classList.contains('open');
 
-        if (typeof window.openScriptDialog === 'function'){
-          if (hasInlineDialog){
-            if (inlineOpen && typeof window.closeScriptDialog === 'function'){
-              window.closeScriptDialog();
-              return;
-            }
-            window.openScriptDialog();
+      if (typeof window.openScriptDialog === 'function'){
+        if (hasInlineDialog){
+          if (inlineOpen && typeof window.closeScriptDialog === 'function'){
+            window.closeScriptDialog();
             return;
           }
-          if (!overlayOpen){
-            window.openScriptDialog();
-          }
-        } else {
-          window.location.href = '/use-cases/screenplay-writing.html';
+          window.openScriptDialog();
+          return;
         }
-      });
+        if (!overlayOpen){
+          window.openScriptDialog();
+        }
+        return;
+      }
+
+      const controller = ensureScriptDialogOverlayController();
+      if (controller){
+        controller.open();
+        return;
+      }
+
+      window.location.href = '/use-cases/screenplay-writing.html';
     }
+    };
+
+    const scriptButtons = Array.from(panel.querySelectorAll('[data-workspace-script]'));
+    scriptButtons.forEach(button => {
+      if (!(button instanceof HTMLElement)) return;
+      if (button.dataset.workspaceScriptBound === 'true') return;
+      button.dataset.workspaceScriptBound = 'true';
+      button.addEventListener('click', handleScriptTriggerClick);
+    });
 
     const saveButton = panel.querySelector('[data-workspace-save]');
     if (saveButton instanceof HTMLElement && saveButton.dataset.workspaceSaveBound !== 'true'){
