@@ -98,6 +98,47 @@ initServiceWorker();
 const SCRIPT_DIALOG_MESSAGE_TYPE = 'so-script-dialog';
 let scriptDialogOverlayController = null;
 
+let videoLessonDialogController = null;
+
+// Video lesson library data
+const VIDEO_LESSONS = [
+  {
+    id: 'lesson-1',
+    title: 'Understanding Your Antagonist',
+    url: 'https://youtu.be/NFiy-1DxJqs?si=fZ1FiPc0XnUjrmSZ',
+    lessonType: 'Character Development',
+    tags: ['antagonist', 'conflict', 'character']
+  },
+  {
+    id: 'lesson-2',
+    title: 'Building Story Tension',
+    url: 'https://youtu.be/jV2OP2YEZII',
+    lessonType: 'Plot Structure',
+    tags: ['tension', 'pacing', 'plot']
+  },
+  {
+    id: 'lesson-3',
+    title: 'Crafting Compelling Dialogue',
+    url: 'https://youtu.be/oHg5SJYRHA0',
+    lessonType: 'Writing Technique',
+    tags: ['dialogue', 'character', 'voice']
+  },
+  {
+    id: 'lesson-4',
+    title: 'Three Act Structure Explained',
+    url: 'https://youtu.be/QH2-TGUlwu4',
+    lessonType: 'Plot Structure',
+    tags: ['structure', 'plot', 'acts']
+  },
+  {
+    id: 'lesson-5',
+    title: 'Creating Memorable Protagonists',
+    url: 'https://youtu.be/9bZkp7q19f0',
+    lessonType: 'Character Development',
+    tags: ['protagonist', 'character', 'hero']
+  }
+];
+
 function ensureScriptDialogOverlayController(){
   if (scriptDialogOverlayController) return scriptDialogOverlayController;
   if (!document.body) return null;
@@ -226,6 +267,198 @@ if (typeof window.openScriptDialog !== 'function'){
     document.addEventListener('DOMContentLoaded', setupScriptDialogFallback, { once: true });
   } else {
     setupScriptDialogFallback();
+  }
+}
+
+function ensureVideoLessonDialogController(){
+  if (videoLessonDialogController) return videoLessonDialogController;
+  if (!document.body) return null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'video-lesson-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.hidden = true;
+
+  const extractVideoId = url => {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^?&"'>]+)/);
+    return match ? match[1] : null;
+  };
+
+  const escapeHtml = str => {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  const renderVideoCard = lesson => {
+    const videoId = extractVideoId(lesson.url);
+    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${escapeHtml(videoId)}/mqdefault.jpg` : '';
+    const tags = Array.isArray(lesson.tags) ? lesson.tags : [];
+    const tagsMarkup = tags.map(tag => `<span class="video-lesson__tag">${escapeHtml(tag)}</span>`).join('');
+    const safeTitle = escapeHtml(lesson.title);
+    const safeType = escapeHtml(lesson.lessonType);
+    const safeUrl = escapeHtml(lesson.url);
+    const safeId = escapeHtml(lesson.id);
+    
+    return `
+      <div class="video-lesson__card" data-video-lesson-id="${safeId}" data-video-url="${safeUrl}">
+        <div class="video-lesson__thumbnail">
+          ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${safeTitle}" loading="lazy" />` : ''}
+          <button type="button" class="video-lesson__play" data-video-play aria-label="Play ${safeTitle}">▶</button>
+        </div>
+        <div class="video-lesson__info">
+          <h3 class="video-lesson__title">${safeTitle}</h3>
+          <p class="video-lesson__type">${safeType}</p>
+          <div class="video-lesson__tags">${tagsMarkup}</div>
+        </div>
+      </div>
+    `;
+  };
+
+  const videoCardsMarkup = VIDEO_LESSONS.map(renderVideoCard).join('');
+
+  overlay.innerHTML = `
+    <div class="video-lesson-overlay__backdrop" data-video-lesson-close></div>
+    <div class="video-lesson-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="video-lesson-title">
+      <button type="button" class="video-lesson-overlay__close" data-video-lesson-close aria-label="Close video lessons">✕</button>
+      <header class="video-lesson-overlay__header">
+        <h2 id="video-lesson-title">📺 Video Lesson Library</h2>
+        <p class="video-lesson-overlay__subtitle">Learn storytelling techniques from expert tutorials</p>
+      </header>
+      <div class="video-lesson-overlay__player" data-video-player hidden>
+        <button type="button" class="video-lesson-overlay__back" data-video-back aria-label="Back to library">← Back to Library</button>
+        <div class="video-lesson-overlay__embed" data-video-embed></div>
+      </div>
+      <div class="video-lesson-overlay__grid" data-video-grid>
+        ${videoCardsMarkup}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const closeTriggers = overlay.querySelectorAll('[data-video-lesson-close]');
+  const grid = overlay.querySelector('[data-video-grid]');
+  const playerContainer = overlay.querySelector('[data-video-player]');
+  const embedContainer = overlay.querySelector('[data-video-embed]');
+  const backButton = overlay.querySelector('[data-video-back]');
+
+  const handleKeydown = event => {
+    if (event.key === 'Escape'){
+      event.preventDefault();
+      controller.close();
+    }
+  };
+
+  const showPlayer = videoUrl => {
+    const videoId = extractVideoId(videoUrl);
+    if (!videoId || !embedContainer || !playerContainer || !grid) return;
+
+    // Clear previous content
+    embedContainer.innerHTML = '';
+    
+    // Create iframe using DOM methods to prevent XSS
+    const iframe = document.createElement('iframe');
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+    iframe.title = 'YouTube video player';
+    iframe.setAttribute('allow', 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    iframe.setAttribute('allowfullscreen', '');
+    
+    embedContainer.appendChild(iframe);
+
+    grid.hidden = true;
+    playerContainer.hidden = false;
+  };
+
+  const hidePlayer = () => {
+    if (!embedContainer || !playerContainer || !grid) return;
+    embedContainer.innerHTML = '';
+    playerContainer.hidden = true;
+    grid.hidden = false;
+  };
+
+  if (backButton){
+    backButton.addEventListener('click', event => {
+      event.preventDefault();
+      hidePlayer();
+    });
+  }
+
+  overlay.addEventListener('click', event => {
+    // Handle play button clicks
+    const playButton = event.target instanceof HTMLElement ? event.target.closest('[data-video-play]') : null;
+    if (playButton){
+      event.preventDefault();
+      const card = playButton.closest('[data-video-lesson-id]');
+      const videoUrl = card?.getAttribute('data-video-url');
+      if (videoUrl){
+        showPlayer(videoUrl);
+      }
+      return;
+    }
+    
+    // Handle backdrop clicks to close
+    if (event.target === overlay){
+      controller.close();
+    }
+  });
+
+  const controller = {
+    open(){
+      if (!overlay) return;
+      hidePlayer();
+      overlay.hidden = false;
+      overlay.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => {
+        overlay.classList.add('is-open');
+      });
+      document.documentElement.classList.add('video-lesson-overlay-open');
+      window.addEventListener('keydown', handleKeydown);
+    },
+    close(){
+      if (!overlay.classList.contains('is-open')) return;
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        overlay.hidden = true;
+        hidePlayer();
+      }, 300);
+      document.documentElement.classList.remove('video-lesson-overlay-open');
+      window.removeEventListener('keydown', handleKeydown);
+    },
+    isOpen(){
+      return overlay.classList.contains('is-open');
+    }
+  };
+
+  closeTriggers.forEach(trigger => {
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      controller.close();
+    });
+  });
+
+  videoLessonDialogController = controller;
+  return controller;
+}
+
+function setupVideoLessonDialog(){
+  if (typeof window.openVideoLessonDialog === 'function') return;
+  const controller = ensureVideoLessonDialogController();
+  if (!controller) return;
+  window.openVideoLessonDialog = () => controller.open();
+  window.closeVideoLessonDialog = () => controller.close();
+}
+
+if (typeof window.openVideoLessonDialog !== 'function'){
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', setupVideoLessonDialog, { once: true });
+  } else {
+    setupVideoLessonDialog();
   }
 }
 
@@ -1927,6 +2160,9 @@ function ensureWorkspaceLauncherStructure(launcher){
       <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="settings">
         <span>⚙️ Adjust how you coach me</span>
       </button>
+      <button type="button" class="workspace-launcher__assistant-action" data-video-lessons-open>
+        <span>📺 Video Lessons</span>
+      </button>
     `;
     if (chat instanceof HTMLElement && chat.parentElement === assistant){
       assistant.insertBefore(assistantActions, chat);
@@ -1985,6 +2221,9 @@ function injectGlobalWorkspaceLauncher(){
             </button>
             <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="settings">
               <span>⚙️ Adjust how you coach me</span>
+            </button>
+            <button type="button" class="workspace-launcher__assistant-action" data-video-lessons-open>
+              <span>📺 Video Lessons</span>
             </button>
           </div>
           <div class="workspace-launcher__chat workspace-launcher__chat--docked" data-workspace-chat hidden aria-hidden="true">
@@ -2350,6 +2589,21 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         // TODO: Implement actual save functionality
         // Should save current workspace state to localStorage/IndexedDB
         // and sync to Supabase if user is authenticated
+      });
+    }
+
+    const videoLessonsButton = panel.querySelector('[data-video-lessons-open]');
+    if (videoLessonsButton instanceof HTMLElement && videoLessonsButton.dataset.videoLessonsBound !== 'true'){
+      videoLessonsButton.dataset.videoLessonsBound = 'true';
+      videoLessonsButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        closeAll();
+        
+        if (typeof window.openVideoLessonDialog === 'function'){
+          window.openVideoLessonDialog();
+        }
       });
     }
 
