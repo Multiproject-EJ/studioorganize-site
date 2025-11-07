@@ -2253,13 +2253,13 @@ function ensureWorkspaceLauncherStructure(launcher){
     assistantToggle.className = 'workspace-launcher__module workspace-launcher__module--assistant';
     assistantToggle.setAttribute('data-workspace-assistant-toggle', '');
     assistantToggle.setAttribute('data-label', 'Assistant');
-    assistantToggle.innerHTML = `
-      <span class="workspace-launcher__module-icon" aria-hidden="true">
-        <span class="workspace-launcher__assistant-glyph" aria-hidden="true">🤖</span>
-      </span>
-      <span class="sr-only">Open StudioOrganize Assistant</span>
-    `;
   }
+  assistantToggle.innerHTML = `
+    <span class="workspace-launcher__module-icon" aria-hidden="true">
+      <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
+    </span>
+    <span class="sr-only">Open StudioOrganize Assistant</span>
+  `;
   if (assistantToggle.parentElement !== modules){
     modules.insertBefore(assistantToggle, modules.firstChild);
   } else if (modules.firstChild !== assistantToggle){
@@ -2286,7 +2286,7 @@ function ensureWorkspaceLauncherStructure(launcher){
   if (!assistant.querySelector('.workspace-launcher__assistant-header')){
     assistant.insertAdjacentHTML('afterbegin', `
       <div class="workspace-launcher__assistant-header">
-        <span class="workspace-launcher__assistant-avatar" aria-hidden="true">🤖</span>
+        <span class="workspace-launcher__assistant-avatar" aria-hidden="true"></span>
         <div>
           <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
           <p class="workspace-launcher__assistant-subtitle">Tell me if we're continuing a story or starting fresh and I'll tailor the prompts.</p>
@@ -2356,7 +2356,7 @@ function injectGlobalWorkspaceLauncher(){
       <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
         <div class="workspace-launcher__assistant">
           <div class="workspace-launcher__assistant-header">
-            <span class="workspace-launcher__assistant-avatar" aria-hidden="true">🤖</span>
+            <span class="workspace-launcher__assistant-avatar" aria-hidden="true"></span>
             <div>
               <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
               <p class="workspace-launcher__assistant-subtitle">Tell me if we're continuing a story or starting fresh and I'll tailor the prompts.</p>
@@ -2651,7 +2651,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
       } else {
         closeAll(launcher);
         const shouldFocusPanel = typeof event.detail === 'number' ? event.detail === 0 : true;
-        openLauncher(launcher, { focusPanel: shouldFocusPanel, revealChat: true });
+        openLauncher(launcher, { focusPanel: shouldFocusPanel, revealChat: false });
       }
     });
 
