@@ -2111,7 +2111,7 @@ function initNotificationCenter(){
   });
 }
 
-const CREATIVE_HUB_ICON = '/assets/img/studioorganize_mock.png';
+const CREATIVE_HUB_ICON = '/assets/img/IMG_6896.webp';
 
 const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/IMG_6892.webp' },
