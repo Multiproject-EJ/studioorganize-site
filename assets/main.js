@@ -303,7 +303,7 @@ function ensureVideoLessonDialogController(){
     const safeId = escapeHtml(lesson.id);
     
     return `
-      <div class="video-lesson__card" data-video-lesson-id="${safeId}" data-video-url="${safeUrl}">
+      <div class="video-lesson__card" data-video-lesson-id="${safeId}" data-video-url="${safeUrl}" data-video-title="${safeTitle}">
         <div class="video-lesson__thumbnail">
           ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${safeTitle}" loading="lazy" />` : ''}
           <button type="button" class="video-lesson__play" data-video-play aria-label="Play ${safeTitle}">▶</button>
@@ -328,12 +328,31 @@ function ensureVideoLessonDialogController(){
         <p class="video-lesson-overlay__subtitle">Learn storytelling techniques from expert tutorials</p>
       </header>
       <div class="video-lesson-overlay__player" data-video-player hidden>
-        <button type="button" class="video-lesson-overlay__back" data-video-back aria-label="Back to library">← Back to Library</button>
+        <div class="video-lesson-overlay__player-bar">
+          <button type="button" class="video-lesson-overlay__back" data-video-back aria-label="Back to library">← Back to Library</button>
+          <button type="button" class="video-lesson-overlay__popout" data-video-popout aria-label="Pop out video player">Pop out</button>
+        </div>
         <div class="video-lesson-overlay__embed" data-video-embed></div>
       </div>
       <div class="video-lesson-overlay__grid" data-video-grid>
         ${videoCardsMarkup}
       </div>
+    </div>
+    <div class="video-lesson-overlay__pip" data-video-pip hidden>
+      <div class="video-lesson-overlay__pip-header">
+        <div class="video-lesson-overlay__pip-meta">
+          <span class="video-lesson-overlay__pip-icon">▶</span>
+          <div class="video-lesson-overlay__pip-text">
+            <p class="video-lesson-overlay__pip-label">Now Playing</p>
+            <p class="video-lesson-overlay__pip-title" data-video-pip-title>Video Lesson</p>
+          </div>
+        </div>
+        <div class="video-lesson-overlay__pip-actions">
+          <button type="button" class="video-lesson-overlay__pip-button" data-video-pip-library aria-label="Browse video lessons">Library</button>
+          <button type="button" class="video-lesson-overlay__pip-button video-lesson-overlay__pip-button--close" data-video-lesson-close aria-label="Close video lesson">✕</button>
+        </div>
+      </div>
+      <div class="video-lesson-overlay__pip-body" data-video-pip-embed></div>
     </div>
   `;
 
@@ -344,6 +363,11 @@ function ensureVideoLessonDialogController(){
   const playerContainer = overlay.querySelector('[data-video-player]');
   const embedContainer = overlay.querySelector('[data-video-embed]');
   const backButton = overlay.querySelector('[data-video-back]');
+  const popoutButton = overlay.querySelector('[data-video-popout]');
+  const pipContainer = overlay.querySelector('[data-video-pip]');
+  const pipEmbed = overlay.querySelector('[data-video-pip-embed]');
+  const pipTitle = overlay.querySelector('[data-video-pip-title]');
+  const pipLibraryButton = overlay.querySelector('[data-video-pip-library]');
 
   const handleKeydown = event => {
     if (event.key === 'Escape'){
@@ -352,39 +376,142 @@ function ensureVideoLessonDialogController(){
     }
   };
 
-  const showPlayer = videoUrl => {
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId || !embedContainer || !playerContainer || !grid) return;
+  let iframe = null;
+  let currentVideoId = null;
+  let currentVideoTitle = '';
+  let keydownBound = false;
 
-    // Clear previous content
-    embedContainer.innerHTML = '';
-    
-    // Create iframe using DOM methods to prevent XSS
-    const iframe = document.createElement('iframe');
-    iframe.width = '100%';
-    iframe.height = '100%';
-    iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-    iframe.title = 'YouTube video player';
-    iframe.setAttribute('allow', 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
-    iframe.setAttribute('allowfullscreen', '');
-    
-    embedContainer.appendChild(iframe);
-
-    grid.hidden = true;
-    playerContainer.hidden = false;
+  const bindKeydown = () => {
+    if (keydownBound) return;
+    window.addEventListener('keydown', handleKeydown);
+    keydownBound = true;
   };
 
-  const hidePlayer = () => {
-    if (!embedContainer || !playerContainer || !grid) return;
-    embedContainer.innerHTML = '';
-    playerContainer.hidden = true;
-    grid.hidden = false;
+  const unbindKeydown = () => {
+    if (!keydownBound) return;
+    window.removeEventListener('keydown', handleKeydown);
+    keydownBound = false;
+  };
+
+  const ensureIframe = () => {
+    if (!iframe){
+      iframe = document.createElement('iframe');
+      iframe.width = '100%';
+      iframe.height = '100%';
+      iframe.title = 'YouTube video player';
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen', '');
+    }
+    return iframe;
+  };
+
+  const mountIframe = container => {
+    if (!container || !currentVideoId) return;
+    const player = ensureIframe();
+    const desiredSrc = `https://www.youtube.com/embed/${encodeURIComponent(currentVideoId)}?rel=0&autoplay=1`;
+    if (player.dataset.videoId !== currentVideoId){
+      player.src = desiredSrc;
+      player.dataset.videoId = currentVideoId;
+    }
+    container.innerHTML = '';
+    container.appendChild(player);
+  };
+
+  const stopVideo = () => {
+    if (iframe){
+      try {
+        iframe.removeAttribute('src');
+        iframe.dataset.videoId = '';
+      } catch (err){}
+      try {
+        iframe.remove();
+      } catch (err){}
+    }
+    iframe = null;
+    currentVideoId = null;
+    currentVideoTitle = '';
+    if (embedContainer) embedContainer.innerHTML = '';
+    if (pipEmbed) pipEmbed.innerHTML = '';
+  };
+
+  const resetLibraryView = () => {
+    if (playerContainer) playerContainer.hidden = true;
+    if (grid) grid.hidden = false;
+    if (embedContainer) embedContainer.innerHTML = '';
+  };
+
+  const enterPiP = () => {
+    if (!pipContainer || !pipEmbed || !currentVideoId) return;
+    overlay.dataset.mode = 'pip';
+    pipContainer.hidden = false;
+    if (pipTitle) pipTitle.textContent = currentVideoTitle || 'Video Lesson';
+    mountIframe(pipEmbed);
+    if (embedContainer) embedContainer.innerHTML = '';
+    resetLibraryView();
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => {
+      overlay.classList.add('is-open');
+    });
+    document.documentElement.classList.remove('video-lesson-overlay-open');
+    bindKeydown();
+  };
+
+  const enterLibrary = ({ showCurrentVideo = false } = {}) => {
+    overlay.dataset.mode = 'library';
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    if (pipContainer){
+      pipContainer.hidden = true;
+    }
+    if (pipEmbed){
+      pipEmbed.innerHTML = '';
+    }
+    requestAnimationFrame(() => {
+      overlay.classList.add('is-open');
+    });
+    document.documentElement.classList.add('video-lesson-overlay-open');
+    if (showCurrentVideo && currentVideoId && embedContainer && playerContainer){
+      mountIframe(embedContainer);
+      playerContainer.hidden = false;
+      if (grid) grid.hidden = true;
+    } else {
+      resetLibraryView();
+    }
+    bindKeydown();
+  };
+
+  const showPlayer = (videoUrl, videoTitle) => {
+    const videoId = extractVideoId(videoUrl);
+    if (!videoId) return;
+    currentVideoId = videoId;
+    currentVideoTitle = videoTitle || '';
+    enterPiP();
   };
 
   if (backButton){
     backButton.addEventListener('click', event => {
       event.preventDefault();
-      hidePlayer();
+      stopVideo();
+      resetLibraryView();
+    });
+  }
+
+  if (popoutButton){
+    popoutButton.addEventListener('click', event => {
+      event.preventDefault();
+      if (!currentVideoId){
+        return;
+      }
+      enterPiP();
+    });
+  }
+
+  if (pipLibraryButton){
+    pipLibraryButton.addEventListener('click', event => {
+      event.preventDefault();
+      const hasVideo = Boolean(currentVideoId);
+      enterLibrary({ showCurrentVideo: hasVideo });
     });
   }
 
@@ -395,14 +522,15 @@ function ensureVideoLessonDialogController(){
       event.preventDefault();
       const card = playButton.closest('[data-video-lesson-id]');
       const videoUrl = card?.getAttribute('data-video-url');
+      const videoTitle = card?.getAttribute('data-video-title') || '';
       if (videoUrl){
-        showPlayer(videoUrl);
+        showPlayer(videoUrl, videoTitle);
       }
       return;
     }
-    
+
     // Handle backdrop clicks to close
-    if (event.target === overlay){
+    if (event.target === overlay && overlay.dataset.mode !== 'pip'){
       controller.close();
     }
   });
@@ -410,14 +538,7 @@ function ensureVideoLessonDialogController(){
   const controller = {
     open(){
       if (!overlay) return;
-      hidePlayer();
-      overlay.hidden = false;
-      overlay.setAttribute('aria-hidden', 'false');
-      requestAnimationFrame(() => {
-        overlay.classList.add('is-open');
-      });
-      document.documentElement.classList.add('video-lesson-overlay-open');
-      window.addEventListener('keydown', handleKeydown);
+      enterLibrary();
     },
     close(){
       if (!overlay.classList.contains('is-open')) return;
@@ -425,10 +546,15 @@ function ensureVideoLessonDialogController(){
       overlay.setAttribute('aria-hidden', 'true');
       setTimeout(() => {
         overlay.hidden = true;
-        hidePlayer();
+        stopVideo();
+        resetLibraryView();
+        if (pipContainer){
+          pipContainer.hidden = true;
+        }
+        overlay.dataset.mode = '';
       }, 300);
       document.documentElement.classList.remove('video-lesson-overlay-open');
-      window.removeEventListener('keydown', handleKeydown);
+      unbindKeydown();
     },
     isOpen(){
       return overlay.classList.contains('is-open');
