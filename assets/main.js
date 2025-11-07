@@ -2665,8 +2665,10 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         const chatVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
         if (!launcher.classList.contains(OPEN_CLASS)){
           closeAll(launcher);
-          openLauncher(launcher, { focusPanel: false, revealChat: true });
-        } else if (!chatVisible){
+          openLauncher(launcher, { focusPanel: false, revealChat: false });
+          return;
+        }
+        if (!chatVisible){
           showChatBubble(launcher, { focusInput: false });
         } else {
           hideChatBubble(launcher);
