@@ -865,7 +865,6 @@
         main.section{padding:0; margin:0; min-height:100dvh; padding-bottom:120px;}
         .nav,
         .footer,
-        .workspace-launcher,
         .timeline-showcase,
         #timelineOverlay,
         #timelineDock,
@@ -874,11 +873,12 @@
         .topbar,
         .layout .panel:not(.editor){display:none !important;}
         .app{display:flex; flex-direction:column; min-height:100dvh;}
-        .layout{display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:12px;}
-        .panel.editor{flex:1 1 auto; border-radius:18px; box-shadow:0 20px 48px rgba(15,23,42,0.22);}
+        .layout{display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0; gap:0;}
+        .panel.editor{flex:1 1 auto; border-radius:0; border:none; box-shadow:none;}
         .editor-stage{flex:1 1 auto;}
-        .editor-scroll{padding:0 0 16px;}
-        #focusHudDock{left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom, 0px) + 16px); transform:none; width:auto; max-width:none; display:flex;}
+        .editor-scroll{padding:0 0 16px; margin:0;}
+        body.focus-mode .editor-area{max-width:none; margin:0; padding:32px 0 48px; border-radius:0;}
+        #focusHudDock{left:16px; right:96px; bottom:calc(env(safe-area-inset-bottom, 0px) + 16px); transform:none; width:auto; max-width:none; display:flex;}
         #focusHudDock.floating-hidden{gap:8px;}
         #focusHudDock.floating-hidden .focus-hud-shell{max-height:none; opacity:1; transform:none;}
         #focusHudDock .focus-hud-shell{width:100%;}
@@ -925,6 +925,10 @@
       body.focus-mode .topbar .non-essential{ display:none !important; }
       body.focus-mode .workspace-launcher{ display:none !important; }
       body.focus-mode .timeline-showcase{ display:none !important; }
+
+      @media (max-width: 768px){
+        body.focus-mode .workspace-launcher{ display:flex !important; }
+      }
 
       /* Line highlight */
       .line.active{ background: rgba(255,255,255,0.05); border-radius: 8px; padding: 2px 6px; }
@@ -1011,7 +1015,7 @@
         justify-content: center;
       }
       #focusHudDock.floating-hidden .focus-hud-shell{ max-height: 0; }
-      #focusHud{
+      #focusHud{ 
         background: var(--panel);
         border: 1px solid var(--ring);
         border-radius: 12px;
