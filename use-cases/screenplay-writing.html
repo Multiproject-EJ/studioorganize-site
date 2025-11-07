@@ -239,35 +239,47 @@
       .btn-menu-list a:hover{border-color:var(--acc)}
       .layout{
         --scene-panel-expanded-width: 280px;
-        --scene-panel-handle-width: 36px;
+        --scene-panel-handle-track: 56px;
+        --scene-panel-handle-thickness: 10px;
+        --right-panel-expanded-width: 320px;
+        --right-panel-handle-track: 56px;
+        --right-panel-handle-thickness: 10px;
         --scene-panel-track: var(--scene-panel-expanded-width);
+        --right-panel-track: var(--right-panel-expanded-width);
         display:grid;
-        grid-template-columns:minmax(0, var(--scene-panel-track)) minmax(0, 1fr) minmax(0, 320px);
+        grid-template-columns:minmax(0, var(--scene-panel-track)) minmax(0, 1fr) minmax(0, var(--right-panel-track));
         gap:10px;
         padding:10px;
         min-height:0;
         transition:grid-template-columns .35s ease;
       }
-      .layout.scene-panel-collapsed{--scene-panel-track: var(--scene-panel-handle-width);}
+      .layout.scene-panel-collapsed{--scene-panel-track: var(--scene-panel-handle-track);}
+      .layout.right-panel-collapsed{--right-panel-track: var(--right-panel-handle-track);}
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
       .panel--scenes{position:relative; width:var(--scene-panel-expanded-width); transition:transform .35s ease, box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.32); z-index:2;}
       .panel--scenes[data-open="false"]{box-shadow:none;}
-      .layout.scene-panel-collapsed .panel--scenes{transform:translateX(calc(-100% + var(--scene-panel-handle-width)));}
+      .layout.scene-panel-collapsed .panel--scenes{transform:translateX(calc(-100% + var(--scene-panel-handle-track)));}
       .scene-panel-slot{position:relative; width:var(--scene-panel-expanded-width); transition:width .35s ease; min-height:0; overflow:visible;}
-      .layout.scene-panel-collapsed .scene-panel-slot{width:var(--scene-panel-handle-width);}
+      .layout.scene-panel-collapsed .scene-panel-slot{width:var(--scene-panel-handle-track);}
+      .tab-panel-slot{position:relative; width:var(--right-panel-expanded-width); transition:width .35s ease; min-height:0; overflow:hidden; display:flex; justify-content:flex-end;}
+      .layout.right-panel-collapsed .tab-panel-slot{width:var(--right-panel-handle-track);}
+      .panel--tabs{position:relative; width:var(--right-panel-expanded-width); transition:box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.24); z-index:2;}
+      .panel--tabs[data-open="false"],
+      .layout.right-panel-collapsed .panel--tabs{box-shadow:none;}
+      .tab-panel__handle{position:absolute; top:50%; left:16px; transform:translateY(-50%) rotate(90deg); transform-origin:center; z-index:3; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer;}
+      .tab-panel__handle.timeline-dock__handle{height:var(--right-panel-handle-thickness);}
+      .layout.right-panel-collapsed .tab-panel__handle{left:calc((var(--right-panel-handle-track) - var(--right-panel-handle-thickness)) / 2);}
+      .tab-panel__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px;}
       .scene-panel__header{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px 0;}
       .scene-panel__header h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted);}
-      .scene-panel__pin-toggle{margin:4px 12px 10px; background:var(--chip); color:var(--muted); border:1px solid var(--ring); border-radius:999px; padding:4px 12px; font-size:11px; letter-spacing:.3px; text-transform:uppercase; display:inline-flex; align-items:center; gap:6px; cursor:pointer; transition:background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;}
-      .scene-panel__pin-toggle::before{content:'📌'; font-size:14px;}
-      .scene-panel__pin-toggle:hover{border-color:var(--acc); color:var(--ink);}
-      .scene-panel__pin-toggle:focus-visible{outline:2px solid var(--acc); outline-offset:3px;}
-      .scene-panel__pin-toggle[aria-pressed="true"]{background:linear-gradient(135deg, rgba(79,123,255,0.22), rgba(79,123,255,0.08)); border-color:var(--acc); color:var(--ink); box-shadow:0 10px 22px rgba(79,123,255,0.18);}
-      .scene-panel__pin-toggle[aria-pressed="true"]::before{content:'📍';}
-      .scene-panel__handle{position:absolute; top:50%; right:calc(-0.5 * var(--scene-panel-handle-width)); transform:translateY(-50%); width:var(--scene-panel-handle-width); height:120px; border:none; border-radius:16px; background:linear-gradient(180deg, rgba(79,123,255,0.95), rgba(79,123,255,0.65)); color:var(--active-tab-text); font-size:10px; letter-spacing:.3em; text-transform:uppercase; writing-mode:vertical-rl; text-orientation:mixed; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 12px 30px rgba(79,123,255,0.35); transition:transform .3s ease, box-shadow .3s ease, opacity .3s ease; z-index:3;}
-      .scene-panel__handle:hover{box-shadow:0 16px 36px rgba(79,123,255,0.45); transform:translateY(-50%) scale(1.02);}
+      .scene-panel__handle{position:absolute; top:50%; right:16px; transform:translateY(-50%) rotate(-90deg); transform-origin:center; z-index:4; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer;}
+      .scene-panel__handle.timeline-dock__handle{height:var(--scene-panel-handle-thickness);}
+      .layout.scene-panel-collapsed .scene-panel__handle{right:calc((var(--scene-panel-handle-track) - var(--scene-panel-handle-thickness)) / 2);}
       .scene-panel__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px;}
-      .layout.scene-panel-collapsed .scene-panel__handle{opacity:0.9;}
+      .scene-panel-slot[data-pinned="true"] .scene-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:timelineDockHandlePinnedRelax .35s ease forwards; animation-delay:1s;}
+      .tab-panel__handle .sr-only,
+      .scene-panel__handle .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
       .scenes{overflow:auto; padding:8px}
       .scene-card{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; display:flex; flex-direction:column; gap:6px; overflow:visible; transition:opacity .25s ease, filter .25s ease, transform .2s ease}
       .scene-card:not(.active):not(.editing){opacity:0.55; filter:saturate(0.7)}
@@ -1372,11 +1384,9 @@
               <h2>Scenes</h2>
               <button class="btn" type="button" style="padding:4px 8px" onclick="addScene()">+ Scene</button>
             </div>
-            <button class="scene-panel__pin-toggle" type="button" id="scenePanelPin" aria-pressed="false">Pin me</button>
             <div id="sceneList" class="scenes"></div>
-            <button class="scene-panel__handle" type="button" id="scenePanelHandle" aria-expanded="false" aria-controls="scenePanel">
-              <span aria-hidden="true">Scenes</span>
-              <span class="sr-only">Toggle Scenes panel</span>
+            <button class="scene-panel__handle timeline-dock__handle" type="button" id="scenePanelHandle" aria-pressed="false" aria-expanded="false" aria-controls="scenePanel">
+              <span class="sr-only">Toggle pin for scenes panel</span>
             </button>
           </div>
         </div>
@@ -1409,17 +1419,18 @@
           </div>
         </div>
 
-        <div class="panel">
-          <div class="tab-header" id="rightTabBar">
-            <button class="tab-btn" data-tab-btn="write">Visual</button>
-            <button class="tab-btn" data-tab-btn="characters">Cast</button>
-            <button class="tab-btn" data-tab-btn="set">Set</button>
-            <button class="tab-btn" data-tab-btn="sound">Sound</button>
-            <button class="tab-btn" data-tab-btn="notes">Notes</button>
-            <button class="tab-btn" data-tab-btn="ai">Ai</button>
-          </div>
-          <div class="tab-panels">
-            <div class="tab-panel" data-tab="write" id="tabWrite">
+        <div class="tab-panel-slot" id="rightPanelSlot">
+          <div class="panel panel--tabs" id="rightPanel" data-open="true">
+            <div class="tab-header" id="rightTabBar">
+              <button class="tab-btn" data-tab-btn="write">Visual</button>
+              <button class="tab-btn" data-tab-btn="characters">Cast</button>
+              <button class="tab-btn" data-tab-btn="set">Set</button>
+              <button class="tab-btn" data-tab-btn="sound">Sound</button>
+              <button class="tab-btn" data-tab-btn="notes">Notes</button>
+              <button class="tab-btn" data-tab-btn="ai">Ai</button>
+            </div>
+            <div class="tab-panels">
+              <div class="tab-panel" data-tab="write" id="tabWrite">
               <div class="storyboard-field">
                 <div class="storyboard-field-create">
                   <h3>AI storyboard assistant</h3>
@@ -1806,7 +1817,11 @@
                 <button type="button" class="btn" id="scriptDialogCreate">Create</button>
               </div>
             </div>
+            </div>
           </div>
+          <button class="tab-panel__handle timeline-dock__handle" type="button" id="rightPanelHandle" aria-expanded="true" aria-controls="rightPanel">
+            <span class="sr-only">Hide workspace tools panel</span>
+          </button>
         </div>
         <div id="scriptDialogGoalModal" class="script-dialog__goal-modal" aria-hidden="true" hidden>
           <div class="script-dialog__goal-modal-backdrop" data-goal-close></div>
@@ -1895,7 +1910,6 @@
     const scenePanel = document.getElementById('scenePanel');
     const scenePanelSlot = document.getElementById('scenePanelSlot');
     const scenePanelHandle = document.getElementById('scenePanelHandle');
-    const scenePanelPin = document.getElementById('scenePanelPin');
 
     const scenePanelState = {
       open: false,
@@ -1922,19 +1936,23 @@
       scenePanelHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
-    function updateScenePanelPinLabel(){
-      if (!scenePanelPin) return;
-      scenePanelPin.textContent = scenePanelState.pinned ? 'Pinned' : 'Pin me';
+    function updateScenePanelHandleState(){
+      if (scenePanelSlot){
+        scenePanelSlot.dataset.pinned = scenePanelState.pinned ? 'true' : 'false';
+      }
+      if (!scenePanelHandle) return;
+      const label = scenePanelState.pinned ? 'Unpin scenes panel' : 'Pin scenes panel';
+      scenePanelHandle.dataset.pinned = scenePanelState.pinned ? 'true' : 'false';
+      scenePanelHandle.setAttribute('aria-pressed', scenePanelState.pinned ? 'true' : 'false');
+      scenePanelHandle.setAttribute('aria-label', label);
+      scenePanelHandle.setAttribute('title', label);
     }
 
     function setScenePanelPinned(pinned){
       if (!scenePanel) return;
       scenePanelState.pinned = !!pinned;
       scenePanel.dataset.pinned = scenePanelState.pinned ? 'true' : 'false';
-      if (scenePanelPin){
-        scenePanelPin.setAttribute('aria-pressed', scenePanelState.pinned ? 'true' : 'false');
-      }
-      updateScenePanelPinLabel();
+      updateScenePanelHandleState();
       if (scenePanelState.pinned){
         clearScenePanelCloseTimer();
         setScenePanelOpen(true, { force: true });
@@ -1969,24 +1987,57 @@
     }
 
     if (scenePanelHandle){
-      scenePanelHandle.addEventListener('click', () => {
+      const handleEnter = () => {
         clearScenePanelCloseTimer();
-        if (scenePanelState.open && !scenePanelState.pinned){
-          setScenePanelOpen(false, { force: true });
-        } else {
-          setScenePanelOpen(true, { force: true });
-        }
+        setScenePanelOpen(true);
+      };
+      scenePanelHandle.addEventListener('pointerenter', handleEnter);
+      scenePanelHandle.addEventListener('focus', handleEnter);
+      scenePanelHandle.addEventListener('pointerleave', scheduleScenePanelClose);
+      scenePanelHandle.addEventListener('blur', event => {
+        if (scenePanelSlot && scenePanelSlot.contains(event.relatedTarget)) return;
+        scheduleScenePanelClose();
       });
-    }
-
-    if (scenePanelPin){
-      scenePanelPin.addEventListener('click', () => {
+      scenePanelHandle.addEventListener('click', event => {
+        event.preventDefault();
         setScenePanelPinned(!scenePanelState.pinned);
       });
     }
 
-    updateScenePanelPinLabel();
+    updateScenePanelHandleState();
     setScenePanelOpen(false, { force: true });
+
+    const rightPanelSlot = document.getElementById('rightPanelSlot');
+    const rightPanel = document.getElementById('rightPanel');
+    const rightPanelHandle = document.getElementById('rightPanelHandle');
+
+    const rightPanelState = {
+      open: true,
+    };
+
+    function updateRightPanelHandleLabel(){
+      if (!rightPanelHandle) return;
+      const label = rightPanelState.open ? 'Hide workspace tools panel' : 'Show workspace tools panel';
+      rightPanelHandle.setAttribute('aria-label', label);
+      rightPanelHandle.setAttribute('title', label);
+    }
+
+    function setRightPanelOpen(open){
+      if (!layoutEl || !rightPanel || !rightPanelHandle) return;
+      rightPanelState.open = !!open;
+      layoutEl.classList.toggle('right-panel-collapsed', !rightPanelState.open);
+      rightPanel.dataset.open = rightPanelState.open ? 'true' : 'false';
+      rightPanelHandle.setAttribute('aria-expanded', rightPanelState.open ? 'true' : 'false');
+      updateRightPanelHandleLabel();
+    }
+
+    if (rightPanelHandle){
+      rightPanelHandle.addEventListener('click', () => {
+        setRightPanelOpen(!rightPanelState.open);
+      });
+    }
+
+    setRightPanelOpen(true);
 
     /* =========================
      * IndexedDB minimal wrapper
