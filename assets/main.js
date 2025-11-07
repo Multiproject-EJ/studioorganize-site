@@ -1985,13 +1985,15 @@ function initNotificationCenter(){
   });
 }
 
+const CREATIVE_HUB_ICON = '/assets/img/studioorganize_mock.png';
+
 const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/IMG_6892.webp' },
   { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/IMG_6894.webp' },
   { href: '/StoryboardPro.html', label: 'Storyboard Pro', image: '/assets/img/IMG_6893.webp' },
   { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/IMG_6896.webp' },
   { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/IMG_6903.webp' },
-  { href: '/creative-hub.html', label: 'Creative Hub', image: '/assets/img/studioorganize_mock.png' },
+  { href: '/creative-hub.html', label: 'Creative Hub', image: CREATIVE_HUB_ICON },
 ];
 
 let workspaceLauncherObserver = null;
@@ -2117,6 +2119,28 @@ function ensureWorkspaceLauncherStructure(launcher){
   if (modules.querySelectorAll('a.workspace-launcher__module').length === 0){
     modules.insertAdjacentHTML('afterbegin', WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join(''));
   }
+
+  let assistantToggle = modules.querySelector('[data-workspace-assistant-toggle]');
+  if (!(assistantToggle instanceof HTMLElement)){
+    assistantToggle = document.createElement('button');
+    assistantToggle.type = 'button';
+    assistantToggle.className = 'workspace-launcher__module workspace-launcher__module--assistant';
+    assistantToggle.setAttribute('data-workspace-assistant-toggle', '');
+    assistantToggle.setAttribute('data-label', 'Assistant');
+    assistantToggle.innerHTML = `
+      <span class="workspace-launcher__module-icon" aria-hidden="true">
+        <span class="workspace-launcher__assistant-glyph" aria-hidden="true">🤖</span>
+      </span>
+      <span class="sr-only">Open StudioOrganize Assistant</span>
+    `;
+  }
+  if (assistantToggle.parentElement !== modules){
+    modules.insertBefore(assistantToggle, modules.firstChild);
+  } else if (modules.firstChild !== assistantToggle){
+    modules.insertBefore(assistantToggle, modules.firstChild);
+  }
+  assistantToggle.setAttribute('aria-pressed', assistantToggle.getAttribute('aria-pressed') === 'true' ? 'true' : 'false');
+  assistantToggle.setAttribute('aria-label', 'Open StudioOrganize Assistant');
 
   [saveButton, storyButton].forEach(button => {
     if (button instanceof HTMLElement){
@@ -2318,6 +2342,18 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     return launcher.querySelector('[data-workspace-chat-input]');
   };
 
+  const getAssistantToggle = launcher => {
+    return launcher.querySelector('[data-workspace-assistant-toggle]');
+  };
+
+  const updateAssistantToggleState = launcher => {
+    const assistantToggle = getAssistantToggle(launcher);
+    if (!(assistantToggle instanceof HTMLElement)) return;
+    const chat = getChatBubble(launcher);
+    const isVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
+    assistantToggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+  };
+
   const showChatBubble = (launcher, { focusInput = true } = {}) => {
     const chat = getChatBubble(launcher);
     if (!(chat instanceof HTMLElement)) return;
@@ -2339,6 +2375,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     chat.setAttribute('aria-hidden', 'false');
     void chat.offsetWidth;
     chat.classList.add(CHAT_VISIBLE_CLASS);
+    updateAssistantToggleState(launcher);
 
     if (focusInput){
       const input = getChatInput(launcher);
@@ -2377,6 +2414,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 
     chat.classList.remove(CHAT_VISIBLE_CLASS);
     chat.setAttribute('aria-hidden', 'true');
+    updateAssistantToggleState(launcher);
   };
 
   const closeLauncher = (launcher, { focusToggle = false } = {}) => {
@@ -2490,6 +2528,27 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         openLauncher(launcher, { focusPanel: shouldFocusPanel, revealChat: true });
       }
     });
+
+    const assistantToggle = getAssistantToggle(launcher);
+    if (assistantToggle instanceof HTMLElement && assistantToggle.dataset.workspaceAssistantBound !== 'true'){
+      assistantToggle.dataset.workspaceAssistantBound = 'true';
+      assistantToggle.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const chat = getChatBubble(launcher);
+        const chatVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
+        if (!launcher.classList.contains(OPEN_CLASS)){
+          closeAll(launcher);
+          openLauncher(launcher, { focusPanel: false, revealChat: true });
+        } else if (!chatVisible){
+          showChatBubble(launcher, { focusInput: false });
+        } else {
+          hideChatBubble(launcher);
+        }
+      });
+    }
+
+    updateAssistantToggleState(launcher);
 
     let hoverTimeoutId;
 
