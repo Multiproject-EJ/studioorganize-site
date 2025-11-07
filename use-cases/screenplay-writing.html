@@ -12,6 +12,13 @@
   <script src="/assets/js/so-mobile-shell.js" defer></script>
 </head>
 <body>
+  <script>
+    if (window.innerWidth <= 768) {
+      const applyMobileFocus = () => document.body && document.body.classList.add('focus-mode');
+      if (document.body) applyMobileFocus();
+      else document.addEventListener('DOMContentLoaded', applyMobileFocus, { once: true });
+    }
+  </script>
   <div class="so-mobile-shell" data-page="screenwriter">
     <nav class="so-mobile-bottom-nav" aria-label="Screenwriter mobile navigation">
       <button type="button" data-target="screenwriter" class="is-active">Write</button>
@@ -851,6 +858,31 @@
         .timeline-dock{padding:10px 10px 4px;}
         .timeline-dock__shell{border-radius:14px;}
         .timeline-dock__content{padding:10px 10px 14px; gap:10px;}
+      }
+
+      @media (max-width: 768px){
+        body{min-height:100dvh; background:var(--bg);}
+        main.section{padding:0; margin:0; min-height:100dvh; padding-bottom:120px;}
+        .nav,
+        .footer,
+        .workspace-launcher,
+        .timeline-showcase,
+        #timelineOverlay,
+        #timelineDock,
+        #focusTimelineDock,
+        .so-mobile-shell,
+        .topbar,
+        .layout .panel:not(.editor){display:none !important;}
+        .app{display:flex; flex-direction:column; min-height:100dvh;}
+        .layout{display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:12px;}
+        .panel.editor{flex:1 1 auto; border-radius:18px; box-shadow:0 20px 48px rgba(15,23,42,0.22);}
+        .editor-stage{flex:1 1 auto;}
+        .editor-scroll{padding:0 0 16px;}
+        #focusHudDock{left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom, 0px) + 16px); transform:none; width:auto; max-width:none; display:flex;}
+        #focusHudDock.floating-hidden{gap:8px;}
+        #focusHudDock.floating-hidden .focus-hud-shell{max-height:none; opacity:1; transform:none;}
+        #focusHudDock .focus-hud-shell{width:100%;}
+        #focusHudHandle{width:88px; margin:0 auto;}
       }
 
       /* ==== Focus Mode ==== */
@@ -9795,12 +9827,14 @@
       }
 
       project.settings = project.settings || {};
+      const isMobileViewport = window.innerWidth <= 768;
       if (typeof project.settings.focus === 'undefined') {
         // Auto-enable focus mode on mobile devices
-        const isMobile = window.innerWidth <= 768;
-        project.settings.focus = isMobile;
+        project.settings.focus = isMobileViewport;
       }
-      if (typeof project.settings.focusHudPinned === 'undefined') project.settings.focusHudPinned = false;
+      if (typeof project.settings.focusHudPinned === 'undefined') {
+        project.settings.focusHudPinned = isMobileViewport;
+      }
       if (typeof project.settings.timelineDockPinned === 'undefined') project.settings.timelineDockPinned = true;
 
       ensurePomodoroSettings();
