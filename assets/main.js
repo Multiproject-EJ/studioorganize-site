@@ -3759,3 +3759,35 @@ if (document.readyState === 'loading'){
   initFinishStoryModal();
   initConstructionOverlay();
 }
+
+// Global fallback handler for save requests on pages without specific workspace handlers
+// This ensures the save button always provides feedback even if no workspace handles the event
+let workspaceSaveFallbackTimeout = null;
+document.addEventListener('studioorganize:save-requested', event => {
+  const detail = event?.detail;
+  if (!detail) return;
+  
+  // Wait a bit to see if any workspace handler claims this save request
+  if (workspaceSaveFallbackTimeout){
+    clearTimeout(workspaceSaveFallbackTimeout);
+  }
+  
+  workspaceSaveFallbackTimeout = setTimeout(() => {
+    // If no workspace has handled the save request, provide fallback feedback
+    if (!detail.handled){
+      console.log('No workspace handler responded to save request. Showing fallback message.');
+      
+      // Try to show user feedback if possible
+      const notification = document.createElement('div');
+      notification.style.cssText = 'position:fixed;bottom:80px;right:20px;background:#333;color:#fff;padding:12px 20px;border-radius:8px;z-index:10000;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+      notification.textContent = 'Nothing to save on this page. Open a workspace to create content.';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+  }, 100);
+});
