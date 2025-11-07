@@ -12,6 +12,13 @@
   <script src="/assets/js/so-mobile-shell.js" defer></script>
 </head>
 <body>
+  <script>
+    if (window.innerWidth <= 768) {
+      const applyMobileFocus = () => document.body && document.body.classList.add('focus-mode');
+      if (document.body) applyMobileFocus();
+      else document.addEventListener('DOMContentLoaded', applyMobileFocus, { once: true });
+    }
+  </script>
   <div class="so-mobile-shell" data-page="screenwriter">
     <nav class="so-mobile-bottom-nav" aria-label="Screenwriter mobile navigation">
       <button type="button" data-target="screenwriter" class="is-active">Write</button>
@@ -853,6 +860,31 @@
         .timeline-dock__content{padding:10px 10px 14px; gap:10px;}
       }
 
+      @media (max-width: 768px){
+        body{min-height:100dvh; background:var(--bg);}
+        main.section{padding:0; margin:0; min-height:100dvh; padding-bottom:120px;}
+        .nav,
+        .footer,
+        .timeline-showcase,
+        #timelineOverlay,
+        #timelineDock,
+        #focusTimelineDock,
+        .so-mobile-shell,
+        .topbar,
+        .layout .panel:not(.editor){display:none !important;}
+        .app{display:flex; flex-direction:column; min-height:100dvh;}
+        .layout{display:flex; flex-direction:column; flex:1 1 auto; min-height:0; padding:0; gap:0;}
+        .panel.editor{flex:1 1 auto; border-radius:0; border:none; box-shadow:none;}
+        .editor-stage{flex:1 1 auto;}
+        .editor-scroll{padding:0 0 16px; margin:0;}
+        body.focus-mode .editor-area{max-width:none; margin:0; padding:32px 0 48px; border-radius:0;}
+        #focusHudDock{left:16px; right:96px; bottom:calc(env(safe-area-inset-bottom, 0px) + 16px); transform:none; width:auto; max-width:none; display:flex;}
+        #focusHudDock.floating-hidden{gap:8px;}
+        #focusHudDock.floating-hidden .focus-hud-shell{max-height:none; opacity:1; transform:none;}
+        #focusHudDock .focus-hud-shell{width:100%;}
+        #focusHudHandle{width:88px; margin:0 auto;}
+      }
+
       /* ==== Focus Mode ==== */
       body.focus-mode{ overflow:hidden; }
       body.focus-mode main.section{ min-height:100dvh; height:auto; }
@@ -893,6 +925,10 @@
       body.focus-mode .topbar .non-essential{ display:none !important; }
       body.focus-mode .workspace-launcher{ display:none !important; }
       body.focus-mode .timeline-showcase{ display:none !important; }
+
+      @media (max-width: 768px){
+        body.focus-mode .workspace-launcher{ display:flex !important; }
+      }
 
       /* Line highlight */
       .line.active{ background: rgba(255,255,255,0.05); border-radius: 8px; padding: 2px 6px; }
@@ -979,7 +1015,7 @@
         justify-content: center;
       }
       #focusHudDock.floating-hidden .focus-hud-shell{ max-height: 0; }
-      #focusHud{
+      #focusHud{ 
         background: var(--panel);
         border: 1px solid var(--ring);
         border-radius: 12px;
@@ -9795,12 +9831,14 @@
       }
 
       project.settings = project.settings || {};
+      const isMobileViewport = window.innerWidth <= 768;
       if (typeof project.settings.focus === 'undefined') {
         // Auto-enable focus mode on mobile devices
-        const isMobile = window.innerWidth <= 768;
-        project.settings.focus = isMobile;
+        project.settings.focus = isMobileViewport;
       }
-      if (typeof project.settings.focusHudPinned === 'undefined') project.settings.focusHudPinned = false;
+      if (typeof project.settings.focusHudPinned === 'undefined') {
+        project.settings.focusHudPinned = isMobileViewport;
+      }
       if (typeof project.settings.timelineDockPinned === 'undefined') project.settings.timelineDockPinned = true;
 
       ensurePomodoroSettings();
