@@ -1883,7 +1883,25 @@
           closeScriptDialog();
         }
       });
-      const notifyReady = () => postScriptDialogMessage('ready');
+      const notifyReady = () => {
+        // Wait for Supabase client to be available before notifying parent
+        let attempts = 0;
+        const maxAttempts = 60; // 3 seconds total (60 * 50ms)
+        const checkClient = () => {
+          if (window.supabaseClient){
+            postScriptDialogMessage('ready');
+          } else if (attempts < maxAttempts){
+            attempts++;
+            // Check again in 50ms if client not ready yet
+            setTimeout(checkClient, 50);
+          } else {
+            // Timeout reached - send ready anyway to avoid hanging
+            console.warn('Supabase client not initialized in time, dialog may have limited functionality');
+            postScriptDialogMessage('ready');
+          }
+        };
+        checkClient();
+      };
       if (document.readyState === 'complete' || document.readyState === 'interactive'){
         notifyReady();
       } else {
