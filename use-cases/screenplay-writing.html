@@ -3382,6 +3382,37 @@
       return outcome;
     }
 
+    document.addEventListener('studioorganize:save-requested', event => {
+      const detail = event?.detail;
+      if (!detail) return;
+      if (typeof handleScriptDialogSave !== 'function') return;
+      if (typeof detail.markHandled === 'function'){
+        detail.markHandled();
+      } else {
+        detail.handled = true;
+      }
+      const action = detail.action || 'save';
+      const source = detail.source || 'unknown';
+      const responsePromise = (async () => {
+        try {
+          const result = await handleScriptDialogSave();
+          if (action === 'save-close' && result?.success){
+            setSaveSceneStatus('success', 'Saved! Redirecting…');
+            window.location.href = '/account.html';
+          }
+          return { success: !!result?.success, handled: true, action, source, result };
+        } catch (error){
+          console.error('Global workspace save failed', error);
+          return { success: false, handled: true, action, source, error };
+        }
+      })();
+      if (typeof detail.waitUntil === 'function'){
+        detail.waitUntil(responsePromise);
+      } else {
+        responsePromise.then(() => {}, () => {});
+      }
+    });
+
     async function handleScriptDialogCreate(){
       const input = document.getElementById('scriptDialogNewTitle');
       const status = document.getElementById('scriptDialogStatus');

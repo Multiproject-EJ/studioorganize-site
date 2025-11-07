@@ -921,6 +921,7 @@ initTheme();
 const workspaceThemes = createWorkspaceThemeManager();
 window.StudioOrganize = window.StudioOrganize || {};
 window.StudioOrganize.workspaceThemes = workspaceThemes;
+window.StudioOrganize.requestWorkspaceSave = requestWorkspaceSave;
 document.dispatchEvent(new CustomEvent('studioorganize:workspace-themes-ready', { detail: { workspaceThemes } }));
 
 const currentWorkspaceModule = workspaceThemes.getModuleForPath(window.location.pathname);
@@ -2122,6 +2123,40 @@ const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/creative-hub.html', label: 'Creative Hub', image: CREATIVE_HUB_ICON },
 ];
 
+const WORKSPACE_SAVE_EVENT = 'studioorganize:save-requested';
+
+function requestWorkspaceSave({ action = 'save', source = 'workspace-launcher', context = null } = {}){
+  const pending = [];
+  const detail = {
+    action,
+    source,
+    context,
+    handled: false,
+    waitUntil(promise){
+      if (!promise || typeof promise.then !== 'function') return;
+      pending.push(Promise.resolve(promise));
+    },
+    markHandled(){
+      detail.handled = true;
+    }
+  };
+
+  document.dispatchEvent(new CustomEvent(WORKSPACE_SAVE_EVENT, { detail }));
+
+  if (!pending.length){
+    return Promise.resolve({ handled: detail.handled, success: false, results: [] });
+  }
+
+  return Promise.allSettled(pending).then(entries => {
+    const results = entries.map(entry => entry.status === 'fulfilled'
+      ? entry.value
+      : { success: false, error: entry.reason });
+    const success = results.some(result => result && typeof result === 'object' && result.success);
+    const handled = detail.handled || pending.length > 0;
+    return { handled, success, results };
+  });
+}
+
 let workspaceLauncherObserver = null;
 let workspaceLauncherObserverScheduled = false;
 
@@ -2758,24 +2793,41 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     const saveButton = panel.querySelector('[data-workspace-save]');
     if (saveButton instanceof HTMLElement && saveButton.dataset.workspaceSaveBound !== 'true'){
       saveButton.dataset.workspaceSaveBound = 'true';
-      saveButton.addEventListener('click', event => {
+      saveButton.addEventListener('click', async event => {
         event.preventDefault();
         event.stopPropagation();
+        if (saveButton.dataset.workspaceSaveState === 'saving') return;
 
-        // Add the saving animation class
+        const animationDuration = 600; // matches the CSS animation duration
+        const resetState = () => {
+          window.setTimeout(() => {
+            saveButton.classList.remove('is-saving');
+            saveButton.disabled = false;
+            delete saveButton.dataset.workspaceSaveState;
+          }, animationDuration);
+        };
+
+        saveButton.dataset.workspaceSaveState = 'saving';
+        saveButton.disabled = true;
         saveButton.classList.add('is-saving');
 
-        // Remove the class after animation completes
-        const animationDuration = 600; // matches the CSS animation duration
-        setTimeout(() => {
-          saveButton.classList.remove('is-saving');
-        }, animationDuration);
-
-        // Trigger save functionality
-        console.log('Save progress clicked');
-        // TODO: Implement actual save functionality
-        // Should save current workspace state to localStorage/IndexedDB
-        // and sync to Supabase if user is authenticated
+        try {
+          const result = await requestWorkspaceSave({
+            source: 'workspace-launcher',
+            action: 'save',
+            context: { launcherId: launcher.id || null }
+          });
+          if (!result.handled){
+            alert('Open a workspace to save your progress.');
+          } else if (!result.success){
+            console.warn('Workspace save request completed without a success response.', result);
+          }
+        } catch (error){
+          console.error('Workspace save request failed', error);
+          alert('Saving your workspace failed. Please try again.');
+        } finally {
+          resetState();
+        }
       });
     }
 
