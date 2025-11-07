@@ -493,7 +493,7 @@
       .character-studio-empty h2 { margin: 0; font-size: 22px; color: var(--ink); }
       .character-studio-empty p { margin: 0; font-size: 14px; }
       .muted-text { color: var(--muted); font-size: 12px; }
-      .character-studio-mobile { display: none; }
+      .character-studio-mobile { display: none; position: relative; }
       .character-studio-mobile-track { display: flex; }
       .character-studio-mobile-card { display: flex; cursor: pointer; }
       .character-studio-mobile-card-media { position: relative; overflow: hidden; }
@@ -541,6 +541,13 @@
         cursor: pointer;
       }
       .character-studio-mobile-dot[aria-current="true"] { background: var(--acc); box-shadow: 0 0 0 4px rgba(79, 123, 255, 0.18); }
+      .character-studio-mobile-arrow { display: none; position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: none; border-radius: 999px; background: rgba(15, 18, 30, 0.65); color: #fff; align-items: center; justify-content: center; z-index: 4; cursor: pointer; transition: background .2s ease, opacity .2s ease; }
+      .character-studio-mobile-arrow span { font-size: 22px; line-height: 1; }
+      .character-studio-mobile-arrow:hover { background: rgba(15, 18, 30, 0.8); }
+      .character-studio-mobile-arrow:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+      .character-studio-mobile-arrow[disabled] { opacity: 0.35; cursor: default; pointer-events: none; }
+      .character-studio-mobile-arrow--prev { left: 12px; }
+      .character-studio-mobile-arrow--next { right: 12px; }
       .character-studio-mobile-close {
         display: none;
         align-items: center;
@@ -569,35 +576,39 @@
         .character-studio-header-actions { width: 100%; justify-content: space-between; }
         .character-studio-window { border-radius: 16px; box-shadow: 0 26px 64px rgba(15, 18, 30, 0.35); }
         .character-studio-body { padding: 18px 0 24px; }
-        .character-studio-mobile { display: flex; flex-direction: column; gap: 14px; padding: 0 16px; }
+        .character-studio-mobile { display: flex; flex-direction: column; gap: 16px; padding: 0; min-height: calc(100vh - 160px); flex: 1 1 auto; }
         .character-studio-mobile-track {
           flex: 1;
-          gap: 16px;
+          height: 100%;
+          gap: 0;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          padding-bottom: 12px;
-          margin: 0 -16px;
-          padding-left: 16px;
-          padding-right: 16px;
+          padding-bottom: 0;
+          margin: 0;
+          padding-left: 0;
+          padding-right: 0;
           -webkit-overflow-scrolling: touch;
         }
         .character-studio-mobile-track::-webkit-scrollbar { display: none; }
         .character-studio-mobile-card {
-          flex: 0 0 calc(100% - 32px);
+          flex: 0 0 100%;
+          max-width: 100%;
+          height: 100%;
           background: var(--card);
-          border: 1px solid var(--ring);
-          border-radius: 24px;
+          border: none;
+          border-radius: 0;
           overflow: hidden;
           flex-direction: column;
-          min-height: calc(100vh - 220px);
+          min-height: 100%;
           scroll-snap-align: center;
-          box-shadow: 0 26px 64px rgba(15, 18, 30, 0.35);
+          box-shadow: none;
           position: relative;
         }
-        .character-studio-mobile-card.is-active { border-color: var(--acc); box-shadow: 0 32px 80px rgba(62, 114, 255, 0.28); }
-        .character-studio-mobile-card-media { flex: 1 1 240px; background: var(--chip); }
-        .character-studio-mobile-card-body { flex: 0 0 auto; }
-        .character-studio-mobile-pagination { display: flex; justify-content: center; gap: 10px; }
+        .character-studio-mobile-card.is-active { box-shadow: 0 32px 80px rgba(62, 114, 255, 0.28); }
+        .character-studio-mobile-card-media { flex: 1 1 auto; background: var(--chip); }
+        .character-studio-mobile-card-body { flex: 1 1 50%; overflow-y: auto; min-height: 0; }
+        .character-studio-mobile-pagination { display: flex; justify-content: center; gap: 10px; padding-bottom: 12px; }
+        .character-studio-mobile-arrow { display: inline-flex; }
         .character-studio-layout { display: none; padding: 0 16px 24px; }
         .character-studio-window[data-mobile-editor-open="true"] .character-studio-mobile { display: none; }
         .character-studio-window[data-mobile-editor-open="true"] .character-studio-layout { display: grid; position: relative; }
@@ -614,6 +625,7 @@
         .character-studio-window[data-mobile-editor-open="true"] .character-studio-layout { gap: 18px; }
         .character-studio-window[data-mobile-editor-open="true"] .character-studio-sidebar { display: none; }
         .character-studio-window[data-mobile-editor-open="true"] .character-studio-details { max-height: none; overflow: visible; }
+        .so-mobile-shell[data-page="character-studio"] .so-mobile-bottom-nav { display: none; }
       }
     </style>
 
@@ -639,7 +651,25 @@
         </div>
         <div class="character-studio-body">
           <section class="character-studio-mobile" data-character-mobile hidden>
+            <button
+              class="character-studio-mobile-arrow character-studio-mobile-arrow--prev"
+              type="button"
+              data-character-mobile-prev
+              aria-label="View previous character"
+              hidden
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
             <div class="character-studio-mobile-track" data-character-mobile-track></div>
+            <button
+              class="character-studio-mobile-arrow character-studio-mobile-arrow--next"
+              type="button"
+              data-character-mobile-next
+              aria-label="View next character"
+              hidden
+            >
+              <span aria-hidden="true">›</span>
+            </button>
             <div class="character-studio-mobile-pagination" data-character-mobile-pagination></div>
           </section>
           <div class="character-studio-layout">
@@ -1328,6 +1358,7 @@
             dot.removeAttribute('aria-current');
           }
         });
+        syncMobileArrowState();
       }
 
       function scrollMobileGalleryToActive(options = {}){
@@ -1343,12 +1374,58 @@
         activeCard.scrollIntoView({ behavior, inline: 'center', block: 'nearest' });
       }
 
+      function syncMobileArrowState(){
+        const prevButton = document.querySelector('[data-character-mobile-prev]');
+        const nextButton = document.querySelector('[data-character-mobile-next]');
+        const total = state.characters.length;
+        const index = state.characters.findIndex(char => char.id === state.activeId);
+        const hideArrows = !isMobileViewport() || total <= 1;
+
+        [prevButton, nextButton].forEach(btn => {
+          if (!btn) return;
+          btn.hidden = hideArrows;
+          btn.disabled = hideArrows;
+        });
+
+        if (hideArrows) return;
+
+        if (prevButton){
+          prevButton.disabled = index <= 0;
+        }
+        if (nextButton){
+          nextButton.disabled = index === -1 || index >= total - 1;
+        }
+      }
+
+      function focusMobileCharacterByOffset(offset){
+        if (!Number.isInteger(offset) || !isMobileViewport()) return;
+        const total = state.characters.length;
+        if (!total) return;
+        const currentIndex = state.characters.findIndex(char => char.id === state.activeId);
+        if (currentIndex === -1) return;
+        const targetIndex = currentIndex + offset;
+        if (targetIndex < 0 || targetIndex >= total){
+          scrollMobileGalleryToActive({ smooth: true });
+          return;
+        }
+        const target = state.characters[targetIndex];
+        if (!target || target.id === state.activeId) {
+          scrollMobileGalleryToActive({ smooth: true });
+          return;
+        }
+        state.activeId = target.id;
+        renderCharacterList();
+        renderCharacterDetails();
+      }
+
       function renderCharacterMobileGallery(){
         const wrapper = document.querySelector('[data-character-mobile]');
         if (!wrapper) return;
         const track = wrapper.querySelector('[data-character-mobile-track]');
         const pagination = wrapper.querySelector('[data-character-mobile-pagination]');
         if (!track || !pagination) return;
+        const prevButton = wrapper.querySelector('[data-character-mobile-prev]');
+        const nextButton = wrapper.querySelector('[data-character-mobile-next]');
 
         if (!isMobileViewport() || !state.projectId || !state.characters.length){
           wrapper.hidden = true;
@@ -1356,10 +1433,27 @@
             track.innerHTML = '';
             pagination.innerHTML = '';
           }
+          if (prevButton){
+            prevButton.hidden = true;
+            prevButton.disabled = true;
+          }
+          if (nextButton){
+            nextButton.hidden = true;
+            nextButton.disabled = true;
+          }
           return;
         }
 
         wrapper.hidden = false;
+
+        if (prevButton && !prevButton.dataset.bound){
+          prevButton.addEventListener('click', () => focusMobileCharacterByOffset(-1));
+          prevButton.dataset.bound = 'true';
+        }
+        if (nextButton && !nextButton.dataset.bound){
+          nextButton.addEventListener('click', () => focusMobileCharacterByOffset(1));
+          nextButton.dataset.bound = 'true';
+        }
 
         if (!mobileGallerySyncingFromScroll){
           track.innerHTML = state.characters.map(buildMobileCardMarkup).join('');
@@ -1415,6 +1509,7 @@
 
         updateMobileActiveCard();
         scrollMobileGalleryToActive({ smooth: false });
+        syncMobileArrowState();
       }
 
       function handleMobileGalleryScroll(){
