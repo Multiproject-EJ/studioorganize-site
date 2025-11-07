@@ -3668,6 +3668,51 @@
     }
 
     bootstrapScenes();
+
+    // Listen for workspace save requests
+    document.addEventListener('studioorganize:save-requested', event => {
+      const detail = event?.detail;
+      if (!detail) return;
+      
+      // Mark the event as handled
+      if (typeof detail.markHandled === 'function'){
+        detail.markHandled();
+      } else {
+        detail.handled = true;
+      }
+      
+      const action = detail.action || 'save';
+      const source = detail.source || 'unknown';
+      
+      // Create a promise for the save operation
+      const savePromise = (async () => {
+        try {
+          // StoryboardPro currently saves to localStorage automatically
+          // This could be enhanced to save to Supabase in the future
+          const message = 'Storyboard changes are saved locally. Cloud sync coming soon!';
+          console.log('StoryboardPro save requested:', { action, source });
+          
+          // Show a notification to user
+          const statusEl = document.querySelector('[data-storyboard-status]');
+          if (statusEl){
+            statusEl.textContent = message;
+            setTimeout(() => {
+              statusEl.textContent = '';
+            }, 3000);
+          }
+          
+          return { success: true, handled: true, action, source, message };
+        } catch (error){
+          console.error('Workspace save failed in StoryboardPro', error);
+          return { success: false, handled: true, action, source, error };
+        }
+      })();
+      
+      // Register the promise with the event
+      if (typeof detail.waitUntil === 'function'){
+        detail.waitUntil(savePromise);
+      }
+    });
   </script>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
   <script type="module" src="/assets/main.js"></script>

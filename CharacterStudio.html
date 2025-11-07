@@ -2794,6 +2794,40 @@
       updateSaveButtonState();
       hydrateCharactersFromLocal();
       initializeSupabase();
+
+      // Listen for workspace save requests
+      document.addEventListener('studioorganize:save-requested', event => {
+        const detail = event?.detail;
+        if (!detail) return;
+        
+        // Mark the event as handled
+        if (typeof detail.markHandled === 'function'){
+          detail.markHandled();
+        } else {
+          detail.handled = true;
+        }
+        
+        const action = detail.action || 'save';
+        const source = detail.source || 'unknown';
+        
+        // Create a promise for the save operation
+        const savePromise = (async () => {
+          try {
+            await handleSaveClick();
+            // Check if save was successful by looking at the status
+            const success = state.saveStatusState === 'ready' || !state.dirty;
+            return { success, handled: true, action, source };
+          } catch (error){
+            console.error('Workspace save failed in Character Studio', error);
+            return { success: false, handled: true, action, source, error };
+          }
+        })();
+        
+        // Register the promise with the event
+        if (typeof detail.waitUntil === 'function'){
+          detail.waitUntil(savePromise);
+        }
+      });
     })();
   </script>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
