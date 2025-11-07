@@ -2118,7 +2118,7 @@ const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/IMG_6892.webp' },
   { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/IMG_6894.webp' },
   { href: '/StoryboardPro.html', label: 'Storyboard Pro', image: '/assets/img/IMG_6893.webp' },
-  { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/IMG_6896.webp' },
+  { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/IMG_6893.webp' },
   { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/IMG_6903.webp' },
   { href: '/creative-hub.html', label: 'Creative Hub', image: CREATIVE_HUB_ICON },
 ];
