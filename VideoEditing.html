@@ -319,6 +319,14 @@
       .story-arc-scenes__step--active .story-arc-scenes__scene-number { color: var(--active-tab-text); }
       .story-arc-scenes__step--active .story-arc-scenes__scene-label { color: var(--active-tab-text); }
       .story-arc-scenes__empty { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 10px; border: 1px dashed var(--ring); color: var(--muted); font-size: 12px; background: var(--chip); }
+      @media (max-width: 1020px) {
+        .timeline-player { grid-template-columns: minmax(220px, 1fr) 1fr; }
+      }
+      @media (max-width: 860px) {
+        .timeline-player { grid-template-columns: 1fr; }
+        .timeline-player__timeline { min-height: 320px; }
+        .timeline-preview { order: -1; }
+      }
       @media (max-width: 820px) {
         .story-arc-layout { flex-direction: column; align-items: stretch; }
         .story-arc-actions { flex-direction: row; justify-content: flex-end; align-items: center; }
@@ -347,6 +355,17 @@
       .timeline-stage header h2 { margin: 0; font-size: 15px; font-weight: 600; }
       .timeline-stage header span { font-size: 12px; color: var(--muted); }
       .timeline-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .timeline-player { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 16px; align-items: start; padding: 16px; }
+      .timeline-player__timeline { min-height: 0; display: flex; }
+      .timeline-player__timeline .timeline-wrapper { flex: 1; }
+      .timeline-preview { margin: 0; background: var(--card); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 12px 28px rgba(8,15,28,0.18); }
+      .timeline-preview__image { position: relative; width: 100%; aspect-ratio: 16 / 9; background: linear-gradient(135deg, rgba(79,123,255,0.14), rgba(79,123,255,0.04)); }
+      .timeline-preview__image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+      .timeline-preview__caption { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
+      .timeline-preview__caption h3 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .2px; }
+      .timeline-preview__meta { margin: 0; font-size: 12px; color: var(--muted); }
+      .timeline-preview__status { margin: 0; font-size: 12px; color: var(--muted); }
+      .timeline-preview--empty .timeline-preview__image { background: linear-gradient(135deg, rgba(79,123,255,0.18), rgba(79,123,255,0.06)); }
       .timeline-wrapper { flex: 1; overflow: auto; padding-bottom: 16px; scroll-behavior: smooth; scroll-snap-type: y proximity; }
       .timeline-grid { display: grid; grid-template-columns: 200px 1fr; min-width: 680px; }
       .timeline-scale { grid-column: 1 / -1; padding: 12px 24px; border-bottom: 1px solid var(--ring); background: linear-gradient(135deg, rgba(79,123,255,0.12), rgba(79,123,255,0)); position: sticky; top: 0; z-index: 2; }
@@ -916,27 +935,48 @@
                 </div>
               </div>
             </header>
-            <div class="timeline-wrapper">
-              <div class="timeline-grid" data-timeline-grid>
-                <div class="timeline-scale" aria-hidden="true">
-                  <div class="timeline-scale__header">
-                    <span>Scene timeline (minutes)</span>
-                    <span>Drag & drop clips to re-time</span>
-                  </div>
-                  <div class="timeline-scale__ruler">
-                    <span style="left:0%">0:00</span>
-                    <span style="left:12.5%">0:05</span>
-                    <span style="left:25%">0:10</span>
-                    <span style="left:37.5%">0:15</span>
-                    <span style="left:50%">0:20</span>
-                    <span style="left:62.5%">0:25</span>
-                    <span style="left:75%">0:30</span>
-                    <span style="left:87.5%">0:35</span>
-                    <span style="left:100%">0:40</span>
+            <div class="timeline-player">
+              <figure class="timeline-preview timeline-preview--empty" data-current-frame>
+                <div class="timeline-preview__image">
+                  <img
+                    data-current-frame-image
+                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+                    alt="Select a scene to view its current frame"
+                  />
+                </div>
+                <figcaption class="timeline-preview__caption">
+                  <h3 data-current-frame-title>Current frame</h3>
+                  <p class="timeline-preview__meta" data-current-frame-meta>
+                    Activate a scene to sync timeline metadata.
+                  </p>
+                  <p class="timeline-preview__status" data-current-frame-status>
+                    Storyboard previews will appear here.
+                  </p>
+                </figcaption>
+              </figure>
+              <div class="timeline-player__timeline">
+                <div class="timeline-wrapper">
+                  <div class="timeline-grid" data-timeline-grid>
+                    <div class="timeline-scale" aria-hidden="true">
+                      <div class="timeline-scale__header">
+                        <span>Scene timeline (minutes)</span>
+                        <span>Drag & drop clips to re-time</span>
+                      </div>
+                      <div class="timeline-scale__ruler">
+                        <span style="left:0%">0:00</span>
+                        <span style="left:12.5%">0:05</span>
+                        <span style="left:25%">0:10</span>
+                        <span style="left:37.5%">0:15</span>
+                        <span style="left:50%">0:20</span>
+                        <span style="left:62.5%">0:25</span>
+                        <span style="left:75%">0:30</span>
+                        <span style="left:87.5%">0:35</span>
+                        <span style="left:100%">0:40</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </section>
@@ -1302,6 +1342,11 @@
     const sceneListContainer = document.querySelector('[data-scene-list]');
     const sceneTitle = document.querySelector('[data-scene-title]');
     const sceneMeta = document.querySelector('[data-scene-meta]');
+    const currentFrameFigure = document.querySelector('[data-current-frame]');
+    const currentFrameImage = currentFrameFigure ? currentFrameFigure.querySelector('[data-current-frame-image]') : null;
+    const currentFrameTitle = currentFrameFigure ? currentFrameFigure.querySelector('[data-current-frame-title]') : null;
+    const currentFrameMeta = currentFrameFigure ? currentFrameFigure.querySelector('[data-current-frame-meta]') : null;
+    const currentFrameStatus = currentFrameFigure ? currentFrameFigure.querySelector('[data-current-frame-status]') : null;
     const timelineGrid = document.querySelector('[data-timeline-grid]');
     const timelineWrapper = document.querySelector('.timeline-wrapper');
     const aiPromptInput = document.getElementById('aiShotPrompt');
@@ -1355,6 +1400,12 @@
     const TIMELINE_STORAGE_KEYS = { dockPinned: 'timelineDockPinned' };
     const TIMELINE_HIDE_DELAY = 3500;
     const SCENE_CAROUSEL_SWIPE_THRESHOLD = 48;
+    const EMPTY_PREVIEW_SCENE = {
+      numberLabel: 'Scene',
+      displayName: 'No scene selected',
+      description: 'Choose a scene to view its current frame.',
+      color: '#4f7bff',
+    };
     let timelinePinned = true;
     let timelineHideTimer = null;
     let timelineHovering = false;
@@ -1379,6 +1430,7 @@
     let sceneCarouselDragState = null;
 
     setSceneCarouselZoom(true);
+    updateCurrentFramePreview(null);
 
     initialiseAiProviderSelect();
     setupApiDialog();
@@ -2047,6 +2099,69 @@
       return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     }
 
+    function getSceneCombinedLabel(scene) {
+      if (!scene || typeof scene !== 'object') return '';
+      const number = sanitizeString(scene.numberLabel);
+      const name = sanitizeString(scene.displayName);
+      if (number && name && number !== name) return `${number} · ${name}`;
+      return number || name || '';
+    }
+
+    function getScenePreviewImageDetails(scene, combinedLabel) {
+      const label = combinedLabel || getSceneCombinedLabel(scene) || 'Scene preview';
+      const previewImages = getScenePreviewImages(scene);
+      if (previewImages.length) {
+        const suffix = previewImages.length > 1 ? ` (showing frame 1 of ${previewImages.length})` : '';
+        return {
+          src: previewImages[0],
+          alt: `${label} storyboard preview${suffix}`,
+        };
+      }
+      return {
+        src: createScenePreviewData(scene),
+        alt: `${label} preview image`,
+      };
+    }
+
+    function getEmptyPreviewImageDetails() {
+      return {
+        src: createScenePreviewData(EMPTY_PREVIEW_SCENE),
+        alt: 'Select a scene to view its current frame',
+      };
+    }
+
+    function updateCurrentFramePreview(scene) {
+      if (!currentFrameFigure) return;
+      const hasScene = Boolean(scene);
+      currentFrameFigure.classList.toggle('timeline-preview--empty', !hasScene);
+
+      const combinedLabel = hasScene ? getSceneCombinedLabel(scene) : '';
+      const titleText = hasScene ? combinedLabel || 'Scene preview' : 'No scene selected';
+      if (currentFrameTitle) currentFrameTitle.textContent = titleText;
+
+      if (currentFrameMeta) {
+        currentFrameMeta.textContent = hasScene
+          ? scene.timelineMeta || 'Timeline metadata not available yet.'
+          : 'Activate a scene from the list to sync timeline metadata.';
+      }
+
+      if (currentFrameStatus) {
+        const statusText = hasScene
+          ? scene.statusText || 'Storyboard previews update as you add frames.'
+          : 'Storyboard previews will appear here when a scene is active.';
+        currentFrameStatus.textContent = statusText;
+        currentFrameStatus.hidden = !statusText;
+      }
+
+      if (currentFrameImage) {
+        const details = hasScene
+          ? getScenePreviewImageDetails(scene, combinedLabel)
+          : getEmptyPreviewImageDetails();
+        currentFrameImage.src = details.src;
+        currentFrameImage.alt = details.alt;
+      }
+    }
+
     function encodeSvgText(value) {
       return String(value || '')
         .replace(/&/g, '&amp;')
@@ -2121,6 +2236,7 @@
         sceneListContainer.appendChild(empty);
         if (sceneTitle) sceneTitle.textContent = 'No scenes yet';
         if (sceneMeta) sceneMeta.textContent = 'Create a scene in the writer to sync it here.';
+        updateCurrentFramePreview(null);
         sceneCards = [];
         sceneRows = [];
         window.storyboardScenes = [];
@@ -2277,6 +2393,7 @@
       }
       if (sceneId === activeSceneId) {
         syncCardDialogSceneData();
+        updateCurrentFramePreview(scene);
       }
       renderSceneCarousel();
     });
@@ -2660,6 +2777,7 @@
       if (!id) return;
       activeSceneId = id;
       window.storyboardActiveSceneId = id;
+      const sceneInfo = sceneDataMap.get(id) || null;
       sceneCards.forEach(card => {
         const isActive = card.dataset.scene === id;
         card.classList.toggle('active', isActive);
@@ -2686,6 +2804,7 @@
           }
         }
       });
+      updateCurrentFramePreview(sceneInfo);
       updateStoryArcActiveState();
       syncCardDialogSceneData();
       syncSceneCarouselActiveState();
