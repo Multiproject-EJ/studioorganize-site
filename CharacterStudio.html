@@ -493,6 +493,66 @@
       .character-studio-empty h2 { margin: 0; font-size: 22px; color: var(--ink); }
       .character-studio-empty p { margin: 0; font-size: 14px; }
       .muted-text { color: var(--muted); font-size: 12px; }
+      .character-studio-mobile { display: none; }
+      .character-studio-mobile-track { display: flex; }
+      .character-studio-mobile-card { display: flex; cursor: pointer; }
+      .character-studio-mobile-card-media { position: relative; overflow: hidden; }
+      .character-studio-mobile-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .character-studio-mobile-card-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.85);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(56, 189, 248, 0.9));
+      }
+      .character-studio-mobile-card-body { display: flex; flex-direction: column; gap: 16px; padding: 20px 20px 24px; }
+      .character-studio-mobile-card-meta { font-size: 13px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; }
+      .character-studio-mobile-card-summary { font-size: 14px; line-height: 1.55; }
+      .character-studio-mobile-card-traits { display: flex; flex-wrap: wrap; gap: 8px; }
+      .character-studio-mobile-card-traits span { background: var(--chip); border: 1px solid var(--ring); border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+      .character-studio-mobile-card-stats { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .character-studio-mobile-card-stats div { display: flex; flex-direction: column; gap: 2px; }
+      .character-studio-mobile-card-stats dt { font-size: 11px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); margin: 0; }
+      .character-studio-mobile-card-stats dd { margin: 0; font-size: 22px; font-weight: 600; }
+      .character-studio-mobile-open {
+        align-self: flex-start;
+        border: 1px solid var(--ring);
+        border-radius: 999px;
+        padding: 10px 18px;
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .character-studio-mobile-open:hover { border-color: var(--acc); }
+      .character-studio-mobile-pagination { display: none; }
+      .character-studio-mobile-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: none;
+        background: var(--ring);
+        padding: 0;
+        cursor: pointer;
+      }
+      .character-studio-mobile-dot[aria-current="true"] { background: var(--acc); box-shadow: 0 0 0 4px rgba(79, 123, 255, 0.18); }
+      .character-studio-mobile-close {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        background: transparent;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 12px 0 0;
+        cursor: pointer;
+      }
       @media (max-width: 1100px) {
         .character-studio-layout { grid-template-columns: 260px 1fr; }
       }
@@ -507,11 +567,58 @@
         .character-studio-header { flex-direction: column; align-items: flex-start; }
         .character-studio-header-primary { width: 100%; }
         .character-studio-header-actions { width: 100%; justify-content: space-between; }
+        .character-studio-window { border-radius: 16px; box-shadow: 0 26px 64px rgba(15, 18, 30, 0.35); }
+        .character-studio-body { padding: 18px 0 24px; }
+        .character-studio-mobile { display: flex; flex-direction: column; gap: 14px; padding: 0 16px; }
+        .character-studio-mobile-track {
+          flex: 1;
+          gap: 16px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          padding-bottom: 12px;
+          margin: 0 -16px;
+          padding-left: 16px;
+          padding-right: 16px;
+          -webkit-overflow-scrolling: touch;
+        }
+        .character-studio-mobile-track::-webkit-scrollbar { display: none; }
+        .character-studio-mobile-card {
+          flex: 0 0 calc(100% - 32px);
+          background: var(--card);
+          border: 1px solid var(--ring);
+          border-radius: 24px;
+          overflow: hidden;
+          flex-direction: column;
+          min-height: calc(100vh - 220px);
+          scroll-snap-align: center;
+          box-shadow: 0 26px 64px rgba(15, 18, 30, 0.35);
+          position: relative;
+        }
+        .character-studio-mobile-card.is-active { border-color: var(--acc); box-shadow: 0 32px 80px rgba(62, 114, 255, 0.28); }
+        .character-studio-mobile-card-media { flex: 1 1 240px; background: var(--chip); }
+        .character-studio-mobile-card-body { flex: 0 0 auto; }
+        .character-studio-mobile-pagination { display: flex; justify-content: center; gap: 10px; }
+        .character-studio-layout { display: none; padding: 0 16px 24px; }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-mobile { display: none; }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-layout { display: grid; position: relative; }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-mobile-close {
+          display: inline-flex;
+          position: sticky;
+          top: 0;
+          z-index: 3;
+          width: 100%;
+          background: var(--panel);
+          padding: 14px 0;
+        }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-body { padding: 16px 16px 32px; }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-layout { gap: 18px; }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-sidebar { display: none; }
+        .character-studio-window[data-mobile-editor-open="true"] .character-studio-details { max-height: none; overflow: visible; }
       }
     </style>
 
     <div class="character-studio-app">
-      <div class="character-studio-window">
+      <div class="character-studio-window" data-character-window>
         <div class="character-studio-header">
           <div class="character-studio-header-primary">
             <span class="topbar__badge brand-with-logo__badge--character" aria-hidden="true">CS</span>
@@ -531,6 +638,10 @@
           </div>
         </div>
         <div class="character-studio-body">
+          <section class="character-studio-mobile" data-character-mobile hidden>
+            <div class="character-studio-mobile-track" data-character-mobile-track></div>
+            <div class="character-studio-mobile-pagination" data-character-mobile-pagination></div>
+          </section>
           <div class="character-studio-layout">
             <aside class="character-studio-sidebar">
               <div class="character-studio-sidebar-header">
@@ -657,6 +768,10 @@
         signedUrlCache: new Map(),
         poseCache: new Map()
       };
+
+      const mobileViewportQuery = window.matchMedia('(max-width: 640px)');
+      let mobileGalleryScrollTimer = null;
+      let mobileGallerySyncingFromScroll = false;
 
       const LOCAL_DB_NAME = 'sw_db_v1';
       const LOCAL_DB_STORE = 'projects';
@@ -1103,6 +1218,246 @@
         return traits.map(trait => `<span class="character-studio-chip"><strong>${escapeHtml(trait)}</strong></span>`).join('');
       }
 
+      function isMobileViewport(){
+        return mobileViewportQuery.matches;
+      }
+
+      function getCharacterWindowElement(){
+        return document.querySelector('[data-character-window]');
+      }
+
+      function openMobileEditor(){
+        const windowEl = getCharacterWindowElement();
+        if (!windowEl) return;
+        windowEl.setAttribute('data-mobile-editor-open', 'true');
+        window.requestAnimationFrame(() => {
+          const top = windowEl.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top, behavior: 'smooth' });
+          const container = document.querySelector('[data-character-details]');
+          if (container){
+            container.scrollTop = 0;
+          }
+        });
+      }
+
+      function closeMobileEditor(){
+        const windowEl = getCharacterWindowElement();
+        if (!windowEl) return;
+        windowEl.removeAttribute('data-mobile-editor-open');
+        scrollMobileGalleryToActive({ smooth: true });
+      }
+
+      function ensureMobileCloseButton(container){
+        if (!container) return;
+        let closeButton = container.querySelector('[data-character-mobile-close]');
+        if (!closeButton){
+          closeButton = document.createElement('button');
+          closeButton.type = 'button';
+          closeButton.className = 'character-studio-mobile-close';
+          closeButton.setAttribute('data-character-mobile-close', '');
+          closeButton.innerHTML = '<span aria-hidden="true">←</span><span>Back to cards</span>';
+          container.prepend(closeButton);
+        }
+        if (!closeButton.dataset.bound){
+          closeButton.addEventListener('click', closeMobileEditor);
+          closeButton.dataset.bound = 'true';
+        }
+      }
+
+      function buildMobileCardMarkup(character){
+        if (!character) return '';
+        const portraitUrl = typeof character?.looks?.portrait === 'string' ? character.looks.portrait.trim() : '';
+        const name = character?.name ? character.name : 'Untitled Character';
+        const meta = characterSidebarMeta(character) || 'Add role or pronouns';
+        const summary = typeof character?.summary === 'string' ? character.summary.trim() : '';
+        const statsScenes = Number.isFinite(character?.stats?.scenes) ? character.stats.scenes : 0;
+        const statsDialogue = Number.isFinite(character?.stats?.dialogue) ? character.stats.dialogue : 0;
+        const statsScreenTime = Number.isFinite(character?.stats?.screenTime) ? character.stats.screenTime : 0;
+        const traits = Array.isArray(character?.traits) ? character.traits.filter(Boolean).slice(0, 4) : [];
+        const traitMarkup = traits.length
+          ? traits.map(trait => `<span>${escapeHtml(trait)}</span>`).join('')
+          : '<span class="muted-text">Add traits to spotlight personality.</span>';
+        const initial = name.trim().charAt(0).toUpperCase() || 'C';
+        const portraitMarkup = portraitUrl
+          ? `<img src="${escapeHtml(portraitUrl)}" alt="${escapeHtml(`${name} portrait`)}" loading="lazy" />`
+          : `<div class="character-studio-mobile-card-placeholder" aria-hidden="true">${escapeHtml(initial)}</div>`;
+        return `
+          <article class="character-studio-mobile-card${character.id === state.activeId ? ' is-active' : ''}" data-character-id="${escapeHtml(character.id)}" tabindex="0">
+            <div class="character-studio-mobile-card-media">
+              ${portraitMarkup}
+            </div>
+            <div class="character-studio-mobile-card-body">
+              <div>
+                <h3>${escapeHtml(name)}</h3>
+                <p class="character-studio-mobile-card-meta">${escapeHtml(meta)}</p>
+              </div>
+              ${summary ? `<p class="character-studio-mobile-card-summary">${escapeHtml(summary)}</p>` : ''}
+              <div class="character-studio-mobile-card-stats">
+                <div>
+                  <dt>Scenes</dt>
+                  <dd>${escapeHtml(String(statsScenes))}</dd>
+                </div>
+                <div>
+                  <dt>Dialogue</dt>
+                  <dd>${escapeHtml(String(statsDialogue))}</dd>
+                </div>
+                <div>
+                  <dt>Minutes</dt>
+                  <dd>${escapeHtml(String(statsScreenTime))}</dd>
+                </div>
+              </div>
+              <div class="character-studio-mobile-card-traits">${traitMarkup}</div>
+              <button class="character-studio-mobile-open" type="button" data-character-mobile-open="${escapeHtml(character.id)}">Open editor</button>
+            </div>
+          </article>`;
+      }
+
+      function updateMobileActiveCard(){
+        const track = document.querySelector('[data-character-mobile-track]');
+        if (!track) return;
+        const cards = track.querySelectorAll('[data-character-id]');
+        cards.forEach(card => {
+          const id = card.getAttribute('data-character-id');
+          card.classList.toggle('is-active', id === state.activeId);
+        });
+        document.querySelectorAll('[data-character-mobile-dot]').forEach(dot => {
+          const id = dot.getAttribute('data-character-mobile-dot');
+          if (id === state.activeId){
+            dot.setAttribute('aria-current', 'true');
+          } else {
+            dot.removeAttribute('aria-current');
+          }
+        });
+      }
+
+      function scrollMobileGalleryToActive(options = {}){
+        if (!isMobileViewport() || mobileGallerySyncingFromScroll) return;
+        const track = document.querySelector('[data-character-mobile-track]');
+        if (!track) return;
+        const activeId = state.activeId;
+        if (!activeId) return;
+        const cards = Array.from(track.querySelectorAll('[data-character-id]'));
+        const activeCard = cards.find(card => card.getAttribute('data-character-id') === activeId);
+        if (!activeCard) return;
+        const behavior = options.smooth === false ? 'auto' : 'smooth';
+        activeCard.scrollIntoView({ behavior, inline: 'center', block: 'nearest' });
+      }
+
+      function renderCharacterMobileGallery(){
+        const wrapper = document.querySelector('[data-character-mobile]');
+        if (!wrapper) return;
+        const track = wrapper.querySelector('[data-character-mobile-track]');
+        const pagination = wrapper.querySelector('[data-character-mobile-pagination]');
+        if (!track || !pagination) return;
+
+        if (!isMobileViewport() || !state.projectId || !state.characters.length){
+          wrapper.hidden = true;
+          if (!mobileGallerySyncingFromScroll){
+            track.innerHTML = '';
+            pagination.innerHTML = '';
+          }
+          return;
+        }
+
+        wrapper.hidden = false;
+
+        if (!mobileGallerySyncingFromScroll){
+          track.innerHTML = state.characters.map(buildMobileCardMarkup).join('');
+          pagination.innerHTML = state.characters.length > 1
+            ? state.characters.map(char => `<button type="button" class="character-studio-mobile-dot" data-character-mobile-dot="${escapeHtml(char.id)}" aria-label="View ${escapeHtml(char.name || 'Character')}"${char.id === state.activeId ? ' aria-current="true"' : ''}></button>`).join('')
+            : '';
+
+          track.querySelectorAll('[data-character-mobile-open]').forEach(button => {
+            button.addEventListener('click', event => {
+              event.stopPropagation();
+              const id = button.getAttribute('data-character-mobile-open');
+              if (!id) return;
+              if (state.activeId !== id){
+                state.activeId = id;
+                renderCharacterList();
+                renderCharacterDetails();
+              } else {
+                updateMobileActiveCard();
+              }
+              openMobileEditor();
+            });
+          });
+
+          track.querySelectorAll('[data-character-id]').forEach(card => {
+            card.addEventListener('click', () => {
+              const id = card.getAttribute('data-character-id');
+              if (!id || id === state.activeId) return;
+              state.activeId = id;
+              renderCharacterList();
+              renderCharacterDetails();
+            });
+          });
+
+          if (!track.dataset.scrollHandlerAttached){
+            track.addEventListener('scroll', handleMobileGalleryScroll, { passive: true });
+            track.dataset.scrollHandlerAttached = 'true';
+          }
+
+          pagination.querySelectorAll('[data-character-mobile-dot]').forEach(dot => {
+            dot.addEventListener('click', () => {
+              const id = dot.getAttribute('data-character-mobile-dot');
+              if (!id) return;
+              if (state.activeId !== id){
+                state.activeId = id;
+                renderCharacterList();
+                renderCharacterDetails();
+              } else {
+                scrollMobileGalleryToActive({ smooth: true });
+              }
+            });
+          });
+        }
+
+        updateMobileActiveCard();
+        scrollMobileGalleryToActive({ smooth: false });
+      }
+
+      function handleMobileGalleryScroll(){
+        if (!isMobileViewport()) return;
+        if (mobileGalleryScrollTimer) window.clearTimeout(mobileGalleryScrollTimer);
+        mobileGalleryScrollTimer = window.setTimeout(() => {
+          mobileGalleryScrollTimer = null;
+          const track = document.querySelector('[data-character-mobile-track]');
+          if (!track) return;
+          const cards = Array.from(track.querySelectorAll('[data-character-id]'));
+          if (!cards.length) return;
+          const trackRect = track.getBoundingClientRect();
+          const center = trackRect.left + trackRect.width / 2;
+          let closestId = null;
+          let minDistance = Infinity;
+          cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const cardCenter = rect.left + rect.width / 2;
+            const distance = Math.abs(cardCenter - center);
+            if (distance < minDistance){
+              minDistance = distance;
+              closestId = card.getAttribute('data-character-id');
+            }
+          });
+          if (closestId && closestId !== state.activeId){
+            mobileGallerySyncingFromScroll = true;
+            state.activeId = closestId;
+            renderCharacterList();
+            renderCharacterDetails();
+            mobileGallerySyncingFromScroll = false;
+          } else {
+            updateMobileActiveCard();
+          }
+        }, 120);
+      }
+
+      function handleMobileViewportChange(event){
+        if (!event.matches){
+          closeMobileEditor();
+        }
+        renderCharacterMobileGallery();
+      }
+
       function characterLookPreviewMarkup(kind, url, character){
         const label = CHARACTER_LOOK_LABELS[kind] || 'Reference';
         const name = character?.name ? character.name : 'Character';
@@ -1268,6 +1623,7 @@
         if (!state.projectId){
           state.activeId = null;
           showMessage('No story linked', 'Open your story in the Writer to connect Character Studio.');
+          renderCharacterMobileGallery();
           return;
         }
         if (!state.characters.length){
@@ -1281,6 +1637,7 @@
           } else {
             showMessage('No characters yet', 'Add the first member of your cast to begin planning.');
           }
+          renderCharacterMobileGallery();
           return;
         }
         state.characters.forEach(char => {
@@ -1288,6 +1645,7 @@
           item.type = 'button';
           item.className = 'character-studio-list-item' + (char.id === state.activeId ? ' active' : '');
           item.innerHTML = `<strong>${escapeHtml(char.name || 'Untitled Character')}</strong><span>${escapeHtml(characterSidebarMeta(char))}</span>`;
+          item.setAttribute('data-character-id', char.id);
           item.addEventListener('click', () => {
             if (state.activeId === char.id) return;
             state.activeId = char.id;
@@ -1296,6 +1654,7 @@
           });
           listEl.appendChild(item);
         });
+        renderCharacterMobileGallery();
       }
 
       function renderCharacterDetails(){
@@ -1307,6 +1666,7 @@
               <h2>No story linked</h2>
               <p>Open your story in the Writer to connect Character Studio.</p>
             </div>`;
+          ensureMobileCloseButton(container);
           return;
         }
         if (!state.characters.length){
@@ -1316,24 +1676,28 @@
                 <h2>Loading characters…</h2>
                 <p>Syncing the cast from Supabase.</p>
               </div>`;
+            ensureMobileCloseButton(container);
           } else if (!state.supabase){
             container.innerHTML = `
               <div class="character-studio-empty">
                 <h2>Connecting to Supabase…</h2>
                 <p>One moment while we prepare your workspace.</p>
               </div>`;
+            ensureMobileCloseButton(container);
           } else if (!state.session){
             container.innerHTML = `
               <div class="character-studio-empty">
                 <h2>Sign in to continue</h2>
                 <p>Sign in to view and save this cast.</p>
               </div>`;
+            ensureMobileCloseButton(container);
           } else {
             container.innerHTML = `
               <div class="character-studio-empty">
                 <h2>No characters yet</h2>
                 <p>Use the + New button to start building your cast.</p>
               </div>`;
+            ensureMobileCloseButton(container);
           }
           return;
         }
@@ -1344,6 +1708,7 @@
               <h2>No character selected</h2>
               <p>Choose a character from the list to begin planning.</p>
             </div>`;
+          ensureMobileCloseButton(container);
           return;
         }
 
@@ -1762,6 +2127,7 @@
         if (summaryInput){
           summaryInput.addEventListener('input', e => {
             updateCharacterField(id, 'summary', e.target.value);
+            renderCharacterMobileGallery();
           });
         }
 
@@ -1772,6 +2138,7 @@
             updateCharacterField(id, 'stats.scenes', value);
             const display = container.querySelector('[data-character-stat="scenes"]');
             if (display) display.textContent = value;
+            renderCharacterMobileGallery();
           });
         }
 
@@ -1782,6 +2149,7 @@
             updateCharacterField(id, 'stats.dialogue', value);
             const display = container.querySelector('[data-character-stat="dialogue"]');
             if (display) display.textContent = value;
+            renderCharacterMobileGallery();
           });
         }
 
@@ -1792,6 +2160,7 @@
             updateCharacterField(id, 'stats.screenTime', value);
             const display = container.querySelector('[data-character-stat="screenTime"]');
             if (display) display.textContent = value;
+            renderCharacterMobileGallery();
           });
         }
 
@@ -1801,6 +2170,7 @@
             const list = normalizeList(e.target.value);
             updateCharacterField(id, 'traits', list);
             refreshTraitsPreview(active);
+            renderCharacterMobileGallery();
           });
         }
 
@@ -1845,6 +2215,7 @@
             const value = e.target.value.trim();
             updateCharacterField(id, 'looks.portrait', value);
             updateLookPreview('portrait', active);
+            renderCharacterMobileGallery();
           });
         }
 
@@ -2057,6 +2428,9 @@
             renderCharacterDetails();
           });
         }
+        ensureMobileCloseButton(container);
+        updateMobileActiveCard();
+        scrollMobileGalleryToActive({ smooth: true });
       }
 
       async function waitForSupabaseClient(timeoutMs = 6000){
@@ -2280,6 +2654,12 @@
           }
           handleSession(nextSession).catch(err => console.error('Character Studio auth change failed', err));
         });
+      }
+
+      if (typeof mobileViewportQuery.addEventListener === 'function'){
+        mobileViewportQuery.addEventListener('change', handleMobileViewportChange);
+      } else if (typeof mobileViewportQuery.addListener === 'function'){
+        mobileViewportQuery.addListener(handleMobileViewportChange);
       }
 
       function addCharacter(){
