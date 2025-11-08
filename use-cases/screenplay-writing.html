@@ -200,6 +200,24 @@
       .timeline-block--beats{background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.3);}
       .timeline-block--cards{background:rgba(251,191,36,0.18); border:1px solid rgba(251,191,36,0.32);}
       .timeline-track--hidden{display:none;}
+      
+      /* Timeline Carousel Styles */
+      .timeline-carousel-wrapper{position:relative; display:flex; align-items:center; gap:12px;}
+      .timeline-carousel{flex:1; overflow:hidden; position:relative; min-height:0;}
+      .timeline-carousel-item{display:none; opacity:0; transition:opacity .3s ease;}
+      .timeline-carousel-item--active{display:block; opacity:1; animation:timelineSlideIn .3s ease;}
+      @keyframes timelineSlideIn{
+        from{opacity:0; transform:translateX(20px);}
+        to{opacity:1; transform:translateX(0);}
+      }
+      .timeline-carousel-nav{width:38px; height:38px; border-radius:999px; border:1px solid var(--ring); background:var(--panel); color:var(--muted); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; box-shadow:0 10px 22px rgba(8,15,28,0.16); flex-shrink:0;}
+      .timeline-carousel-nav:hover{background:linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); border-color:var(--acc); color:var(--ink); transform:translateY(-1px);}
+      .timeline-carousel-nav:focus-visible{outline:2px solid var(--acc); outline-offset:3px;}
+      .timeline-carousel-nav:active{transform:translateY(0);}
+      .timeline-carousel-nav:disabled{opacity:0.4; cursor:not-allowed; pointer-events:none;}
+      .timeline-carousel-nav svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2;}
+      .timeline-carousel-nav svg polyline{stroke-linecap:round; stroke-linejoin:round;}
+      
       @media (max-width: 820px){
         .story-arc-layout{flex-direction:column; align-items:stretch;}
         .story-arc-actions{flex-direction:row; justify-content:flex-end; align-items:center;}
@@ -1277,43 +1295,391 @@
         <div class="timeline-dock pinned timeline-showcase__dock" id="timelineDock" data-timeline-dock="primary">
           <div class="timeline-dock__shell">
             <div class="timeline-dock__content">
-              <div class="story-arc-layout">
-                <div class="story-arc-columns">
-                  <div class="story-arc-timeline" aria-label="Story arc timeline">
-                    <div class="story-arc-container">
-                      <ol class="story-arc-track" role="list">
-                        <li class="story-arc-step" role="listitem">
-                          <div class="story-arc-pill">
-                            <span class="story-arc-label">Opening</span>
+              <!-- Timeline Carousel Container -->
+              <div class="timeline-carousel-wrapper">
+                <button class="timeline-carousel-nav timeline-carousel-nav--prev" type="button" id="timelineNavPrev" aria-label="Previous timeline" title="Previous timeline">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <div class="timeline-carousel" id="timelineCarousel">
+                  <!-- Timeline 1: Beginning, Middle, End (Original) -->
+                  <div class="timeline-carousel-item timeline-carousel-item--active" data-timeline-index="0">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Beginning</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Middle</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">End</span>
+                                </div>
+                              </li>
+                            </ol>
                           </div>
-                        </li>
-                        <li class="story-arc-step story-arc-step--active" role="listitem" aria-current="step">
-                          <div class="story-arc-pill">
-                            <span class="story-arc-label">Middle</span>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list" data-story-arc-track></ol>
                           </div>
-                        </li>
-                        <li class="story-arc-step" role="listitem">
-                          <div class="story-arc-pill">
-                            <span class="story-arc-label">End</span>
-                          </div>
-                        </li>
-                      </ol>
+                        </div>
+                      </div>
+                      <div class="story-arc-actions" aria-label="Story timeline actions">
+                        <button class="story-arc-action-btn" type="button" id="timelineModeBtn" aria-pressed="false" aria-label="Open timeline workspace" title="Open timeline workspace">
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <polyline points="7 17 17 7"></polyline>
+                            <polyline points="7 7 17 7 17 17"></polyline>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div class="story-arc-scenes" aria-label="Scene timeline">
-                    <div class="story-arc-scenes__container">
-                      <ol class="story-arc-scenes__track" role="list" data-story-arc-track></ol>
+                  <!-- Timeline 2: Setup, Confrontation, Resolution -->
+                  <div class="timeline-carousel-item" data-timeline-index="1">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Setup</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Confrontation</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Resolution</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 3: Act I, Act II, Act III -->
+                  <div class="timeline-carousel-item" data-timeline-index="2">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Act I</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Act II</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Act III</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 4: Exposition, Rising Action, Climax -->
+                  <div class="timeline-carousel-item" data-timeline-index="3">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Exposition</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Rising Action</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Climax</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 5: Introduction, Development, Conclusion -->
+                  <div class="timeline-carousel-item" data-timeline-index="4">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Introduction</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Development</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Conclusion</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 6: Opening Hook, Build Up, Finale -->
+                  <div class="timeline-carousel-item" data-timeline-index="5">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Opening Hook</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Build Up</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Finale</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 7: Inciting Incident, Midpoint, Denouement -->
+                  <div class="timeline-carousel-item" data-timeline-index="6">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Inciting Incident</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Midpoint</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Denouement</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 8: Ordinary World, Special World, Return -->
+                  <div class="timeline-carousel-item" data-timeline-index="7">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Ordinary World</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Special World</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Return</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 9: Thesis, Antithesis, Synthesis -->
+                  <div class="timeline-carousel-item" data-timeline-index="8">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Thesis</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Antithesis</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Synthesis</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 10: Journey Begins, Trials, Victory -->
+                  <div class="timeline-carousel-item" data-timeline-index="9">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Journey Begins</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Trials</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Victory</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Timeline 11: Discovery, Challenge, Transformation -->
+                  <div class="timeline-carousel-item" data-timeline-index="10">
+                    <div class="story-arc-layout">
+                      <div class="story-arc-columns">
+                        <div class="story-arc-timeline" aria-label="Story arc timeline">
+                          <div class="story-arc-container">
+                            <ol class="story-arc-track" role="list">
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Discovery</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Challenge</span>
+                                </div>
+                              </li>
+                              <li class="story-arc-step" role="listitem">
+                                <div class="story-arc-pill">
+                                  <span class="story-arc-label">Transformation</span>
+                                </div>
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                        <div class="story-arc-scenes" aria-label="Scene timeline">
+                          <div class="story-arc-scenes__container">
+                            <ol class="story-arc-scenes__track" role="list"></ol>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div class="story-arc-actions" aria-label="Story timeline actions">
-                  <button class="story-arc-action-btn" type="button" id="timelineModeBtn" aria-pressed="false" aria-label="Open timeline workspace" title="Open timeline workspace">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <polyline points="7 17 17 7"></polyline>
-                      <polyline points="7 7 17 7 17 17"></polyline>
-                    </svg>
-                  </button>
-                </div>
+                <button class="timeline-carousel-nav timeline-carousel-nav--next" type="button" id="timelineNavNext" aria-label="Next timeline" title="Next timeline">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -9870,6 +10236,55 @@
     });
 
     /* =========================
+     * Timeline Carousel
+     * =======================*/
+    let currentTimelineIndex = 0;
+    const totalTimelines = 11;
+
+    function setupTimelineCarousel(){
+      const prevBtn = document.getElementById('timelineNavPrev');
+      const nextBtn = document.getElementById('timelineNavNext');
+      
+      if (!prevBtn || !nextBtn) return;
+
+      prevBtn.addEventListener('click', ()=> navigateTimeline(-1));
+      nextBtn.addEventListener('click', ()=> navigateTimeline(1));
+      
+      updateTimelineCarousel();
+    }
+
+    function navigateTimeline(direction){
+      const newIndex = currentTimelineIndex + direction;
+      
+      if (newIndex < 0 || newIndex >= totalTimelines) return;
+      
+      currentTimelineIndex = newIndex;
+      updateTimelineCarousel();
+    }
+
+    function updateTimelineCarousel(){
+      const items = document.querySelectorAll('.timeline-carousel-item');
+      const prevBtn = document.getElementById('timelineNavPrev');
+      const nextBtn = document.getElementById('timelineNavNext');
+      
+      items.forEach((item, index) => {
+        if (index === currentTimelineIndex) {
+          item.classList.add('timeline-carousel-item--active');
+        } else {
+          item.classList.remove('timeline-carousel-item--active');
+        }
+      });
+      
+      if (prevBtn) {
+        prevBtn.disabled = currentTimelineIndex === 0;
+      }
+      
+      if (nextBtn) {
+        nextBtn.disabled = currentTimelineIndex === totalTimelines - 1;
+      }
+    }
+
+    /* =========================
      * Versioning helpers
      * =======================*/
     function bumpVersion(){ project.version = (project.version || 0) + 1; project.updatedAt = Date.now(); }
@@ -9948,6 +10363,7 @@
       render();
       applyFocusModeUI();
       updatePomodoroUI();
+      setupTimelineCarousel();
       setTimeout(runSelfTests, 0);
     })();
     </script>
