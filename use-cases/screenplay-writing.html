@@ -290,6 +290,7 @@
       .tab-panel__handle.timeline-dock__handle{height:var(--right-panel-handle-thickness);}
       .layout.right-panel-collapsed .tab-panel__handle{left:calc((var(--right-panel-handle-track) - var(--right-panel-handle-thickness)) / 2);}
       .tab-panel__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px;}
+      .tab-panel-slot[data-pinned="true"] .tab-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:timelineDockHandlePinnedRelax .35s ease forwards; animation-delay:1s;}
       .scene-panel__header{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px 0;}
       .scene-panel__header h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted);}
       .scene-panel__handle{position:absolute; top:50%; right:calc(var(--scene-panel-handle-thickness) * -0.5); transform:translateY(-50%) rotate(-90deg); transform-origin:center; z-index:4; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer;}
@@ -1788,7 +1789,7 @@
         </div>
 
         <div class="tab-panel-slot" id="rightPanelSlot">
-          <div class="panel panel--tabs" id="rightPanel" data-open="true">
+          <div class="panel panel--tabs" id="rightPanel" data-open="true" data-pinned="true">
             <div class="tab-header" id="rightTabBar">
               <button class="tab-btn" data-tab-btn="write">Visual</button>
               <button class="tab-btn" data-tab-btn="characters">Cast</button>
@@ -2187,8 +2188,8 @@
             </div>
             </div>
           </div>
-          <button class="tab-panel__handle timeline-dock__handle" type="button" id="rightPanelHandle" aria-expanded="true" aria-controls="rightPanel">
-            <span class="sr-only">Hide workspace tools panel</span>
+          <button class="tab-panel__handle timeline-dock__handle" type="button" id="rightPanelHandle" aria-expanded="true" aria-pressed="true" aria-controls="rightPanel" data-pinned="true">
+            <span class="sr-only">Toggle pin for workspace tools panel</span>
           </button>
         </div>
         <div id="scriptDialogGoalModal" class="script-dialog__goal-modal" aria-hidden="true" hidden>
@@ -2381,31 +2382,101 @@
 
     const rightPanelState = {
       open: true,
+      pinned: true,
+      closeTimer: null,
     };
 
-    function updateRightPanelHandleLabel(){
+    function clearRightPanelCloseTimer(){
+      if (rightPanelState.closeTimer){
+        clearTimeout(rightPanelState.closeTimer);
+        rightPanelState.closeTimer = null;
+      }
+    }
+
+    function updateRightPanelHandleState(){
+      if (rightPanelSlot){
+        rightPanelSlot.dataset.pinned = rightPanelState.pinned ? 'true' : 'false';
+      }
       if (!rightPanelHandle) return;
-      const label = rightPanelState.open ? 'Hide workspace tools panel' : 'Show workspace tools panel';
+      const label = rightPanelState.pinned ? 'Unpin workspace tools panel' : 'Pin workspace tools panel';
+      rightPanelHandle.dataset.pinned = rightPanelState.pinned ? 'true' : 'false';
+      rightPanelHandle.setAttribute('aria-pressed', rightPanelState.pinned ? 'true' : 'false');
       rightPanelHandle.setAttribute('aria-label', label);
       rightPanelHandle.setAttribute('title', label);
     }
 
-    function setRightPanelOpen(open){
+    function setRightPanelOpen(open, { force = false } = {}){
       if (!layoutEl || !rightPanel || !rightPanelHandle) return;
-      rightPanelState.open = !!open;
+      if (!open && rightPanelState.pinned && !force){
+        open = true;
+      }
+      const nextOpen = !!open;
+      if (!force && rightPanelState.open === nextOpen) return;
+      rightPanelState.open = nextOpen;
       layoutEl.classList.toggle('right-panel-collapsed', !rightPanelState.open);
       rightPanel.dataset.open = rightPanelState.open ? 'true' : 'false';
       rightPanelHandle.setAttribute('aria-expanded', rightPanelState.open ? 'true' : 'false');
-      updateRightPanelHandleLabel();
     }
 
-    if (rightPanelHandle){
-      rightPanelHandle.addEventListener('click', () => {
-        setRightPanelOpen(!rightPanelState.open);
+    function setRightPanelPinned(pinned){
+      if (!rightPanel) return;
+      rightPanelState.pinned = !!pinned;
+      rightPanel.dataset.pinned = rightPanelState.pinned ? 'true' : 'false';
+      updateRightPanelHandleState();
+      if (rightPanelState.pinned){
+        clearRightPanelCloseTimer();
+        setRightPanelOpen(true, { force: true });
+      } else {
+        const shouldStayOpen = rightPanelSlot && (rightPanelSlot.matches(':hover') || rightPanelSlot.contains(document.activeElement));
+        setRightPanelOpen(!!shouldStayOpen, { force: true });
+      }
+    }
+
+    function scheduleRightPanelClose(){
+      if (rightPanelState.pinned) return;
+      clearRightPanelCloseTimer();
+      rightPanelState.closeTimer = setTimeout(() => {
+        setRightPanelOpen(false);
+      }, 220);
+    }
+
+    if (rightPanelSlot){
+      rightPanelSlot.addEventListener('mouseenter', () => {
+        clearRightPanelCloseTimer();
+        setRightPanelOpen(true);
+      });
+      rightPanelSlot.addEventListener('mouseleave', scheduleRightPanelClose);
+      rightPanelSlot.addEventListener('focusin', () => {
+        clearRightPanelCloseTimer();
+        setRightPanelOpen(true);
+      });
+      rightPanelSlot.addEventListener('focusout', event => {
+        if (rightPanelSlot.contains(event.relatedTarget)) return;
+        scheduleRightPanelClose();
       });
     }
 
-    setRightPanelOpen(true);
+    if (rightPanelHandle){
+      const handleEnter = () => {
+        clearRightPanelCloseTimer();
+        setRightPanelOpen(true);
+      };
+      rightPanelHandle.addEventListener('pointerenter', handleEnter);
+      rightPanelHandle.addEventListener('focus', handleEnter);
+      rightPanelHandle.addEventListener('pointerleave', scheduleRightPanelClose);
+      rightPanelHandle.addEventListener('blur', event => {
+        if (rightPanelSlot && rightPanelSlot.contains(event.relatedTarget)) return;
+        scheduleRightPanelClose();
+      });
+      rightPanelHandle.addEventListener('click', event => {
+        event.preventDefault();
+        setRightPanelPinned(!rightPanelState.pinned);
+      });
+    }
+
+    updateRightPanelHandleState();
+    setRightPanelOpen(true, { force: true });
+    setRightPanelPinned(true);
 
     /* =========================
      * IndexedDB minimal wrapper
