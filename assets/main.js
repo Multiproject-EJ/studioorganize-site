@@ -1,4 +1,10 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+let createClient = null;
+try {
+  const module = await import('https://esm.sh/@supabase/supabase-js@2');
+  createClient = module.createClient;
+} catch (error) {
+  console.warn('Failed to load Supabase client:', error);
+}
 import { resolveBrandLogo } from './brand-logos.js';
 
 // footer year
@@ -256,6 +262,16 @@ function ensureScriptDialogOverlayController(){
 function setupScriptDialogFallback(){
   if (typeof window.openScriptDialog === 'function') return;
   if (document.getElementById('scriptDialog')) return;
+  // Ensure document.body is ready before creating the overlay
+  if (!document.body) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupScriptDialogFallback, { once: true });
+    } else {
+      // Body should exist but doesn't - wait a bit and retry
+      setTimeout(setupScriptDialogFallback, 0);
+    }
+    return;
+  }
   const controller = ensureScriptDialogOverlayController();
   if (!controller) return;
   window.openScriptDialog = () => controller.open();
@@ -918,6 +934,21 @@ function initTheme(){
 
 initTheme();
 
+const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
+
+let supabaseClient = null;
+try {
+  if (typeof createClient === 'function') {
+    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabaseClient = supabaseClient;
+  } else {
+    console.warn('Supabase createClient not available - running without database features');
+  }
+} catch (error) {
+  console.error('Failed to initialize Supabase client', error);
+}
+
 const workspaceThemes = createWorkspaceThemeManager();
 window.StudioOrganize = window.StudioOrganize || {};
 window.StudioOrganize.workspaceThemes = workspaceThemes;
@@ -957,17 +988,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
     if (el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
   });
 });
-
-const SUPABASE_URL = 'https://ycgqgkwwitqunabowswi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU';
-
-let supabaseClient = null;
-try {
-  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.supabaseClient = supabaseClient;
-} catch (error) {
-  console.error('Failed to initialize Supabase client', error);
-}
 
 const authLinks = Array.from(document.querySelectorAll('[data-auth-link]'));
 const navAuthLink = authLinks.find(link => link.closest('.menu')) || null;
