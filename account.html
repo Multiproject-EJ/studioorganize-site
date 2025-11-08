@@ -54,6 +54,10 @@
           <span class="sr-only">Workspace menu</span>
           <span class="workspace-launcher__icon" aria-hidden="true"></span>
         </button>
+        <button class="workspace-launcher__goal-badge" type="button" data-goal-alert>
+          <span class="sr-only">Jump to today's goal</span>
+          <span aria-hidden="true">1</span>
+        </button>
         <div class="workspace-launcher__chat" data-workspace-chat hidden aria-hidden="true">
           <div class="workspace-launcher__chat-bubble">
             <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
@@ -152,6 +156,26 @@
   </div>
 
 <main class="section">
+  <section class="daily-goal" id="daily-goal-card" data-daily-goal aria-label="Today's featured goal" tabindex="-1">
+    <div class="daily-goal__media">
+      <img src="/assets/img/IMG_6893.webp" alt="Storyboard frames arranged in a grid" loading="lazy" />
+      <img src="/assets/img/IMG_6894.webp" alt="Creative planning notes for a film sequence" loading="lazy" />
+    </div>
+    <div class="daily-goal__content">
+      <span class="daily-goal__kicker">New today</span>
+      <h2 class="daily-goal__title">Goal: Name 10 scenes in Act 3</h2>
+      <p class="daily-goal__copy">
+        Focus on Episode 3's finale by sketching ten pivotal scene names. Capture the emotional turns so your storyboard
+        sprint hits the right beats when you return to the workspace.
+      </p>
+      <ul class="daily-goal__checklist">
+        <li><strong>Warm-up:</strong> Re-read your Act 2 cliffhanger to anchor the momentum.</li>
+        <li><strong>List scenes:</strong> Draft ten scene titles that map the escalation toward the climax.</li>
+        <li><strong>Visual cue:</strong> Clip a quick image reference for each scene inside Storyboard Pro.</li>
+      </ul>
+    </div>
+  </section>
+
   <section class="creator-overview" aria-label="Today's studio overview">
     <div class="creator-overview__today">
       <span class="creator-overview__kicker">📅 Today</span>
@@ -863,6 +887,41 @@
     </div>
   </div>
 </footer>
+
+<script>
+  (function(){
+    const badge = document.querySelector('[data-goal-alert]');
+    const goalCard = document.querySelector('[data-daily-goal]');
+    if (!badge || !goalCard) return;
+
+    function focusGoal(){
+      goalCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      goalCard.classList.add('daily-goal--highlight');
+      badge.classList.add('workspace-launcher__goal-badge--seen');
+
+      const badgeNumber = badge.querySelector('span[aria-hidden="true"]');
+      const srLabel = badge.querySelector('.sr-only');
+      if (badgeNumber) badgeNumber.textContent = '✓';
+      if (srLabel) srLabel.textContent = 'Today\'s goal opened';
+      badge.setAttribute('aria-label', "Today's goal opened");
+
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          goalCard.classList.remove('daily-goal--highlight');
+        }, 1600);
+      });
+
+      if (typeof goalCard.focus === 'function'){
+        goalCard.focus({ preventScroll: true });
+      }
+    }
+
+    badge.addEventListener('click', event => {
+      event.preventDefault();
+      focusGoal();
+    });
+  })();
+</script>
 
 <script>
   (function(){
