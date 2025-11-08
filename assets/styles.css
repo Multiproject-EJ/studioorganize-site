@@ -273,6 +273,10 @@ html.construction-overlay-dismissed .construction-overlay{display:none;}
 .workspace-launcher{--workspace-launcher-gutter:clamp(18px,4vw,32px);--workspace-border-gradient:linear-gradient(135deg,rgba(79,123,255,.85),rgba(255,107,107,.9));--workspace-border-glow:0 0 22px rgba(125,211,252,.28);position:fixed;bottom:var(--workspace-launcher-gutter);right:var(--workspace-launcher-gutter);display:flex;flex-direction:column;align-items:flex-end;gap:16px;padding:0;z-index:1400}
 .workspace-launcher__controls{display:flex;flex-direction:column;align-items:flex-end;gap:14px}
 .workspace-launcher__toggle-wrap{position:relative;display:grid;place-items:center}
+.workspace-launcher__goal-badge{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid var(--panel);background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);display:grid;place-items:center;font-size:12px;font-weight:700;box-shadow:0 8px 18px rgba(8,15,28,.35);cursor:pointer;transition:transform .2s ease,opacity .2s ease,box-shadow .2s ease}
+.workspace-launcher__goal-badge:hover{transform:scale(1.08);box-shadow:0 12px 28px rgba(8,15,28,.45)}
+.workspace-launcher__goal-badge:focus-visible{outline:2px solid var(--cta-text);outline-offset:2px}
+.workspace-launcher__goal-badge--seen{opacity:0;transform:scale(.6);pointer-events:none}
 .workspace-launcher__toggle{width:45px;height:45px;padding:0;border-radius:50%;border:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand-2),var(--brand));color:var(--cta-text);cursor:pointer;box-shadow:0 10px 26px rgba(8,15,28,.32),0 0 26px rgba(79,123,255,.45);transition:width .25s ease,height .25s ease,box-shadow .25s ease,transform .25s ease;overflow:hidden;position:relative;animation:workspaceToggleGlow 3.6s ease-in-out infinite alternate}
 .workspace-launcher__toggle:hover{width:72px;height:72px;box-shadow:0 22px 50px rgba(0,0,0,.52),0 0 42px rgba(79,123,255,.78),0 0 58px rgba(255,107,107,.56);transform:translateY(-1px);animation:none}
 .workspace-launcher--open .workspace-launcher__toggle{width:72px;height:72px;box-shadow:0 24px 54px rgba(0,0,0,.56),0 0 48px rgba(79,123,255,.85),0 0 66px rgba(255,107,107,.62);transform:translateY(-1px);animation:none}
@@ -1160,6 +1164,20 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
 @media (max-width:600px){.app-grid{grid-template-columns:minmax(0,220px)}.app-card{max-width:220px}}
 
 /* creator dashboard */
+.daily-goal{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.4fr);gap:32px;margin-bottom:36px;padding:36px;border-radius:32px;background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(124,58,237,.18));border:1px solid rgba(37,99,235,.18);box-shadow:0 34px 68px -36px rgba(12,18,28,.58);overflow:hidden}
+.daily-goal::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 12% 18%,rgba(125,211,252,.26),transparent 60%),radial-gradient(circle at 88% 82%,rgba(244,114,182,.22),transparent 55%);mix-blend-mode:screen;pointer-events:none}
+.daily-goal>*{position:relative;z-index:1}
+.daily-goal__media{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.daily-goal__media img{width:100%;height:100%;object-fit:cover;border-radius:22px;box-shadow:0 16px 36px rgba(12,18,28,.35)}
+.daily-goal__content{display:flex;flex-direction:column;gap:16px}
+.daily-goal__kicker{font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--brand)}
+.daily-goal__title{margin:0;font-size:clamp(26px,4vw,36px);font-weight:800;line-height:1.1}
+.daily-goal__copy{margin:0;font-size:16px;color:var(--muted);max-width:520px}
+.daily-goal__checklist{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:15px;color:var(--ink)}
+.daily-goal__checklist li{line-height:1.5}
+.daily-goal__checklist strong{color:var(--brand)}
+.daily-goal--highlight{animation:dailyGoalPulse 1.4s ease}
+@keyframes dailyGoalPulse{0%{box-shadow:0 0 0 0 rgba(79,123,255,.75),0 34px 68px -36px rgba(12,18,28,.58)}70%{box-shadow:0 0 0 14px rgba(79,123,255,0),0 34px 68px -36px rgba(12,18,28,.58)}100%{box-shadow:0 0 0 0 rgba(79,123,255,0),0 34px 68px -36px rgba(12,18,28,.58)}}
 .creator-overview{position:relative;display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1.2fr) minmax(0,1.3fr);gap:32px;padding:38px 44px;margin-bottom:24px;border-radius:32px;background:linear-gradient(135deg,rgba(125,211,252,.16),rgba(167,139,250,.2));border:1px solid rgba(125,211,252,.28);box-shadow:0 34px 68px -38px rgba(12,18,28,.65);overflow:hidden}
 .creator-overview::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top left,rgba(125,211,252,.28),transparent 62%),radial-gradient(circle at bottom right,rgba(167,139,250,.24),transparent 55%);mix-blend-mode:screen;opacity:.85;pointer-events:none}
 .creator-overview>*{position:relative;z-index:1}
@@ -1223,6 +1241,7 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
   .creator-theme__item{flex-direction:column;align-items:flex-start}
   .creator-theme__select{width:100%}
 }
+:root[data-theme="light"] .daily-goal{background:linear-gradient(135deg,rgba(191,219,254,.65),rgba(221,214,254,.72));border-color:rgba(59,130,246,.28);box-shadow:0 28px 60px -30px rgba(15,23,42,.18)}
 :root[data-theme="light"] .creator-overview{background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(124,58,237,.12));border-color:rgba(37,99,235,.18);box-shadow:0 28px 60px -34px rgba(15,23,42,.25)}
 :root[data-theme="light"] .creator-overview__weather,
 :root[data-theme="light"] .creator-overview__streak{border-left:1px solid rgba(15,23,42,.1)}
@@ -1335,6 +1354,20 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
   .ai-preferences{padding:20px}
   .ai-preferences__header h3{font-size:20px}
   .ai-preferences__primer{padding:16px}
+}
+
+@media (max-width:1100px){
+  .daily-goal{grid-template-columns:minmax(0,1fr);padding:32px;gap:26px}
+  .daily-goal__content{order:1}
+  .daily-goal__media{order:2;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+}
+@media (max-width:720px){
+  .daily-goal{padding:26px;border-radius:26px}
+}
+@media (max-width:560px){
+  .daily-goal__media{grid-template-columns:minmax(0,1fr);gap:12px}
+  .daily-goal__copy{font-size:15px}
+  .daily-goal__checklist{font-size:14px}
 }
 
 @media (max-width:720px){
