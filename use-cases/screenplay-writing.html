@@ -2261,7 +2261,12 @@
         const data = event.data;
         if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) return;
         if (data.action === 'open'){
-          openScriptDialog();
+          // Wait for initialization to complete before opening the dialog
+          if (initializationComplete){
+            openScriptDialog();
+          } else {
+            pendingScriptDialogOpen = true;
+          }
         } else if (data.action === 'close'){
           closeScriptDialog();
         }
@@ -2678,6 +2683,8 @@
     let activeSceneId = null;
     let saveTimer = null;
     let saveSceneStatusTimer = null;
+    let initializationComplete = false;
+    let pendingScriptDialogOpen = false;
     let storyboardMode = false;
     let storyboardMediaMode = loadStoryboardMediaMode();
     let storyboardOverlaySceneId = null;
@@ -10481,6 +10488,15 @@
       updatePomodoroUI();
       setupTimelineCarousel();
       setTimeout(runSelfTests, 0);
+      
+      // Mark initialization as complete
+      initializationComplete = true;
+      
+      // If dialog was requested to open before initialization completed, open it now
+      if (pendingScriptDialogOpen && isScriptDialogEmbedded){
+        pendingScriptDialogOpen = false;
+        openScriptDialog();
+      }
     })();
     </script>
   </main>
