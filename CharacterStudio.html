@@ -688,6 +688,174 @@
         }
         .so-mobile-shell[data-page="character-studio"] .so-mobile-bottom-nav { display: none; }
       }
+      
+      /* FinishThatStory AI Assistant Styles */
+      .fts-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: none;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: opacity 0.3s ease;
+      }
+      .fts-overlay.active {
+        display: block;
+      }
+      .fts-dimmed {
+        filter: blur(4px) brightness(0.6);
+        pointer-events: none;
+        transition: filter 0.3s ease;
+      }
+      .fts-highlighted {
+        position: relative;
+        z-index: 10000;
+        filter: none !important;
+        pointer-events: auto;
+        animation: fts-glow 2s ease-in-out infinite;
+        border-radius: 12px;
+        box-shadow: 0 0 0 3px var(--acc), 0 0 30px rgba(79, 123, 255, 0.6);
+      }
+      @keyframes fts-glow {
+        0%, 100% {
+          box-shadow: 0 0 0 3px var(--acc), 0 0 30px rgba(79, 123, 255, 0.6);
+        }
+        50% {
+          box-shadow: 0 0 0 3px var(--acc), 0 0 50px rgba(79, 123, 255, 0.9), 0 0 70px rgba(79, 123, 255, 0.5);
+        }
+      }
+      .fts-assistant {
+        position: fixed;
+        z-index: 10001;
+        background: var(--panel);
+        border: 2px solid var(--acc);
+        border-radius: 24px;
+        padding: 28px 32px;
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        max-width: 450px;
+        min-width: 350px;
+        display: none;
+        animation: fts-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .fts-assistant.active {
+        display: block;
+      }
+      @keyframes fts-slide-in {
+        from {
+          opacity: 0;
+          transform: scale(0.9) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      .fts-assistant-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .fts-assistant-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #22d3ee);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+      }
+      .fts-assistant-title {
+        flex: 1;
+      }
+      .fts-assistant-title h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #7c3aed, #22d3ee);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .fts-assistant-title p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .fts-assistant-content {
+        margin-bottom: 24px;
+      }
+      .fts-question {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--ink);
+        margin-bottom: 16px;
+        padding: 16px;
+        background: var(--chip);
+        border-radius: 12px;
+        border: 1px solid var(--ring);
+      }
+      .fts-question strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--acc);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .fts-advice {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted);
+        padding: 12px;
+        background: var(--card);
+        border-left: 3px solid var(--acc);
+        border-radius: 8px;
+        margin-top: 12px;
+      }
+      .fts-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+      .fts-btn {
+        padding: 10px 24px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid var(--ring);
+      }
+      .fts-btn-primary {
+        background: linear-gradient(135deg, #7c3aed, #22d3ee);
+        color: white;
+        border: none;
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+      }
+      .fts-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 32px rgba(124, 58, 237, 0.4);
+      }
+      .fts-btn-secondary {
+        background: var(--panel);
+        color: var(--ink);
+      }
+      .fts-btn-secondary:hover {
+        border-color: var(--acc);
+        background: var(--chip);
+      }
+      .fts-progress {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--ring);
+      }
     </style>
 
     <div class="character-studio-app">
@@ -749,6 +917,30 @@
       </div>
     </div>
   </main>
+
+  <!-- FinishThatStory AI Assistant Overlay -->
+  <div class="fts-overlay" data-fts-overlay></div>
+  <div class="fts-assistant" data-fts-assistant>
+    <div class="fts-assistant-header">
+      <div class="fts-assistant-icon">✨</div>
+      <div class="fts-assistant-title">
+        <h3>FinishThatStory</h3>
+        <p>AI Character Assistant</p>
+      </div>
+    </div>
+    <div class="fts-assistant-content">
+      <div class="fts-question" data-fts-question>
+        <strong data-fts-field-name>Field Name</strong>
+        <p data-fts-question-text>Question text will appear here...</p>
+      </div>
+      <div class="fts-advice" data-fts-advice></div>
+    </div>
+    <div class="fts-actions">
+      <button class="fts-btn fts-btn-secondary" type="button" data-fts-skip>Skip</button>
+      <button class="fts-btn fts-btn-primary" type="button" data-fts-next>Next</button>
+    </div>
+    <div class="fts-progress" data-fts-progress>Field 1 of 10</div>
+  </div>
 
   <footer class="footer">
     <div class="footer__grid">
@@ -1905,6 +2097,7 @@
               <p class="muted-text" data-character-subheading>${escapeHtml(subheading || 'Add role, pronouns, or age details.')}</p>
             </div>
             <div class="character-studio-header-actions">
+              <button class="character-studio-tertiary" type="button" data-character-finish-story>FinishThatStory</button>
               <button class="character-studio-tertiary" type="button" data-character-delete>Delete Character</button>
             </div>
           </div>
@@ -2586,6 +2779,14 @@
             renderCharacterDetails();
           });
         }
+        
+        const finishStoryBtn = container.querySelector('[data-character-finish-story]');
+        if (finishStoryBtn){
+          finishStoryBtn.addEventListener('click', () => {
+            startFinishThatStory(container, active);
+          });
+        }
+        
         ensureMobileCloseButton(container);
         updateMobileActiveCard();
         scrollMobileGalleryToActive({ smooth: true });
@@ -2779,6 +2980,234 @@
           state.saving = false;
           updateSaveButtonState();
         }
+      }
+
+      // FinishThatStory AI Assistant functionality
+      function startFinishThatStory(container, character){
+        if (!container || !character) return;
+        
+        // Define all fields that can be filled with their questions and advice
+        const fieldDefinitions = [
+          {
+            selector: '[data-character-field="name"]',
+            name: 'Character Name',
+            question: 'What\'s your character\'s name?',
+            advice: 'Tip: Choose a name that reflects your character\'s background, culture, or personality. Consider the time period and setting of your story.'
+          },
+          {
+            selector: '[data-character-field="role"]',
+            name: 'Role',
+            question: 'What role does this character play in your story?',
+            advice: 'Common roles include: Protagonist, Antagonist, Mentor, Sidekick, Love Interest. Think about how they drive the plot forward.'
+          },
+          {
+            selector: '[data-character-field="archetype"]',
+            name: 'Archetype',
+            question: 'What archetype best describes your character?',
+            advice: 'Examples: The Hero, The Rebel, The Caregiver, The Explorer. Archetypes help readers quickly understand character motivations.'
+          },
+          {
+            selector: '[data-character-field="pronouns"]',
+            name: 'Pronouns',
+            question: 'What pronouns does your character use?',
+            advice: 'Common options: He/Him, She/Her, They/Them. This helps establish how other characters refer to them.'
+          },
+          {
+            selector: '[data-character-field="age"]',
+            name: 'Age',
+            question: 'How old is your character?',
+            advice: 'Age affects perspective, maturity, and life experience. Consider how their age impacts their decisions and relationships.'
+          },
+          {
+            selector: '[data-character-field="summary"]',
+            name: 'Summary',
+            question: 'Can you describe your character in a brief summary?',
+            advice: 'Aim for 1-3 sentences that capture the essence of who they are and what makes them unique.'
+          },
+          {
+            selector: '[data-character-field="traits"]',
+            name: 'Traits & Personality',
+            question: 'What are your character\'s defining personality traits?',
+            advice: 'Include both positive and negative traits. Consider: Are they brave or cautious? Honest or secretive? Optimistic or cynical?'
+          },
+          {
+            selector: '[data-character-field="background"]',
+            name: 'Background',
+            question: 'What\'s your character\'s background story?',
+            advice: 'Where did they come from? What key experiences shaped who they are today? What do they care most about?'
+          },
+          {
+            selector: '[data-character-field="familyTree"]',
+            name: 'Family & Relationships',
+            question: 'Who are the important people in your character\'s life?',
+            advice: 'Consider family members, friends, rivals, or romantic interests. How do these relationships influence your character?'
+          },
+          {
+            selector: '[data-character-field="arc.setup"]',
+            name: 'Character Arc - Setup',
+            question: 'Who is your character at the beginning of the story?',
+            advice: 'Describe their initial state: beliefs, fears, goals. What is their normal world before the story events?'
+          },
+          {
+            selector: '[data-character-field="arc.development"]',
+            name: 'Character Arc - Development',
+            question: 'How does your character change throughout the story?',
+            advice: 'What challenges do they face? What do they learn? How are they tested? This is where growth happens.'
+          },
+          {
+            selector: '[data-character-field="arc.resolution"]',
+            name: 'Character Arc - Resolution',
+            question: 'Who is your character at the end of the story?',
+            advice: 'How have they transformed? What have they learned or overcome? How are they different from the beginning?'
+          }
+        ];
+        
+        // Shuffle the fields randomly
+        const shuffledFields = [...fieldDefinitions].sort(() => Math.random() - 0.5);
+        
+        // Filter to only include fields that exist in the DOM
+        const availableFields = shuffledFields.filter(field => {
+          return container.querySelector(field.selector) !== null;
+        });
+        
+        if (availableFields.length === 0) {
+          alert('No fields available to fill. Please make sure you have a character selected.');
+          return;
+        }
+        
+        let currentFieldIndex = 0;
+        let activeFieldElement = null;
+        
+        const overlay = document.querySelector('[data-fts-overlay]');
+        const assistant = document.querySelector('[data-fts-assistant]');
+        const questionEl = document.querySelector('[data-fts-question-text]');
+        const fieldNameEl = document.querySelector('[data-fts-field-name]');
+        const adviceEl = document.querySelector('[data-fts-advice]');
+        const progressEl = document.querySelector('[data-fts-progress]');
+        const nextBtn = document.querySelector('[data-fts-next]');
+        const skipBtn = document.querySelector('[data-fts-skip]');
+        
+        if (!overlay || !assistant) return;
+        
+        // Show overlay and dim the page
+        overlay.classList.add('active');
+        const mainContent = document.querySelector('.character-studio-window');
+        if (mainContent) {
+          mainContent.classList.add('fts-dimmed');
+        }
+        
+        function showField(index){
+          // Remove highlight from previous field
+          if (activeFieldElement){
+            activeFieldElement.classList.remove('fts-highlighted');
+          }
+          
+          if (index >= availableFields.length){
+            // All fields completed
+            closeAssistant();
+            alert('Great job! You\'ve completed the character development walkthrough. Your character is now more fully developed!');
+            return;
+          }
+          
+          const fieldDef = availableFields[index];
+          const fieldElement = container.querySelector(fieldDef.selector);
+          
+          if (!fieldElement){
+            // Field not found, skip to next
+            currentFieldIndex++;
+            showField(currentFieldIndex);
+            return;
+          }
+          
+          activeFieldElement = fieldElement;
+          
+          // Highlight the current field
+          fieldElement.classList.add('fts-highlighted');
+          
+          // Update assistant content
+          if (fieldNameEl) fieldNameEl.textContent = fieldDef.name;
+          if (questionEl) questionEl.textContent = fieldDef.question;
+          if (adviceEl) adviceEl.textContent = fieldDef.advice;
+          if (progressEl) progressEl.textContent = `Field ${index + 1} of ${availableFields.length}`;
+          
+          // Position assistant near the field
+          positionAssistant(fieldElement);
+          
+          // Show assistant
+          assistant.classList.add('active');
+          
+          // Focus the field
+          setTimeout(() => {
+            fieldElement.focus();
+            fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+        
+        function positionAssistant(fieldElement){
+          if (!fieldElement || !assistant) return;
+          
+          const fieldRect = fieldElement.getBoundingClientRect();
+          const assistantWidth = 400;
+          const assistantHeight = 300;
+          const padding = 30;
+          
+          let top = fieldRect.top - assistantHeight - padding;
+          let left = fieldRect.left + (fieldRect.width / 2) - (assistantWidth / 2);
+          
+          // Adjust if assistant goes off screen
+          if (top < 20){
+            top = fieldRect.bottom + padding;
+          }
+          
+          if (left < 20){
+            left = 20;
+          } else if (left + assistantWidth > window.innerWidth - 20){
+            left = window.innerWidth - assistantWidth - 20;
+          }
+          
+          assistant.style.top = `${top}px`;
+          assistant.style.left = `${left}px`;
+        }
+        
+        function closeAssistant(){
+          overlay.classList.remove('active');
+          assistant.classList.remove('active');
+          if (mainContent){
+            mainContent.classList.remove('fts-dimmed');
+          }
+          if (activeFieldElement){
+            activeFieldElement.classList.remove('fts-highlighted');
+          }
+        }
+        
+        function handleNext(){
+          currentFieldIndex++;
+          showField(currentFieldIndex);
+        }
+        
+        function handleSkip(){
+          currentFieldIndex++;
+          showField(currentFieldIndex);
+        }
+        
+        // Add event listeners
+        nextBtn.addEventListener('click', handleNext);
+        skipBtn.addEventListener('click', handleSkip);
+        overlay.addEventListener('click', closeAssistant);
+        
+        // Handle keyboard shortcuts
+        const handleKeydown = (e) => {
+          if (e.key === 'Escape'){
+            closeAssistant();
+            document.removeEventListener('keydown', handleKeydown);
+          } else if (e.key === 'Enter' && e.ctrlKey){
+            handleNext();
+          }
+        };
+        document.addEventListener('keydown', handleKeydown);
+        
+        // Start with the first field
+        showField(currentFieldIndex);
       }
 
       async function initializeSupabase(){
