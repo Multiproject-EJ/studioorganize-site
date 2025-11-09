@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <style>
+      .stroke{fill:none;stroke:#ff4d36;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
+      .stroke-thin{fill:none;stroke:#ff4d36;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;}
+    </style>
+  </defs>
+  <circle class="stroke" cx="100" cy="100" r="92"/>
+  <path class="stroke" d="M70 114h60"/>
+  <path class="stroke" d="M77 91h46v23H77z"/>
+  <circle class="stroke" cx="100" cy="68" r="26"/>
+  <path class="stroke" d="M74 58l-10-12"/>
+  <path class="stroke" d="M126 58l10-12"/>
+  <path class="stroke" d="M86 144l-14 36"/>
+  <path class="stroke" d="M114 144l14 36"/>
+  <path class="stroke" d="M60 140l80-32"/>
+  <path class="stroke" d="M140 140L60 108"/>
+  <path class="stroke" d="M70 114l-20 62"/>
+  <path class="stroke" d="M130 114l20 62"/>
+  <path class="stroke-thin" d="M87 68h26"/>
+  <circle fill="#ff4d36" cx="88" cy="66" r="5"/>
+  <circle fill="#ff4d36" cx="112" cy="66" r="5"/>
+</svg>
