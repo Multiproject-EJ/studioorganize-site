@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Lovable Sheet — Harmony Sheets</title>
+  <meta name="description" content="Preview the Lovable Sheet workspace and product pipeline for the Todo do mini product line."/>
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp"/>
+  <link rel="stylesheet" href="/assets/styles.css"/>
+  <link rel="stylesheet" href="/assets/css/lovablesheet.css"/>
+</head>
+<body class="lovablesheet-page">
+  <header class="hs-header">
+    <div class="hs-header__inner">
+      <a class="hs-brand" href="/">
+        <span class="hs-brand__mark" aria-hidden="true">✨</span>
+        <span class="hs-brand__text">Harmony Sheets</span>
+      </a>
+      <nav class="hs-nav" aria-label="Primary">
+        <a class="hs-nav__link" href="/">Home</a>
+        <a class="hs-nav__link" href="/product/studioorganize.html">Products</a>
+        <a class="hs-nav__link" href="/use-cases/">Use Cases</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hs-hero">
+      <div class="hs-hero__inner">
+        <div class="hs-hero__copy">
+          <p class="hs-hero__eyebrow">Lovable Sheet workspace</p>
+          <h1>Create lovable spreadsheet experiences without the guesswork</h1>
+          <p class="hs-hero__lead">Peek inside the Todo do workspace to see how we go from idea sparks to launch-ready sheets with a single collaborative flow.</p>
+          <div class="hs-hero__actions">
+            <button class="btn btn-primary" type="button" data-open-workspace>Preview the workspace</button>
+            <a class="btn btn-ghost" href="mailto:support@studioorganize.com">Talk with the team</a>
+          </div>
+        </div>
+        <div class="hs-hero__visual" aria-hidden="true">
+          <div class="hs-hero__card">
+            <span class="hs-hero__card-emoji">📊</span>
+            <span class="hs-hero__card-title">Todo do pipeline</span>
+            <span class="hs-hero__card-meta">6 launches in motion</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hs-feature">
+      <div class="hs-feature__grid">
+        <div>
+          <h2>Fast-track every launch</h2>
+          <p>Workspaces bundle intake, scoring, and product briefs so teams can align quickly. Lovable Sheet keeps your Todo do pipeline organized and launch-ready.</p>
+        </div>
+        <div class="hs-feature__card">
+          <h3>What’s inside</h3>
+          <ul class="checks">
+            <li>Idea capture with timestamped entries</li>
+            <li>Draft comparison and weighted scoring</li>
+            <li>Auto-generated product briefs</li>
+          </ul>
+          <button class="btn" type="button" data-open-workspace>See the workspace steps →</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="lovablesheet-dialog" data-workspace-dialog aria-hidden="true">
+    <div class="lovablesheet-dialog__surface" role="dialog" aria-modal="true" aria-labelledby="lovablesheet-dialog-title">
+      <button class="lovablesheet-dialog__close" type="button" aria-label="Close workspace dialog" data-workspace-close>×</button>
+      <div class="lovablesheet-dialog__intro">
+        <p class="lovablesheet-dialog__eyebrow">STEP 1 WORKSPACE</p>
+        <h2 id="lovablesheet-dialog-title">Idea generation</h2>
+        <p class="lovablesheet-dialog__lead">Gather launch-ready concepts, compare drafts, and lock the product you want to brief next.</p>
+      </div>
+
+      <section class="lovablesheet-dialog__pipeline">
+        <header class="lovablesheet-dialog__pipeline-header">
+          <h3>«Todo do» product pipeline</h3>
+          <p>Track upcoming spreadsheet experiences and align launch priorities for the Todo do mini product line.</p>
+          <button class="pipeline-toggle" type="button" data-pipeline-toggle aria-expanded="false">Expand full pipeline</button>
+          <p class="lovablesheet-dialog__hint">This table shows the first three Todo do products. Use the pipeline toggle button to reveal or collapse the remaining items.</p>
+        </header>
+        <div class="lovablesheet-dialog__table" data-pipeline-container data-collapsed="true">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Type</th>
+                <th scope="col">Badge</th>
+                <th scope="col">Price</th>
+                <th scope="col">Use in brief</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="lovablesheet-dialog__label">Life Area: Finances</span>
+                  <strong>Budget Blueprint</strong>
+                </td>
+                <td>Budget</td>
+                <td><span class="lovablesheet-dialog__badge lovablesheet-dialog__badge--accent">Best-seller</span></td>
+                <td>$38</td>
+                <td>Primary hero</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="lovablesheet-dialog__label">Life Area: Health</span>
+                  <strong>Reset Routine</strong>
+                </td>
+                <td>Wellness</td>
+                <td><span class="lovablesheet-dialog__badge">New</span></td>
+                <td>$34</td>
+                <td>Secondary feature</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="lovablesheet-dialog__label">Life Area: Creativity</span>
+                  <strong>Spark Planner</strong>
+                </td>
+                <td>Planning</td>
+                <td><span class="lovablesheet-dialog__badge">Coming soon</span></td>
+                <td>$29</td>
+                <td>Teaser slot</td>
+              </tr>
+              <tr data-pipeline-extra>
+                <td>
+                  <span class="lovablesheet-dialog__label">Life Area: Career</span>
+                  <strong>Promotion Sprint</strong>
+                </td>
+                <td>Career</td>
+                <td><span class="lovablesheet-dialog__badge">Researching</span></td>
+                <td>$32</td>
+                <td>Pipeline backlog</td>
+              </tr>
+              <tr data-pipeline-extra>
+                <td>
+                  <span class="lovablesheet-dialog__label">Life Area: Learning</span>
+                  <strong>Course Companion</strong>
+                </td>
+                <td>Education</td>
+                <td><span class="lovablesheet-dialog__badge">Drafting</span></td>
+                <td>$26</td>
+                <td>Beta cohort</td>
+              </tr>
+              <tr data-pipeline-extra>
+                <td>
+                  <span class="lovablesheet-dialog__label">Life Area: Home</span>
+                  <strong>Refresh Ritual</strong>
+                </td>
+                <td>Home</td>
+                <td><span class="lovablesheet-dialog__badge">Queued</span></td>
+                <td>$24</td>
+                <td>Follow-up brief</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="lovablesheet-dialog__steps" aria-label="Workspace steps">
+        <ol>
+          <li>
+            <h4>Capture sparks</h4>
+            <p>Log every idea with source, timestamp, and quick viability tags so you never lose momentum.</p>
+          </li>
+          <li>
+            <h4>Compare drafts</h4>
+            <p>Stack-ranked scoring surfaces standout concepts while flagging gaps that need research.</p>
+          </li>
+          <li>
+            <h4>Lock the brief</h4>
+            <p>Once the winner is clear, auto-generate a creative brief with linked assets and launch checklist.</p>
+          </li>
+        </ol>
+      </section>
+    </div>
+  </div>
+
+  <footer class="hs-footer">
+    <div class="hs-footer__inner">
+      <div>
+        <strong>Harmony Sheets</strong>
+        <p class="muted">© <span id="hs-year"></span> Harmony Sheets. Built on StudioOrganize.</p>
+      </div>
+      <div>
+        <a href="mailto:support@studioorganize.com">support@studioorganize.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/assets/main.js"></script>
+  <script>
+    (() => {
+      const dialog = document.querySelector('[data-workspace-dialog]');
+      const openers = document.querySelectorAll('[data-open-workspace]');
+      const closeButton = dialog?.querySelector('[data-workspace-close]');
+      const toggleButton = dialog?.querySelector('[data-pipeline-toggle]');
+      const pipelineContainer = dialog?.querySelector('[data-pipeline-container]');
+      const extraRows = dialog ? Array.from(dialog.querySelectorAll('[data-pipeline-extra]')) : [];
+
+      const setDialogOpen = open => {
+        if (!dialog) return;
+        dialog.classList.toggle('is-open', open);
+        dialog.setAttribute('aria-hidden', open ? 'false' : 'true');
+        document.body.classList.toggle('lovablesheet-dialog-open', open);
+        if (open && closeButton instanceof HTMLElement) {
+          closeButton.focus();
+        } else if (!open) {
+          const opener = openers.item(0);
+          if (opener instanceof HTMLElement) {
+            opener.focus();
+          }
+        }
+      };
+
+      openers.forEach(btn => {
+        btn.addEventListener('click', () => setDialogOpen(true));
+      });
+
+      closeButton?.addEventListener('click', () => setDialogOpen(false));
+
+      dialog?.addEventListener('click', event => {
+        if (event.target === dialog) {
+          setDialogOpen(false);
+        }
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && dialog?.classList.contains('is-open')) {
+          setDialogOpen(false);
+        }
+      });
+
+      const updatePipeline = () => {
+        if (!pipelineContainer || !toggleButton) return;
+        const collapsed = pipelineContainer.dataset.collapsed === 'true';
+        extraRows.forEach(row => {
+          if (row instanceof HTMLElement) {
+            row.toggleAttribute('hidden', collapsed);
+          }
+        });
+        toggleButton.textContent = collapsed ? 'Expand full pipeline' : 'Collapse pipeline';
+        toggleButton.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      };
+
+      if (pipelineContainer && toggleButton) {
+        updatePipeline();
+        toggleButton.addEventListener('click', () => {
+          const collapsed = pipelineContainer.dataset.collapsed === 'true';
+          pipelineContainer.dataset.collapsed = collapsed ? 'false' : 'true';
+          updatePipeline();
+        });
+      }
+
+      const yearEl = document.getElementById('hs-year');
+      if (yearEl) {
+        yearEl.textContent = new Date().getFullYear();
+      }
+    })();
+  </script>
+</body>
+</html>
