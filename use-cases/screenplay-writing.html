@@ -395,7 +395,7 @@
       .editor-stage[data-view-mode="pages"] .editor-scroll::-webkit-scrollbar{display:none}
       .editor-stage[data-view-mode="pages"] .editor-area{max-width:var(--page-width); width:var(--page-width); margin:0; box-shadow:0 18px 48px rgba(15,23,42,0.35)}
       .editor-footer{padding:12px; border-top:1px solid var(--ring); background:var(--panel); display:flex; justify-content:center}
-      .script-controls{display:flex; justify-content:center; transition:opacity .3s ease, transform .3s ease; will-change:opacity, transform}
+      .script-controls{display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; transition:opacity .3s ease, transform .3s ease; will-change:opacity, transform}
       .script-controls[data-visible="false"]{opacity:0; pointer-events:none; transform:translateY(8px)}
       .editor-view-toggle{display:inline-flex; border:1px solid var(--ring); border-radius:999px; padding:2px; background:var(--chip); gap:2px}
       .editor-view-toggle button{border:none; background:transparent; color:var(--muted); font-size:11px; letter-spacing:.3px; text-transform:uppercase; padding:4px 10px; border-radius:999px; cursor:pointer; transition:background .2s ease, color .2s ease}
@@ -409,6 +409,11 @@
       .page-view-nav button{border:1px solid var(--ring); background:var(--chip); color:var(--ink); border-radius:8px; padding:4px 8px; font-size:12px; cursor:pointer}
       .page-view-nav button:disabled{opacity:0.5; cursor:not-allowed}
       .page-view-label{font-size:12px; color:var(--muted)}
+      .scene-view-nav{display:flex; align-items:center; gap:6px; justify-content:center}
+      .scene-view-nav button{border:1px solid var(--ring); background:var(--chip); color:var(--ink); border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer; white-space:nowrap}
+      .scene-view-nav button:hover{border-color:var(--acc)}
+      .scene-view-nav button:disabled{opacity:0.5; cursor:not-allowed}
+      .scene-view-label{font-size:12px; color:var(--muted)}
       .line{margin:6px 0; position:relative}
       .line.slug{letter-spacing:.4px; font-weight:700}
       .line.character{text-transform:uppercase; margin-top:14px; margin-bottom:2px}
@@ -1801,6 +1806,11 @@
                 <span class="page-view-label" id="pageViewLabel">Page 1 of 1</span>
                 <button type="button" id="pageViewNext" aria-label="Next page">▸</button>
               </div>
+              <div class="scene-view-nav" id="sceneViewNav">
+                <button type="button" id="sceneViewPrev" aria-label="Previous scene">◂ Scene</button>
+                <span class="scene-view-label" id="sceneViewLabel">Scene — of 0</span>
+                <button type="button" id="sceneViewNext" aria-label="Next scene">Scene ▸</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2326,6 +2336,10 @@
     }
 
     let project = null;
+    let sceneViewNavEl = null;
+    let sceneViewLabelEl = null;
+    let sceneViewPrevBtn = null;
+    let sceneViewNextBtn = null;
 
     const VISIBILITY_MODULE_ID = 'script_writer';
     const DEFAULT_VISIBILITY_PREF = Object.freeze({
@@ -4920,6 +4934,8 @@
         });
       }
 
+      updateSceneNavigationButtons();
+
       // right-side bindings
       const scene = getActiveScene();
       if (!scene){
@@ -4995,6 +5011,40 @@
       if (storyboardMode) renderStoryboardGallery();
       updateStoryboardButton();
       if (characterStudioState.open) renderCharacterStudio();
+    }
+
+    function updateSceneNavigationButtons(){
+      if (!sceneViewNavEl) sceneViewNavEl = document.getElementById('sceneViewNav');
+      if (!sceneViewLabelEl) sceneViewLabelEl = document.getElementById('sceneViewLabel');
+      if (!sceneViewPrevBtn) sceneViewPrevBtn = document.getElementById('sceneViewPrev');
+      if (!sceneViewNextBtn) sceneViewNextBtn = document.getElementById('sceneViewNext');
+      if (!sceneViewNavEl && !sceneViewLabelEl && !sceneViewPrevBtn && !sceneViewNextBtn) return;
+
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const total = scenes.length;
+      const currentIndex = total ? scenes.findIndex(scene => scene.id === activeSceneId) : -1;
+
+      if (sceneViewNavEl) sceneViewNavEl.hidden = total === 0;
+
+      if (sceneViewLabelEl){
+        if (!total){
+          sceneViewLabelEl.textContent = 'No scenes';
+        } else {
+          const displayIndex = currentIndex === -1 ? '—' : String(currentIndex + 1);
+          sceneViewLabelEl.textContent = `Scene ${displayIndex} of ${total}`;
+        }
+      }
+
+      if (sceneViewPrevBtn){
+        sceneViewPrevBtn.disabled = total === 0 || currentIndex <= 0;
+      }
+
+      if (sceneViewNextBtn){
+        sceneViewNextBtn.disabled = total === 0 || (currentIndex !== -1 && currentIndex >= total - 1);
+        if (sceneViewNextBtn.disabled && total > 0 && currentIndex === -1){
+          sceneViewNextBtn.disabled = false;
+        }
+      }
     }
 
     function beginSceneInlineRename(sceneId){
@@ -7866,9 +7916,41 @@
     const pageViewLabelEl = document.getElementById('pageViewLabel');
     const pageViewPrevBtn = document.getElementById('pageViewPrev');
     const pageViewNextBtn = document.getElementById('pageViewNext');
+    sceneViewNavEl = document.getElementById('sceneViewNav');
+    sceneViewLabelEl = document.getElementById('sceneViewLabel');
+    sceneViewPrevBtn = document.getElementById('sceneViewPrev');
+    sceneViewNextBtn = document.getElementById('sceneViewNext');
     const sceneNotesToggleBtn = document.getElementById('sceneNotesToggle');
     const sceneNotesHiddenHint = document.getElementById('sceneNotesHiddenHint');
     const sceneNotesListEl = document.getElementById('sceneNotesList');
+
+    function scrollEditorToTop({ smooth = false } = {}){
+      if (!editorScrollEl) return;
+      const behavior = smooth ? 'smooth' : 'auto';
+      try {
+        editorScrollEl.scrollTo({ top: 0, behavior });
+      } catch (_error){
+        editorScrollEl.scrollTop = 0;
+      }
+    }
+
+    function goToAdjacentScene(offset){
+      if (!project || !Array.isArray(project.scenes) || !project.scenes.length) return;
+      const scenes = project.scenes;
+      const currentIndex = scenes.findIndex(scene => scene.id === activeSceneId);
+      let targetIndex;
+      if (currentIndex === -1){
+        targetIndex = offset >= 0 ? 0 : scenes.length - 1;
+      } else {
+        targetIndex = currentIndex + offset;
+      }
+      targetIndex = Math.max(0, Math.min(scenes.length - 1, targetIndex));
+      if (targetIndex === currentIndex) return;
+      activeSceneId = scenes[targetIndex].id;
+      render();
+      setPageViewIndex(0, { smooth:true, persist:true });
+      scrollEditorToTop({ smooth:true });
+    }
 
     if (sceneNotesToggleBtn){
       sceneNotesToggleBtn.addEventListener('click', ()=>{
@@ -8096,6 +8178,13 @@
     if (pageViewNextBtn){
       pageViewNextBtn.addEventListener('click', ()=> setPageViewIndex(pageViewIndex + 1, { smooth:true, persist:true }));
     }
+    if (sceneViewPrevBtn){
+      sceneViewPrevBtn.addEventListener('click', ()=> goToAdjacentScene(-1));
+    }
+    if (sceneViewNextBtn){
+      sceneViewNextBtn.addEventListener('click', ()=> goToAdjacentScene(1));
+    }
+    updateSceneNavigationButtons();
     if (editorScrollEl){
       editorScrollEl.addEventListener('scroll', ()=>{
         if (pageViewMode !== 'pages' || syncingPageScroll) return;
