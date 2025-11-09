@@ -388,6 +388,75 @@
       <p class="creator-theme__status" data-workspace-theme-status>Sign in to sync themes across devices.</p>
     </section>
 
+    <section class="creator-visibility" aria-label="Workspace visibility preferences" data-module-visibility-preferences>
+      <div class="creator-theme__header">
+        <h3>Visible – My Preferences</h3>
+        <p>Choose which workspace panels appear each time you open a module. We'll remember your picks across sessions.</p>
+      </div>
+      <div class="creator-visibility__grid">
+        <div class="creator-theme__item creator-visibility__item" data-visibility-module="script_writer">
+          <div class="creator-visibility__intro">
+            <h4>Screenplay Writing</h4>
+            <p class="muted">Control the Writer workspace layout when it launches.</p>
+          </div>
+          <div class="creator-visibility__controls" role="group" aria-label="Screenplay Writing visibility preferences">
+            <label class="visibility-toggle" data-visibility-key="scene_panel">
+              <input type="checkbox" data-visibility-input />
+              <span class="visibility-toggle__label">
+                <strong>Scenes panel</strong>
+                <small>Left column that lists every scene in your script.</small>
+              </span>
+            </label>
+            <label class="visibility-toggle" data-visibility-key="workspace_tools">
+              <input type="checkbox" data-visibility-input />
+              <span class="visibility-toggle__label">
+                <strong>Workspace tools</strong>
+                <small>Right rail with Visual, Cast, Set, Sound, Notes, and AI tabs.</small>
+              </span>
+            </label>
+            <label class="visibility-toggle" data-visibility-key="timeline">
+              <input type="checkbox" data-visibility-input />
+              <span class="visibility-toggle__label">
+                <strong>Timeline dock</strong>
+                <small>Storyboard timeline that floats above the editor.</small>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="creator-theme__item creator-visibility__item" data-visibility-module="storyboard">
+          <div class="creator-visibility__intro">
+            <h4>Storyboard Pro</h4>
+            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+          </div>
+        </div>
+        <div class="creator-theme__item creator-visibility__item" data-visibility-module="character_studio">
+          <div class="creator-visibility__intro">
+            <h4>Character Studio</h4>
+            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+          </div>
+        </div>
+        <div class="creator-theme__item creator-visibility__item" data-visibility-module="set_design">
+          <div class="creator-visibility__intro">
+            <h4>Set Design</h4>
+            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+          </div>
+        </div>
+        <div class="creator-theme__item creator-visibility__item" data-visibility-module="video_editing">
+          <div class="creator-visibility__intro">
+            <h4>Video &amp; Editing</h4>
+            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+          </div>
+        </div>
+        <div class="creator-theme__item creator-visibility__item" data-visibility-module="creative_hub">
+          <div class="creator-visibility__intro">
+            <h4>Creative Hub</h4>
+            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+          </div>
+        </div>
+      </div>
+      <p class="creator-theme__status" data-visibility-status>Sign in to sync visibility preferences across devices.</p>
+    </section>
+
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
         <h3>Challenge Badges</h3>
@@ -966,6 +1035,124 @@
       event.preventDefault();
       focusGoal();
     });
+  })();
+</script>
+
+<script>
+  (function(){
+    const section = document.querySelector('[data-module-visibility-preferences]');
+    if (!section) return;
+
+    const statusEl = section.querySelector('[data-visibility-status]');
+    const moduleItems = Array.from(section.querySelectorAll('[data-visibility-module]')).map(item => {
+      const moduleId = item.dataset.visibilityModule || '';
+      if (!moduleId) return null;
+      const controls = Array.from(item.querySelectorAll('[data-visibility-key]')).map(controlEl => {
+        const key = controlEl.dataset.visibilityKey || '';
+        const input = controlEl.querySelector('[data-visibility-input]');
+        if (!key || !(input instanceof HTMLInputElement)) return null;
+        input.disabled = true;
+        return { key, input };
+      }).filter(Boolean);
+      return { id: moduleId, element: item, controls };
+    }).filter(Boolean);
+
+    function setStatus(message, tone = 'muted'){
+      if (!statusEl) return;
+      statusEl.textContent = message;
+      statusEl.dataset.tone = tone;
+    }
+
+    function applySnapshot(snapshot){
+      moduleItems.forEach(item => {
+        const prefs = snapshot && typeof snapshot === 'object' ? snapshot[item.id] : null;
+        item.controls.forEach(control => {
+          const value = prefs && typeof prefs === 'object' ? Boolean(prefs[control.key]) : false;
+          control.input.checked = value;
+        });
+      });
+    }
+
+    function enableControls(enabled){
+      moduleItems.forEach(item => {
+        item.controls.forEach(control => {
+          control.input.disabled = !enabled;
+        });
+      });
+    }
+
+    let workspaceVisibility = null;
+    let unsubscribe = null;
+
+    function attach(manager){
+      if (unsubscribe){
+        unsubscribe();
+        unsubscribe = null;
+      }
+      workspaceVisibility = manager;
+      if (!manager){
+        enableControls(false);
+        setStatus('Visibility controls are offline right now.', 'error');
+        return;
+      }
+      enableControls(true);
+      if (typeof manager.subscribe === 'function'){
+        unsubscribe = manager.subscribe(snapshot => {
+          applySnapshot(snapshot || {});
+        });
+      } else {
+        applySnapshot({});
+      }
+      if (typeof manager.loadRemote === 'function'){
+        manager.loadRemote().then(result => {
+          if (result?.success){
+            setStatus('Visibility preferences synced from your account.', 'success');
+          } else if (result?.reason === 'not_signed_in'){
+            setStatus('Saved locally. Sign in to sync everywhere.', 'warning');
+          } else if (result?.reason && result.reason !== 'no_client'){
+            setStatus('Visibility preferences saved locally. Reconnect to sync.', 'warning');
+          }
+        });
+      }
+    }
+
+    moduleItems.forEach(item => {
+      item.controls.forEach(control => {
+        control.input.addEventListener('change', async () => {
+          if (!workspaceVisibility || typeof workspaceVisibility.savePreference !== 'function'){
+            setStatus('Visibility controls are offline right now.', 'error');
+            return;
+          }
+          setStatus('Saving preference…');
+          try {
+            const result = await workspaceVisibility.savePreference(item.id, { [control.key]: control.input.checked });
+            if (result?.success){
+              setStatus('Visibility preference saved.', 'success');
+            } else if (result?.reason === 'not_signed_in'){
+              setStatus('Saved locally. Sign in to sync everywhere.', 'warning');
+            } else if (result?.reason === 'no_client'){
+              setStatus('Preference saved locally while offline.', 'warning');
+            } else {
+              setStatus('Unable to save visibility preference right now.', 'error');
+            }
+          } catch (error){
+            console.error('Failed to save workspace visibility preference', error);
+            setStatus('Unable to save visibility preference. Try again.', 'error');
+          }
+        });
+      });
+    });
+
+    const immediate = window.StudioOrganize && window.StudioOrganize.workspaceVisibility;
+    if (immediate){
+      attach(immediate);
+    } else {
+      setStatus('Loading visibility preferences…');
+      document.addEventListener('studioorganize:workspace-visibility-ready', event => {
+        const manager = event?.detail?.workspaceVisibility || null;
+        attach(manager);
+      }, { once: true });
+    }
   })();
 </script>
 

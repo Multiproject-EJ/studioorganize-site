@@ -1001,10 +1001,13 @@ try {
 }
 
 const workspaceThemes = createWorkspaceThemeManager();
+const workspaceVisibility = createWorkspaceVisibilityManager();
 window.StudioOrganize = window.StudioOrganize || {};
 window.StudioOrganize.workspaceThemes = workspaceThemes;
+window.StudioOrganize.workspaceVisibility = workspaceVisibility;
 window.StudioOrganize.requestWorkspaceSave = requestWorkspaceSave;
 document.dispatchEvent(new CustomEvent('studioorganize:workspace-themes-ready', { detail: { workspaceThemes } }));
+document.dispatchEvent(new CustomEvent('studioorganize:workspace-visibility-ready', { detail: { workspaceVisibility } }));
 
 const currentWorkspaceModule = workspaceThemes.getModuleForPath(window.location.pathname);
 if (currentWorkspaceModule){
@@ -1020,6 +1023,7 @@ if (currentWorkspaceModule){
     applySiteTheme(desiredTheme, false);
   });
   workspaceThemes.loadRemote();
+  workspaceVisibility.loadRemote();
   document.addEventListener('themechange', event => {
     const theme = event?.detail?.theme;
     if (!theme) return;
@@ -1270,6 +1274,268 @@ function createWorkspaceThemeManager(){
     handleSessionChange,
     getModuleForPath,
     applyModuleTheme,
+    isSignedIn,
+  };
+}
+
+function createWorkspaceVisibilityManager(){
+  const STORAGE_KEY = 'SO_WORKSPACE_VISIBILITY_PREFS';
+  const MODULES = Object.freeze([
+    { id: 'script_writer', label: 'Screenplay Writing', paths: [/screenplay-writing/] },
+    { id: 'storyboard', label: 'Storyboard', paths: [/storyboardpro/, /storyboard\//] },
+    { id: 'character_studio', label: 'Character Studio', paths: [/characterstudio\./, /characterstudio/] },
+    { id: 'set_design', label: 'Set Design', paths: [/set-design/] },
+    { id: 'video_editing', label: 'Video & Editing', paths: [/videoediting/, /video-editing/] },
+    { id: 'creative_hub', label: 'Creative Hub', paths: [/creative-hub/] },
+  ]);
+  const DEFAULTS = Object.freeze({
+    script_writer: Object.freeze({
+      scene_panel: false,
+      workspace_tools: false,
+      timeline: true,
+    }),
+    storyboard: Object.freeze({}),
+    character_studio: Object.freeze({}),
+    set_design: Object.freeze({}),
+    video_editing: Object.freeze({}),
+    creative_hub: Object.freeze({}),
+  });
+
+  let local = loadLocal();
+  let remote = null;
+  let loadingPromise = null;
+  let lastSessionUserId = null;
+  const listeners = new Set();
+
+  function clonePreference(preference){
+    try {
+      return JSON.parse(JSON.stringify(preference));
+    } catch (_error){
+      return preference && typeof preference === 'object' ? { ...preference } : {};
+    }
+  }
+
+  function getDefaultPreference(moduleId){
+    const defaults = DEFAULTS[moduleId];
+    return defaults ? clonePreference(defaults) : {};
+  }
+
+  function normalizePreference(moduleId, value){
+    const defaults = getDefaultPreference(moduleId);
+    const result = { ...defaults };
+    const source = value && typeof value === 'object' ? value : {};
+    Object.keys(source).forEach(key => {
+      const sourceValue = source[key];
+      if (typeof defaults[key] === 'boolean'){
+        result[key] = Boolean(sourceValue);
+      } else if (!(key in result)) {
+        result[key] = sourceValue;
+      } else {
+        result[key] = sourceValue;
+      }
+    });
+    return result;
+  }
+
+  function loadLocal(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return {};
+      const map = {};
+      Object.entries(parsed).forEach(([moduleId, preference]) => {
+        map[moduleId] = normalizePreference(moduleId, preference);
+      });
+      return map;
+    } catch (_error){
+      return {};
+    }
+  }
+
+  function persistLocal(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
+    } catch (_error){
+      /* ignore */
+    }
+  }
+
+  function getPreference(moduleId){
+    if (!moduleId) return {};
+    if (remote && remote[moduleId]){
+      return clonePreference(normalizePreference(moduleId, remote[moduleId]));
+    }
+    if (local && local[moduleId]){
+      return clonePreference(normalizePreference(moduleId, local[moduleId]));
+    }
+    return getDefaultPreference(moduleId);
+  }
+
+  function getSnapshot(){
+    const snapshot = {};
+    MODULES.forEach(module => {
+      snapshot[module.id] = getPreference(module.id);
+    });
+    return snapshot;
+  }
+
+  function notify(){
+    const snapshot = getSnapshot();
+    listeners.forEach(listener => {
+      try {
+        listener(clonePreference(snapshot));
+      } catch (error){
+        console.error('Workspace visibility listener failed', error);
+      }
+    });
+  }
+
+  function subscribe(listener){
+    if (typeof listener !== 'function') return () => {};
+    listeners.add(listener);
+    try {
+      listener(getSnapshot());
+    } catch (error){
+      console.error('Workspace visibility subscriber threw on init', error);
+    }
+    return () => {
+      listeners.delete(listener);
+    };
+  }
+
+  function setLocalPreference(moduleId, preference){
+    if (!moduleId) return {};
+    const normalized = normalizePreference(moduleId, preference);
+    local = { ...(local || {}), [moduleId]: normalized };
+    persistLocal();
+    return normalized;
+  }
+
+  function mergePreference(moduleId, updates){
+    const current = getPreference(moduleId);
+    const merged = { ...current, ...(updates && typeof updates === 'object' ? updates : {}) };
+    return setLocalPreference(moduleId, merged);
+  }
+
+  async function savePreference(moduleId, updates){
+    const merged = mergePreference(moduleId, updates);
+    notify();
+    const cloned = clonePreference(merged);
+    if (!moduleId) return { success: false, reason: 'invalid_module', preference: cloned };
+    if (!supabaseClient) return { success: false, reason: 'no_client', preference: cloned };
+    try {
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError){
+        console.error('Failed to fetch Supabase session for workspace visibility preference', sessionError);
+        return { success: false, reason: 'session_error', preference: cloned };
+      }
+      const user = sessionData?.session?.user;
+      lastSessionUserId = user?.id || null;
+      if (!user){
+        return { success: false, reason: 'not_signed_in', preference: cloned };
+      }
+      const payload = {
+        owner_id: user.id,
+        module: moduleId,
+        preferences: merged,
+      };
+      const { data, error } = await supabaseClient
+        .from('workspace_visibility_preferences')
+        .upsert(payload, { onConflict: 'owner_id,module' })
+        .select('module, preferences')
+        .maybeSingle();
+      if (error){
+        console.error('Failed to save workspace visibility preference', error);
+        return { success: false, reason: 'request_failed', preference: cloned };
+      }
+      const savedModule = data?.module || moduleId;
+      const savedPreference = normalizePreference(savedModule, data?.preferences || merged);
+      remote = { ...(remote || {}), [savedModule]: savedPreference };
+      notify();
+      return { success: true, source: 'supabase', preference: clonePreference(savedPreference) };
+    } catch (error){
+      console.error('Unexpected error saving workspace visibility preference', error);
+      return { success: false, reason: 'unexpected', preference: cloned };
+    }
+  }
+
+  async function loadRemote(){
+    if (!supabaseClient) return { success: false, reason: 'no_client' };
+    if (loadingPromise) return loadingPromise;
+    loadingPromise = (async () => {
+      try {
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError){
+          console.error('Failed to fetch Supabase session for workspace visibility preferences', sessionError);
+          return { success: false, reason: 'session_error' };
+        }
+        const user = sessionData?.session?.user;
+        lastSessionUserId = user?.id || null;
+        if (!user){
+          remote = null;
+          notify();
+          return { success: false, reason: 'not_signed_in' };
+        }
+        const { data, error } = await supabaseClient
+          .from('workspace_visibility_preferences')
+          .select('module, preferences')
+          .eq('owner_id', user.id);
+        if (error){
+          console.error('Failed to load workspace visibility preferences', error);
+          return { success: false, reason: 'request_failed' };
+        }
+        const map = {};
+        (data || []).forEach(row => {
+          if (!row || typeof row !== 'object') return;
+          const moduleId = row.module;
+          if (!moduleId) return;
+          map[moduleId] = normalizePreference(moduleId, row.preferences);
+        });
+        remote = map;
+        notify();
+        return { success: true, source: 'supabase' };
+      } catch (error){
+        console.error('Unexpected error loading workspace visibility preferences', error);
+        return { success: false, reason: 'unexpected' };
+      } finally {
+        loadingPromise = null;
+      }
+    })();
+    return loadingPromise;
+  }
+
+  function handleSessionChange(session){
+    const nextUserId = session?.user?.id || null;
+    if (nextUserId === lastSessionUserId) return;
+    lastSessionUserId = nextUserId;
+    if (!nextUserId){
+      remote = null;
+      notify();
+      return;
+    }
+    loadRemote();
+  }
+
+  function getModuleForPath(pathname){
+    const normalizedPath = (pathname || window.location.pathname || '').toLowerCase();
+    const module = MODULES.find(entry => (entry.paths || []).some(pattern => pattern.test(normalizedPath)));
+    return module ? module.id : null;
+  }
+
+  function isSignedIn(){
+    return Boolean(lastSessionUserId);
+  }
+
+  return {
+    MODULES,
+    getPreference,
+    getDefaultPreference,
+    subscribe,
+    savePreference,
+    loadRemote,
+    handleSessionChange,
+    getModuleForPath,
     isSignedIn,
   };
 }
@@ -1618,6 +1884,7 @@ async function refreshAccountSession(){
       updateAccountUI(session);
     }
     workspaceThemes.handleSessionChange(session);
+    workspaceVisibility.handleSessionChange(session);
   } catch (error){
     console.error('Unexpected error while checking Supabase session', error);
   }
@@ -1645,6 +1912,7 @@ if (supabaseClient){
       updateAccountUI(resolvedSession);
     }
     workspaceThemes.handleSessionChange(resolvedSession);
+    workspaceVisibility.handleSessionChange(resolvedSession);
   });
   refreshAccountSession();
 }
