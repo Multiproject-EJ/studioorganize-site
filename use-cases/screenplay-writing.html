@@ -100,6 +100,10 @@
         from{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); height:10px; opacity:1;}
         to{background:var(--ring); box-shadow:0 3px 10px rgba(0,0,0,0.22); height:6px; opacity:0.7;}
       }
+      @keyframes screenplayPanelHandleRelax{
+        from{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); opacity:1;}
+        to{background:var(--ring); box-shadow:0 3px 10px rgba(0,0,0,0.22); opacity:0.85;}
+      }
       .timeline-dock.floating-hidden .timeline-dock__handle{opacity:0.85;}
       .timeline-dock__shell{order:1; width:min(1080px, 100%); background:var(--hud); border:1px solid var(--ring); border-radius:18px; box-shadow:0 14px 34px rgba(8,15,28,0.32); overflow:hidden; transition:max-height .35s ease, box-shadow .35s ease, border-color .3s ease; max-height:560px; margin:0 auto;}
       .timeline-dock.floating-hidden .timeline-dock__shell{max-height:0; border-color:transparent; box-shadow:none;}
@@ -265,7 +269,7 @@
         --right-panel-handle-gap: 8px;
         --right-panel-handle-track: calc(var(--right-panel-handle-thickness) + var(--right-panel-handle-gap));
         --scene-panel-track: calc(var(--scene-panel-expanded-width) + var(--scene-panel-handle-thickness) + var(--scene-panel-handle-gap));
-        --right-panel-track: var(--right-panel-expanded-width);
+        --right-panel-track: calc(var(--right-panel-expanded-width) + var(--right-panel-handle-thickness) + var(--right-panel-handle-gap));
         display:grid;
         grid-template-columns:minmax(0, var(--scene-panel-track)) minmax(0, 1fr) minmax(0, var(--right-panel-track));
         gap:10px;
@@ -280,26 +284,23 @@
       .panel--scenes{position:relative; width:var(--scene-panel-expanded-width); transition:transform .35s ease, box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.32); z-index:2;}
       .panel--scenes[data-open="false"]{box-shadow:none;}
       .layout.scene-panel-collapsed .panel--scenes{transform:translateX(calc(-100% + var(--scene-panel-handle-thickness)));}
-      .scene-panel-slot{position:relative; width:var(--scene-panel-track); transition:width .35s ease; min-height:0; overflow:visible;}
+      .scene-panel-slot{position:relative; width:var(--scene-panel-track); transition:width .35s ease; min-height:0; overflow:visible; display:flex; align-items:stretch; gap:var(--scene-panel-handle-gap);}
       .layout.scene-panel-collapsed .scene-panel-slot{width:var(--scene-panel-handle-track);}
-      .tab-panel-slot{position:relative; width:var(--right-panel-expanded-width); transition:width .35s ease; min-height:0; overflow:visible; display:flex; justify-content:flex-end;}
+      .tab-panel-slot{position:relative; width:var(--right-panel-track); transition:width .35s ease; min-height:0; overflow:visible; display:flex; justify-content:flex-end; align-items:stretch; gap:var(--right-panel-handle-gap);}
       .layout.right-panel-collapsed .tab-panel-slot{width:var(--right-panel-handle-track);}
       .panel--tabs{position:relative; width:var(--right-panel-expanded-width); transition:transform .35s ease, box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.24); z-index:2;}
       .panel--tabs[data-open="false"]{box-shadow:none;}
       .layout.right-panel-collapsed .panel--tabs{transform:translateX(calc(100% - var(--right-panel-handle-thickness))); box-shadow:none;}
-      .tab-panel__handle{position:absolute; top:50%; left:-5px; transform:translateY(-50%) rotate(90deg); transform-origin:center; z-index:3; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer;}
-      .tab-panel__handle.timeline-dock__handle{height:10px;}
-      .layout.right-panel-collapsed .tab-panel__handle{left:calc((var(--right-panel-handle-track) - var(--right-panel-handle-thickness)) / 2);}
+      .tab-panel__handle{position:relative; z-index:3; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer; border-radius:999px; align-self:center; flex:0 0 auto;}
+      .tab-panel__handle.timeline-dock__handle{width:var(--right-panel-handle-thickness); height:clamp(96px, 38vh, 220px);}
       .tab-panel__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px;}
-      .tab-panel-slot[data-pinned="true"] .tab-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:timelineDockHandlePinnedRelax .35s ease forwards; animation-delay:1s;}
+      .tab-panel-slot[data-pinned="true"] .tab-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:screenplayPanelHandleRelax .35s ease forwards; animation-delay:1s;}
       .scene-panel__header{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px 0;}
       .scene-panel__header h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted);}
-      .scene-panel__handle{position:absolute; top:50%; right:calc(var(--scene-panel-handle-thickness) * -0.5); transform:translateY(-50%) rotate(-90deg); transform-origin:center; z-index:4; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer;}
-      .scene-panel__handle.timeline-dock__handle{height:var(--scene-panel-handle-thickness);}
-      .layout:not(.scene-panel-collapsed) .scene-panel__handle{right:calc((var(--scene-panel-handle-thickness) + (var(--scene-panel-handle-gap) / 2)) * -1);}
-      .layout.scene-panel-collapsed .scene-panel__handle{right:calc((var(--scene-panel-handle-track) - var(--scene-panel-handle-thickness)) / 2);}
+      .scene-panel__handle{position:relative; z-index:4; display:flex; align-items:center; justify-content:center; padding:0; border:none; cursor:pointer; border-radius:999px; align-self:center; flex:0 0 auto;}
+      .scene-panel__handle.timeline-dock__handle{width:var(--scene-panel-handle-thickness); height:clamp(96px, 38vh, 220px);}
       .scene-panel__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px;}
-      .scene-panel-slot[data-pinned="true"] .scene-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:timelineDockHandlePinnedRelax .35s ease forwards; animation-delay:1s;}
+      .scene-panel-slot[data-pinned="true"] .scene-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:screenplayPanelHandleRelax .35s ease forwards; animation-delay:1s;}
       .tab-panel__handle .sr-only,
       .scene-panel__handle .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
       .scenes{overflow:auto; padding:8px}
@@ -1770,10 +1771,10 @@
               <button class="btn" type="button" style="padding:4px 8px" onclick="addScene()">+ Scene</button>
             </div>
             <div id="sceneList" class="scenes"></div>
-            <button class="scene-panel__handle timeline-dock__handle" type="button" id="scenePanelHandle" aria-pressed="false" aria-expanded="false" aria-controls="scenePanel">
-              <span class="sr-only">Toggle pin for scenes panel</span>
-            </button>
           </div>
+          <button class="scene-panel__handle timeline-dock__handle" type="button" id="scenePanelHandle" aria-pressed="false" aria-expanded="false" aria-controls="scenePanel">
+            <span class="sr-only">Toggle pin for scenes panel</span>
+          </button>
         </div>
 
         <div class="panel editor">
@@ -1805,6 +1806,9 @@
         </div>
 
         <div class="tab-panel-slot" id="rightPanelSlot">
+          <button class="tab-panel__handle timeline-dock__handle" type="button" id="rightPanelHandle" aria-expanded="true" aria-pressed="true" aria-controls="rightPanel" data-pinned="true">
+            <span class="sr-only">Toggle pin for workspace tools panel</span>
+          </button>
           <div class="panel panel--tabs" id="rightPanel" data-open="true" data-pinned="true">
             <div class="tab-header" id="rightTabBar">
               <button class="tab-btn" data-tab-btn="write">Visual</button>
@@ -1981,11 +1985,7 @@
               </div>
             </div>
           </div>
-      </div>
-      <button class="tab-panel__handle timeline-dock__handle" type="button" id="rightPanelHandle" aria-expanded="true" aria-pressed="true" aria-controls="rightPanel" data-pinned="true">
-        <span class="sr-only">Toggle pin for workspace tools panel</span>
-      </button>
-    </div>
+        </div>
   </div>
 
     <div id="selectionMenu" class="selection-menu" hidden>
