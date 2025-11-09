@@ -6,7 +6,8 @@
   const pageId = shell.dataset.page || 'default';
 
   // helper: find or create a mobile module
-  function ensureModule(id, selectorList, placeholderText) {
+  function ensureModule(id, selectorList, placeholderText, options) {
+    const { createPlaceholder = true } = options || {};
     let el = null;
 
     if (selectorList && selectorList.length) {
@@ -20,6 +21,9 @@
     }
 
     if (!el) {
+      if (!createPlaceholder) {
+        return null;
+      }
       el = document.createElement('div');
       el.id = id;
       el.className = 'so-mobile-module';
@@ -39,18 +43,30 @@
     modules.screenwriter = ensureModule(
       'screenwriter-main',
       ['#screenplay-editor', '.screenplay-editor', '[data-screenwriter]'],
-      'Screenwriter (mobile) — missing main editor'
+      'Screenwriter (mobile) — missing main editor',
+      { createPlaceholder: false }
     );
     modules.outline = ensureModule(
       'screenwriter-outline',
       ['#screenplay-outline'],
-      'Outline (mobile)'
+      'Outline (mobile)',
+      { createPlaceholder: false }
     );
     modules.notes = ensureModule(
       'screenwriter-notes',
       ['#screenplay-notes'],
-      'Notes (mobile)'
+      'Notes (mobile)',
+      { createPlaceholder: false }
     );
+    ['screenwriter', 'outline', 'notes'].forEach((key) => {
+      if (!modules[key]) {
+        delete modules[key];
+        const btn = nav.querySelector('[data-target="' + key + '"]');
+        if (btn) {
+          btn.remove();
+        }
+      }
+    });
   } else if (pageId === 'character-studio') {
     modules.characters = ensureModule(
       'character-studio-main',
@@ -74,6 +90,18 @@
       ['main', '#main', '.main'],
       'Mobile view'
     );
+  }
+
+  const moduleIds = Object.keys(modules);
+  if (!moduleIds.length) {
+    shell.remove();
+    return;
+  }
+
+  const availableButtons = nav.querySelectorAll('[data-target]');
+  if (!availableButtons.length) {
+    shell.remove();
+    return;
   }
 
   function activate(id) {
