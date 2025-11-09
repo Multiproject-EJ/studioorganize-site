@@ -2244,7 +2244,6 @@ function ensureWorkspaceLauncherStructure(launcher){
     actions.className = 'workspace-launcher__actions';
     actions.innerHTML = `
       <button type="button" class="workspace-launcher__script" data-workspace-script>
-        <span class="workspace-launcher__script-icon" aria-hidden="true">＋</span>
         <span>Story</span>
       </button>
     `;
