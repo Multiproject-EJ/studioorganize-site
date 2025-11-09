@@ -3422,11 +3422,14 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 
 // Stuff Menu - Mobile only circular menu
 const STUFF_MENU_ITEMS = [
-  { icon: '🎬', label: 'Placeholder 1', action: () => console.log('Item 1 clicked') },
-  { icon: '🎨', label: 'Placeholder 2', action: () => console.log('Item 2 clicked') },
-  { icon: '📝', label: 'Placeholder 3', action: () => console.log('Item 3 clicked') },
-  { icon: '⚙️', label: 'Placeholder 4', action: () => console.log('Item 4 clicked') },
-  { icon: '📊', label: 'Placeholder 5', action: () => console.log('Item 5 clicked') },
+  { label: 'Timelines', action: () => console.log('Timelines clicked') },
+  { label: 'Scene', action: () => console.log('Scene clicked') },
+  { label: 'Visual', action: () => console.log('Visual clicked') },
+  { label: 'Cast', action: () => console.log('Cast clicked') },
+  { label: 'Set', action: () => console.log('Set clicked') },
+  { label: 'Sound', action: () => console.log('Sound clicked') },
+  { label: 'Notes', action: () => console.log('Notes clicked') },
+  { label: 'AI', action: () => console.log('AI clicked') },
 ];
 
 function syncStuffMenuIcon(toggle){
@@ -3469,12 +3472,13 @@ function createStuffMenu(){
   const items = document.createElement('div');
   items.className = 'stuff-menu__items';
 
-  STUFF_MENU_ITEMS.forEach(item => {
+  STUFF_MENU_ITEMS.forEach((item, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'stuff-menu__item';
     button.setAttribute('aria-label', item.label);
-    button.innerHTML = item.icon;
+    button.setAttribute('data-stuff-menu-index', String(index));
+    button.textContent = item.label;
     button.addEventListener('click', event => {
       event.stopPropagation();
       item.action();
