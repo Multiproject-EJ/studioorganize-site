@@ -146,8 +146,16 @@ const VIDEO_LESSONS = [
 ];
 
 function ensureScriptDialogOverlayController(){
-  if (scriptDialogOverlayController) return scriptDialogOverlayController;
-  if (!document.body) return null;
+  if (scriptDialogOverlayController) {
+    console.log('[ScriptDialog] Overlay controller already exists');
+    return scriptDialogOverlayController;
+  }
+  if (!document.body) {
+    console.error('[ScriptDialog] Cannot create overlay: document.body not available');
+    return null;
+  }
+
+  console.log('[ScriptDialog] Creating overlay controller');
 
   const overlay = document.createElement('div');
   overlay.className = 'script-dialog-overlay';
@@ -161,6 +169,7 @@ function ensureScriptDialogOverlayController(){
     </div>
   `;
   document.body.appendChild(overlay);
+  console.log('[ScriptDialog] Overlay HTML appended to body');
 
   const iframe = overlay.querySelector('iframe');
   const closeTriggers = overlay.querySelectorAll('[data-script-dialog-overlay-close]');
@@ -170,7 +179,11 @@ function ensureScriptDialogOverlayController(){
   let pendingOpen = false;
 
   const postToFrame = action => {
-    if (!frameReady || !(iframe?.contentWindow)) return;
+    if (!frameReady || !(iframe?.contentWindow)) {
+      console.log(`[ScriptDialog] Cannot post '${action}' to frame: frameReady=${frameReady}, hasContentWindow=${!!(iframe?.contentWindow)}`);
+      return;
+    }
+    console.log(`[ScriptDialog] Posting '${action}' to frame`);
     try {
       iframe.contentWindow.postMessage({ type: SCRIPT_DIALOG_MESSAGE_TYPE, action }, messageOrigin);
     } catch (_error){
@@ -187,9 +200,17 @@ function ensureScriptDialogOverlayController(){
 
   const controller = {
     open(){
-      if (!iframe) return;
+      if (!iframe) {
+        console.error('[ScriptDialog] Cannot open: iframe not found');
+        return;
+      }
+      console.log('[ScriptDialog] Opening overlay');
       if (!iframe.src){
-        iframe.src = '/use-cases/screenplay-writing.html?embed=script-dialog';
+        const iframeSrc = '/use-cases/screenplay-writing.html?embed=script-dialog';
+        console.log(`[ScriptDialog] Setting iframe src to: ${iframeSrc}`);
+        iframe.src = iframeSrc;
+      } else {
+        console.log('[ScriptDialog] Iframe already has src:', iframe.src);
       }
       pendingOpen = true;
       overlay.hidden = false;
@@ -201,13 +222,19 @@ function ensureScriptDialogOverlayController(){
       window.addEventListener('keydown', handleKeydown);
       if (frameReady){
         postToFrame('open');
+      } else {
+        console.log('[ScriptDialog] Frame not ready yet, will post open message when ready');
       }
       setTimeout(() => {
         try { iframe.focus(); } catch (_error){}
       }, 150);
     },
     close({ notifyChild = true } = {}){
-      if (!overlay.classList.contains('is-open')) return;
+      if (!overlay.classList.contains('is-open')) {
+        console.log('[ScriptDialog] Overlay not open, skipping close');
+        return;
+      }
+      console.log('[ScriptDialog] Closing overlay');
       overlay.classList.remove('is-open');
       overlay.setAttribute('aria-hidden', 'true');
       overlay.hidden = true;
@@ -219,8 +246,10 @@ function ensureScriptDialogOverlayController(){
       }
     },
     notifyReady(){
+      console.log('[ScriptDialog] Frame notified ready');
       frameReady = true;
       if (pendingOpen){
+        console.log('[ScriptDialog] Pending open detected, posting open message now');
         postToFrame('open');
       }
     },
@@ -232,12 +261,14 @@ function ensureScriptDialogOverlayController(){
   closeTriggers.forEach(trigger => {
     trigger.addEventListener('click', event => {
       event.preventDefault();
+      console.log('[ScriptDialog] Close trigger clicked');
       controller.close();
     });
   });
 
   overlay.addEventListener('click', event => {
     if (event.target === overlay){
+      console.log('[ScriptDialog] Backdrop clicked, closing');
       controller.close();
     }
   });
@@ -247,6 +278,7 @@ function ensureScriptDialogOverlayController(){
     if (messageOrigin !== '*' && event.origin && event.origin !== messageOrigin && event.origin !== 'null') return;
     const data = event.data;
     if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) return;
+    console.log(`[ScriptDialog] Received message from frame:`, data.action);
     if (data.action === 'ready'){
       frameReady = true;
       controller.notifyReady();
@@ -256,14 +288,22 @@ function ensureScriptDialogOverlayController(){
   });
 
   scriptDialogOverlayController = controller;
+  console.log('[ScriptDialog] Overlay controller created successfully');
   return controller;
 }
 
 function setupScriptDialogFallback(){
-  if (typeof window.openScriptDialog === 'function') return;
-  if (document.getElementById('scriptDialog')) return;
+  if (typeof window.openScriptDialog === 'function') {
+    console.log('[ScriptDialog] Fallback: openScriptDialog already exists, skipping setup');
+    return;
+  }
+  if (document.getElementById('scriptDialog')) {
+    console.log('[ScriptDialog] Fallback: inline dialog exists, skipping overlay');
+    return;
+  }
   // Ensure document.body is ready before creating the overlay
   if (!document.body) {
+    console.log('[ScriptDialog] Fallback: body not ready, waiting...');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', setupScriptDialogFallback, { once: true });
     } else {
@@ -272,10 +312,21 @@ function setupScriptDialogFallback(){
     }
     return;
   }
+  console.log('[ScriptDialog] Fallback: creating overlay controller');
   const controller = ensureScriptDialogOverlayController();
-  if (!controller) return;
-  window.openScriptDialog = () => controller.open();
-  window.closeScriptDialog = () => controller.close();
+  if (!controller) {
+    console.error('[ScriptDialog] Fallback: failed to create overlay controller');
+    return;
+  }
+  window.openScriptDialog = () => {
+    console.log('[ScriptDialog] Opening overlay dialog');
+    controller.open();
+  };
+  window.closeScriptDialog = () => {
+    console.log('[ScriptDialog] Closing overlay dialog');
+    controller.close();
+  };
+  console.log('[ScriptDialog] Fallback: setup complete, window.openScriptDialog is now available');
 }
 
 if (typeof window.openScriptDialog !== 'function'){
@@ -2784,6 +2835,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         event.preventDefault();
         event.stopPropagation();
 
+        console.log('[Workspace] STORY button clicked');
         closeAll();
 
         const dialog = document.getElementById('scriptDialog');
@@ -2791,19 +2843,33 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         const hasInlineDialog = dialog instanceof HTMLElement;
         const inlineOpen = hasInlineDialog && dialog.classList.contains('open');
 
+        console.log('[Workspace] Script dialog state:', {
+          hasOpenFunction: typeof window.openScriptDialog === 'function',
+          hasInlineDialog,
+          inlineOpen,
+          overlayOpen
+        });
+
         if (typeof window.openScriptDialog === 'function'){
           if (hasInlineDialog){
+            console.log('[Workspace] Using inline dialog');
             if (inlineOpen && typeof window.closeScriptDialog === 'function'){
+              console.log('[Workspace] Closing inline dialog');
               window.closeScriptDialog();
               return;
             }
+            console.log('[Workspace] Opening inline dialog');
             window.openScriptDialog();
             return;
           }
           if (!overlayOpen){
+            console.log('[Workspace] Opening overlay dialog');
             window.openScriptDialog();
+          } else {
+            console.log('[Workspace] Overlay already open');
           }
         } else {
+          console.log('[Workspace] No openScriptDialog function, redirecting to screenplay-writing.html');
           window.location.href = '/use-cases/screenplay-writing.html';
         }
       });
