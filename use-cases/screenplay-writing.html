@@ -2325,6 +2325,108 @@
       }
     }
 
+    let project = null;
+
+    const VISIBILITY_MODULE_ID = 'script_writer';
+    const DEFAULT_VISIBILITY_PREF = Object.freeze({
+      scene_panel: false,
+      workspace_tools: false,
+      timeline: true,
+    });
+    let latestVisibilityPreference = { ...DEFAULT_VISIBILITY_PREF };
+    let pendingTimelinePreference = latestVisibilityPreference.timeline;
+    let workspaceVisibilityManager = (window.StudioOrganize && window.StudioOrganize.workspaceVisibility) || null;
+    let unsubscribeWorkspaceVisibility = null;
+    let initialVisibilityReady = false;
+    let suppressVisibilitySync = false;
+
+    function normalizeVisibilityPreference(preference){
+      const source = preference && typeof preference === 'object' ? preference : {};
+      return {
+        scene_panel: typeof source.scene_panel === 'boolean' ? source.scene_panel : DEFAULT_VISIBILITY_PREF.scene_panel,
+        workspace_tools: typeof source.workspace_tools === 'boolean' ? source.workspace_tools : DEFAULT_VISIBILITY_PREF.workspace_tools,
+        timeline: typeof source.timeline === 'boolean' ? source.timeline : DEFAULT_VISIBILITY_PREF.timeline,
+      };
+    }
+
+    function applyTimelinePreference(value){
+      pendingTimelinePreference = Boolean(value);
+      if (project && typeof project === 'object'){
+        project.settings = project.settings || {};
+        project.settings.timelineDockPinned = pendingTimelinePreference;
+      }
+      if (typeof syncTimelineDockState === 'function'){
+        try {
+          syncTimelineDockState(true);
+        } catch (_error){
+          /* ignore */
+        }
+      }
+    }
+
+    function applyVisibilitySnapshot(){
+      const config = latestVisibilityPreference;
+      suppressVisibilitySync = true;
+      try {
+        setScenePanelPinned(config.scene_panel);
+        setScenePanelOpen(config.scene_panel, { force: true });
+        setRightPanelPinned(config.workspace_tools);
+        setRightPanelOpen(config.workspace_tools, { force: true });
+        applyTimelinePreference(config.timeline);
+      } finally {
+        suppressVisibilitySync = false;
+      }
+    }
+
+    function updateVisibilityPreference(preference){
+      latestVisibilityPreference = normalizeVisibilityPreference(preference);
+      pendingTimelinePreference = latestVisibilityPreference.timeline;
+      if (initialVisibilityReady){
+        applyVisibilitySnapshot();
+      }
+    }
+
+    function persistVisibilityPreference(partial){
+      if (!workspaceVisibilityManager || typeof workspaceVisibilityManager.savePreference !== 'function') return;
+      try {
+        const outcome = workspaceVisibilityManager.savePreference(VISIBILITY_MODULE_ID, partial);
+        if (outcome && typeof outcome.then === 'function'){
+          outcome.catch(error => console.error('Failed to persist workspace visibility preference', error));
+        }
+      } catch (error){
+        console.error('Failed to persist workspace visibility preference', error);
+      }
+    }
+
+    function attachWorkspaceVisibility(manager){
+      if (unsubscribeWorkspaceVisibility){
+        unsubscribeWorkspaceVisibility();
+        unsubscribeWorkspaceVisibility = null;
+      }
+      workspaceVisibilityManager = manager;
+      if (!manager) return;
+      if (typeof manager.subscribe === 'function'){
+        unsubscribeWorkspaceVisibility = manager.subscribe(snapshot => {
+          const modulePrefs = snapshot && snapshot[VISIBILITY_MODULE_ID] ? snapshot[VISIBILITY_MODULE_ID] : null;
+          updateVisibilityPreference(modulePrefs);
+        });
+      } else if (typeof manager.getPreference === 'function'){
+        updateVisibilityPreference(manager.getPreference(VISIBILITY_MODULE_ID));
+      }
+      if (typeof manager.loadRemote === 'function'){
+        manager.loadRemote();
+      }
+    }
+
+    if (workspaceVisibilityManager){
+      attachWorkspaceVisibility(workspaceVisibilityManager);
+    } else {
+      document.addEventListener('studioorganize:workspace-visibility-ready', event => {
+        const manager = event?.detail?.workspaceVisibility || null;
+        attachWorkspaceVisibility(manager);
+      }, { once: true });
+    }
+
     const layoutEl = document.getElementById('screenplayLayout');
     const scenePanel = document.getElementById('scenePanel');
     const scenePanelSlot = document.getElementById('scenePanelSlot');
@@ -2378,6 +2480,9 @@
       } else {
         const shouldStayOpen = (scenePanelSlot && (scenePanelSlot.matches(':hover') || scenePanelSlot.contains(document.activeElement)));
         setScenePanelOpen(!!shouldStayOpen, { force: true });
+      }
+      if (!suppressVisibilitySync){
+        persistVisibilityPreference({ scene_panel: scenePanelState.pinned });
       }
     }
 
@@ -2484,6 +2589,9 @@
       }
       // Persist state to localStorage per page
       saveRightPanelState();
+      if (!suppressVisibilitySync){
+        persistVisibilityPreference({ workspace_tools: rightPanelState.pinned });
+      }
     }
 
     function saveRightPanelState(){
@@ -2571,6 +2679,8 @@
     const savedState = loadRightPanelState();
     setRightPanelOpen(savedState.open, { force: true });
     setRightPanelPinned(savedState.pinned);
+    initialVisibilityReady = true;
+    applyVisibilitySnapshot();
 
     /* =========================
      * IndexedDB minimal wrapper
@@ -2725,7 +2835,6 @@
     /* =========================
      * State & Config
      * =======================*/
-    let project = null;
     let activeSceneId = null;
     let saveTimer = null;
     let saveSceneStatusTimer = null;
@@ -2745,7 +2854,7 @@
     let timelinePendingPreviewId = null;
     let timelineSuppressClick = false;
     const TIMELINE_HIDE_DELAY = 3500;
-    let timelinePinned = true;
+    let timelinePinned = pendingTimelinePreference;
     let timelineHideTimer = null;
     let timelineHovering = false;
     let lastTimelinePinned = null;
@@ -4056,6 +4165,9 @@
       }
       project = loaded;
       ensureProjectShape();
+      if (initialVisibilityReady){
+        applyVisibilitySnapshot();
+      }
       lastSyncedGoalsSignature = goalSignature(project.settings.goals);
       goalSyncPending = false;
       if (!project.settings.coverImageUrl){
@@ -4240,9 +4352,10 @@
       if (typeof project.settings.showSceneNotes !== 'boolean'){
         project.settings.showSceneNotes = true;
       }
-      if (typeof project.settings.timelineDockPinned !== 'boolean'){
-        project.settings.timelineDockPinned = true;
-      }
+      const timelinePreference = typeof latestVisibilityPreference.timeline === 'boolean'
+        ? latestVisibilityPreference.timeline
+        : DEFAULT_VISIBILITY_PREF.timeline;
+      project.settings.timelineDockPinned = timelinePreference;
       project.settings.goals = normalizeProjectGoals(project.settings.goals);
       updateGoalSummaryDisplay(project.settings.goals);
       project.catalogs = project.catalogs || {};
@@ -4478,7 +4591,7 @@
           goals: { pageCount: null, runtimeMinutes: null, sceneCount: null },
           pageWidth: 60,
           focus: false,
-          timelineDockPinned: true,
+          timelineDockPinned: pendingTimelinePreference,
           pomodoro: { workMin: 25, breakMin: 5, autoStartBreak: true, autoStartWork: false }
         },
         catalogs: { characters:[], locations:[] },
@@ -4512,6 +4625,9 @@
       }
       setLastProjectId(pid);
       lastTimelinePinned = null;
+      if (initialVisibilityReady){
+        applyVisibilitySnapshot();
+      }
     }
 
     /* =========================
@@ -9904,6 +10020,9 @@
           }
           project = state;
           ensureProjectShape();
+          if (initialVisibilityReady){
+            applyVisibilitySnapshot();
+          }
           storyboardIndexState.clear();
           (project.scenes || []).forEach(scene => {
             STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(scene.id, 0, mode));
@@ -9953,6 +10072,9 @@
         }
         saveLocal(project);
         syncTimelineDockState(true);
+        if (!suppressVisibilitySync){
+          persistVisibilityPreference({ timeline: !!project.settings.timelineDockPinned });
+        }
       });
       dock.addEventListener('pointerenter', event=>{
         timelineHovering = true;
@@ -10510,6 +10632,9 @@
           project = loaded;
           lastTimelinePinned = null;
           ensureProjectShape();
+          if (initialVisibilityReady){
+            applyVisibilitySnapshot();
+          }
           storyboardIndexState.clear();
           (project.scenes || []).forEach(scene => {
             STORYBOARD_MEDIA_MODES.forEach(mode => setStoryboardIndex(scene.id, 0, mode));
@@ -10533,7 +10658,7 @@
       if (typeof project.settings.focusHudPinned === 'undefined') {
         project.settings.focusHudPinned = isMobileViewport;
       }
-      if (typeof project.settings.timelineDockPinned === 'undefined') project.settings.timelineDockPinned = true;
+      if (typeof project.settings.timelineDockPinned === 'undefined') project.settings.timelineDockPinned = pendingTimelinePreference;
 
       ensurePomodoroSettings();
       if (project._pomoState) {
