@@ -3095,6 +3095,26 @@ const STUFF_MENU_ITEMS = [
   { icon: '📊', label: 'Placeholder 5', action: () => console.log('Item 5 clicked') },
 ];
 
+function syncStuffMenuIcon(toggle){
+  if (!toggle) return;
+
+  const activeModuleIcon = document.querySelector('.workspace-launcher__module--active .workspace-launcher__module-icon');
+
+  if (activeModuleIcon){
+    const iconWrapper = document.createElement('span');
+    iconWrapper.className = 'stuff-menu__toggle-icon';
+    iconWrapper.innerHTML = activeModuleIcon.innerHTML;
+
+    toggle.innerHTML = '';
+    toggle.appendChild(iconWrapper);
+    toggle.classList.add('stuff-menu__toggle--with-image');
+    return;
+  }
+
+  toggle.textContent = '⚡';
+  toggle.classList.remove('stuff-menu__toggle--with-image');
+}
+
 function createStuffMenu(){
   const container = document.createElement('div');
   container.className = 'stuff-menu';
@@ -3131,6 +3151,18 @@ function createStuffMenu(){
   panel.appendChild(items);
   container.appendChild(toggle);
   container.appendChild(panel);
+
+  syncStuffMenuIcon(toggle);
+
+  const workspaceLauncher = document.querySelector('[data-workspace-launcher]');
+  if (workspaceLauncher && typeof MutationObserver !== 'undefined'){
+    const observer = new MutationObserver(() => syncStuffMenuIcon(toggle));
+    observer.observe(workspaceLauncher, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
 
   let isOpen = false;
 
