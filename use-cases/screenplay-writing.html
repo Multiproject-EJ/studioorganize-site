@@ -2252,6 +2252,8 @@
     window.addEventListener('resize', syncNavHeight);
 
     const SCRIPT_DIALOG_MESSAGE_TYPE = 'so-script-dialog';
+    let scriptDialogInitializationComplete = false;
+    let pendingScriptDialogOpen = false;
     const isScriptDialogEmbedded = (() => {
       try {
         return window.self !== window.top && new URLSearchParams(window.location.search).get('embed') === 'script-dialog';
@@ -2270,6 +2272,14 @@
       } catch (_error){}
     }
 
+    function requestScriptDialogOpen(){
+      if (scriptDialogInitializationComplete){
+        openScriptDialog();
+      } else {
+        pendingScriptDialogOpen = true;
+      }
+    }
+
     if (isScriptDialogEmbedded){
       window.addEventListener('message', event => {
         if (event.source !== window.parent) return;
@@ -2277,8 +2287,9 @@
         const data = event.data;
         if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) return;
         if (data.action === 'open'){
-          openScriptDialog();
+          requestScriptDialogOpen();
         } else if (data.action === 'close'){
+          pendingScriptDialogOpen = false;
           closeScriptDialog();
         }
       });
@@ -3580,6 +3591,10 @@
     }
 
     async function openScriptDialog(){
+      if (!scriptDialogInitializationComplete){
+        pendingScriptDialogOpen = true;
+        return;
+      }
       const dialog = document.getElementById('scriptDialog');
       if (!dialog || dialog.classList.contains('open')) return;
       closeScriptDialogGoalModal({ restoreFocus: false });
@@ -10497,6 +10512,11 @@
       updatePomodoroUI();
       setupTimelineCarousel();
       setTimeout(runSelfTests, 0);
+      scriptDialogInitializationComplete = true;
+      if (pendingScriptDialogOpen){
+        pendingScriptDialogOpen = false;
+        openScriptDialog();
+      }
     })();
     </script>
   </main>
