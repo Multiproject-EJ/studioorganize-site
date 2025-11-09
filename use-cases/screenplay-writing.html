@@ -2256,20 +2256,29 @@
     let pendingScriptDialogOpen = false;
     const isScriptDialogEmbedded = (() => {
       try {
-        return window.self !== window.top && new URLSearchParams(window.location.search).get('embed') === 'script-dialog';
+        const embedded = window.self !== window.top && new URLSearchParams(window.location.search).get('embed') === 'script-dialog';
+        console.log('[ScriptDialog Embed] Checking if embedded:', { embedded, isFramed: window.self !== window.top, embedParam: new URLSearchParams(window.location.search).get('embed') });
+        return embedded;
       } catch (_error){
+        console.error('[ScriptDialog Embed] Error checking embed status:', _error);
         return false;
       }
     })();
     if (isScriptDialogEmbedded){
+      console.log('[ScriptDialog Embed] Page is in embed mode, setting data attribute');
       document.documentElement.setAttribute('data-script-dialog-embed', 'true');
+    } else {
+      console.log('[ScriptDialog Embed] Page is NOT in embed mode');
     }
 
     function postScriptDialogMessage(action){
       if (!isScriptDialogEmbedded) return;
+      console.log(`[ScriptDialog Embed] Posting message to parent: ${action}`);
       try {
         window.parent.postMessage({ type: SCRIPT_DIALOG_MESSAGE_TYPE, action }, '*');
-      } catch (_error){}
+      } catch (_error){
+        console.error('[ScriptDialog Embed] Error posting message to parent:', _error);
+      }
     }
 
     function requestScriptDialogOpen(){
@@ -2281,11 +2290,22 @@
     }
 
     if (isScriptDialogEmbedded){
+      console.log('[ScriptDialog Embed] Setting up message listener for parent communication');
       window.addEventListener('message', event => {
-        if (event.source !== window.parent) return;
-        if (event.origin && event.origin !== window.location.origin && event.origin !== 'null') return;
+        if (event.source !== window.parent) {
+          console.log('[ScriptDialog Embed] Ignoring message from non-parent source');
+          return;
+        }
+        if (event.origin && event.origin !== window.location.origin && event.origin !== 'null') {
+          console.log('[ScriptDialog Embed] Ignoring message from unexpected origin:', event.origin);
+          return;
+        }
         const data = event.data;
-        if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) return;
+        if (!data || data.type !== SCRIPT_DIALOG_MESSAGE_TYPE) {
+          console.log('[ScriptDialog Embed] Ignoring message with wrong type');
+          return;
+        }
+        console.log('[ScriptDialog Embed] Received message from parent:', data.action);
         if (data.action === 'open'){
           requestScriptDialogOpen();
         } else if (data.action === 'close'){
@@ -2293,7 +2313,10 @@
           closeScriptDialog();
         }
       });
-      const notifyReady = () => postScriptDialogMessage('ready');
+      const notifyReady = () => {
+        console.log('[ScriptDialog Embed] Notifying parent that frame is ready');
+        postScriptDialogMessage('ready');
+      };
       if (document.readyState === 'complete' || document.readyState === 'interactive'){
         notifyReady();
       } else {
@@ -3592,11 +3615,20 @@
 
     async function openScriptDialog(){
       if (!scriptDialogInitializationComplete){
+        console.log('[ScriptDialog] Dialog not initialized yet, setting pending flag');
         pendingScriptDialogOpen = true;
         return;
       }
       const dialog = document.getElementById('scriptDialog');
-      if (!dialog || dialog.classList.contains('open')) return;
+      if (!dialog) {
+        console.error('[ScriptDialog] Cannot find #scriptDialog element');
+        return;
+      }
+      if (dialog.classList.contains('open')) {
+        console.log('[ScriptDialog] Dialog already open');
+        return;
+      }
+      console.log('[ScriptDialog] Opening dialog');
       closeScriptDialogGoalModal({ restoreFocus: false });
       dialog.classList.add('open');
       dialog.setAttribute('aria-hidden', 'false');
@@ -3641,7 +3673,9 @@
       scriptDialogLoading = true;
       updateScriptDialogLoadState();
       try {
+        console.log('[ScriptDialog] Loading script options...');
         const options = await getScriptOptions();
+        console.log(`[ScriptDialog] Loaded ${options.length} script options`);
         if (select){
           const frag = document.createDocumentFragment();
           options.forEach(opt => {
@@ -3666,7 +3700,7 @@
         }
         if (status) status.textContent = scriptOptionsStatus || (options.length ? '' : 'No scripts available yet.');
       } catch (err){
-        console.warn(err);
+        console.error('[ScriptDialog] Error loading scripts:', err);
         if (status) status.textContent = scriptOptionsStatus || 'Unable to load scripts right now.';
         updateScriptPreview('');
       } finally {
@@ -3676,6 +3710,7 @@
       setTimeout(()=>{
         if (select && !select.disabled) select.focus();
       }, 0);
+      console.log('[ScriptDialog] Dialog opened successfully');
     }
 
     function closeScriptDialog(){
