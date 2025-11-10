@@ -138,6 +138,16 @@
 
   <main class="section">
     <style>
+      .so-mobile-shell[data-page="character-studio"] .so-mobile-bottom-nav {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .so-mobile-shell[data-page="character-studio"] .so-mobile-bottom-nav {
+          display: flex;
+        }
+      }
+
       html, body { height: 100%; font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial; }
       body {
         color: var(--ink);
