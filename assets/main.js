@@ -2639,6 +2639,7 @@ function ensureWorkspaceLauncherStructure(launcher){
     modules.insertBefore(assistantToggle, modules.firstChild);
   }
   assistantToggle.setAttribute('aria-pressed', assistantToggle.getAttribute('aria-pressed') === 'true' ? 'true' : 'false');
+  assistantToggle.setAttribute('aria-expanded', 'false');
   assistantToggle.setAttribute('aria-label', 'Open StudioOrganize Assistant');
 
   [saveButton, storyButton].forEach(button => {
@@ -2654,6 +2655,16 @@ function ensureWorkspaceLauncherStructure(launcher){
     panel.insertBefore(assistant, moduleStack);
   } else if (assistant.parentElement !== panel){
     panel.insertBefore(assistant, moduleStack);
+  }
+
+  if (assistant instanceof HTMLElement){
+    if (assistant.dataset.workspaceAssistantInitialized === 'true'){
+      assistant.setAttribute('aria-hidden', assistant.hidden ? 'true' : 'false');
+    } else {
+      assistant.hidden = true;
+      assistant.setAttribute('aria-hidden', 'true');
+      assistant.dataset.workspaceAssistantInitialized = 'true';
+    }
   }
 
   if (!assistant.querySelector('.workspace-launcher__assistant-header')){
@@ -2727,7 +2738,7 @@ function injectGlobalWorkspaceLauncher(){
         </div>
       </div>
       <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
-        <div class="workspace-launcher__assistant">
+        <div class="workspace-launcher__assistant" hidden aria-hidden="true">
           <div class="workspace-launcher__assistant-header">
             <span class="workspace-launcher__assistant-avatar" aria-hidden="true"></span>
             <div>
@@ -2845,12 +2856,18 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     return launcher.querySelector('[data-workspace-assistant-toggle]');
   };
 
+  const getAssistant = launcher => {
+    return launcher.querySelector('.workspace-launcher__assistant');
+  };
+
   const updateAssistantToggleState = launcher => {
     const assistantToggle = getAssistantToggle(launcher);
     if (!(assistantToggle instanceof HTMLElement)) return;
-    const chat = getChatBubble(launcher);
-    const isVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
-    assistantToggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+    const assistant = getAssistant(launcher);
+    const assistantVisible = assistant instanceof HTMLElement && !assistant.hidden;
+    assistantToggle.setAttribute('aria-pressed', assistantVisible ? 'true' : 'false');
+    assistantToggle.setAttribute('aria-expanded', assistantVisible ? 'true' : 'false');
+    assistantToggle.setAttribute('aria-label', assistantVisible ? 'Close StudioOrganize Assistant' : 'Open StudioOrganize Assistant');
   };
 
   const showChatBubble = (launcher, { focusInput = true } = {}) => {
@@ -2916,6 +2933,35 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     updateAssistantToggleState(launcher);
   };
 
+  const showAssistant = (launcher, { revealChat = true, focusInput = true } = {}) => {
+    const assistant = getAssistant(launcher);
+    if (!(assistant instanceof HTMLElement)) return;
+
+    if (assistant.hidden){
+      assistant.hidden = false;
+    }
+    assistant.setAttribute('aria-hidden', 'false');
+
+    if (revealChat){
+      showChatBubble(launcher, { focusInput });
+    } else {
+      updateAssistantToggleState(launcher);
+    }
+  };
+
+  const hideAssistant = launcher => {
+    const assistant = getAssistant(launcher);
+    if (!(assistant instanceof HTMLElement)) return;
+
+    hideChatBubble(launcher);
+
+    if (!assistant.hidden){
+      assistant.hidden = true;
+    }
+    assistant.setAttribute('aria-hidden', 'true');
+    updateAssistantToggleState(launcher);
+  };
+
   const closeLauncher = (launcher, { focusToggle = false } = {}) => {
     if (!(launcher instanceof HTMLElement)) return;
     const toggle = launcher.querySelector('[data-workspace-toggle]');
@@ -2927,7 +2973,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     launcher.classList.remove(OPEN_CLASS);
     panel.setAttribute('aria-hidden', 'true');
     toggle.setAttribute('aria-expanded', 'false');
-    hideChatBubble(launcher);
+    hideAssistant(launcher);
 
     if (!panel.hidden){
       panel.dataset.workspaceClosing = 'true';
@@ -2974,7 +3020,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     toggle.setAttribute('aria-expanded', 'true');
 
     if (revealChat){
-      showChatBubble(launcher);
+      showAssistant(launcher);
     } else {
       hideChatBubble(launcher);
     }
@@ -3034,18 +3080,27 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
       assistantToggle.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        const assistant = getAssistant(launcher);
+        const assistantVisible = assistant instanceof HTMLElement && !assistant.hidden;
         const chat = getChatBubble(launcher);
         const chatVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
+
         if (!launcher.classList.contains(OPEN_CLASS)){
           closeAll(launcher);
           openLauncher(launcher, { focusPanel: false, revealChat: false });
+        }
+
+        if (!assistantVisible){
+          showAssistant(launcher, { revealChat: true, focusInput: false });
           return;
         }
+
         if (!chatVisible){
           showChatBubble(launcher, { focusInput: false });
-        } else {
-          hideChatBubble(launcher);
+          return;
         }
+
+        hideAssistant(launcher);
       });
     }
 
