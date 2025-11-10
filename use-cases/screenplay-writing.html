@@ -1132,6 +1132,18 @@
         .panel{ border:none }
       }
 
+      .selection-highlight{position:fixed; z-index:1385; border:1px solid rgba(79,123,255,0.35); box-shadow:0 0 0 3px rgba(79,123,255,0.2), 0 0 26px rgba(79,123,255,0.35); border-radius:14px; pointer-events:none; transition:opacity .18s ease; opacity:0.95; backdrop-filter:blur(1px);}
+      .selection-highlight[hidden]{display:none !important;}
+      .selection-handle{position:fixed; z-index:1425; width:16px; height:16px; border-radius:999px; background:var(--acc); border:2px solid var(--panel); box-shadow:0 10px 24px rgba(79,123,255,0.35); cursor:ew-resize; transition:transform .18s ease, box-shadow .18s ease;}
+      .selection-handle[hidden]{display:none !important;}
+      .selection-handle:active{transform:scale(0.92); box-shadow:0 8px 18px rgba(79,123,255,0.35);}
+      .selection-handle--start{cursor:w-resize;}
+      .selection-handle--end{cursor:e-resize;}
+      .selection-action-button{position:fixed; z-index:1420; border-radius:999px; border:1px solid var(--ring); background:var(--acc); color:var(--active-tab-text); font-size:12px; font-weight:600; padding:6px 16px; letter-spacing:.3px; text-transform:uppercase; cursor:pointer; box-shadow:0 16px 32px rgba(79,123,255,0.28); transition:transform .18s ease, box-shadow .18s ease, filter .2s ease;}
+      .selection-action-button[hidden]{display:none !important;}
+      .selection-action-button:hover{transform:translateY(-1px); box-shadow:0 22px 38px rgba(79,123,255,0.32); filter:brightness(1.02);}
+      .selection-action-button:focus-visible{outline:2px solid var(--active-tab-text); outline-offset:3px;}
+      .selection-action-button:active{transform:translateY(0); box-shadow:0 12px 28px rgba(79,123,255,0.32);}
       .selection-menu{position:fixed; z-index:1400; background:var(--panel); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,0.35); padding:14px 16px; display:flex; flex-direction:column; gap:12px; min-width:220px; max-width:280px}
       .selection-menu[hidden]{display:none !important;}
       .selection-menu__quick{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px}
@@ -8205,10 +8217,292 @@
     const selectionTypeMenuEl = document.getElementById('selectionTypeMenu');
     const selectionTypeCharactersSection = selectionTypeMenuEl?.querySelector('[data-type-characters-section]') || null;
     const selectionTypeCharactersList = selectionTypeMenuEl?.querySelector('[data-type-characters]') || null;
+    let selectionHighlightEl = null;
+    let selectionHandleStart = null;
+    let selectionHandleEnd = null;
+    let selectionActionButton = null;
+    let selectionOverlayFrame = null;
+    let selectionHandleDrag = null;
+    let pointerDownHadSelection = false;
+    let pointerDownWithinSelection = false;
     const LINE_TYPE_CLASSES = ['slug','action','dialogue','character','parenthetical','transition','exposition'];
     let selectionMenuTargetLine = null;
     let selectionMenuFrame = null;
     let selectionTypeMenuFrame = null;
+
+    if (editorEl){
+      selectionHighlightEl = document.createElement('div');
+      selectionHighlightEl.className = 'selection-highlight';
+      selectionHighlightEl.setAttribute('hidden', '');
+      selectionHighlightEl.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(selectionHighlightEl);
+
+      selectionHandleStart = document.createElement('div');
+      selectionHandleStart.className = 'selection-handle selection-handle--start';
+      selectionHandleStart.setAttribute('hidden', '');
+      selectionHandleStart.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(selectionHandleStart);
+
+      selectionHandleEnd = document.createElement('div');
+      selectionHandleEnd.className = 'selection-handle selection-handle--end';
+      selectionHandleEnd.setAttribute('hidden', '');
+      selectionHandleEnd.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(selectionHandleEnd);
+
+      selectionActionButton = document.createElement('button');
+      selectionActionButton.type = 'button';
+      selectionActionButton.className = 'selection-action-button';
+      selectionActionButton.textContent = 'Add…';
+      selectionActionButton.setAttribute('aria-label', 'Open selection actions');
+      selectionActionButton.setAttribute('hidden', '');
+      document.body.appendChild(selectionActionButton);
+    }
+
+    function getCaretRangeFromPoint(x, y){
+      if (typeof document.caretRangeFromPoint === 'function'){
+        const range = document.caretRangeFromPoint(x, y);
+        if (range) return range;
+      }
+      if (typeof document.caretPositionFromPoint === 'function'){
+        const pos = document.caretPositionFromPoint(x, y);
+        if (pos && pos.offsetNode){
+          const range = document.createRange();
+          range.setStart(pos.offsetNode, pos.offset);
+          range.collapse(true);
+          return range;
+        }
+      }
+      return null;
+    }
+
+    function expandRangeToWord(caretRange){
+      if (!caretRange) return null;
+      const range = caretRange.cloneRange();
+      let node = range.startContainer;
+      let offset = range.startOffset;
+      if (node.nodeType !== Node.TEXT_NODE){
+        if (node.childNodes && node.childNodes.length){
+          const child = node.childNodes[Math.min(offset, node.childNodes.length - 1)];
+          if (child && child.nodeType === Node.TEXT_NODE){
+            node = child;
+            offset = child.textContent.length;
+          } else if (child) {
+            const walker = document.createTreeWalker(child, NodeFilter.SHOW_TEXT, null);
+            const textChild = walker.nextNode();
+            if (textChild){
+              node = textChild;
+              offset = textChild.textContent.length;
+            }
+          }
+        }
+        if (node.nodeType !== Node.TEXT_NODE){
+          return null;
+        }
+      }
+      const text = node.textContent || '';
+      if (!text){
+        return null;
+      }
+      let start = Math.min(offset, text.length);
+      let end = start;
+      while (start > 0 && !/\s/.test(text[start - 1])) start--;
+      while (end < text.length && !/\s/.test(text[end])) end++;
+      if (start === end) return null;
+      range.setStart(node, start);
+      range.setEnd(node, end);
+      return range;
+    }
+
+    function hideSelectionOverlay(){
+      if (selectionHighlightEl){
+        selectionHighlightEl.setAttribute('hidden', '');
+        selectionHighlightEl.style.top = '';
+        selectionHighlightEl.style.left = '';
+        selectionHighlightEl.style.width = '';
+        selectionHighlightEl.style.height = '';
+      }
+      if (selectionHandleStart){
+        selectionHandleStart.setAttribute('hidden', '');
+        selectionHandleStart.style.top = '';
+        selectionHandleStart.style.left = '';
+      }
+      if (selectionHandleEnd){
+        selectionHandleEnd.setAttribute('hidden', '');
+        selectionHandleEnd.style.top = '';
+        selectionHandleEnd.style.left = '';
+      }
+      if (selectionActionButton){
+        selectionActionButton.setAttribute('hidden', '');
+        selectionActionButton.style.top = '';
+        selectionActionButton.style.left = '';
+      }
+      stopSelectionHandleDrag();
+    }
+
+    function positionSelectionActionButton(rect){
+      if (!selectionActionButton) return;
+      selectionActionButton.removeAttribute('hidden');
+      requestAnimationFrame(()=>{
+        const buttonRect = selectionActionButton.getBoundingClientRect();
+        let top = rect.top - buttonRect.height - 14;
+        if (top < 12){
+          top = rect.bottom + 14;
+        }
+        top = Math.max(12, Math.min(top, window.innerHeight - buttonRect.height - 12));
+        let left = rect.left + (rect.width / 2) - (buttonRect.width / 2);
+        left = Math.max(12, Math.min(left, window.innerWidth - buttonRect.width - 12));
+        selectionActionButton.style.top = `${Math.round(top)}px`;
+        selectionActionButton.style.left = `${Math.round(left)}px`;
+      });
+    }
+
+    function updateSelectionOverlay(range){
+      if (!range || !selectionHighlightEl) return;
+      const rect = range.getBoundingClientRect();
+      if (!rect || (!rect.width && !rect.height)){
+        hideSelectionOverlay();
+        return;
+      }
+      const padding = 6;
+      selectionHighlightEl.removeAttribute('hidden');
+      selectionHighlightEl.style.top = `${Math.max(0, rect.top - padding)}px`;
+      selectionHighlightEl.style.left = `${Math.max(0, rect.left - padding)}px`;
+      selectionHighlightEl.style.width = `${rect.width + padding * 2}px`;
+      selectionHighlightEl.style.height = `${rect.height + padding * 2}px`;
+
+      if (selectionHandleStart && selectionHandleEnd){
+        const rects = Array.from(range.getClientRects()).filter(r => r.width || r.height);
+        if (rects.length){
+          const first = rects[0];
+          const last = rects[rects.length - 1];
+          selectionHandleStart.removeAttribute('hidden');
+          selectionHandleStart.style.top = `${first.top + first.height / 2}px`;
+          selectionHandleStart.style.left = `${first.left - padding - 4}px`;
+          selectionHandleEnd.removeAttribute('hidden');
+          selectionHandleEnd.style.top = `${last.top + last.height / 2}px`;
+          selectionHandleEnd.style.left = `${last.right + padding + 4}px`;
+        } else {
+          selectionHandleStart.setAttribute('hidden', '');
+          selectionHandleEnd.setAttribute('hidden', '');
+        }
+      }
+      positionSelectionActionButton(rect);
+    }
+
+    function updateSelectionOverlayFromSelection(){
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed){
+        hideSelectionOverlay();
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      if (!editorEl || !editorEl.contains(range.commonAncestorContainer)){
+        hideSelectionOverlay();
+        return;
+      }
+      updateSelectionOverlay(range);
+    }
+
+    function scheduleSelectionOverlayUpdate(){
+      if (selectionOverlayFrame) cancelAnimationFrame(selectionOverlayFrame);
+      selectionOverlayFrame = requestAnimationFrame(()=>{
+        selectionOverlayFrame = null;
+        updateSelectionOverlayFromSelection();
+      });
+    }
+
+    function startSelectionHandleDrag(type, event){
+      if (!selectionHandleStart || !selectionHandleEnd) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+      selectionHandleDrag = { type };
+      document.addEventListener('pointermove', handleSelectionHandleDrag);
+      document.addEventListener('pointerup', stopSelectionHandleDrag);
+      document.addEventListener('pointercancel', stopSelectionHandleDrag);
+    }
+
+    function handleSelectionHandleDrag(event){
+      if (!selectionHandleDrag) return;
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const caretRange = getCaretRangeFromPoint(event.clientX, event.clientY);
+      if (!caretRange) return;
+      const current = sel.getRangeAt(0);
+      const next = current.cloneRange();
+      if (selectionHandleDrag.type === 'start'){
+        try {
+          if (caretRange.comparePoint(current.endContainer, current.endOffset) === 1){
+            next.setStart(current.endContainer, current.endOffset);
+            next.setEnd(caretRange.startContainer, caretRange.startOffset);
+          } else {
+            next.setStart(caretRange.startContainer, caretRange.startOffset);
+            next.setEnd(current.endContainer, current.endOffset);
+          }
+        } catch (err) {
+          return;
+        }
+      } else {
+        try {
+          if (caretRange.comparePoint(current.startContainer, current.startOffset) === -1){
+            next.setEnd(current.startContainer, current.startOffset);
+            next.setStart(caretRange.startContainer, caretRange.startOffset);
+          } else {
+            next.setStart(current.startContainer, current.startOffset);
+            next.setEnd(caretRange.startContainer, caretRange.startOffset);
+          }
+        } catch (err) {
+          return;
+        }
+      }
+      sel.removeAllRanges();
+      sel.addRange(next);
+      selectionMenuTargetLine = getActiveLineNode();
+      refreshSelectionMenuState();
+      scheduleSelectionOverlayUpdate();
+    }
+
+    function stopSelectionHandleDrag(){
+      if (!selectionHandleDrag) return;
+      document.removeEventListener('pointermove', handleSelectionHandleDrag);
+      document.removeEventListener('pointerup', stopSelectionHandleDrag);
+      document.removeEventListener('pointercancel', stopSelectionHandleDrag);
+      selectionHandleDrag = null;
+      scheduleSelectionOverlayUpdate();
+    }
+
+    if (selectionHandleStart){
+      selectionHandleStart.addEventListener('pointerdown', event => startSelectionHandleDrag('start', event));
+    }
+    if (selectionHandleEnd){
+      selectionHandleEnd.addEventListener('pointerdown', event => startSelectionHandleDrag('end', event));
+    }
+    if (selectionActionButton){
+      selectionActionButton.addEventListener('click', event => {
+        event.preventDefault();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || sel.isCollapsed){
+          hideSelectionMenu();
+          hideSelectionOverlay();
+          return;
+        }
+        const range = sel.getRangeAt(0);
+        if (!editorEl || !editorEl.contains(range.commonAncestorContainer)){
+          hideSelectionMenu();
+          hideSelectionOverlay();
+          return;
+        }
+        if (selectionMenuEl && !selectionMenuEl.hasAttribute('hidden')){
+          hideSelectionMenu(false);
+          return;
+        }
+        const line = getActiveLineNode();
+        if (line) selectionMenuTargetLine = line;
+        refreshSelectionMenuState();
+        positionSelectionMenu(range.getBoundingClientRect());
+      });
+    }
 
     function getCharacterNameById(id){
       if (!id || !project || !project.catalogs) return '';
@@ -8370,14 +8664,14 @@
       }
     }
 
-    function hideSelectionMenu(){
+    function hideSelectionMenu(resetTarget = true){
       if (!selectionMenuEl) return;
       selectionMenuEl.setAttribute('hidden', '');
       selectionMenuEl.style.top = '';
       selectionMenuEl.style.left = '';
       selectionMenuEl.style.opacity = '';
       selectionMenuEl.style.visibility = '';
-      selectionMenuTargetLine = null;
+      if (resetTarget) selectionMenuTargetLine = null;
       hideSelectionTypeMenu();
     }
 
@@ -8450,26 +8744,35 @@
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || sel.isCollapsed){
         hideSelectionMenu();
+        hideSelectionOverlay();
         return;
       }
       const range = sel.getRangeAt(0);
       if (!editorEl.contains(range.commonAncestorContainer)){
         hideSelectionMenu();
+        hideSelectionOverlay();
         return;
       }
       const rect = range.getBoundingClientRect();
       if (!rect || (!rect.width && !rect.height)){
         hideSelectionMenu();
+        hideSelectionOverlay();
         return;
       }
       const line = getActiveLineNode();
       if (!line){
         hideSelectionMenu();
+        hideSelectionOverlay();
         return;
       }
       selectionMenuTargetLine = line;
       refreshSelectionMenuState();
-      positionSelectionMenu(rect);
+      updateSelectionOverlay(range);
+      if (selectionMenuEl && !selectionMenuEl.hasAttribute('hidden')){
+        positionSelectionMenu(rect);
+      } else {
+        hideSelectionMenu(false);
+      }
     }
 
     function handleSelectionMenuClick(event){
@@ -8581,11 +8884,16 @@
       if (selectionMenuEl.contains(e.target)) return;
       if (selectionTypeMenuEl && selectionTypeMenuEl.contains(e.target)) return;
       if (selectionMenuTypeTrigger && selectionMenuTypeTrigger.contains(e.target)) return;
+      if (selectionActionButton && selectionActionButton.contains(e.target)) return;
+      if (selectionHandleStart && selectionHandleStart.contains(e.target)) return;
+      if (selectionHandleEnd && selectionHandleEnd.contains(e.target)) return;
       if (editorEl && editorEl.contains(e.target)) return;
       hideSelectionMenu();
     });
     window.addEventListener('resize', hideSelectionMenu);
+    window.addEventListener('resize', scheduleSelectionOverlayUpdate);
     document.addEventListener('scroll', hideSelectionMenu, true);
+    document.addEventListener('scroll', scheduleSelectionOverlayUpdate, true);
 
     function getActiveLineNode(){
       const sel = window.getSelection();
@@ -8666,6 +8974,45 @@
       markActiveLine();
       if (document.body.classList.contains('focus-mode')) centerActiveLine();
     });
+
+    if (editorEl){
+      editorEl.addEventListener('pointerdown', event => {
+        const sel = window.getSelection();
+        pointerDownHadSelection = !!sel && sel.rangeCount > 0 && !sel.isCollapsed;
+        pointerDownWithinSelection = false;
+        if (!pointerDownHadSelection) return;
+        const range = sel.getRangeAt(0);
+        const caret = getCaretRangeFromPoint(event.clientX, event.clientY);
+        if (!caret) return;
+        try {
+          if (range.isPointInRange(caret.startContainer, caret.startOffset)){
+            pointerDownWithinSelection = true;
+          }
+        } catch (err) {
+          pointerDownWithinSelection = false;
+        }
+      });
+      editorEl.addEventListener('click', event => {
+        if (!pointerDownHadSelection){
+          pointerDownWithinSelection = false;
+          return;
+        }
+        const wasInside = pointerDownWithinSelection;
+        pointerDownHadSelection = false;
+        pointerDownWithinSelection = false;
+        if (!wasInside) return;
+        const caret = getCaretRangeFromPoint(event.clientX, event.clientY);
+        const wordRange = expandRangeToWord(caret);
+        if (!wordRange) return;
+        const sel = window.getSelection();
+        if (!sel) return;
+        sel.removeAllRanges();
+        sel.addRange(wordRange);
+        selectionMenuTargetLine = getActiveLineNode();
+        refreshSelectionMenuState();
+        scheduleSelectionOverlayUpdate();
+      });
+    }
 
     /* Auto type-detection */
     function autoDetectTypes(){
