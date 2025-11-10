@@ -383,7 +383,8 @@
       .scene-card[data-color-source="auto"] .scene-card-color{box-shadow:0 0 0 2px rgba(79,123,255,0.2);}
       .timeline-card-color{display:inline-flex; width:12px; height:12px; border-radius:50%; border:1px solid rgba(15,23,42,0.25);}
       .editor{padding:0; display:flex; flex-direction:column; min-height:0}
-      .editor-heading{display:flex; align-items:center; justify-content:space-between; padding:10px 12px 0 12px; gap:12px}
+      .editor-heading{display:flex; align-items:center; justify-content:space-between; padding:10px 12px 0 12px; gap:12px; flex-wrap:wrap}
+      .editor-heading__title{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0}
       .editor-heading h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted)}
       .editor-heading__actions{display:flex; align-items:center; gap:8px}
       .editor-stage{flex:1; display:flex; flex-direction:column; min-height:0; position:relative; --page-width:794px; --page-height:1123px}
@@ -400,6 +401,17 @@
       .editor-view-toggle{display:inline-flex; border:1px solid var(--ring); border-radius:999px; padding:2px; background:var(--chip); gap:2px}
       .editor-view-toggle button{border:none; background:transparent; color:var(--muted); font-size:11px; letter-spacing:.3px; text-transform:uppercase; padding:4px 10px; border-radius:999px; cursor:pointer; transition:background .2s ease, color .2s ease}
       .editor-view-toggle button.active{background:var(--acc); color:var(--active-tab-text); font-weight:600}
+      body[data-main-view-mode="industry"] #screenplayLayout{grid-template-columns:minmax(0, 1fr);}
+      body[data-main-view-mode="industry"] #scenePanelSlot,
+      body[data-main-view-mode="industry"] #rightPanelSlot,
+      body[data-main-view-mode="industry"] #focusHudDock,
+      body[data-main-view-mode="industry"] .timeline-dock{display:none !important;}
+      body[data-main-view-mode="industry"] .editor-footer .scene-view-nav{display:none !important;}
+      body[data-main-view-mode="industry"] .editor-area .line.exposition{display:none !important;}
+      body[data-main-view-mode="industry"] .editor-area .line[data-tag-label]{padding-top:0;}
+      body[data-main-view-mode="industry"] .editor-area .line[data-tag-label]::after{display:none !important;}
+      body[data-main-view-mode="industry"] .editor-area .line[data-story-part]{border-left:none !important; padding-left:0;}
+      body[data-main-view-mode="industry"] .editor-area .line[data-story-beat]{background-image:none !important;}
       #exitFocusBtn{display:none; width:30px; height:30px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--muted); font-size:16px; line-height:1; align-items:center; justify-content:center; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease; padding:0}
       #exitFocusBtn:hover{border-color:var(--acc); background:var(--acc); color:var(--active-tab-text)}
       #exitFocusBtn:focus{outline:none}
@@ -1796,7 +1808,13 @@
 
         <div class="panel editor">
           <div class="editor-heading">
-            <h2>Script</h2>
+            <div class="editor-heading__title">
+              <h2>Script</h2>
+              <div class="editor-view-toggle editor-main-view-toggle" role="group" aria-label="Main view mode">
+                <button type="button" class="active" data-main-view-mode="writer" aria-pressed="true">Writer</button>
+                <button type="button" data-main-view-mode="industry" aria-pressed="false">Industry</button>
+              </div>
+            </div>
             <div class="editor-heading__actions">
               <div class="editor-view-toggle" role="group" aria-label="Script view mode">
                 <button type="button" class="active" data-script-view-mode="scroll" aria-pressed="true">Scroll</button>
@@ -4378,6 +4396,9 @@
       if (typeof project.settings.showSceneNotes !== 'boolean'){
         project.settings.showSceneNotes = true;
       }
+      if (project.settings.mainViewMode !== 'industry' && project.settings.mainViewMode !== 'writer'){
+        project.settings.mainViewMode = 'writer';
+      }
       const timelinePreference = typeof latestVisibilityPreference.timeline === 'boolean'
         ? latestVisibilityPreference.timeline
         : DEFAULT_VISIBILITY_PREF.timeline;
@@ -4734,6 +4755,7 @@
 
     function render(){
       ensureProjectShape();
+      applyMainViewModeFromProject();
       pruneStoryboardAIState();
       updateStoryboardModeUI();
       hideSelectionMenu();
@@ -7923,6 +7945,8 @@
     const editorStageEl = document.getElementById('editorStage');
     const editorScrollEl = document.getElementById('editorScroll');
     const scriptViewModeButtons = Array.from(document.querySelectorAll('[data-script-view-mode]'));
+    const mainViewModeButtons = Array.from(document.querySelectorAll('[data-main-view-mode]'));
+    let mainViewMode = 'writer';
     const scriptControlsEl = document.getElementById('scriptControls');
     const pageViewNavEl = document.getElementById('pageViewNav');
     const pageViewLabelEl = document.getElementById('pageViewLabel');
@@ -7945,6 +7969,51 @@
         editorScrollEl.scrollTop = 0;
       }
     }
+
+    function normalizeMainViewMode(mode){
+      return mode === 'industry' ? 'industry' : 'writer';
+    }
+
+    function updateMainViewModeUI(){
+      const body = document.body;
+      if (body){
+        body.dataset.mainViewMode = mainViewMode;
+      }
+      const layoutEl = document.getElementById('screenplayLayout');
+      if (layoutEl){
+        layoutEl.dataset.mainViewMode = mainViewMode;
+      }
+      mainViewModeButtons.forEach(btn => {
+        const value = normalizeMainViewMode(btn.dataset.mainViewMode);
+        const isActive = value === mainViewMode;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+    }
+
+    function setMainViewMode(mode, options = {}){
+      const normalized = normalizeMainViewMode(mode);
+      if (normalized === mainViewMode && !options.force){
+        updateMainViewModeUI();
+        return;
+      }
+      mainViewMode = normalized;
+      updateMainViewModeUI();
+      if (project){
+        project.settings = project.settings || {};
+        project.settings.mainViewMode = normalized;
+        if (options.persist !== false){
+          saveLocal(project);
+        }
+      }
+    }
+
+    function applyMainViewModeFromProject(){
+      mainViewMode = normalizeMainViewMode(project?.settings?.mainViewMode);
+      updateMainViewModeUI();
+    }
+
+    updateMainViewModeUI();
 
     function goToAdjacentScene(offset){
       if (!project || !Array.isArray(project.scenes) || !project.scenes.length) return;
@@ -8179,6 +8248,12 @@
         setPageViewIndex(nextIndex, { smooth:false, persist:false, force:true });
       }
     }
+    if (mainViewModeButtons.length){
+      mainViewModeButtons.forEach(btn => {
+        btn.addEventListener('click', ()=> setMainViewMode(btn.dataset.mainViewMode));
+      });
+    }
+
     if (scriptViewModeButtons.length){
       scriptViewModeButtons.forEach(btn => {
         btn.addEventListener('click', ()=> setPageViewMode(btn.dataset.scriptViewMode));
