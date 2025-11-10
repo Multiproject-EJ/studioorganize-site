@@ -3421,13 +3421,52 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 }
 
 // Stuff Menu - Mobile only circular menu
-const STUFF_MENU_ITEMS = [
-  { icon: '🎬', label: 'Placeholder 1', action: () => console.log('Item 1 clicked') },
-  { icon: '🎨', label: 'Placeholder 2', action: () => console.log('Item 2 clicked') },
-  { icon: '📝', label: 'Placeholder 3', action: () => console.log('Item 3 clicked') },
-  { icon: '⚙️', label: 'Placeholder 4', action: () => console.log('Item 4 clicked') },
-  { icon: '📊', label: 'Placeholder 5', action: () => console.log('Item 5 clicked') },
+const STUFF_MENU_PAGE_ITEMS = [
+  {
+    match: 'screenplay-writing.html',
+    items: [
+      { label: 'Timelines', action: () => console.log('Timelines clicked') },
+      { label: 'Scene', action: () => console.log('Scene clicked') },
+      { label: 'Visual', action: () => console.log('Visual clicked') },
+      { label: 'Cast', action: () => console.log('Cast clicked') },
+      { label: 'Set', action: () => console.log('Set clicked') },
+      { label: 'Sound', action: () => console.log('Sound clicked') },
+      { label: 'Notes', action: () => console.log('Notes clicked') },
+      { label: 'Ai', action: () => console.log('Ai clicked') },
+    ]
+  },
+  {
+    match: 'CharacterStudio.html',
+    items: [
+      { label: 'FinishThatStory', action: () => console.log('FinishThatStory clicked') },
+      { label: 'QuickStart Dialog', action: () => console.log('QuickStart Dialog clicked') },
+    ]
+  },
+  {
+    match: 'StoryboardPro.html',
+    items: [
+      { label: 'Timeline', action: () => console.log('Timeline clicked') },
+      { label: 'Placeholder', action: () => console.log('Placeholder clicked') },
+      { label: 'Ai Settings', action: () => console.log('Ai Settings clicked') },
+    ]
+  },
+  {
+    match: 'VideoEditing.html',
+    items: [
+      { label: 'Video Ai Settings', action: () => console.log('Video Ai Settings clicked') },
+      { label: 'Placeholder', action: () => console.log('Placeholder clicked') },
+    ]
+  }
 ];
+
+function resolveStuffMenuItems(pathname){
+  for (const entry of STUFF_MENU_PAGE_ITEMS){
+    if (pathname.includes(entry.match)){
+      return entry.items;
+    }
+  }
+  return null;
+}
 
 function syncStuffMenuIcon(toggle){
   if (!toggle) return;
@@ -3449,7 +3488,7 @@ function syncStuffMenuIcon(toggle){
   toggle.classList.remove('stuff-menu__toggle--with-image');
 }
 
-function createStuffMenu(){
+function createStuffMenu(menuItems){
   const container = document.createElement('div');
   container.className = 'stuff-menu';
   container.setAttribute('data-stuff-menu', '');
@@ -3469,15 +3508,18 @@ function createStuffMenu(){
   const items = document.createElement('div');
   items.className = 'stuff-menu__items';
 
-  STUFF_MENU_ITEMS.forEach(item => {
+  menuItems.forEach((item, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'stuff-menu__item';
     button.setAttribute('aria-label', item.label);
-    button.innerHTML = item.icon;
+    button.setAttribute('data-stuff-menu-index', String(index));
+    button.textContent = item.label;
     button.addEventListener('click', event => {
       event.stopPropagation();
-      item.action();
+      if (typeof item.action === 'function'){
+        item.action();
+      }
     });
     items.appendChild(button);
   });
@@ -3547,21 +3589,16 @@ function createStuffMenu(){
 }
 
 function initStuffMenu(){
-  // Only initialize on specific pages
   const currentPath = window.location.pathname;
-  const shouldShowMenu =
-    currentPath.includes('screenplay-writing.html') ||
-    currentPath.includes('StoryboardPro.html') ||
-    currentPath.includes('VideoEditing.html') ||
-    currentPath.includes('CharacterStudio.html');
+  const pageItems = resolveStuffMenuItems(currentPath);
 
-  if (!shouldShowMenu) return;
+  if (!pageItems || pageItems.length === 0) return;
 
   // Check if stuff menu already exists
   if (document.querySelector('[data-stuff-menu]')) return;
 
   // Create and append stuff menu
-  const stuffMenu = createStuffMenu();
+  const stuffMenu = createStuffMenu(pageItems);
   document.body.appendChild(stuffMenu);
 }
 
