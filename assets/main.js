@@ -2557,20 +2557,6 @@ function ensureWorkspaceLauncherStructure(launcher){
     panel.appendChild(moduleStack);
   }
 
-  let actions = panel.querySelector('.workspace-launcher__actions');
-  if (!(actions instanceof HTMLElement)){
-    actions = document.createElement('div');
-    actions.className = 'workspace-launcher__actions';
-    actions.innerHTML = `
-      <button type="button" class="workspace-launcher__script" data-workspace-script>
-        <span>Story</span>
-      </button>
-    `;
-  }
-  if (actions.parentElement !== moduleStack){
-    moduleStack.insertBefore(actions, moduleStack.firstChild);
-  }
-
   let modules = panel.querySelector('.workspace-launcher__modules');
   if (!(modules instanceof HTMLElement)){
     modules = document.createElement('nav');
@@ -2582,10 +2568,10 @@ function ensureWorkspaceLauncherStructure(launcher){
   }
 
   const ensureButton = (selector, html) => {
-    let button = modules.querySelector(selector);
+    let button = panel.querySelector(selector);
     if (!button){
       modules.insertAdjacentHTML('beforeend', html);
-      button = modules.querySelector(selector);
+      button = panel.querySelector(selector);
     }
     return button instanceof HTMLElement ? button : null;
   };
@@ -2603,7 +2589,7 @@ function ensureWorkspaceLauncherStructure(launcher){
       </button>
     `);
 
-  const storyButton = ensureButton('[data-workspace-script]', `
+  const storyButton = ensureButton('.workspace-launcher__module--story', `
       <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
         <span class="workspace-launcher__module-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2642,80 +2628,49 @@ function ensureWorkspaceLauncherStructure(launcher){
   assistantToggle.setAttribute('aria-expanded', 'false');
   assistantToggle.setAttribute('aria-label', 'Open StudioOrganize Assistant');
 
+  let quickActions = panel.querySelector('.workspace-launcher__quick-actions');
+  if (!(quickActions instanceof HTMLElement)){
+    quickActions = document.createElement('div');
+    quickActions.className = 'workspace-launcher__quick-actions';
+    quickActions.innerHTML = `
+      <p class="workspace-launcher__quick-actions-label">Quick actions</p>
+      <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions"></div>
+    `;
+  }
+  if (quickActions.parentElement !== panel){
+    panel.insertBefore(quickActions, moduleStack);
+  } else if (panel.firstElementChild !== quickActions){
+    panel.insertBefore(quickActions, moduleStack);
+  }
+
+  let quickActionsGroup = quickActions.querySelector('.workspace-launcher__quick-actions-buttons');
+  if (!(quickActionsGroup instanceof HTMLElement)){
+    quickActionsGroup = document.createElement('div');
+    quickActionsGroup.className = 'workspace-launcher__quick-actions-buttons';
+    quickActionsGroup.setAttribute('role', 'group');
+    quickActionsGroup.setAttribute('aria-label', 'Workspace quick actions');
+    quickActions.appendChild(quickActionsGroup);
+  }
+
+  let scriptButton = quickActionsGroup.querySelector('.workspace-launcher__script');
+  if (!(scriptButton instanceof HTMLElement)){
+    scriptButton = document.createElement('button');
+    scriptButton.type = 'button';
+    scriptButton.className = 'workspace-launcher__script';
+    scriptButton.setAttribute('data-workspace-script', '');
+    scriptButton.innerHTML = '<span>Story</span>';
+  }
+  quickActionsGroup.appendChild(scriptButton);
+
   [saveButton, storyButton].forEach(button => {
     if (button instanceof HTMLElement){
-      modules.appendChild(button);
+      quickActionsGroup.appendChild(button);
     }
   });
 
-  let assistant = panel.querySelector('.workspace-launcher__assistant');
-  if (!(assistant instanceof HTMLElement)){
-    assistant = document.createElement('div');
-    assistant.className = 'workspace-launcher__assistant';
-    panel.insertBefore(assistant, moduleStack);
-  } else if (assistant.parentElement !== panel){
-    panel.insertBefore(assistant, moduleStack);
-  }
-
-  if (assistant instanceof HTMLElement){
-    if (assistant.dataset.workspaceAssistantInitialized === 'true'){
-      assistant.setAttribute('aria-hidden', assistant.hidden ? 'true' : 'false');
-    } else {
-      assistant.hidden = true;
-      assistant.setAttribute('aria-hidden', 'true');
-      assistant.dataset.workspaceAssistantInitialized = 'true';
-    }
-  }
-
-  if (!assistant.querySelector('.workspace-launcher__assistant-header')){
-    assistant.insertAdjacentHTML('afterbegin', `
-      <div class="workspace-launcher__assistant-header">
-        <span class="workspace-launcher__assistant-avatar" aria-hidden="true"></span>
-        <div>
-          <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
-          <p class="workspace-launcher__assistant-subtitle">Tell me if we're continuing a story or starting fresh and I'll tailor the prompts.</p>
-        </div>
-      </div>
-    `);
-  }
-
-  const chat = launcher.querySelector('[data-workspace-chat]');
-  let assistantActions = assistant.querySelector('.workspace-launcher__assistant-actions');
-  if (!(assistantActions instanceof HTMLElement)){
-    assistantActions = document.createElement('div');
-    assistantActions.className = 'workspace-launcher__assistant-actions';
-    assistantActions.innerHTML = `
-      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="continue">
-        <span>📚 Check in on my current story</span>
-      </button>
-      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="new">
-        <span>✨ Start something new</span>
-      </button>
-      <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="settings">
-        <span>⚙️ Adjust how you coach me</span>
-      </button>
-      <button type="button" class="workspace-launcher__assistant-action" data-video-lessons-open>
-        <span>📺 Video Lessons</span>
-      </button>
-    `;
-    if (chat instanceof HTMLElement && chat.parentElement === assistant){
-      assistant.insertBefore(assistantActions, chat);
-    } else {
-      assistant.appendChild(assistantActions);
-    }
-  }
-
-  if (chat instanceof HTMLElement){
-    chat.classList.add('workspace-launcher__chat--docked');
-    if (!assistant.contains(chat)){
-      assistant.appendChild(chat);
-    } else if (assistantActions instanceof HTMLElement){
-      assistant.appendChild(chat);
-    }
-    if (!chat.hasAttribute('hidden')){
-      chat.hidden = true;
-      chat.setAttribute('aria-hidden', 'true');
-    }
+  const legacyActions = panel.querySelector('.workspace-launcher__actions');
+  if (legacyActions instanceof HTMLElement && legacyActions !== quickActions){
+    legacyActions.remove();
   }
 
   launcher.dataset.workspaceLauncherPrepared = 'true';
@@ -2738,71 +2693,38 @@ function injectGlobalWorkspaceLauncher(){
         </div>
       </div>
       <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
-        <div class="workspace-launcher__assistant" hidden aria-hidden="true">
-          <div class="workspace-launcher__assistant-header">
-            <span class="workspace-launcher__assistant-avatar" aria-hidden="true"></span>
-            <div>
-              <p class="workspace-launcher__assistant-title">StudioOrganize Assistant</p>
-              <p class="workspace-launcher__assistant-subtitle">Tell me if we're continuing a story or starting fresh and I'll tailor the prompts.</p>
-            </div>
-          </div>
-          <div class="workspace-launcher__assistant-actions">
-            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="continue">
-              <span>📚 Check in on my current story</span>
+        <div class="workspace-launcher__quick-actions">
+          <p class="workspace-launcher__quick-actions-label">Quick actions</p>
+          <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
+            <button type="button" class="workspace-launcher__script" data-workspace-script>
+              <span>Story</span>
             </button>
-            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="new">
-              <span>✨ Start something new</span>
+            <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+              </span>
+              <span class="sr-only">Save Progress</span>
             </button>
-            <button type="button" class="workspace-launcher__assistant-action" data-workspace-chat-suggestion data-workspace-chat-action="settings">
-              <span>⚙️ Adjust how you coach me</span>
+            <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </span>
+              <span class="sr-only">New Story</span>
             </button>
-            <button type="button" class="workspace-launcher__assistant-action" data-video-lessons-open>
-              <span>📺 Video Lessons</span>
-            </button>
-          </div>
-          <div class="workspace-launcher__chat workspace-launcher__chat--docked" data-workspace-chat hidden aria-hidden="true">
-            <div class="workspace-launcher__chat-bubble">
-              <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
-                <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Hi there! Ready to build something great today?</div>
-              </div>
-              <div class="workspace-launcher__chat-suggestions">
-                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="continue">Check my progress</button>
-                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="new">Spin up something new</button>
-                <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="settings">How should you behave?</button>
-              </div>
-              <form class="workspace-launcher__chat-form" data-workspace-chat-form>
-                <div class="workspace-launcher__chat-input">
-                  <input type="text" placeholder="Ask StudioOrganize…" aria-label="Ask the workspace assistant" data-workspace-chat-input />
-                  <button type="submit" class="workspace-launcher__chat-send" aria-label="Send chat message">
-                    <span aria-hidden="true">➤</span>
-                  </button>
-                </div>
-              </form>
-            </div>
           </div>
         </div>
-        <nav class="workspace-launcher__modules" aria-label="Workspace modules">
-          ${modulesMarkup}
-          <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-            </span>
-            <span class="sr-only">Save Progress</span>
-          </button>
-          <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </span>
-            <span class="sr-only">New Story</span>
-          </button>
-        </nav>
+        <div class="workspace-launcher__module-stack">
+          <nav class="workspace-launcher__modules" aria-label="Workspace modules">
+            ${modulesMarkup}
+          </nav>
+        </div>
       </div>
     </div>
   `;
