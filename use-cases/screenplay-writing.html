@@ -4975,8 +4975,8 @@
         const tagsHtml = hasTags
           ? tags.map(tag => `<span class="scene-card-tag">${escapeHtml(tag)}</span>`).join('')
           : '';
-        const tagsButtonLabel = hasTags ? 'Tags' : 'Add scene tags';
-        const tagsButtonAriaLabel = hasTags ? `Edit scene tags for ${sceneNumberLabel}` : 'Add scene tags';
+        const tagsButtonLabel = hasTags ? 'Tags' : 'Add tags';
+        const tagsButtonAriaLabel = hasTags ? `Edit scene tags for ${sceneNumberLabel}` : `Add tags for ${sceneNumberLabel}`;
         div.innerHTML = `
           <div class="scene-card-body">
             <div class="scene-card-title" data-scene-edit-root>
