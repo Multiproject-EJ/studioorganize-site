@@ -772,12 +772,37 @@
       .api-dialog__close { border: none; background: transparent; color: inherit; font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
       .api-dialog__close:hover { background: rgba(79,123,255,0.12); }
       .ai-form select { width: 100%; border-radius: 12px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); padding: 10px 12px; font-size: 14px; }
-      .feature-section { padding: 36px 48px 72px; display: grid; gap: 24px; }
-      .feature-section h2 { font-size: 26px; margin: 0; }
-      .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-      .feature-card { background: var(--panel); border: 1px solid var(--ring); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-      .feature-card h3 { margin: 0; font-size: 16px; }
-      .feature-card p { margin: 0; color: var(--muted); line-height: 1.5; }
+      .feature-section { padding: 36px 24px 64px; display: flex; flex-direction: column; gap: 24px; }
+      .feature-section h2 { margin: 0; max-width: 780px; font-size: clamp(24px, 3vw, 32px); font-weight: 700; letter-spacing: .2px; }
+      .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+      .feature-card { background: linear-gradient(135deg, rgba(79,123,255,0.08), rgba(34,211,238,0.08)), var(--panel); border: 1px solid rgba(79,123,255,0.2); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 18px 38px rgba(8,15,28,0.16); }
+      .feature-card h3 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }
+      .feature-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+      .storyboard-gallery-cta { padding: 48px 24px 60px; display: flex; justify-content: center; }
+      .storyboard-gallery-cta__button { font-size: 15px; padding: 14px 28px; box-shadow: 0 22px 46px rgba(79,123,255,0.28); }
+      .storyboard-gallery-cta__button:hover { box-shadow: 0 28px 56px rgba(79,123,255,0.36); }
+      .lookbook-dialog { border: none; border-radius: 24px; padding: 0; width: min(960px, 92vw); max-width: 960px; background: transparent; color: inherit; }
+      .lookbook-dialog::backdrop { background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); }
+      .lookbook-dialog__surface { background: var(--panel); border-radius: 24px; border: 1px solid var(--ring); box-shadow: 0 48px 120px rgba(8,15,28,0.45); display: flex; flex-direction: column; max-height: min(85vh, 760px); overflow: hidden; }
+      .lookbook-dialog__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 28px 16px; border-bottom: 1px solid var(--ring); }
+      .lookbook-dialog__header-text { display: flex; flex-direction: column; gap: 6px; }
+      .lookbook-dialog__eyebrow { margin: 0; font-size: 12px; letter-spacing: .32px; text-transform: uppercase; color: rgba(15,23,42,0.55); }
+      .lookbook-dialog__header h2 { margin: 0; font-size: clamp(22px, 3vw, 28px); font-weight: 700; letter-spacing: 0.2px; }
+      .lookbook-dialog__close { border: 1px solid transparent; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; line-height: 1; background: var(--chip); color: var(--ink); cursor: pointer; transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+      .lookbook-dialog__close:hover { background: var(--acc); color: var(--active-tab-text); border-color: var(--acc); box-shadow: 0 12px 26px rgba(79,123,255,0.32); }
+      .lookbook-dialog__close:focus-visible { outline: none; border-color: var(--acc); box-shadow: 0 0 0 2px rgba(79,123,255,0.25); }
+      .lookbook-dialog__body { padding: 0 28px 28px; overflow-y: auto; display: flex; flex-direction: column; gap: 28px; }
+      .lookbook-dialog__intro { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.6; }
+      .lookbook-dialog__feature-section { padding: 0; }
+      .lookbook-dialog__feature-section .feature-card { box-shadow: 0 14px 34px rgba(8,15,28,0.18); }
+      .lookbook-dialog__footer { display: flex; justify-content: flex-end; padding: 16px 28px 24px; border-top: 1px solid var(--ring); background: linear-gradient(180deg, rgba(79,123,255,0.05), transparent); }
+      @media (max-width: 720px) {
+        .lookbook-dialog { width: min(94vw, 520px); }
+        .lookbook-dialog__surface { border-radius: 20px; }
+        .lookbook-dialog__header { padding: 20px 22px 14px; }
+        .lookbook-dialog__body { padding: 0 22px 22px; }
+        .lookbook-dialog__footer { padding: 16px 22px 20px; }
+      }
       @media (max-width: 1280px) {
         .layout { grid-template-columns: 1fr; grid-template-rows: repeat(3, minmax(0, auto)); }
         .timeline-wrapper { max-height: 520px; }
@@ -1094,56 +1119,7 @@
                 <span>EXT. ALLEY - NIGHT</span>
               </div>
             </div>
-            <div class="image-selection__grid">
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%231d4ed8%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%230ea5e9%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2001%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 01" loading="lazy" />
-  <span class="image-selection__label">Option 01</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%237c3aed%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23ec4899%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2002%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 02" loading="lazy" />
-  <span class="image-selection__label">Option 02</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%230f172a%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%231e293b%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2003%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 03" loading="lazy" />
-  <span class="image-selection__label">Option 03</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23ef4444%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23f97316%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2004%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 04" loading="lazy" />
-  <span class="image-selection__label">Option 04</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%2314b8a6%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%230ea5e9%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2005%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 05" loading="lazy" />
-  <span class="image-selection__label">Option 05</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23f59e0b%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23f97316%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2006%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 06" loading="lazy" />
-  <span class="image-selection__label">Option 06</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23a855f7%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%236366f1%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2007%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 07" loading="lazy" />
-  <span class="image-selection__label">Option 07</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%232563eb%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%234338ca%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2008%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 08" loading="lazy" />
-  <span class="image-selection__label">Option 08</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%230ea5e9%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2322d3ee%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2009%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 09" loading="lazy" />
-  <span class="image-selection__label">Option 09</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%236366f1%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2322d3ee%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2010%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 10" loading="lazy" />
-  <span class="image-selection__label">Option 10</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%23f43f5e%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%23f97316%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2011%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 11" loading="lazy" />
-  <span class="image-selection__label">Option 11</span>
-</button>
-<button class="image-selection__item" type="button">
-  <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20600%20400%27%3E%0A%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%3ClinearGradient%20id%3D%27grad%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27%231e293b%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%2364748b%27/%3E%0A%20%20%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3C/defs%3E%0A%20%20%20%20%3Crect%20width%3D%27600%27%20height%3D%27400%27%20fill%3D%27url%28%23grad%29%27/%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2748%27%20font-weight%3D%27600%27%3EScene%201%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27190%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.92%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2732%27%20font-weight%3D%27500%27%3EEXT.%20ALLEY%20%C2%B7%20NIGHT%3C/text%3E%0A%20%20%20%20%3Ctext%20x%3D%2740%27%20y%3D%27260%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.78%29%27%20font-family%3D%27Segoe%20UI%2C%20Inter%2C%20sans-serif%27%20font-size%3D%2724%27%20font-weight%3D%27400%27%3EConcept%20variation%2012%3C/text%3E%0A%20%20%3C/svg%3E" alt="Storyboard variation 12" loading="lazy" />
-  <span class="image-selection__label">Option 12</span>
-</button>
-            </div>
+            <div class="image-selection__grid" data-image-selection-grid></div>
           </div>
           <div class="timeline-stage timeline-stage--legacy visually-hidden" aria-hidden="true">
             <header>
@@ -1439,84 +1415,106 @@
         </div>
       </dialog>
 
-      <section class="storyboard-gallery" aria-labelledby="storyboardGalleryTitle">
-        <div class="storyboard-gallery__header">
-          <h2 id="storyboardGalleryTitle">Storyboard lookbook</h2>
-          <p class="muted">Collect visual inspiration and pin reference frames as you build your scenes.</p>
-        </div>
-        <div class="storyboard-gallery__grid">
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Atmospheric establishing shot</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Character close-up</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Action beat snapshot</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Lighting reference</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Storyboard thumbnail</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Storyboard motion study</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Location concept</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Storyboard beat detail</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Previz frame</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Color script panel</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Audio cue marker</figcaption>
-          </figure>
-          <figure class="storyboard-gallery__item">
-            <div class="storyboard-gallery__preview" aria-hidden="true"></div>
-            <figcaption>Director's note overlay</figcaption>
-          </figure>
-        </div>
+      <section class="storyboard-gallery-cta">
+        <button
+          class="btn btn-primary storyboard-gallery-cta__button"
+          type="button"
+          data-lookbook-open
+          aria-haspopup="dialog"
+          aria-controls="lookbookDialog"
+        >
+          Open storyboard lookbook
+        </button>
       </section>
 
-    <section class="feature-section">
-      <h2>Storyboard Pro keeps every department locked to the same scene timeline.</h2>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <h3>Scene-aware continuity</h3>
-          <p>Every block tracks back to a script beat, automatically inheriting dialogue, props, and camera notes from the writer.</p>
+      <dialog class="lookbook-dialog" id="lookbookDialog" aria-labelledby="lookbookDialogTitle" aria-modal="true" data-lookbook-dialog>
+        <div class="lookbook-dialog__surface" role="document">
+          <header class="lookbook-dialog__header">
+            <div class="lookbook-dialog__header-text">
+              <p class="lookbook-dialog__eyebrow">Inspiration library</p>
+              <h2 id="lookbookDialogTitle">Storyboard lookbook</h2>
+            </div>
+            <button class="lookbook-dialog__close" type="button" data-lookbook-close aria-label="Close lookbook">×</button>
+          </header>
+          <div class="lookbook-dialog__body">
+            <p class="lookbook-dialog__intro">Collect visual inspiration and pin reference frames as you build your scenes.</p>
+            <div class="storyboard-gallery__grid">
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Atmospheric establishing shot</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Character close-up</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Action beat snapshot</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Lighting reference</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Storyboard thumbnail</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Storyboard motion study</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Location concept</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Storyboard beat detail</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Previz frame</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Color script panel</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Audio cue marker</figcaption>
+              </figure>
+              <figure class="storyboard-gallery__item">
+                <div class="storyboard-gallery__preview" aria-hidden="true"></div>
+                <figcaption>Director's note overlay</figcaption>
+              </figure>
+            </div>
+            <section class="feature-section lookbook-dialog__feature-section">
+              <h2>Storyboard Pro keeps every department locked to the same scene timeline.</h2>
+              <div class="feature-grid">
+                <div class="feature-card">
+                  <h3>Scene-aware continuity</h3>
+                  <p>Every block tracks back to a script beat, automatically inheriting dialogue, props, and camera notes from the writer.</p>
+                </div>
+                <div class="feature-card">
+                  <h3>Unified stacked timelines</h3>
+                  <p>Shots, audio cues, lighting rigs, and production notes live in parallel so teams can iterate without losing sync.</p>
+                </div>
+                <div class="feature-card">
+                  <h3>Realtime collaboration</h3>
+                  <p>Invite directors, storyboard artists, and producers with role-based access and threaded feedback.</p>
+                </div>
+                <div class="feature-card">
+                  <h3>Production-ready pipeline</h3>
+                  <p>Sync cues with lighting, VFX, and edit teams using integrations for Notion, Frame.io, and timeline apps.</p>
+                </div>
+              </div>
+            </section>
+          </div>
+          <footer class="lookbook-dialog__footer">
+            <button class="btn" type="button" data-lookbook-close>Close</button>
+          </footer>
         </div>
-        <div class="feature-card">
-          <h3>Unified stacked timelines</h3>
-          <p>Shots, audio cues, lighting rigs, and production notes live in parallel so teams can iterate without losing sync.</p>
-        </div>
-        <div class="feature-card">
-          <h3>Realtime collaboration</h3>
-          <p>Invite directors, storyboard artists, and producers with role-based access and threaded feedback.</p>
-        </div>
-        <div class="feature-card">
-          <h3>Production-ready pipeline</h3>
-          <p>Sync cues with lighting, VFX, and edit teams using integrations for Notion, Frame.io, and timeline apps.</p>
-        </div>
-      </div>
-    </section>
+      </dialog>
 
     <div
       class="storyboard-ai-modal"
@@ -1678,6 +1676,108 @@
           prompt: cardDialog.querySelector('[data-card-dialog-prompt]'),
         }
       : null;
+    const lookbookDialog = document.querySelector('[data-lookbook-dialog]');
+    const lookbookOpenButton = document.querySelector('[data-lookbook-open]');
+    const lookbookCloseButtons = lookbookDialog ? lookbookDialog.querySelectorAll('[data-lookbook-close]') : [];
+    const imageSelectionGrid = document.querySelector('[data-image-selection-grid]');
+    let lookbookLastFocus = null;
+
+    if (lookbookDialog && lookbookOpenButton) {
+      const supportsModalDialog = typeof lookbookDialog.showModal === 'function';
+      const openLookbook = () => {
+        lookbookLastFocus = document.activeElement;
+        if (supportsModalDialog) {
+          lookbookDialog.showModal();
+        } else {
+          lookbookDialog.setAttribute('open', '');
+        }
+      };
+
+      const closeLookbook = () => {
+        if (supportsModalDialog && typeof lookbookDialog.close === 'function' && lookbookDialog.open) {
+          lookbookDialog.close();
+        } else {
+          lookbookDialog.removeAttribute('open');
+          if (lookbookLastFocus && typeof lookbookLastFocus.focus === 'function') {
+            lookbookLastFocus.focus();
+          }
+        }
+      };
+
+      lookbookOpenButton.addEventListener('click', openLookbook);
+      lookbookDialog.addEventListener('cancel', event => {
+        event.preventDefault();
+        closeLookbook();
+      });
+      lookbookDialog.addEventListener('close', () => {
+        if (supportsModalDialog && lookbookLastFocus && typeof lookbookLastFocus.focus === 'function') {
+          lookbookLastFocus.focus();
+        }
+      });
+      lookbookDialog.addEventListener('click', event => {
+        if (event.target === lookbookDialog) {
+          closeLookbook();
+        }
+      });
+      lookbookCloseButtons.forEach(button => {
+        button.addEventListener('click', closeLookbook);
+      });
+    }
+
+    if (imageSelectionGrid) {
+      const palettes = [
+        ['#1d4ed8', '#0ea5e9'],
+        ['#7c3aed', '#ec4899'],
+        ['#0f172a', '#1e293b'],
+        ['#ef4444', '#f97316'],
+        ['#14b8a6', '#0ea5e9'],
+        ['#f59e0b', '#f97316'],
+        ['#a855f7', '#6366f1'],
+        ['#2563eb', '#4338ca'],
+        ['#0ea5e9', '#22d3ee'],
+        ['#6366f1', '#22d3ee'],
+        ['#f43f5e', '#f97316'],
+        ['#1e293b', '#64748b'],
+      ];
+
+      const createPlaceholder = (optionNumber) => {
+        const [start, end] = palettes[(optionNumber - 1) % palettes.length];
+        const label = String(optionNumber).padStart(2, '0');
+        const svg = `
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'>
+  <defs>
+    <linearGradient id='grad' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0%' stop-color='${start}' />
+      <stop offset='100%' stop-color='${end}' />
+    </linearGradient>
+  </defs>
+  <rect width='600' height='400' fill='url(#grad)' />
+  <text x='40' y='120' fill='rgba(255,255,255,0.85)' font-family='Segoe UI, Inter, sans-serif' font-size='48' font-weight='600'>Scene 1</text>
+  <text x='40' y='190' fill='rgba(255,255,255,0.92)' font-family='Segoe UI, Inter, sans-serif' font-size='32' font-weight='500'>EXT. ALLEY · NIGHT</text>
+  <text x='40' y='260' fill='rgba(255,255,255,0.78)' font-family='Segoe UI, Inter, sans-serif' font-size='24' font-weight='400'>Concept variation ${label}</text>
+</svg>`;
+        return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+      };
+
+      const totalOptions = 125;
+      for (let optionNumber = 1; optionNumber <= totalOptions; optionNumber += 1) {
+        const button = document.createElement('button');
+        button.className = 'image-selection__item';
+        button.type = 'button';
+
+        const image = document.createElement('img');
+        image.loading = 'lazy';
+        image.src = createPlaceholder(optionNumber);
+        image.alt = `Storyboard variation ${String(optionNumber).padStart(2, '0')}`;
+
+        const label = document.createElement('span');
+        label.className = 'image-selection__label';
+        label.textContent = `Option ${String(optionNumber).padStart(2, '0')}`;
+
+        button.append(image, label);
+        imageSelectionGrid.appendChild(button);
+      }
+    }
     const apiGeminiInput = apiDialog ? apiDialog.querySelector('[data-api-gemini]') : null;
     const apiSoaraInput = apiDialog ? apiDialog.querySelector('[data-api-soara]') : null;
     const apiFeedbackLabel = apiDialog ? apiDialog.querySelector('[data-api-feedback]') : null;
