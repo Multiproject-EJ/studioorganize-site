@@ -104,24 +104,17 @@
       .btn.btn-primary { background: var(--acc); border-color: var(--acc); color: var(--active-tab-text); font-weight: 600; }
       .topbar-group { display: flex; gap: 6px; align-items: center; }
       .scene-carousel-wrapper {
-        --scene-carousel-active-scale: 0.96;
-        --scene-carousel-adjacent-scale: 0.68;
-        --scene-carousel-far-scale: 0.52;
-        --scene-carousel-distant-scale: 0.42;
-        --scene-carousel-horizon-scale: 0.34;
+        --scene-carousel-active-scale: 1.04;
+        --scene-carousel-adjacent-scale: 0.78;
+        --scene-carousel-far-scale: 0.62;
+        --scene-carousel-distant-scale: 0.5;
+        --scene-carousel-horizon-scale: 0.4;
         display: flex;
         flex-direction: column;
         gap: 12px;
         padding: 16px 20px 10px;
         background: linear-gradient(180deg, rgba(79,123,255,0.08), transparent);
         border-bottom: 1px solid var(--ring);
-      }
-      .scene-carousel-wrapper.scene-carousel--zoomed {
-        --scene-carousel-active-scale: 1.04;
-        --scene-carousel-adjacent-scale: 0.78;
-        --scene-carousel-far-scale: 0.62;
-        --scene-carousel-distant-scale: 0.5;
-        --scene-carousel-horizon-scale: 0.4;
       }
       .scene-carousel-wrapper:focus-within { outline: 2px solid rgba(79,123,255,0.28); outline-offset: 6px; box-shadow: none; border-radius: 0; }
       .scene-carousel { display: flex; align-items: center; gap: 14px; }
@@ -139,30 +132,64 @@
         list-style: none;
         padding: 0;
         margin: 0;
-        min-height: clamp(440px, 64vw, 640px);
+        min-height: clamp(520px, 72vw, 720px);
         transform: translateX(var(--scene-carousel-drag-offset, 0));
         transition: transform var(--scene-carousel-drag-transition, .45s cubic-bezier(0.32, 0.72, 0, 1));
         will-change: transform;
         transform-style: preserve-3d;
       }
-      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__track { min-height: clamp(520px, 72vw, 720px); }
       .scene-carousel__slide { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; transform-style: preserve-3d; }
       .scene-carousel__slide-button { border: none; background: transparent; padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; cursor: pointer; text-align: left; color: inherit; pointer-events: auto; position: relative; transform-style: preserve-3d; transition: transform .45s ease; }
       .scene-carousel__slide-button:focus-visible { outline: none; }
-      .scene-carousel__figure { display: flex; flex-direction: column; align-items: center; gap: 14px; height: 100%; max-width: clamp(520px, 82vw, 880px); margin: 0 auto; background: transparent; border-radius: 0; overflow: visible; transform-origin: center bottom; transform: scale(var(--scene-carousel-horizon-scale)); opacity: 0.18; filter: saturate(0.7) blur(0.45px); box-shadow: none; transition: transform .45s ease, opacity .45s ease, filter .45s ease; }
-      .scene-carousel__image-wrapper { position: relative; width: 100%; border-radius: 20px; overflow: hidden; }
+      .scene-carousel__figure {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.9fr);
+        gap: 24px;
+        align-items: stretch;
+        height: 100%;
+        max-width: clamp(720px, 88vw, 1100px);
+        margin: 0 auto;
+        background: transparent;
+        border-radius: 0;
+        overflow: visible;
+        transform-origin: center bottom;
+        transform: scale(var(--scene-carousel-horizon-scale));
+        opacity: 0.18;
+        filter: saturate(0.7) blur(0.45px);
+        box-shadow: none;
+        transition: transform .45s ease, opacity .45s ease, filter .45s ease;
+      }
+      .scene-carousel__image-wrapper { position: relative; width: 100%; border-radius: 20px; overflow: hidden; box-shadow: 0 22px 46px rgba(8,15,28,0.35); }
       .scene-carousel__image { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border: none; transition: transform .3s ease; display: block; border-radius: 20px; box-shadow: none; }
       .scene-carousel__image-strip { position: absolute; right: 16px; bottom: 16px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.72); backdrop-filter: blur(12px); box-shadow: 0 10px 24px rgba(8,15,28,0.38); }
       .scene-carousel__thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 18px rgba(15,23,42,0.45); }
       .scene-carousel__thumb-count { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 38px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: .3px; color: rgba(255,255,255,0.92); background: rgba(79,123,255,0.55); border: 1px solid rgba(148,163,184,0.45); box-shadow: 0 8px 18px rgba(15,23,42,0.45); }
       .scene-carousel__thumb-count[aria-hidden="true"] { pointer-events: none; }
-      .scene-carousel__caption { margin: 0 auto; padding: 0; display: flex; flex-direction: column; gap: 6px; text-align: center; max-width: clamp(520px, 82vw, 880px); }
+      .scene-carousel__caption {
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        text-align: left;
+        background: var(--panel);
+        border-radius: 20px;
+        border: 1px solid var(--ring);
+        box-shadow: 0 24px 48px rgba(8,15,28,0.18);
+      }
       .scene-carousel__title { font-size: 18px; font-weight: 600; letter-spacing: 0.2px; margin: 0; display: flex; gap: 10px; align-items: baseline; }
       .scene-carousel__title small { font-size: 12px; letter-spacing: .25px; text-transform: uppercase; color: var(--muted); }
-      .scene-carousel__description { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+      .scene-carousel__description { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
       .scene-carousel__meta { font-size: 12px; color: var(--muted); margin: 0; }
+      .scene-carousel__insights { display: flex; flex-direction: column; gap: 14px; }
+      .scene-carousel__insight-block { display: flex; flex-direction: column; gap: 8px; }
+      .scene-carousel__insight-title { margin: 0; font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+      .scene-carousel__insight-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+      .scene-carousel__insight-item { display: flex; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.45; color: var(--muted); background: var(--chip); border-radius: 12px; border: 1px solid var(--ring); padding: 8px 12px; }
+      .scene-carousel__insight-item strong { color: var(--ink); font-weight: 600; }
+      .scene-carousel__stat-value { margin-left: auto; color: var(--ink); font-weight: 600; font-size: 13px; }
       .scene-carousel__slide--active .scene-carousel__figure { transform: scale(var(--scene-carousel-active-scale)); opacity: 1; filter: none; }
-      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__slide--active .scene-carousel__image { transform: scale(1.02); }
+      .scene-carousel__slide--active .scene-carousel__image { transform: scale(1.02); }
       .scene-carousel__slide--previous .scene-carousel__figure,
       .scene-carousel__slide--next .scene-carousel__figure { opacity: 0.48; filter: saturate(0.62) blur(0.55px); }
       .scene-carousel__slide--previous .scene-carousel__figure { transform: translateX(-82%) scale(var(--scene-carousel-adjacent-scale)) rotateY(-14deg); }
@@ -186,10 +213,6 @@
       .scene-carousel__slide--offscreen .scene-carousel__figure { opacity: 0; filter: saturate(0.2) blur(2.4px); transform: translateX(0) scale(calc(var(--scene-carousel-horizon-scale) * 0.8)); pointer-events: none; }
       .scene-carousel__slide-button:hover .scene-carousel__image { transform: scale(1.02); }
       .scene-carousel__slide-button:focus-visible .scene-carousel__image { transform: scale(1.02); }
-      .scene-carousel__zoom { position: absolute; top: 12px; right: 12px; border: none; border-radius: 999px; background: rgba(12,19,33,0.58); color: var(--active-tab-text, #ffffff); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; cursor: pointer; transition: background .2s ease, transform .2s ease; }
-      .scene-carousel__zoom:hover { background: rgba(79,123,255,0.8); transform: translateY(-1px); }
-      .scene-carousel__zoom:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
-      .scene-carousel__zoom-icon { font-size: 14px; }
       .scene-carousel__dots { display: flex; gap: 10px; justify-content: center; align-items: center; padding-bottom: 4px; }
       .scene-carousel__dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(79,123,255,0.4); background: rgba(79,123,255,0.12); padding: 0; cursor: pointer; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
       .scene-carousel__dot[aria-selected="true"] { transform: scale(1.2); background: var(--acc); border-color: var(--acc); }
@@ -200,7 +223,8 @@
         .scene-carousel-wrapper { padding: 16px 16px 10px; }
         .scene-carousel { gap: 10px; }
         .scene-carousel__nav { width: 38px; height: 38px; }
-        .scene-carousel__caption { padding: 16px 16px 18px; }
+        .scene-carousel__figure { grid-template-columns: 1fr; }
+        .scene-carousel__caption { padding: 16px 16px 18px; box-shadow: 0 16px 32px rgba(8,15,28,0.18); }
         .scene-carousel__image-strip { right: 12px; bottom: 12px; }
       }
       @media (max-width: 720px) {
@@ -208,6 +232,8 @@
         .scene-carousel__nav { order: -1; align-self: flex-end; }
         .scene-carousel__nav--prev { align-self: flex-start; }
         .scene-carousel__viewport { border-radius: 0; }
+        .scene-carousel__caption { padding: 14px; gap: 12px; }
+        .scene-carousel__insight-item { font-size: 12.5px; padding: 8px 10px; }
       }
       @media (prefers-reduced-motion: reduce) {
         .scene-carousel__track { transition: none; }
@@ -859,10 +885,6 @@
             <span class="scene-carousel__nav-icon" aria-hidden="true">‹</span>
           </button>
           <div class="scene-carousel__viewport" data-scene-carousel-viewport tabindex="0" role="group" aria-label="Storyboard scene preview">
-            <button class="scene-carousel__zoom" type="button" data-scene-carousel-zoom aria-pressed="false">
-              <span class="scene-carousel__zoom-icon" aria-hidden="true">⤢</span>
-              <span data-scene-carousel-zoom-label>Zoom in</span>
-            </button>
             <ul class="scene-carousel__track" data-scene-carousel-track></ul>
           </div>
           <button class="scene-carousel__nav scene-carousel__nav--next" type="button" aria-label="Next scene" data-scene-carousel-next>
@@ -1541,10 +1563,6 @@
     const sceneCarouselPrev = document.querySelector('[data-scene-carousel-prev]');
     const sceneCarouselNext = document.querySelector('[data-scene-carousel-next]');
     const sceneCarouselViewport = document.querySelector('[data-scene-carousel-viewport]');
-    const sceneCarouselZoomButton = document.querySelector('[data-scene-carousel-zoom]');
-    const sceneCarouselZoomLabel = sceneCarouselZoomButton
-      ? sceneCarouselZoomButton.querySelector('[data-scene-carousel-zoom-label]')
-      : null;
     const cardDialog = document.querySelector('[data-card-dialog]');
     const cardDialogElements = cardDialog
       ? {
@@ -1596,10 +1614,7 @@
     let sceneCarouselSlides = [];
     let sceneCarouselDotsList = [];
     let activeSceneId = null;
-    let sceneCarouselZoomed = true;
     let sceneCarouselDragState = null;
-
-    setSceneCarouselZoom(true);
 
     initialiseAiProviderSelect();
     setupApiDialog();
@@ -1630,6 +1645,21 @@
           { id: 'demo-alley-sound-1', cue: 'SFX: rain layers' },
           { id: 'demo-alley-sound-2', cue: 'Score: tension swell' }
         ],
+        facts: [
+          'Rain rig staged along south wall',
+          'Stunt sprint cleared with coordinator',
+          'Neon signage practicals synced for bounce'
+        ],
+        stats: [
+          { label: 'Frames locked', value: '12' },
+          { label: 'Beat cards', value: '4' },
+          { label: 'Sound cues', value: '2' }
+        ],
+        inspiration: [
+          'Blade Runner alley finale palette',
+          'High-gloss puddle reflections',
+          'Noir silhouettes with rim light'
+        ],
         notes: 'Director: stay wide\nProducer: add rain plates',
         metadata: {
           sceneTagState: { locationType: 'ALLEY', timeOfDay: 'NIGHT', custom: ['Rain soaked'] },
@@ -1655,6 +1685,21 @@
           { id: 'demo-rooftop-sound-2', cue: 'Score: percussive chase bed' },
           { id: 'demo-rooftop-sound-3', cue: 'Wind gusts' }
         ],
+        facts: [
+          'Drone clearance filed with pilot team',
+          'Rain pass scheduled for second unit',
+          'Harness checks complete before gap leap'
+        ],
+        stats: [
+          { label: 'Frames planned', value: '8' },
+          { label: 'Beat cards', value: '4' },
+          { label: 'Sound cues', value: '3' }
+        ],
+        inspiration: [
+          'Skyline chase energy from The Dark Knight',
+          'Parkour silhouettes against neon signage',
+          'Wind howl layers for vertical tension'
+        ],
         notes: 'FX: add rain pass\nDirector: add wide landing',
         metadata: {
           sceneTagState: { locationType: 'ROOFTOP', timeOfDay: 'NIGHT', custom: ['Neon spill'] },
@@ -1677,6 +1722,21 @@
         sounds: [
           { id: 'demo-safehouse-sound-1', cue: 'Score: low synth tension' },
           { id: 'demo-safehouse-sound-2', cue: 'Radio chatter' }
+        ],
+        facts: [
+          'Intel binders prepped for macro shots',
+          'Practical lamps dimmed to 35 percent',
+          'Wall monitors looping surveillance feed'
+        ],
+        stats: [
+          { label: 'Storyboard frames', value: '3' },
+          { label: 'Beat cards', value: '3' },
+          { label: 'Sound cues', value: '2' }
+        ],
+        inspiration: [
+          'Tinker Tailor safehouse palette',
+          'Lambert & Co briefing room staging',
+          'Cold blue monitor glow accents'
         ],
         notes: 'AD: schedule reshoot\nDP: add monitor glow',
         metadata: {
@@ -1701,6 +1761,21 @@
           { id: 'demo-finale-sound-1', cue: 'Score: ascend' },
           { id: 'demo-finale-sound-2', cue: 'FX: energy surge' },
           { id: 'demo-finale-sound-3', cue: 'Score: resolve' }
+        ],
+        facts: [
+          'Hero rig timed with VFX supervisor',
+          'Stage haze on standby for light cones',
+          'Audience extras released after final beat'
+        ],
+        stats: [
+          { label: 'Storyboard frames', value: '3' },
+          { label: 'Beat cards', value: '4' },
+          { label: 'Sound cues', value: '3' }
+        ],
+        inspiration: [
+          'Tron Legacy finale lighting arcs',
+          'Cirque-style moving spot choreography',
+          'Hero lens flare moments for climax'
         ],
         notes: 'Producer: confirm VFX\nDirector: punch final beat',
         metadata: {
@@ -1826,6 +1901,73 @@
             .filter(Boolean)
         : [];
 
+      const facts = [];
+      const factSet = new Set();
+      const pushFact = value => {
+        const clean = sanitizeString(value);
+        if (clean && !factSet.has(clean)) {
+          factSet.add(clean);
+          facts.push(clean);
+        }
+      };
+      if (Array.isArray(scene?.facts)) {
+        scene.facts.forEach(pushFact);
+      }
+      if (locationMeta) pushFact(`Setting: ${locationMeta}`);
+      notesList.slice(0, 2).forEach(pushFact);
+      pushFact(statusText);
+      pushFact(sourceMeta);
+
+      const stats = [];
+      const statSet = new Set();
+      const pushStat = (label, value = '') => {
+        const cleanLabel = sanitizeString(label);
+        const cleanValue = sanitizeString(value);
+        if (!cleanLabel && !cleanValue) return;
+        const key = `${cleanLabel}|${cleanValue}`;
+        if (statSet.has(key)) return;
+        statSet.add(key);
+        stats.push({ label: cleanLabel, value: cleanValue });
+      };
+      if (Array.isArray(scene?.stats)) {
+        scene.stats.forEach(entry => {
+          if (typeof entry === 'string') {
+            const parts = entry.split(':');
+            if (parts.length > 1) {
+              const [first, ...rest] = parts;
+              pushStat(first, rest.join(':'));
+            } else {
+              pushStat(entry);
+            }
+          } else if (entry && typeof entry === 'object') {
+            pushStat(entry.label || entry.title || entry.name, entry.value || entry.count || entry.total || '');
+          }
+        });
+      }
+      if (storyboards.length) pushStat('Storyboard frames', String(storyboards.length));
+      if (cards.length) pushStat('Beat cards', String(cards.length));
+      if (sounds.length) pushStat('Sound cues', String(sounds.length));
+
+      const inspiration = [];
+      const inspirationSet = new Set();
+      const pushInspiration = value => {
+        const clean = sanitizeString(value);
+        if (clean && !inspirationSet.has(clean)) {
+          inspirationSet.add(clean);
+          inspiration.push(clean);
+        }
+      };
+      if (Array.isArray(scene?.inspiration)) {
+        scene.inspiration.forEach(pushInspiration);
+      }
+      cards.slice(0, 2).forEach(card => pushInspiration(`Beat focus: ${card}`));
+      lightingCues.slice(0, 2).forEach(cue => pushInspiration(`Lighting cue: ${cue}`));
+      if (!inspiration.length) notesList.slice(0, 2).forEach(pushInspiration);
+
+      const factList = facts.slice(0, 4);
+      const statsList = stats.filter(entry => entry && (entry.label || entry.value)).slice(0, 4);
+      const inspirationList = inspiration.slice(0, 4);
+
       return {
         id: String(scene?.id || `scene-${index}`),
         index,
@@ -1843,6 +1985,9 @@
         colorSourceLabel,
         source,
         previewImages,
+        facts: factList,
+        stats: statsList,
+        inspiration: inspirationList,
       };
     }
 
@@ -2068,7 +2213,6 @@
         clearSceneCarouselDragStyles();
         if (sceneCarouselPrev) sceneCarouselPrev.disabled = true;
         if (sceneCarouselNext) sceneCarouselNext.disabled = true;
-        updateSceneCarouselZoomAvailability(false);
         return;
       }
 
@@ -2098,31 +2242,7 @@
 
       sceneCarouselTrack.appendChild(fragment);
       if (sceneCarouselDots) sceneCarouselDots.appendChild(dotsFragment);
-      updateSceneCarouselZoomAvailability(true);
       syncSceneCarouselActiveState();
-    }
-
-    function setSceneCarouselZoom(nextState) {
-      if (!sceneCarouselContainer) return;
-      sceneCarouselZoomed = nextState;
-      sceneCarouselContainer.classList.toggle('scene-carousel--zoomed', sceneCarouselZoomed);
-      if (sceneCarouselZoomButton) {
-        sceneCarouselZoomButton.setAttribute('aria-pressed', sceneCarouselZoomed ? 'true' : 'false');
-      }
-      if (sceneCarouselZoomLabel) {
-        sceneCarouselZoomLabel.textContent = sceneCarouselZoomed ? 'Zoom out' : 'Zoom in';
-      }
-    }
-
-    function updateSceneCarouselZoomAvailability(hasScenes) {
-      if (!sceneCarouselZoomButton) return;
-      sceneCarouselZoomButton.hidden = !hasScenes;
-      sceneCarouselZoomButton.disabled = !hasScenes;
-      if (!hasScenes && sceneCarouselZoomed) {
-        setSceneCarouselZoom(false);
-      } else if (hasScenes) {
-        setSceneCarouselZoom(sceneCarouselZoomed);
-      }
     }
 
     function createSceneCarouselSlide(scene) {
@@ -2203,10 +2323,107 @@
         caption.appendChild(meta);
       }
 
+      const insights = createSceneInsights(scene);
+      if (insights) {
+        caption.appendChild(insights);
+      }
+
       figure.append(imageWrapper, caption);
       button.appendChild(figure);
       slide.appendChild(button);
       return slide;
+    }
+
+    function createSceneInsights(scene) {
+      if (!scene || typeof scene !== 'object') return null;
+
+      const facts = Array.isArray(scene.facts)
+        ? scene.facts.map(sanitizeString).filter(Boolean)
+        : [];
+      const stats = Array.isArray(scene.stats)
+        ? scene.stats.filter(entry => {
+            if (!entry) return false;
+            if (typeof entry === 'string') return Boolean(sanitizeString(entry));
+            if (typeof entry === 'object') {
+              return Boolean(sanitizeString(entry.label || entry.title || entry.name) || sanitizeString(entry.value || entry.count || entry.total));
+            }
+            return false;
+          })
+        : [];
+      const inspiration = Array.isArray(scene.inspiration)
+        ? scene.inspiration.map(sanitizeString).filter(Boolean)
+        : [];
+
+      if (!facts.length && !stats.length && !inspiration.length) {
+        return null;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'scene-carousel__insights';
+
+      const addSection = (title, items, renderer) => {
+        if (!Array.isArray(items) || !items.length) return;
+        const block = document.createElement('div');
+        block.className = 'scene-carousel__insight-block';
+        const heading = document.createElement('h4');
+        heading.className = 'scene-carousel__insight-title';
+        heading.textContent = title;
+        block.appendChild(heading);
+        const list = document.createElement('ul');
+        list.className = 'scene-carousel__insight-list';
+        items.forEach(item => {
+          const listItem = renderer(item);
+          if (listItem) {
+            list.appendChild(listItem);
+          }
+        });
+        if (list.childElementCount) {
+          block.appendChild(list);
+          wrapper.appendChild(block);
+        }
+      };
+
+      addSection('Facts', facts, fact => {
+        if (!fact) return null;
+        const item = document.createElement('li');
+        item.className = 'scene-carousel__insight-item';
+        item.textContent = fact;
+        return item;
+      });
+
+      addSection('Stats', stats, stat => {
+        let label = '';
+        let value = '';
+        if (typeof stat === 'string') {
+          label = sanitizeString(stat);
+        } else if (stat && typeof stat === 'object') {
+          label = sanitizeString(stat.label || stat.title || stat.name || '');
+          value = sanitizeString(stat.value || stat.count || stat.total || '');
+        }
+        if (!label && !value) return null;
+        const item = document.createElement('li');
+        item.className = 'scene-carousel__insight-item';
+        const labelEl = document.createElement('strong');
+        labelEl.textContent = label || value;
+        item.appendChild(labelEl);
+        if (value && label) {
+          const valueEl = document.createElement('span');
+          valueEl.className = 'scene-carousel__stat-value';
+          valueEl.textContent = value;
+          item.appendChild(valueEl);
+        }
+        return item;
+      });
+
+      addSection('Inspiration', inspiration, idea => {
+        if (!idea) return null;
+        const item = document.createElement('li');
+        item.className = 'scene-carousel__insight-item';
+        item.textContent = idea;
+        return item;
+      });
+
+      return wrapper.childElementCount ? wrapper : null;
     }
 
     function cleanImageUrl(value) {
@@ -2834,19 +3051,6 @@
           event.preventDefault();
           const target = sceneCarouselOrder[sceneCarouselOrder.length - 1];
           if (target) activateScene(target, { scroll: false });
-        } else if (event.key === 'Escape' && sceneCarouselZoomed) {
-          event.preventDefault();
-          setSceneCarouselZoom(false);
-        }
-      });
-    }
-
-    if (sceneCarouselZoomButton) {
-      sceneCarouselZoomButton.addEventListener('click', () => {
-        const nextState = !sceneCarouselZoomed;
-        setSceneCarouselZoom(nextState);
-        if (nextState && sceneCarouselViewport) {
-          sceneCarouselViewport.focus();
         }
       });
     }
