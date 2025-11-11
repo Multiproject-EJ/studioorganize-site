@@ -23,7 +23,7 @@
     <nav class="so-mobile-bottom-nav" aria-label="Screenwriter mobile navigation">
       <button type="button" data-target="screenwriter" class="is-active">Write</button>
       <button type="button" data-target="outline">Outline</button>
-      <button type="button" data-target="notes">Notes</button>
+      <button type="button" data-target="ideas">Ideas</button>
     </nav>
   </div>
   <header class="nav">
@@ -508,6 +508,15 @@
       .tab-panels{flex:1; display:flex; flex-direction:column; min-height:0}
       .tab-panel{display:none; flex-direction:column; flex:1; padding:12px; gap:12px; overflow:auto}
       .tab-panel.active{display:flex}
+      .ideas-subtabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px}
+      .ideas-subtab-btn{flex:1 1 120px; display:flex; align-items:center; justify-content:center; border-radius:14px}
+      .ideas-subtab-btn.active{background:var(--acc); border-color:var(--acc); color:var(--active-tab-text); font-weight:600}
+      .ideas-subtab-panels{display:flex; flex-direction:column; gap:16px}
+      .ideas-subtab-panel{display:flex; flex-direction:column; gap:12px}
+      .ideas-ai-actions{display:flex; flex-direction:column; gap:12px}
+      .ideas-ai-buttons{display:flex; flex-wrap:wrap; gap:8px}
+      .ideas-ai-btn{flex:1 1 140px; display:flex; align-items:center; justify-content:center; border-radius:14px}
+      .ideas-ai-description{margin:0}
       .tab-panel h3{margin:0; font-size:12px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
       .storyboard-field{display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); align-items:start;}
       .storyboard-field-primary{display:flex; flex-direction:column; gap:12px;}
@@ -1892,8 +1901,7 @@
               <button class="tab-btn" data-tab-btn="characters">Cast</button>
               <button class="tab-btn" data-tab-btn="set">Set</button>
               <button class="tab-btn" data-tab-btn="sound">Sound</button>
-              <button class="tab-btn" data-tab-btn="notes">Notes</button>
-              <button class="tab-btn" data-tab-btn="ai">Ai</button>
+              <button class="tab-btn" data-tab-btn="ideas">Ideas</button>
             </div>
             <div class="tab-panels">
               <div class="tab-panel" data-tab="write" id="tabWrite">
@@ -1995,70 +2003,89 @@
                 <button class="btn" id="addSoundBtn">Add</button>
               </div>
             </div>
-            <div class="tab-panel" data-tab="notes" id="tabNotes">
-              <h3>Notes &amp; Meta</h3>
-              <div class="notes">
-                <div class="notes-visibility">
-                  <div class="notes-visibility__text">
-                    <h3>Scene Notes</h3>
-                    <p>Toggle inline notes without losing your thoughts.</p>
-                  </div>
-                  <button type="button" class="notes-toggle-btn" id="sceneNotesToggle" aria-pressed="true">Hide notes in script</button>
+            <div class="tab-panel" data-tab="ideas" id="tabIdeas">
+              <div id="screenplay-ideas">
+                <div class="ideas-subtabs" role="tablist" aria-label="Ideas tools">
+                  <button class="btn ideas-subtab-btn active" type="button" data-ideas-subtab="ai" role="tab" aria-selected="true" aria-controls="ideasPanelAi" id="ideasTabAi">AI</button>
+                  <button class="btn ideas-subtab-btn" type="button" data-ideas-subtab="notes" role="tab" aria-selected="false" aria-controls="ideasPanelNotes" id="ideasTabNotes" tabindex="-1">Notes</button>
                 </div>
-                <p id="sceneNotesHiddenHint" class="notes-hidden-hint" hidden>Scene notes are hidden in the script view. They remain available below.</p>
-                <div id="sceneNotesList" class="note-list"></div>
-                <div class="tab-divider"></div>
-                <label class="sr-only" for="projectNotes">Project notes</label>
-                <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
-                <div class="row">
-                  <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
-                  <div class="scene-color-control">
-                    <input id="sceneColor" type="color" aria-describedby="sceneColorDescription" />
-                    <button id="sceneColorAutoBtn" class="btn scene-color-auto-btn" type="button">Auto from slug</button>
+                <div class="ideas-subtab-panels">
+                  <div class="ideas-subtab-panel" data-ideas-subtab-panel="ai" id="ideasPanelAi" role="tabpanel" aria-labelledby="ideasTabAi" aria-hidden="false">
+                    <div class="ideas-ai-actions">
+                      <div class="ideas-ai-buttons">
+                        <button class="btn ideas-ai-btn" type="button">Ideas</button>
+                        <button class="btn ideas-ai-btn" type="button">Check</button>
+                        <button class="btn ideas-ai-btn" type="button">Search/Chat</button>
+                      </div>
+                      <p class="muted-text ideas-ai-description">use the Search/Chat to find inspiration, and simply ask me for a nice way to included it, either as a writers note, or a script input</p>
+                    </div>
+                    <div class="tab-divider"></div>
+                    <div>
+                      <h3>AI Workspace</h3>
+                      <p class="muted-text">Centralize AI prompts, outputs, and automation controls for your scene.</p>
+                    </div>
+                  </div>
+                  <div class="ideas-subtab-panel" data-ideas-subtab-panel="notes" id="ideasPanelNotes" role="tabpanel" aria-labelledby="ideasTabNotes" aria-hidden="true" hidden>
+                    <h3>Notes &amp; Meta</h3>
+                    <div class="notes">
+                      <div class="notes-visibility">
+                        <div class="notes-visibility__text">
+                          <h3>Scene Notes</h3>
+                          <p>Toggle inline notes without losing your thoughts.</p>
+                        </div>
+                        <button type="button" class="notes-toggle-btn" id="sceneNotesToggle" aria-pressed="true">Hide notes in script</button>
+                      </div>
+                      <p id="sceneNotesHiddenHint" class="notes-hidden-hint" hidden>Scene notes are hidden in the script view. They remain available below.</p>
+                      <div id="sceneNotesList" class="note-list"></div>
+                      <div class="tab-divider"></div>
+                      <label class="sr-only" for="projectNotes">Project notes</label>
+                      <textarea id="projectNotes" rows="8" placeholder="Project notes"></textarea>
+                      <div class="row">
+                        <input id="sceneSlug" placeholder="Scene Heading (Slug)" />
+                        <div class="scene-color-control">
+                          <input id="sceneColor" type="color" aria-describedby="sceneColorDescription" />
+                          <button id="sceneColorAutoBtn" class="btn scene-color-auto-btn" type="button">Auto from slug</button>
+                        </div>
+                      </div>
+                      <div class="scene-color-meta" id="sceneColorMeta" aria-live="polite">
+                        <span class="scene-color-badge" id="sceneColorBadge" data-source="auto">Auto</span>
+                        <span id="sceneColorDescription">Stripboard palette ready.</span>
+                      </div>
+                      <div class="row">
+                        <select id="smartFormat">
+                          <option value="true">Smart format: ON</option>
+                          <option value="false">Smart format: OFF</option>
+                        </select>
+                        <button id="writerThemeToggle" class="theme-toggle writer-theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
+                      </div>
+                    </div>
+                    <div class="tab-divider"></div>
+                    <div>
+                      <h3>Stats</h3>
+                      <div class="stats-grid">
+                        <div class="stat-card">
+                          <span class="stat-value" id="statSceneCount">0</span>
+                          <span class="stat-label">Scenes</span>
+                        </div>
+                        <div class="stat-card">
+                          <span class="stat-value" id="statPageCount">0</span>
+                          <span class="stat-label">Pages</span>
+                        </div>
+                        <div class="stat-card">
+                          <span class="stat-value" id="statWordCount">0</span>
+                          <span class="stat-label">Words</span>
+                        </div>
+                        <div class="stat-card">
+                          <span class="stat-value" id="statLineCount">0</span>
+                          <span class="stat-label">Lines</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="panel-footer-actions">
+                      <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
+                    </div>
                   </div>
                 </div>
-                <div class="scene-color-meta" id="sceneColorMeta" aria-live="polite">
-                  <span class="scene-color-badge" id="sceneColorBadge" data-source="auto">Auto</span>
-                  <span id="sceneColorDescription">Stripboard palette ready.</span>
-                </div>
-                <div class="row">
-                  <select id="smartFormat">
-                    <option value="true">Smart format: ON</option>
-                    <option value="false">Smart format: OFF</option>
-                  </select>
-                  <button id="writerThemeToggle" class="theme-toggle writer-theme-toggle" type="button" data-theme-toggle aria-pressed="false">Toggle theme</button>
-                </div>
-              </div>
-              <div class="tab-divider"></div>
-              <div>
-                <h3>Stats</h3>
-                <div class="stats-grid">
-                  <div class="stat-card">
-                    <span class="stat-value" id="statSceneCount">0</span>
-                    <span class="stat-label">Scenes</span>
-                  </div>
-                  <div class="stat-card">
-                    <span class="stat-value" id="statPageCount">0</span>
-                    <span class="stat-label">Pages</span>
-                  </div>
-                  <div class="stat-card">
-                    <span class="stat-value" id="statWordCount">0</span>
-                    <span class="stat-label">Words</span>
-                  </div>
-                  <div class="stat-card">
-                    <span class="stat-value" id="statLineCount">0</span>
-                    <span class="stat-label">Lines</span>
-                  </div>
-                </div>
-              </div>
-              <div class="panel-footer-actions">
-                <button class="danger-btn" id="deleteSceneBtn">Delete Scene</button>
-              </div>
-            </div>
-            <div class="tab-panel" data-tab="ai" id="tabAi">
-              <div>
-                <h3>AI Workspace</h3>
-                <p class="muted-text">Centralize AI prompts, outputs, and automation controls for your scene.</p>
               </div>
             </div>
           </div>
@@ -4356,9 +4383,20 @@
     }
 
     const RIGHT_TAB_KEY = 'SW_RIGHT_TAB';
+    const IDEAS_SUBTAB_KEY = 'SW_IDEAS_SUBTAB';
     let activeRightTab = (()=>{
-      try { return localStorage.getItem(RIGHT_TAB_KEY) || 'write'; }
+      try {
+        const stored = localStorage.getItem(RIGHT_TAB_KEY) || 'write';
+        return (stored === 'notes' || stored === 'ai') ? 'ideas' : stored;
+      }
       catch(e){ return 'write'; }
+    })();
+    let activeIdeasSubTab = (()=>{
+      try {
+        const stored = localStorage.getItem(IDEAS_SUBTAB_KEY) || 'ai';
+        return ['ai','notes'].includes(stored) ? stored : 'ai';
+      }
+      catch(e){ return 'ai'; }
     })();
 
     /* =========================
@@ -4513,20 +4551,46 @@
     }
 
     function setRightTab(tab){
-      const allowed = ['write','characters','set','sound','notes','ai'];
+      if (tab === 'notes' || tab === 'ai') tab = 'ideas';
+      const allowed = ['write','characters','set','sound','ideas'];
       activeRightTab = allowed.includes(tab) ? tab : 'write';
       try { localStorage.setItem(RIGHT_TAB_KEY, activeRightTab); } catch(e){}
       applyActiveTabUI();
     }
 
     function applyActiveTabUI(){
-      const allowed = ['write','characters','set','sound','notes','ai'];
+      const allowed = ['write','characters','set','sound','ideas'];
       if (!allowed.includes(activeRightTab)) activeRightTab = 'write';
       document.querySelectorAll('[data-tab-btn]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tabBtn === activeRightTab);
       });
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.toggle('active', panel.dataset.tab === activeRightTab);
+      });
+      if (activeRightTab === 'ideas') applyIdeasSubTabUI();
+    }
+
+    function setIdeasSubTab(tab){
+      const allowed = ['ai','notes'];
+      activeIdeasSubTab = allowed.includes(tab) ? tab : 'ai';
+      try { localStorage.setItem(IDEAS_SUBTAB_KEY, activeIdeasSubTab); } catch(e){}
+      applyIdeasSubTabUI();
+    }
+
+    function applyIdeasSubTabUI(){
+      const allowed = ['ai','notes'];
+      if (!allowed.includes(activeIdeasSubTab)) activeIdeasSubTab = 'ai';
+      document.querySelectorAll('[data-ideas-subtab]').forEach(btn => {
+        const isActive = btn.dataset.ideasSubtab === activeIdeasSubTab;
+        btn.classList.toggle('active', isActive);
+        if (btn.hasAttribute('aria-selected')){
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+        btn.tabIndex = isActive ? 0 : -1;
+      });
+      document.querySelectorAll('[data-ideas-subtab-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.ideasSubtabPanel !== activeIdeasSubTab;
+        panel.setAttribute('aria-hidden', panel.hidden ? 'true' : 'false');
       });
     }
 
@@ -9215,6 +9279,10 @@
     document.querySelectorAll('[data-tab-btn]').forEach(btn=>{
       btn.addEventListener('click', ()=> setRightTab(btn.dataset.tabBtn));
     });
+    document.querySelectorAll('[data-ideas-subtab]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setIdeasSubTab(btn.dataset.ideasSubtab));
+    });
+    applyIdeasSubTabUI();
     setupSaveMenu();
     setupExportMenu();
     document.querySelectorAll('[data-slug-prefix]').forEach(btn=>{
@@ -11346,9 +11414,9 @@
     document.querySelector('#screenplay-outline') ||
     createMobileSection('screenplay-outline', 'Outline (mobile) – coming soon');
 
-  const notesEl =
-    document.querySelector('#screenplay-notes') ||
-    createMobileSection('screenplay-notes', 'Notes (mobile) – coming soon');
+  const ideasEl =
+    document.querySelector('#screenplay-ideas') ||
+    createMobileSection('screenplay-ideas', 'Ideas (mobile) – coming soon');
 
   if (screenwriterEl) {
     screenwriterEl.classList.add('so-mobile-module');
@@ -11357,12 +11425,13 @@
   const modules = {
     screenwriter: screenwriterEl,
     outline: outlineEl,
-    notes: notesEl
+    ideas: ideasEl
   };
 
   let currentTab = 'screenwriter';
 
   function activate(id) {
+    if (id === 'notes') id = 'ideas';
     Object.keys(modules).forEach((key) => {
       const el = modules[key];
       if (!el) return;
