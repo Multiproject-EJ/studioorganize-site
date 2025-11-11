@@ -2762,7 +2762,7 @@ function ensureWorkspaceLauncherStructure(launcher){
     quickActions.appendChild(quickActionsGroup);
   }
 
-  let scriptButton = quickActionsGroup.querySelector('.workspace-launcher__script');
+  let scriptButton = quickActionsGroup.querySelector('.workspace-launcher__script[data-workspace-script]');
   if (!(scriptButton instanceof HTMLElement)){
     scriptButton = document.createElement('button');
     scriptButton.type = 'button';
@@ -2771,6 +2771,16 @@ function ensureWorkspaceLauncherStructure(launcher){
     scriptButton.innerHTML = '<span>Story</span>';
   }
   quickActionsGroup.appendChild(scriptButton);
+
+  let creatorLink = quickActionsGroup.querySelector('.workspace-launcher__creator');
+  if (!(creatorLink instanceof HTMLElement)){
+    creatorLink = document.createElement('a');
+    creatorLink.className = 'workspace-launcher__script workspace-launcher__creator';
+    creatorLink.setAttribute('href', '/account.html');
+    creatorLink.setAttribute('aria-label', 'Creator Page');
+    creatorLink.innerHTML = '<span>Creator Page</span>';
+  }
+  quickActionsGroup.appendChild(creatorLink);
 
   [assistantToggle, saveButton, storyButton].forEach(button => {
     if (button instanceof HTMLElement){
@@ -2809,6 +2819,9 @@ function injectGlobalWorkspaceLauncher(){
             <button type="button" class="workspace-launcher__script" data-workspace-script>
               <span>Story</span>
             </button>
+            <a class="workspace-launcher__script workspace-launcher__creator" href="/account.html" aria-label="Creator Page">
+              <span>Creator Page</span>
+            </a>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
               <span class="workspace-launcher__module-icon" aria-hidden="true">
                 <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
