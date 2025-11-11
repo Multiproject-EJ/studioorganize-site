@@ -2455,8 +2455,9 @@ const CREATIVE_HUB_ICON = '/assets/img/IMG_6896.webp';
 
 const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/use-cases/screenplay-writing.html', label: 'Screenplay Writing', image: '/assets/img/IMG_6892.webp' },
-  { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/IMG_6894.webp' },
   { href: '/StoryboardPro.html', label: 'Storyboard Pro', image: '/assets/img/IMG_6893.webp' },
+  { href: '/MusicStudio.html', label: 'Music Workspace', icon: 'music' },
+  { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/IMG_6894.webp' },
   { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/IMG_6893.webp' },
   { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/IMG_6903.webp' },
   { href: '/creative-hub.html', label: 'Creative Hub', image: CREATIVE_HUB_ICON },
@@ -2528,16 +2529,17 @@ function observeWorkspaceLaunchers(){
   workspaceLauncherObserver.observe(document.body, { childList: true, subtree: true });
 }
 
-function renderWorkspaceModuleLink({ href, label, image }){
+function renderWorkspaceModuleLink({ href, label, image, icon }){
   const safeLabel = typeof label === 'string' ? label : '';
   const safeAttr = safeLabel.replace(/"/g, '&quot;');
   const safeHref = typeof href === 'string' ? href : '#';
   const safeImage = typeof image === 'string' ? image : '/assets/img/studioorganize_mock.png';
+  const iconMarkup = icon === 'music'
+    ? '<span class="workspace-launcher__module-icon workspace-launcher__module-icon--music" aria-hidden="true"><span aria-hidden="true">🎵❤️</span></span>'
+    : `<span class="workspace-launcher__module-icon" aria-hidden="true"><img src="${safeImage}" alt="" loading="lazy" /></span>`;
   return `
     <a class="workspace-launcher__module" href="${safeHref}" data-label="${safeAttr}">
-      <span class="workspace-launcher__module-icon" aria-hidden="true">
-        <img src="${safeImage}" alt="" loading="lazy" />
-      </span>
+      ${iconMarkup}
       <span class="sr-only">${safeLabel}</span>
     </a>
   `;

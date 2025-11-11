@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Music Workspace — StudioOrganize</title>
+  <meta
+    name="description"
+    content="Design adaptive soundtracks that follow every beat of your story with StudioOrganize's music workspace."
+  />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="/assets/css/so-mobile-shell.css" />
+  <link rel="stylesheet" href="/assets/css/music-studio.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+  <script src="/assets/js/so-mobile-shell.js" defer></script>
+</head>
+<body class="music-page">
+  <header class="nav">
+    <div class="brand-with-logo">
+      <a class="brand brand--with-logo" href="/">
+        <span class="brand__logo" aria-hidden="true"></span>
+        <span class="sr-only">StudioOrganize</span>
+      </a>
+    </div>
+    <nav class="menu">
+      <a class="menu__link menu__link--plain menu__link--icon" href="/">
+        <span aria-hidden="true">🏠</span>
+        <span class="sr-only">Home</span>
+      </a>
+      <div class="dropdown">
+        <button class="dropbtn dropbtn--plain" type="button">Use Cases</button>
+        <div class="dropdown-content">
+          <a href="/use-cases/">All Use Cases</a>
+          <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+          <a href="/use-cases/screenplay.html">Screenplay Script</a>
+          <a href="/use-cases/character-design.html">Character Design</a>
+          <a href="/use-cases/set-design.html">Set / Production Design</a>
+        </div>
+      </div>
+      <a class="menu__link menu__link--plain" href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a>
+      <div class="menu__actions">
+        <button class="theme-toggle theme-toggle--icon" type="button" data-theme-toggle aria-pressed="false">
+          <span class="sr-only">Toggle theme</span>
+          <span class="theme-toggle__icon" aria-hidden="true" data-theme-icon>☀️</span>
+        </button>
+        <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link data-auth-intent="signin">Sign in</a>
+        <div class="dropdown" data-account-menu hidden>
+          <button class="menu__cta" type="button" data-account-button>Account</button>
+          <div class="dropdown-content">
+            <a href="/account.html">My Creator Page</a>
+            <a href="/product/personal.html">My Subscription</a>
+            <a href="#" data-account-logout>Log out</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="section">
+    <style>
+      main.section { flex: 1; display: flex; padding: 0; margin: 0; max-width: none; }
+    </style>
+    <div class="music-app" data-music-app>
+      <div class="music-topbar">
+        <h1 class="music-topbar__title">Music Workspace</h1>
+        <p class="music-topbar__summary">Linked to <strong>Writer scenes</strong> · 6 cues ready for review</p>
+        <div class="music-topbar__actions">
+          <button type="button" class="music-topbar__btn" data-import-track>Import Track</button>
+          <button type="button" class="music-topbar__btn" data-sync-scenes>Sync Scenes</button>
+        </div>
+      </div>
+
+      <section class="music-timeline" aria-label="Story timeline">
+        <div class="music-timeline__label">
+          <h2>Story Timeline</h2>
+          <span class="music-topbar__summary">Tap a beat to focus sound design.</span>
+        </div>
+        <div class="music-timeline__carousel">
+          <button type="button" class="music-timeline__item" data-act-filter="all" aria-pressed="true">
+            <strong>Full Story</strong>
+            <span>All cues and beats</span>
+          </button>
+          <button type="button" class="music-timeline__item" data-act-filter="setup" aria-pressed="false">
+            <strong>Act I · Spark</strong>
+            <span>Warm welcomes & exposition</span>
+          </button>
+          <button type="button" class="music-timeline__item" data-act-filter="confrontation" aria-pressed="false">
+            <strong>Act II · Tension</strong>
+            <span>Rising stakes and reversals</span>
+          </button>
+          <button type="button" class="music-timeline__item" data-act-filter="resolution" aria-pressed="false">
+            <strong>Act III · Resolution</strong>
+            <span>Emotional payoff</span>
+          </button>
+          <button type="button" class="music-timeline__item" data-act-filter="flashback" aria-pressed="false">
+            <strong>Flashbacks</strong>
+            <span>Memory motifs</span>
+          </button>
+          <button type="button" class="music-timeline__item" data-act-filter="epilogue" aria-pressed="false">
+            <strong>Epilogue</strong>
+            <span>Closing beats</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="music-layout">
+        <section class="music-scenes" aria-label="Scenes and beats">
+          <header>
+            <h2>Scenes & Beats</h2>
+            <div class="music-scenes__filters" role="group" aria-label="Filter scenes">
+              <button type="button" data-scene-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-scene-filter="setup" aria-pressed="false">Act I</button>
+              <button type="button" data-scene-filter="confrontation" aria-pressed="false">Act II</button>
+              <button type="button" data-scene-filter="resolution" aria-pressed="false">Act III</button>
+              <button type="button" data-scene-filter="flashback" aria-pressed="false">Flashback</button>
+              <button type="button" data-scene-filter="epilogue" aria-pressed="false">Epilogue</button>
+            </div>
+          </header>
+          <ol class="music-scenes__list" data-scene-list>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="intro" data-act="setup" aria-pressed="true">
+                <strong>Scene 1A · Wake Up Call</strong>
+                <span>Loft · Dawn light · Character intros</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="cafe" data-act="setup" aria-pressed="false">
+                <strong>Scene 2 · Corner Café</strong>
+                <span>First ally appears</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="studio" data-act="confrontation" aria-pressed="false">
+                <strong>Scene 7 · Studio Clash</strong>
+                <span>Conflict with producer</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="rain" data-act="confrontation" aria-pressed="false">
+                <strong>Scene 10 · Rain Chase</strong>
+                <span>Night exterior · Rapid cuts</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="hospital" data-act="resolution" aria-pressed="false">
+                <strong>Scene 14 · Recovery</strong>
+                <span>Quiet beats · Whispered vows</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="rooftop" data-act="resolution" aria-pressed="false">
+                <strong>Scene 16 · Rooftop Finale</strong>
+                <span>Sunrise · Final confession</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="flashback" data-act="flashback" aria-pressed="false">
+                <strong>Memory Beat · Childhood Promise</strong>
+                <span>Super 8 overlay</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="music-scene-btn" data-scene="epilogue" data-act="epilogue" aria-pressed="false">
+                <strong>Epilogue · Backstage Glow</strong>
+                <span>Encore bows & curtain</span>
+              </button>
+            </li>
+          </ol>
+        </section>
+
+        <section class="music-tracks" aria-label="Music tracks">
+          <header>
+            <h2>Sound Cues</h2>
+            <a class="music-link" href="#" data-open-library>Browse Library</a>
+          </header>
+          <ul class="music-tracks__list" data-track-list>
+            <li>
+              <article class="music-track" data-track data-act="setup" data-scene="intro" data-tags="happy warm hopeful" data-frequency="220" data-duration="1:12">
+                <div class="music-track__meta">
+                  <h3>Morning Light</h3>
+                  <span class="music-track__duration">1:12</span>
+                </div>
+                <div class="music-track__scene">
+                  <span aria-hidden="true">🎬</span>
+                  <a href="#" data-track-scene-link="intro">Scene 1A · Wake Up Call</a>
+                </div>
+                <div class="music-track__tags">
+                  <span class="music-tag">Happy</span>
+                  <span class="music-tag">Warm</span>
+                  <span class="music-tag">Acoustic</span>
+                </div>
+                <div class="music-track__waveform" aria-hidden="true"></div>
+                <div class="music-track__controls">
+                  <button type="button" class="music-track__play" data-track-play aria-pressed="false" aria-label="Play Morning Light">▶</button>
+                  <button type="button" class="music-track__assign" data-track-assign>Link Scene</button>
+                </div>
+              </article>
+            </li>
+            <li>
+              <article class="music-track" data-track data-act="setup" data-scene="cafe" data-tags="romantic gentle piano" data-frequency="320" data-duration="0:58">
+                <div class="music-track__meta">
+                  <h3>Corner Café Theme</h3>
+                  <span class="music-track__duration">0:58</span>
+                </div>
+                <div class="music-track__scene">
+                  <span aria-hidden="true">🎬</span>
+                  <a href="#" data-track-scene-link="cafe">Scene 2 · Corner Café</a>
+                </div>
+                <div class="music-track__tags">
+                  <span class="music-tag">Romantic</span>
+                  <span class="music-tag">Gentle</span>
+                  <span class="music-tag">Piano</span>
+                </div>
+                <div class="music-track__waveform" aria-hidden="true"></div>
+                <div class="music-track__controls">
+                  <button type="button" class="music-track__play" data-track-play aria-pressed="false" aria-label="Play Corner Café Theme">▶</button>
+                  <button type="button" class="music-track__assign" data-track-assign>Link Scene</button>
+                </div>
+              </article>
+            </li>
+            <li>
+              <article class="music-track" data-track data-act="confrontation" data-scene="studio" data-tags="dark tense synth" data-frequency="420" data-duration="1:45">
+                <div class="music-track__meta">
+                  <h3>Studio Static</h3>
+                  <span class="music-track__duration">1:45</span>
+                </div>
+                <div class="music-track__scene">
+                  <span aria-hidden="true">🎬</span>
+                  <a href="#" data-track-scene-link="studio">Scene 7 · Studio Clash</a>
+                </div>
+                <div class="music-track__tags">
+                  <span class="music-tag">Tense</span>
+                  <span class="music-tag">Dark</span>
+                  <span class="music-tag">Synth</span>
+                </div>
+                <div class="music-track__waveform" aria-hidden="true"></div>
+                <div class="music-track__controls">
+                  <button type="button" class="music-track__play" data-track-play aria-pressed="false" aria-label="Play Studio Static">▶</button>
+                  <button type="button" class="music-track__assign" data-track-assign>Link Scene</button>
+                </div>
+              </article>
+            </li>
+            <li>
+              <article class="music-track" data-track data-act="confrontation" data-scene="rain" data-tags="urgent driving percussion" data-frequency="480" data-duration="1:18">
+                <div class="music-track__meta">
+                  <h3>Chase Pulse</h3>
+                  <span class="music-track__duration">1:18</span>
+                </div>
+                <div class="music-track__scene">
+                  <span aria-hidden="true">🎬</span>
+                  <a href="#" data-track-scene-link="rain">Scene 10 · Rain Chase</a>
+                </div>
+                <div class="music-track__tags">
+                  <span class="music-tag">Urgent</span>
+                  <span class="music-tag">Driving</span>
+                  <span class="music-tag">Percussion</span>
+                </div>
+                <div class="music-track__waveform" aria-hidden="true"></div>
+                <div class="music-track__controls">
+                  <button type="button" class="music-track__play" data-track-play aria-pressed="false" aria-label="Play Chase Pulse">▶</button>
+                  <button type="button" class="music-track__assign" data-track-assign>Link Scene</button>
+                </div>
+              </article>
+            </li>
+            <li>
+              <article class="music-track" data-track data-act="resolution" data-scene="hospital" data-tags="hopeful strings emotional" data-frequency="260" data-duration="2:04">
+                <div class="music-track__meta">
+                  <h3>Hold On</h3>
+                  <span class="music-track__duration">2:04</span>
+                </div>
+                <div class="music-track__scene">
+                  <span aria-hidden="true">🎬</span>
+                  <a href="#" data-track-scene-link="hospital">Scene 14 · Recovery</a>
+                </div>
+                <div class="music-track__tags">
+                  <span class="music-tag">Emotional</span>
+                  <span class="music-tag">Hopeful</span>
+                  <span class="music-tag">Strings</span>
+                </div>
+                <div class="music-track__waveform" aria-hidden="true"></div>
+                <div class="music-track__controls">
+                  <button type="button" class="music-track__play" data-track-play aria-pressed="false" aria-label="Play Hold On">▶</button>
+                  <button type="button" class="music-track__assign" data-track-assign>Link Scene</button>
+                </div>
+              </article>
+            </li>
+            <li>
+              <article class="music-track" data-track data-act="epilogue" data-scene="rooftop" data-tags="uplifting finale anthem" data-frequency="300" data-duration="1:33">
+                <div class="music-track__meta">
+                  <h3>Hearts Awake</h3>
+                  <span class="music-track__duration">1:33</span>
+                </div>
+                <div class="music-track__scene">
+                  <span aria-hidden="true">🎬</span>
+                  <a href="#" data-track-scene-link="rooftop">Scene 16 · Rooftop Finale</a>
+                </div>
+                <div class="music-track__tags">
+                  <span class="music-tag">Finale</span>
+                  <span class="music-tag">Uplifting</span>
+                  <span class="music-tag">Anthem</span>
+                </div>
+                <div class="music-track__waveform" aria-hidden="true"></div>
+                <div class="music-track__controls">
+                  <button type="button" class="music-track__play" data-track-play aria-pressed="false" aria-label="Play Hearts Awake">▶</button>
+                  <button type="button" class="music-track__assign" data-track-assign>Link Scene</button>
+                </div>
+              </article>
+            </li>
+          </ul>
+        </section>
+
+        <aside class="music-panel" aria-label="Sound design tools">
+          <div class="music-panel__tabs" role="tablist">
+            <button type="button" class="music-panel__tab" data-panel-toggle="sound" aria-selected="true" role="tab" aria-controls="soundPanel">Sound Track</button>
+            <button type="button" class="music-panel__tab" data-panel-toggle="generate" aria-selected="false" role="tab" aria-controls="generatePanel">Generate</button>
+            <button type="button" class="music-panel__tab" data-panel-toggle="library" aria-selected="false" role="tab" aria-controls="libraryPanel">Library</button>
+            <button type="button" class="music-panel__tab" data-panel-toggle="notes" aria-selected="false" role="tab" aria-controls="notesPanel">Inspiration &amp; Notes</button>
+          </div>
+          <div class="music-panel__content" id="soundPanel" role="tabpanel" data-panel="sound">
+            <div class="music-panel__section" data-track-summary>
+              <h3>Selected Cue</h3>
+              <p class="music-panel__empty" data-track-empty>No cue selected. Choose a track to review timing and tags.</p>
+              <div class="music-panel__grid" data-track-details hidden>
+                <div>
+                  <h4 data-track-title></h4>
+                  <p><span aria-hidden="true">🕒</span> <span data-track-duration></span></p>
+                </div>
+                <div>
+                  <h4>Linked Scene</h4>
+                  <p><span data-track-scene></span></p>
+                </div>
+                <div>
+                  <h4>Mood Tags</h4>
+                  <p><span data-track-tags></span></p>
+                </div>
+              </div>
+            </div>
+            <div class="music-panel__section">
+              <h3>Automation</h3>
+              <p>Set volume keyframes, dynamic ducking, and entrance markers.</p>
+              <button type="button" class="music-track__assign" data-open-automation>Open Mixer</button>
+            </div>
+          </div>
+          <div class="music-panel__content" id="generatePanel" role="tabpanel" data-panel="generate" hidden>
+            <div class="music-panel__section">
+              <h3>Generate New Cue</h3>
+              <p>Describe the emotion, instruments, and timing you need. The composer assistant will craft an original cue.</p>
+            </div>
+            <form class="music-panel__grid" data-generate-form>
+              <label>
+                <span>Mood &amp; reference</span>
+                <input type="text" name="mood" placeholder="e.g. hopeful strings with modern pulse" required />
+              </label>
+              <label>
+                <span>Target scene</span>
+                <select name="scene">
+                  <option value="intro">Scene 1A · Wake Up Call</option>
+                  <option value="cafe">Scene 2 · Corner Café</option>
+                  <option value="studio">Scene 7 · Studio Clash</option>
+                  <option value="rain">Scene 10 · Rain Chase</option>
+                  <option value="hospital">Scene 14 · Recovery</option>
+                  <option value="rooftop">Scene 16 · Rooftop Finale</option>
+                </select>
+              </label>
+              <label>
+                <span>Timing</span>
+                <input type="text" name="timing" placeholder="00:45 - 01:30" />
+              </label>
+              <button type="submit" class="music-track__assign">Request Draft</button>
+            </form>
+          </div>
+          <div class="music-panel__content" id="libraryPanel" role="tabpanel" data-panel="library" hidden>
+            <div class="music-panel__section">
+              <h3>Library</h3>
+              <p>Drag a cue into the middle column to audition it with your scene.</p>
+            </div>
+            <ul class="music-panel__list">
+              <li class="music-panel__card">
+                <h4>Quiet Resolve</h4>
+                <p>Ambient piano · Reflective · 1:08</p>
+              </li>
+              <li class="music-panel__card">
+                <h4>Blaze Run</h4>
+                <p>Synthwave percussion · High energy · 0:52</p>
+              </li>
+              <li class="music-panel__card">
+                <h4>Starlit Promise</h4>
+                <p>Strings &amp; choir · Romantic swell · 1:26</p>
+              </li>
+            </ul>
+          </div>
+          <div class="music-panel__content" id="notesPanel" role="tabpanel" data-panel="notes" hidden>
+            <div class="music-panel__section">
+              <h3>Inspiration &amp; Notes</h3>
+              <p>Collect references, lyrics, or emotional anchors for this sequence.</p>
+            </div>
+            <textarea class="music-panel__textarea" placeholder="Write notes for collaborators…" data-notes></textarea>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="workspace-launcher" data-workspace-launcher>
+      <div class="workspace-launcher__controls">
+        <div class="workspace-launcher__toggle-wrap">
+          <button class="workspace-launcher__toggle" type="button" aria-expanded="false" aria-label="Workspace menu" data-workspace-toggle>
+            <span class="workspace-launcher__icon" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="workspace-launcher__chat" data-workspace-chat hidden aria-hidden="true">
+          <div class="workspace-launcher__chat-bubble">
+            <div class="workspace-launcher__chat-thread" data-workspace-chat-thread>
+              <div class="workspace-launcher__chat-message workspace-launcher__chat-message--assistant">Ready to score your story. Which scene needs music next?</div>
+            </div>
+            <div class="workspace-launcher__chat-suggestions">
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="continue">Check existing cues</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="new">Draft something new</button>
+              <button type="button" class="workspace-launcher__chat-chip" data-workspace-chat-suggestion data-workspace-chat-action="settings">Adjust your vibe</button>
+            </div>
+            <form class="workspace-launcher__chat-form" data-workspace-chat-form>
+              <div class="workspace-launcher__chat-input">
+                <label class="sr-only" for="workspaceChatInput">Send a chat message</label>
+                <input id="workspaceChatInput" name="workspaceChat" placeholder="Ask the assistant" autocomplete="off" />
+                <button type="submit" class="workspace-launcher__chat-send" aria-label="Send chat message">➤</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
+        <div class="workspace-launcher__module-stack">
+          <nav class="workspace-launcher__modules" aria-label="Workspace modules">
+            <a class="workspace-launcher__module" href="/use-cases/screenplay-writing.html" data-label="Screenplay Writing">
+              <span class="workspace-launcher__module-icon" aria-hidden="true"><img src="/assets/img/IMG_6892.webp" alt="" loading="lazy" /></span>
+            </a>
+            <a class="workspace-launcher__module" href="/StoryboardPro.html" data-label="Storyboard Pro">
+              <span class="workspace-launcher__module-icon" aria-hidden="true"><img src="/assets/img/IMG_6893.webp" alt="" loading="lazy" /></span>
+            </a>
+            <a class="workspace-launcher__module workspace-launcher__module--active" href="/MusicStudio.html" data-label="Music Workspace">
+              <span class="workspace-launcher__module-icon workspace-launcher__module-icon--music" aria-hidden="true"><span aria-hidden="true">🎵❤️</span></span>
+            </a>
+            <a class="workspace-launcher__module" href="/CharacterStudio.html" data-label="Character Studio">
+              <span class="workspace-launcher__module-icon" aria-hidden="true"><img src="/assets/img/IMG_6894.webp" alt="" loading="lazy" /></span>
+            </a>
+            <a class="workspace-launcher__module" href="/VideoEditing.html" data-label="Video &amp; Editing">
+              <span class="workspace-launcher__module-icon" aria-hidden="true"><img src="/assets/img/IMG_6893.webp" alt="" loading="lazy" /></span>
+            </a>
+            <a class="workspace-launcher__module" href="/use-cases/set-design.html" data-label="Set Design">
+              <span class="workspace-launcher__module-icon" aria-hidden="true"><img src="/assets/img/IMG_6903.webp" alt="" loading="lazy" /></span>
+            </a>
+            <a class="workspace-launcher__module" href="/creative-hub.html" data-label="Creative Hub">
+              <span class="workspace-launcher__module-icon" aria-hidden="true"><img src="/assets/img/IMG_6896.webp" alt="" loading="lazy" /></span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <p class="footer__copy">&copy; <span id="musicFooterYear"></span> StudioOrganize</p>
+      <nav aria-label="Footer links" class="footer__nav">
+        <a href="/about.html">About</a>
+        <a href="/faq.html">FAQ</a>
+        <a href="/docs/index.html">Docs</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('musicFooterYear').textContent = new Date().getFullYear();
+  </script>
+  <script type="module">
+    const app = document.querySelector('[data-music-app]');
+    const timelineButtons = Array.from(app.querySelectorAll('[data-act-filter]'));
+    const sceneButtons = Array.from(app.querySelectorAll('[data-scene]'));
+    const trackCards = Array.from(app.querySelectorAll('[data-track]'));
+    const trackList = app.querySelector('[data-track-list]');
+    const sceneFilters = Array.from(app.querySelectorAll('[data-scene-filter]'));
+
+    const summary = app.querySelector('[data-track-empty]');
+    const detailsWrap = app.querySelector('[data-track-details]');
+    const titleEl = app.querySelector('[data-track-title]');
+    const durationEl = app.querySelector('[data-track-duration]');
+    const sceneEl = app.querySelector('[data-track-scene]');
+    const tagsEl = app.querySelector('[data-track-tags]');
+
+    let activeTrack = null;
+    let activeOscillator = null;
+    let activeContext = null;
+
+    const stopTone = () => {
+      if (activeOscillator) {
+        try { activeOscillator.stop(); } catch (error) { /* ignore */ }
+        activeOscillator.disconnect();
+        activeOscillator = null;
+      }
+      if (activeContext) {
+        activeContext.close();
+        activeContext = null;
+      }
+      trackCards.forEach(card => {
+        const button = card.querySelector('[data-track-play]');
+        if (button) {
+          button.setAttribute('aria-pressed', 'false');
+          button.textContent = '▶';
+        }
+      });
+    };
+
+    const playTone = (button, frequency = 220) => {
+      stopTone();
+      try {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        activeContext = new AudioContextCtor();
+        activeOscillator = activeContext.createOscillator();
+        const gain = activeContext.createGain();
+        gain.gain.value = 0.12;
+        activeOscillator.type = 'sine';
+        activeOscillator.frequency.value = frequency;
+        activeOscillator.connect(gain);
+        gain.connect(activeContext.destination);
+        activeOscillator.start();
+        setTimeout(() => {
+          if (activeOscillator) {
+            stopTone();
+          }
+        }, 4000);
+        button.setAttribute('aria-pressed', 'true');
+        button.textContent = '⏸';
+      } catch (error) {
+        console.error('Unable to play tone', error);
+      }
+    };
+
+    const selectTrack = track => {
+      trackCards.forEach(card => card.dataset.selected = card === track ? 'true' : 'false');
+      activeTrack = track;
+      if (track) {
+        const title = track.querySelector('h3')?.textContent || 'Untitled cue';
+        const duration = track.dataset.duration || track.querySelector('.music-track__duration')?.textContent || '';
+        const scene = track.querySelector('[data-track-scene-link]')?.textContent || 'Unlinked';
+        const tags = track.dataset.tags ? track.dataset.tags.split(' ').map(tag => `#${tag}`).join(' ') : 'Add tags to describe the feel';
+        if (summary) summary.setAttribute('hidden', '');
+        if (detailsWrap) {
+          detailsWrap.hidden = false;
+        }
+        if (titleEl) titleEl.textContent = title;
+        if (durationEl) durationEl.textContent = duration;
+        if (sceneEl) sceneEl.textContent = scene;
+        if (tagsEl) tagsEl.textContent = tags;
+      } else {
+        if (summary) summary.hidden = false;
+        if (detailsWrap) detailsWrap.hidden = true;
+        if (titleEl) titleEl.textContent = '';
+        if (durationEl) durationEl.textContent = '';
+        if (sceneEl) sceneEl.textContent = '';
+        if (tagsEl) tagsEl.textContent = '';
+      }
+    };
+
+    trackCards.forEach(card => {
+      card.addEventListener('click', event => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.closest('[data-track-play]')) return;
+        selectTrack(card);
+      });
+      const playButton = card.querySelector('[data-track-play]');
+      if (playButton) {
+        playButton.addEventListener('click', event => {
+          event.stopPropagation();
+          const pressed = playButton.getAttribute('aria-pressed') === 'true';
+          if (pressed) {
+            stopTone();
+          } else {
+            const frequency = Number(card.dataset.frequency) || 220;
+            playTone(playButton, frequency);
+          }
+        });
+      }
+    });
+
+    const applyActFilter = act => {
+      trackCards.forEach(card => {
+        const matches = act === 'all' || card.dataset.act === act;
+        card.parentElement?.toggleAttribute('hidden', !matches);
+      });
+      sceneButtons.forEach(button => {
+        const matches = act === 'all' || button.dataset.act === act;
+        button.parentElement?.toggleAttribute('hidden', !matches);
+      });
+      if (activeTrack && activeTrack.parentElement?.hasAttribute('hidden')) {
+        selectTrack(null);
+      }
+      const visibleItem = trackList.querySelector('li:not([hidden])');
+      if (!visibleItem) {
+        selectTrack(null);
+      }
+    };
+
+    timelineButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const act = button.dataset.actFilter || 'all';
+        timelineButtons.forEach(btn => btn.setAttribute('aria-pressed', btn === button ? 'true' : 'false'));
+        applyActFilter(act);
+      });
+    });
+
+    sceneFilters.forEach(button => {
+      button.addEventListener('click', () => {
+        const act = button.dataset.sceneFilter || 'all';
+        sceneFilters.forEach(btn => btn.setAttribute('aria-pressed', btn === button ? 'true' : 'false'));
+        applyActFilter(act);
+      });
+    });
+
+    sceneButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        sceneButtons.forEach(btn => btn.setAttribute('aria-pressed', btn === button ? 'true' : 'false'));
+        const sceneId = button.dataset.scene;
+        const track = trackCards.find(card => card.dataset.scene === sceneId);
+        if (track) {
+          selectTrack(track);
+          track.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    });
+
+    const panelButtons = Array.from(app.querySelectorAll('[data-panel-toggle]'));
+    const panels = Array.from(app.querySelectorAll('[data-panel]'));
+    panelButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.panelToggle;
+        panelButtons.forEach(btn => btn.setAttribute('aria-selected', btn === button ? 'true' : 'false'));
+        panels.forEach(panel => {
+          const matches = panel.dataset.panel === target;
+          panel.toggleAttribute('hidden', !matches);
+        });
+      });
+    });
+
+    selectTrack(trackCards[0] || null);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') {
+        stopTone();
+      }
+    });
+  </script>
+  <script type="module" src="/assets/main.js"></script>
+</body>
+</html>
