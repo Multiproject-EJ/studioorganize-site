@@ -401,12 +401,6 @@
       .editor-view-toggle{display:inline-flex; border:1px solid var(--ring); border-radius:999px; padding:2px; background:var(--chip); gap:2px}
       .editor-view-toggle button{border:none; background:transparent; color:var(--muted); font-size:11px; letter-spacing:.3px; text-transform:uppercase; padding:4px 10px; border-radius:999px; cursor:pointer; transition:background .2s ease, color .2s ease}
       .editor-view-toggle button.active{background:var(--acc); color:var(--active-tab-text); font-weight:600}
-      body[data-main-view-mode="industry"] #screenplayLayout{grid-template-columns:minmax(0, 1fr);}
-      body[data-main-view-mode="industry"] #scenePanelSlot,
-      body[data-main-view-mode="industry"] #rightPanelSlot,
-      body[data-main-view-mode="industry"] #focusHudDock,
-      body[data-main-view-mode="industry"] .timeline-dock{display:none !important;}
-      body[data-main-view-mode="industry"] .editor-footer .scene-view-nav{display:none !important;}
       body[data-main-view-mode="industry"] .editor-area .line.exposition{display:none !important;}
       body[data-main-view-mode="industry"] .editor-area .line[data-tag-label]{padding-top:0;}
       body[data-main-view-mode="industry"] .editor-area .line[data-tag-label]::after{display:none !important;}
@@ -2370,6 +2364,7 @@
     let sceneViewLabelEl = null;
     let sceneViewPrevBtn = null;
     let sceneViewNextBtn = null;
+    let mainViewMode = 'writer';
 
     const VISIBILITY_MODULE_ID = 'script_writer';
     const DEFAULT_VISIBILITY_PREF = Object.freeze({
@@ -5550,6 +5545,7 @@
     }
 
     function areSceneNotesVisible(){
+      if (typeof mainViewMode === 'string' && mainViewMode === 'industry') return false;
       if (!project || !project.settings) return true;
       return project.settings.showSceneNotes !== false;
     }
@@ -5563,11 +5559,19 @@
       if (!sceneNotesToggleBtn) return;
       const scene = getActiveScene();
       const visible = areSceneNotesVisible();
-      sceneNotesToggleBtn.disabled = !scene;
-      sceneNotesToggleBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
-      sceneNotesToggleBtn.textContent = visible ? 'Hide notes in script' : 'Show notes in script';
-      sceneNotesToggleBtn.setAttribute('aria-label', visible ? 'Hide notes in script' : 'Show notes in script');
-      sceneNotesToggleBtn.title = visible ? 'Hide inline notes in the script editor' : 'Show inline notes in the script editor';
+      const lockedByMode = typeof mainViewMode === 'string' && mainViewMode === 'industry';
+      sceneNotesToggleBtn.disabled = !scene || lockedByMode;
+      if (lockedByMode){
+        sceneNotesToggleBtn.setAttribute('aria-pressed', 'false');
+        sceneNotesToggleBtn.textContent = 'Notes hidden in Industry mode';
+        sceneNotesToggleBtn.setAttribute('aria-label', 'Notes hidden in Industry mode');
+        sceneNotesToggleBtn.title = 'Switch to Writer view to show inline notes.';
+      } else {
+        sceneNotesToggleBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+        sceneNotesToggleBtn.textContent = visible ? 'Hide notes in script' : 'Show notes in script';
+        sceneNotesToggleBtn.setAttribute('aria-label', visible ? 'Hide notes in script' : 'Show notes in script');
+        sceneNotesToggleBtn.title = visible ? 'Hide inline notes in the script editor' : 'Show inline notes in the script editor';
+      }
     }
 
     function renderSceneNotesList(){
@@ -5642,6 +5646,12 @@
 
     function setSceneNotesVisibility(nextVisible){
       if (!project) return;
+      if (typeof mainViewMode === 'string' && mainViewMode === 'industry'){
+        project.settings = project.settings || {};
+        project.settings.showSceneNotes = false;
+        applyModeTextVisibility();
+        return;
+      }
       project.settings = project.settings || {};
       const normalized = !!nextVisible;
       const current = areSceneNotesVisible();
@@ -7946,7 +7956,6 @@
     const editorScrollEl = document.getElementById('editorScroll');
     const scriptViewModeButtons = Array.from(document.querySelectorAll('[data-script-view-mode]'));
     const mainViewModeButtons = Array.from(document.querySelectorAll('[data-main-view-mode]'));
-    let mainViewMode = 'writer';
     const scriptControlsEl = document.getElementById('scriptControls');
     const pageViewNavEl = document.getElementById('pageViewNav');
     const pageViewLabelEl = document.getElementById('pageViewLabel');
@@ -7995,22 +8004,40 @@
       const normalized = normalizeMainViewMode(mode);
       if (normalized === mainViewMode && !options.force){
         updateMainViewModeUI();
+        applyModeTextVisibility();
         return;
       }
       mainViewMode = normalized;
       updateMainViewModeUI();
+      let notesChanged = false;
       if (project){
         project.settings = project.settings || {};
+        const previousNotes = project.settings.showSceneNotes;
+        const nextNotes = normalized === 'industry' ? false : true;
+        notesChanged = previousNotes !== nextNotes;
+        project.settings.showSceneNotes = nextNotes;
         project.settings.mainViewMode = normalized;
         if (options.persist !== false){
           saveLocal(project);
         }
+        if (notesChanged && options.recordChange !== false){
+          bumpVersion();
+          scheduleSave();
+          scheduleBackup();
+        }
       }
+      applyModeTextVisibility();
+    }
+
+    function applyModeTextVisibility(){
+      applySceneNotesVisibility();
+      updateSceneNotesToggleUI();
+      renderSceneNotesList();
+      updatePageViewControls({ skipScroll: pageViewMode !== 'pages' });
     }
 
     function applyMainViewModeFromProject(){
-      mainViewMode = normalizeMainViewMode(project?.settings?.mainViewMode);
-      updateMainViewModeUI();
+      setMainViewMode(project?.settings?.mainViewMode, { force:true, persist:false, recordChange:false });
     }
 
     updateMainViewModeUI();
