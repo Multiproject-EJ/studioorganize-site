@@ -150,6 +150,21 @@
     <h1 class="landing-parallax__title sr-only" id="landing-parallax-title">StudioOrganize</h1>
   </section>
 
+  <section class="landing-overview" aria-labelledby="landing-overview-title">
+    <div class="landing-overview__inner">
+      <h2 class="landing-overview__headline" id="landing-overview-title">Your studio, ready when inspiration hits</h2>
+      <p class="landing-overview__body">StudioOrganize keeps your story beats, characters, and production plans in sync so you can keep creating—no matter which device is in front of you.</p>
+      <ul class="landing-overview__list">
+        <li class="landing-overview__chip">Guided AI workflows across every stage</li>
+        <li class="landing-overview__chip">Instantly synced Google Sheets foundation</li>
+        <li class="landing-overview__chip">Modules that adapt to laptop, tablet, and phone</li>
+      </ul>
+      <div class="cta-row">
+        <button class="btn btn-primary" type="button" data-hero-modal-open>Explore the Story Creation Suite</button>
+      </div>
+    </div>
+  </section>
+
   <section class="landing-steps" aria-label="Five step creative flow">
     <ol class="landing-steps__list">
       <li class="landing-step">
@@ -187,68 +202,17 @@
   </section>
 
   <section class="landing-grid" aria-label="Creative journey preview">
-    <div class="landing-grid__item" aria-hidden="true">1</div>
-    <div class="landing-grid__item" aria-hidden="true">2</div>
-    <div class="landing-grid__item" aria-hidden="true">3</div>
-    <div class="landing-grid__item" aria-hidden="true">4</div>
-  </section>
-
-  <!-- HERO: story-first -->
-  <section class="hero hero--questions">
-    <div class="hero__content">
-      <span class="kicker">Story creation suite</span>
-      <h1 class="hero__question">Where are you stuck in your story today?</h1>
-      <p class="lead">StudioOrganize guides you from spark to schedule. Tell us what you need help with and we’ll point you to the right workspace.</p>
-      <div class="cta-row">
-        <button class="btn btn-primary" type="button" data-questionnaire-open>Take the 2-minute questionnaire</button>
-        <a class="btn btn-ghost" href="#modules">See modules</a>
-      </div>
+    <div class="landing-grid__item">
+      <span class="landing-grid__heading">On Your Computer</span>
     </div>
-    <div class="hero__media">
-      <div class="mockup-card">
-        <div class="mockup-bar"></div>
-        <img src="/assets/img/studioorganize_mock.png" alt="StudioOrganize story modules preview" />
-      </div>
+    <div class="landing-grid__item">
+      <span class="landing-grid__heading">On Your Phone</span>
     </div>
-    <div class="hero__checks">
-      <p class="hero__checks-intro" id="hero-checks-title">Check where you’re stuck in five simple questions:</p>
-      <form class="hero__checks-form" aria-labelledby="hero-checks-title">
-        <fieldset>
-          <legend class="sr-only">Select the areas where you need story support</legend>
-          <label class="hero-check">
-            <input type="checkbox" name="story-roadblock" value="idea" />
-            I’m still shaping the core idea of my story.
-          </label>
-          <label class="hero-check">
-            <input type="checkbox" name="story-roadblock" value="characters" />
-            I need stronger characters or world-building.
-          </label>
-          <label class="hero-check">
-            <input type="checkbox" name="story-roadblock" value="outline" />
-            I’m stuck turning beats into a solid outline.
-          </label>
-          <label class="hero-check">
-            <input type="checkbox" name="story-roadblock" value="production" />
-            I’m planning scenes, schedules, or call sheets.
-          </label>
-          <label class="hero-check">
-            <input type="checkbox" name="story-roadblock" value="delivery" />
-            I need exports, revisions, or presentation-ready PDFs.
-          </label>
-        </fieldset>
-      </form>
-      <p class="hero__checks-note">Need deeper guidance? Launch the questionnaire and we’ll tailor a plan for you.</p>
-      <ul class="hero__bullets">
-        <li>Idea & concept playground with drag-and-drop prompts</li>
-        <li>Character & world databases that link to scenes</li>
-        <li>Beats → scenes → stripboard → call sheets</li>
-        <li>PDF/CSV exports and project duplication in one click</li>
-      </ul>
-      <div class="trust-badges">
-        <span>Works with Google Sheets</span>
-        <span>One-time purchase</span>
-        <span>Instant delivery</span>
-      </div>
+    <div class="landing-grid__item">
+      <span class="landing-grid__heading">On Your Tablet</span>
+    </div>
+    <div class="landing-grid__item">
+      <span class="landing-grid__heading">Everywhere</span>
     </div>
   </section>
 
@@ -407,6 +371,71 @@
   </section>
 </main>
 
+<div class="modal" data-hero-modal hidden>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="hero-modal-title" data-hero-modal-dialog>
+    <button class="modal__close" type="button" data-hero-modal-dismiss data-hero-modal-focus aria-label="Close Story Creation Suite">
+      <span aria-hidden="true">✕</span>
+    </button>
+    <section class="hero hero--questions">
+      <div class="hero__content">
+        <span class="kicker">Story creation suite</span>
+        <h1 class="hero__question" id="hero-modal-title">Where are you stuck in your story today?</h1>
+        <p class="lead">StudioOrganize guides you from spark to schedule. Tell us what you need help with and we’ll point you to the right workspace.</p>
+        <div class="cta-row">
+          <button class="btn btn-primary" type="button" data-questionnaire-open>Take the 2-minute questionnaire</button>
+          <a class="btn btn-ghost" href="#modules">See modules</a>
+        </div>
+      </div>
+      <div class="hero__media">
+        <div class="mockup-card">
+          <div class="mockup-bar"></div>
+          <img src="/assets/img/studioorganize_mock.png" alt="StudioOrganize story modules preview" />
+        </div>
+      </div>
+      <div class="hero__checks">
+        <p class="hero__checks-intro" id="hero-checks-title">Check where you’re stuck in five simple questions:</p>
+        <form class="hero__checks-form" aria-labelledby="hero-checks-title">
+          <fieldset>
+            <legend class="sr-only">Select the areas where you need story support</legend>
+            <label class="hero-check">
+              <input type="checkbox" name="story-roadblock" value="idea" />
+              I’m still shaping the core idea of my story.
+            </label>
+            <label class="hero-check">
+              <input type="checkbox" name="story-roadblock" value="characters" />
+              I need stronger characters or world-building.
+            </label>
+            <label class="hero-check">
+              <input type="checkbox" name="story-roadblock" value="outline" />
+              I’m stuck turning beats into a solid outline.
+            </label>
+            <label class="hero-check">
+              <input type="checkbox" name="story-roadblock" value="production" />
+              I’m planning scenes, schedules, or call sheets.
+            </label>
+            <label class="hero-check">
+              <input type="checkbox" name="story-roadblock" value="delivery" />
+              I need exports, revisions, or presentation-ready PDFs.
+            </label>
+          </fieldset>
+        </form>
+        <p class="hero__checks-note">Need deeper guidance? Launch the questionnaire and we’ll tailor a plan for you.</p>
+        <ul class="hero__bullets">
+          <li>Idea & concept playground with drag-and-drop prompts</li>
+          <li>Character & world databases that link to scenes</li>
+          <li>Beats → scenes → stripboard → call sheets</li>
+          <li>PDF/CSV exports and project duplication in one click</li>
+        </ul>
+        <div class="trust-badges">
+          <span>Works with Google Sheets</span>
+          <span>One-time purchase</span>
+          <span>Instant delivery</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
 <footer class="footer">
   <div class="footer__grid">
     <div>
@@ -448,6 +477,96 @@
     </form>
   </div>
 </div>
+
+<script>
+  (function(){
+    const modal = document.querySelector('[data-hero-modal]');
+    const openButton = document.querySelector('[data-hero-modal-open]');
+    if (!(modal instanceof HTMLElement) || !(openButton instanceof HTMLElement)){
+      return;
+    }
+
+    const dialog = modal.querySelector('[data-hero-modal-dialog]');
+    const closeButtons = modal.querySelectorAll('[data-hero-modal-dismiss]');
+    let lastFocused = null;
+    let closeTimer = 0;
+
+    const handleTransitionEnd = () => {
+      if (modal.classList.contains('is-open')){
+        return;
+      }
+      modal.hidden = true;
+      modal.removeEventListener('transitionend', handleTransitionEnd);
+      if (closeTimer){
+        window.clearTimeout(closeTimer);
+        closeTimer = 0;
+      }
+    };
+
+    const onKeydown = event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+      }
+    };
+
+    const openModal = () => {
+      if (modal.classList.contains('is-open')){
+        return;
+      }
+      lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      modal.removeEventListener('transitionend', handleTransitionEnd);
+      if (closeTimer){
+        window.clearTimeout(closeTimer);
+        closeTimer = 0;
+      }
+      modal.hidden = false;
+      requestAnimationFrame(() => {
+        modal.classList.add('is-open');
+      });
+      document.documentElement.classList.add('is-modal-open');
+      document.addEventListener('keydown', onKeydown);
+      const focusTarget = modal.querySelector('[data-hero-modal-focus]') || closeButtons[0] || dialog;
+      if (focusTarget instanceof HTMLElement){
+        try {
+          focusTarget.focus({ preventScroll: true });
+        } catch (_error){
+          focusTarget.focus();
+        }
+      }
+    };
+
+    const closeModal = () => {
+      if (!modal.classList.contains('is-open')){
+        return;
+      }
+      modal.classList.remove('is-open');
+      modal.addEventListener('transitionend', handleTransitionEnd);
+      closeTimer = window.setTimeout(handleTransitionEnd, 320);
+      document.documentElement.classList.remove('is-modal-open');
+      document.removeEventListener('keydown', onKeydown);
+      if (lastFocused instanceof HTMLElement){
+        try {
+          lastFocused.focus({ preventScroll: true });
+        } catch (_error){
+          lastFocused.focus();
+        }
+      }
+    };
+
+    openButton.addEventListener('click', openModal);
+    closeButtons.forEach(button => {
+      if (button instanceof HTMLElement){
+        button.addEventListener('click', closeModal);
+      }
+    });
+    modal.addEventListener('click', event => {
+      if (event.target === modal){
+        closeModal();
+      }
+    });
+  }());
+</script>
 
 <script type="module" src="/assets/main.js"></script>
 </body>
