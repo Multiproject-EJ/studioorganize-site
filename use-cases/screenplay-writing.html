@@ -8441,17 +8441,16 @@
       stopSelectionHandleDrag();
     }
 
-    function positionSelectionActionButton(rect){
-      if (!selectionActionButton) return;
+    function positionSelectionActionButton(range){
+      if (!selectionActionButton || !range) return;
       selectionActionButton.removeAttribute('hidden');
       requestAnimationFrame(()=>{
         const buttonRect = selectionActionButton.getBoundingClientRect();
-        let top = rect.top - buttonRect.height - 14;
-        if (top < 12){
-          top = rect.bottom + 14;
-        }
+        const rects = Array.from(range.getClientRects()).filter(r => r.width || r.height);
+        const targetRect = rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+        let top = targetRect.top + (targetRect.height / 2) - (buttonRect.height / 2);
+        let left = targetRect.right + 12;
         top = Math.max(12, Math.min(top, window.innerHeight - buttonRect.height - 12));
-        let left = rect.left + (rect.width / 2) - (buttonRect.width / 2);
         left = Math.max(12, Math.min(left, window.innerWidth - buttonRect.width - 12));
         selectionActionButton.style.top = `${Math.round(top)}px`;
         selectionActionButton.style.left = `${Math.round(left)}px`;
@@ -8488,7 +8487,7 @@
           selectionHandleEnd.setAttribute('hidden', '');
         }
       }
-      positionSelectionActionButton(rect);
+      positionSelectionActionButton(range);
     }
 
     function updateSelectionOverlayFromSelection(){
