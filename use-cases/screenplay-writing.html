@@ -807,6 +807,7 @@
       .script-dialog__backdrop{position:absolute; inset:0;}
       .script-dialog__panel{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,0.45); max-width:1000px; width:100%; padding:24px; display:flex; flex-direction:column; gap:20px; color:var(--ink); max-height:calc(100vh - 48px); overflow:hidden;}
       .script-dialog__header{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-shrink:0;}
+      .script-dialog__header-tools{margin-top:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
       .script-dialog__header h2{margin:0; font-size:20px;}
       .script-dialog__close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
       .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; align-items:start; flex:1; min-height:0; overflow:auto; padding-right:4px;}
@@ -1339,20 +1340,9 @@
             <button class="btn" type="button" id="saveSceneBtn" aria-haspopup="true" aria-expanded="false">Save ▾</button>
             <div class="btn-menu-list" id="saveMenuList" role="menu">
               <button type="button" id="saveSceneMenuAction" data-save-action="save" role="menuitem">Save</button>
-              <button type="button" id="saveSceneCloseAction" data-save-action="save-close" role="menuitem">Save &amp; Close</button>
-              <button type="button" data-save-action="backup" role="menuitem">Backup Now</button>
-              <button type="button" data-save-action="restore" role="menuitem">Restore…</button>
             </div>
           </div>
           <span class="save-status" id="saveSceneStatus" role="status" aria-live="polite" hidden></span>
-        </div>
-
-        <div class="btn-menu non-essential" id="exportMenu">
-          <button class="btn" type="button" id="exportMenuButton" aria-haspopup="true" aria-expanded="false">Export ▾</button>
-          <div class="btn-menu-list" id="exportMenuList" role="menu">
-            <button type="button" data-export-action="fountain" role="menuitem">Fountain (.fountain)</button>
-            <button type="button" data-export-action="pdf" role="menuitem">PDF</button>
-          </div>
         </div>
 
         <button class="btn non-essential" id="scriptBtn" type="button" onclick="openScriptDialog()">Script…</button>
@@ -2137,6 +2127,17 @@
           <div>
             <h2 id="scriptDialogTitle">Load Script</h2>
             <p class="muted-text" id="scriptDialogSubtitle">Save your current work, then switch to a different script.</p>
+            <div class="script-dialog__header-tools">
+              <div class="btn-menu" id="exportMenu">
+                <button class="btn" type="button" id="exportMenuButton" aria-haspopup="true" aria-expanded="false">Export ▾</button>
+                <div class="btn-menu-list" id="exportMenuList" role="menu">
+                  <button type="button" data-export-action="fountain" role="menuitem">Fountain (.fountain)</button>
+                  <button type="button" data-export-action="pdf" role="menuitem">PDF</button>
+                  <button type="button" data-export-action="backup" role="menuitem">Backup Now</button>
+                  <button type="button" data-export-action="restore" role="menuitem">Restore…</button>
+                </div>
+              </div>
+            </div>
           </div>
           <button type="button" class="script-dialog__close" id="scriptDialogClose" aria-label="Close script dialog">✕</button>
         </div>
@@ -4529,10 +4530,8 @@
       });
 
       const setSaveButtonsDisabled = (disabled)=>{
-        ['saveSceneMenuAction', 'saveSceneCloseAction'].forEach(id=>{
-          const button = document.getElementById(id);
-          if (button) button.disabled = !!disabled;
-        });
+        const button = document.getElementById('saveSceneMenuAction');
+        if (button) button.disabled = !!disabled;
       };
 
       const setSaveFailureStatus = (reason)=>{
@@ -4573,13 +4572,7 @@
           setOpen(false);
           if (action === 'save'){
             await runSaveFlow();
-          } else if (action === 'save-close'){
-            await runSaveFlow(()=>{
-              setSaveSceneStatus('success', 'Saved! Redirecting…');
-              window.location.href = '/account.html';
-            });
-          } else if (action === 'backup') backupNow();
-          else if (action === 'restore') openRestore();
+          }
         });
       });
 
@@ -4622,6 +4615,8 @@
           setOpen(false);
           if (action === 'fountain') exportFountain();
           else if (action === 'pdf') printPDF();
+          else if (action === 'backup') backupNow();
+          else if (action === 'restore') openRestore();
         });
       });
 
