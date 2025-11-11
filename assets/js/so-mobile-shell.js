@@ -52,13 +52,13 @@
       'Outline (mobile)',
       { createPlaceholder: false }
     );
-    modules.notes = ensureModule(
-      'screenwriter-notes',
-      ['#screenplay-notes'],
-      'Notes (mobile)',
+    modules.ideas = ensureModule(
+      'screenwriter-ideas',
+      ['#screenplay-ideas'],
+      'Ideas (mobile)',
       { createPlaceholder: false }
     );
-    ['screenwriter', 'outline', 'notes'].forEach((key) => {
+    ['screenwriter', 'outline', 'ideas'].forEach((key) => {
       if (!modules[key]) {
         delete modules[key];
         const btn = nav.querySelector('[data-target="' + key + '"]');
@@ -105,6 +105,7 @@
   }
 
   function activate(id) {
+    if (id === 'notes') id = 'ideas';
     Object.keys(modules).forEach((key) => {
       const el = modules[key];
       if (!el) return;
@@ -142,7 +143,8 @@
 
   // pick first button if no saved tab
   const firstBtn = nav.querySelector('[data-target]');
-  const initialTab = savedTab || (firstBtn ? firstBtn.dataset.target : Object.keys(modules)[0]);
+  const normalizedSaved = savedTab === 'notes' ? 'ideas' : savedTab;
+  const initialTab = normalizedSaved || (firstBtn ? firstBtn.dataset.target : Object.keys(modules)[0]);
   activate(initialTab);
 
   // optional shared SW (must not throw)
