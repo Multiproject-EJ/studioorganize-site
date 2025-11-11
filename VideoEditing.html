@@ -116,6 +116,318 @@
         background: linear-gradient(180deg, rgba(79,123,255,0.08), transparent);
         border-bottom: 1px solid var(--ring);
       }
+      .scene-pair-lab {
+        display: grid;
+        gap: 14px;
+        padding: 18px 20px 14px;
+        margin-bottom: 12px;
+        border: 1px solid var(--ring);
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(79,123,255,0.12), rgba(79,123,255,0.04));
+        box-shadow: 0 18px 36px rgba(15,23,42,0.18);
+      }
+      .scene-pair-lab__header {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        color: var(--ink);
+      }
+      .scene-pair-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .scene-pair-row--all { min-height: 48px; }
+      .scene-pair-row--pair,
+      .scene-pair-row--focus {
+        min-height: clamp(240px, 32vw, 320px);
+      }
+      .scene-pair-grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(52px, 1fr);
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+      }
+      .scene-pair-grid__item { scroll-snap-align: center; }
+      .scene-pair-grid__button {
+        width: 100%;
+        min-height: 48px;
+        border-radius: 12px;
+        border: 1px solid var(--ring);
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+        transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .scene-pair-grid__button span {
+        display: block;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .scene-pair-grid__button span:last-child {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+      .scene-pair-grid__button:hover,
+      .scene-pair-grid__button:focus-visible {
+        outline: none;
+        border-color: var(--acc);
+        box-shadow: 0 10px 24px rgba(79,123,255,0.18);
+        transform: translateY(-1px);
+      }
+      .scene-pair-grid__button.is-active {
+        border-color: rgba(79,123,255,0.65);
+        background: rgba(79,123,255,0.12);
+      }
+      .scene-pair-grid__button.is-focused {
+        border-color: var(--acc);
+        background: rgba(79,123,255,0.22);
+        color: var(--acc);
+      }
+      .scene-pair-grid__empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--muted);
+        padding: 12px 0;
+      }
+      .scene-pair-feature {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .scene-pair-nav {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        border: 1px solid var(--ring);
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .scene-pair-nav:hover,
+      .scene-pair-nav:focus-visible {
+        outline: none;
+        border-color: var(--acc);
+        background: rgba(79,123,255,0.16);
+        box-shadow: 0 12px 26px rgba(79,123,255,0.18);
+        transform: translateY(-1px);
+      }
+      .scene-pair-nav:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+      .scene-pair-cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .scene-pair-card {
+        border-radius: 16px;
+        background: var(--card);
+        border: 1px solid var(--ring);
+        overflow: hidden;
+        box-shadow: 0 14px 32px rgba(8,15,28,0.22);
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+      }
+      .scene-pair-card--active {
+        border-color: var(--acc);
+        box-shadow: 0 16px 34px rgba(79,123,255,0.25);
+      }
+      .scene-pair-card--empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        border-style: dashed;
+        background: rgba(148,163,184,0.08);
+      }
+      .scene-pair-card--empty p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+      }
+      .scene-pair-card__button {
+        width: 100%;
+        padding: 18px 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+        border: none;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .scene-pair-card__button:focus-visible {
+        outline: none;
+      }
+      .scene-pair-card__eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .scene-pair-card__title {
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        margin: 0;
+      }
+      .scene-pair-card__meta {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .scene-pair-focus {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        gap: 16px;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        border-radius: 18px;
+        background: var(--card);
+        border: 1px solid var(--ring);
+        box-shadow: 0 18px 40px rgba(8,15,28,0.24);
+      }
+      .scene-pair-focus__image {
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(79,123,255,0.18), rgba(79,123,255,0.04));
+      }
+      .scene-pair-focus__image::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+        pointer-events: none;
+      }
+      .scene-pair-focus__image img {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 3 / 2;
+        object-fit: cover;
+        display: block;
+      }
+      .scene-pair-focus__caption {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        justify-content: center;
+      }
+      .scene-pair-focus__eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0;
+      }
+      .scene-pair-focus__title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+      .scene-pair-focus__meta {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .scene-pair-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+      .scene-pair-select {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+      }
+      .scene-pair-select select {
+        appearance: none;
+        border-radius: 10px;
+        border: 1px solid var(--ring);
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 10px 34px 10px 12px;
+        cursor: pointer;
+        transition: border-color .2s ease, box-shadow .2s ease;
+      }
+      .scene-pair-select select:focus-visible {
+        outline: none;
+        border-color: var(--acc);
+        box-shadow: 0 0 0 2px rgba(79,123,255,0.2);
+      }
+      .scene-pair-select::after {
+        content: '▾';
+        position: absolute;
+        right: 12px;
+        pointer-events: none;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .scene-pair-lab--empty .scene-pair-focus,
+      .scene-pair-lab--empty .scene-pair-feature,
+      .scene-pair-lab--empty .scene-pair-actions {
+        opacity: 0.6;
+      }
+      @media (max-width: 1024px) {
+        .scene-pair-focus {
+          grid-template-columns: 1fr;
+          padding: 18px;
+        }
+        .scene-pair-focus__image img { aspect-ratio: 16 / 9; }
+      }
+      @media (max-width: 768px) {
+        .scene-pair-lab {
+          padding: 16px;
+        }
+        .scene-pair-feature {
+          grid-template-columns: 1fr;
+        }
+        .scene-pair-nav {
+          width: 44px;
+          height: 44px;
+        }
+        .scene-pair-cards {
+          grid-template-columns: 1fr;
+        }
+      }
       .scene-carousel-wrapper.scene-carousel--zoomed {
         --scene-carousel-active-scale: 1.04;
         --scene-carousel-adjacent-scale: 0.78;
@@ -875,6 +1187,48 @@
         <button id="timelineDockHandle" class="timeline-dock__handle" type="button" aria-pressed="true" aria-expanded="true" aria-label="Click to float story timelines" title="Click to float story timelines"></button>
         <div class="timeline-dock__shell">
           <div class="timeline-dock__content">
+            <section class="scene-pair-lab" aria-label="Scene pair explorer" data-scene-pair-lab>
+              <h2 class="scene-pair-lab__header">Scene pair explorer</h2>
+              <div class="scene-pair-row scene-pair-row--all">
+                <ol class="scene-pair-grid" data-scene-pair-grid role="list"></ol>
+              </div>
+              <div class="scene-pair-row scene-pair-row--pair">
+                <div class="scene-pair-feature">
+                  <button class="scene-pair-nav" type="button" aria-label="Previous scene pair" data-scene-pair-prev>
+                    ‹
+                  </button>
+                  <div class="scene-pair-cards" data-scene-pair-cards></div>
+                  <button class="scene-pair-nav" type="button" aria-label="Next scene pair" data-scene-pair-next>
+                    ›
+                  </button>
+                </div>
+              </div>
+              <div class="scene-pair-row scene-pair-row--focus">
+                <figure class="scene-pair-focus" data-scene-pair-focus hidden>
+                  <div class="scene-pair-focus__image">
+                    <img src="" alt="" loading="lazy" decoding="async" data-scene-pair-focus-image />
+                  </div>
+                  <figcaption class="scene-pair-focus__caption">
+                    <p class="scene-pair-focus__eyebrow" data-scene-pair-focus-label></p>
+                    <h3 class="scene-pair-focus__title" data-scene-pair-focus-title></h3>
+                    <p class="scene-pair-focus__meta" data-scene-pair-focus-meta></p>
+                  </figcaption>
+                </figure>
+              </div>
+              <div class="scene-pair-row scene-pair-row--actions">
+                <div class="scene-pair-actions">
+                  <button class="btn btn-primary" type="button" data-scene-pair-generate disabled>Generate</button>
+                  <label class="scene-pair-select">
+                    <span class="sr-only">Choose generator</span>
+                    <select data-scene-pair-engine disabled>
+                      <option value="">Select</option>
+                      <option value="google-veo">Google VEO</option>
+                      <option value="openai-sora">| OPENAI SORA</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </section>
             <div class="story-arc-layout">
               <div class="story-arc-columns">
                 <div class="story-arc-timeline" aria-label="Story arc timeline">
@@ -1414,6 +1768,18 @@
     const sceneCarouselZoomLabel = sceneCarouselZoomButton
       ? sceneCarouselZoomButton.querySelector('[data-scene-carousel-zoom-label]')
       : null;
+    const scenePairLab = document.querySelector('[data-scene-pair-lab]');
+    const scenePairGrid = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-grid]') : null;
+    const scenePairCardsContainer = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-cards]') : null;
+    const scenePairPrevButton = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-prev]') : null;
+    const scenePairNextButton = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-next]') : null;
+    const scenePairFocusFigure = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-focus]') : null;
+    const scenePairFocusImage = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-focus-image]') : null;
+    const scenePairFocusLabel = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-focus-label]') : null;
+    const scenePairFocusTitle = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-focus-title]') : null;
+    const scenePairFocusMeta = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-focus-meta]') : null;
+    const scenePairGenerateButton = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-generate]') : null;
+    const scenePairEngineSelect = scenePairLab ? scenePairLab.querySelector('[data-scene-pair-engine]') : null;
     const cardDialog = document.querySelector('[data-card-dialog]');
     const cardDialogElements = cardDialog
       ? {
@@ -1473,10 +1839,14 @@
     let activeSceneId = null;
     let sceneCarouselZoomed = true;
     let sceneCarouselDragState = null;
+    let scenePairStartIndex = 0;
+    let scenePairFocusId = null;
 
     setSceneCarouselZoom(true);
     updateCurrentFramePreview(null);
 
+    setupScenePairLab();
+    renderScenePairLab();
     initialiseAiProviderSelect();
     setupApiDialog();
     setupCardDialog();
@@ -2285,6 +2655,8 @@
         sceneCards = [];
         sceneRows = [];
         window.storyboardScenes = [];
+        scenePairStartIndex = 0;
+        scenePairFocusId = null;
         document.dispatchEvent(
           new CustomEvent('storyboard:scenes-rendered', {
             detail: { scenes: [], activeSceneId: null },
@@ -2350,7 +2722,222 @@
       renderScenes();
     }
 
+    function setupScenePairLab() {
+      if (!scenePairLab) return;
+      if (scenePairPrevButton) {
+        scenePairPrevButton.addEventListener('click', () => shiftScenePair(-1));
+      }
+      if (scenePairNextButton) {
+        scenePairNextButton.addEventListener('click', () => shiftScenePair(1));
+      }
+    }
+
+    function getScenePairScenes() {
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+      if (!scenes.length) return [];
+      const length = scenes.length;
+      const normalisedStart = ((scenePairStartIndex % length) + length) % length;
+      scenePairStartIndex = normalisedStart;
+      const firstScene = scenes[normalisedStart] || null;
+      if (length === 1) {
+        return [firstScene, null];
+      }
+      const secondScene = scenes[(normalisedStart + 1) % length] || null;
+      return [firstScene, secondScene];
+    }
+
+    function shiftScenePair(step) {
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+      if (!scenes.length) return;
+      const length = scenes.length;
+      if (!length) return;
+      const nextIndex = ((scenePairStartIndex + step) % length + length) % length;
+      setScenePairStart(nextIndex, { focusSceneId: scenePairFocusId });
+    }
+
+    function setScenePairStart(index, options = {}) {
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+      if (!scenes.length) return;
+      const length = scenes.length;
+      const normalisedIndex = ((index % length) + length) % length;
+      scenePairStartIndex = normalisedIndex;
+      if (options && options.focusSceneId) {
+        scenePairFocusId = options.focusSceneId;
+      }
+      const pair = getScenePairScenes();
+      const pairIds = pair.map(scene => (scene ? scene.id : null)).filter(Boolean);
+      if (!pairIds.includes(scenePairFocusId)) {
+        scenePairFocusId = pairIds[0] || null;
+      }
+      renderScenePairLab();
+    }
+
+    function setScenePairFocus(sceneId) {
+      if (!sceneId) return;
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+      const exists = scenes.some(scene => scene && scene.id === sceneId);
+      if (!exists) return;
+      scenePairFocusId = sceneId;
+      renderScenePairLab();
+    }
+
+    function renderScenePairLab() {
+      if (!scenePairLab) return;
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+      const hasScenes = scenes.length > 0;
+      scenePairLab.classList.toggle('scene-pair-lab--empty', !hasScenes);
+
+      if (!hasScenes) {
+        if (scenePairGrid) {
+          scenePairGrid.innerHTML = '';
+          const emptyItem = document.createElement('li');
+          emptyItem.className = 'scene-pair-grid__empty';
+          emptyItem.setAttribute('role', 'listitem');
+          emptyItem.textContent = 'Add scenes to start pairing.';
+          scenePairGrid.appendChild(emptyItem);
+        }
+        if (scenePairCardsContainer) {
+          scenePairCardsContainer.innerHTML = '';
+          const placeholder = document.createElement('article');
+          placeholder.className = 'scene-pair-card scene-pair-card--empty';
+          const text = document.createElement('p');
+          text.textContent = 'Create scenes in Writer to explore pairs.';
+          placeholder.appendChild(text);
+          scenePairCardsContainer.appendChild(placeholder);
+        }
+        if (scenePairPrevButton) scenePairPrevButton.disabled = true;
+        if (scenePairNextButton) scenePairNextButton.disabled = true;
+        if (scenePairFocusFigure) scenePairFocusFigure.hidden = true;
+        if (scenePairGenerateButton) {
+          scenePairGenerateButton.disabled = true;
+          scenePairGenerateButton.title = '';
+        }
+        if (scenePairEngineSelect) {
+          scenePairEngineSelect.disabled = true;
+          scenePairEngineSelect.value = '';
+        }
+        return;
+      }
+
+      const pair = getScenePairScenes();
+      const pairIds = pair.map(scene => (scene ? scene.id : null)).filter(Boolean);
+      if (!pairIds.includes(scenePairFocusId)) {
+        scenePairFocusId = pairIds[0] || null;
+      }
+
+      if (scenePairGrid) {
+        scenePairGrid.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        scenes.forEach((scene, index) => {
+          const item = document.createElement('li');
+          item.className = 'scene-pair-grid__item';
+          item.setAttribute('role', 'listitem');
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'scene-pair-grid__button';
+          const numberLabel = scene.numberLabel || `Scene ${index + 1}`;
+          const rawName = scene.displayName || scene.slug || `Scene ${index + 1}`;
+          const isInPair = pairIds.includes(scene.id);
+          const isFocused = scene.id === scenePairFocusId;
+          if (isInPair) button.classList.add('is-active');
+          if (isFocused) button.classList.add('is-focused');
+          button.setAttribute('aria-pressed', isInPair ? 'true' : 'false');
+          button.setAttribute('aria-label', `${numberLabel} · ${rawName}. Set as starting scene for pair.`);
+          const numberSpan = document.createElement('span');
+          numberSpan.textContent = numberLabel;
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = rawName;
+          button.append(numberSpan, nameSpan);
+          button.addEventListener('click', () => setScenePairStart(index, { focusSceneId: scene.id }));
+          item.appendChild(button);
+          fragment.appendChild(item);
+        });
+        scenePairGrid.appendChild(fragment);
+      }
+
+      if (scenePairPrevButton) scenePairPrevButton.disabled = scenes.length <= 1;
+      if (scenePairNextButton) scenePairNextButton.disabled = scenes.length <= 1;
+
+      if (scenePairCardsContainer) {
+        scenePairCardsContainer.innerHTML = '';
+        const cardsFragment = document.createDocumentFragment();
+        pair.forEach((scene, cardIndex) => {
+          if (!scene) {
+            const placeholder = document.createElement('article');
+            placeholder.className = 'scene-pair-card scene-pair-card--empty';
+            const text = document.createElement('p');
+            text.textContent = 'Add another scene to complete the pair.';
+            placeholder.appendChild(text);
+            cardsFragment.appendChild(placeholder);
+            return;
+          }
+          const card = document.createElement('article');
+          card.className = 'scene-pair-card' + (scene.id === scenePairFocusId ? ' scene-pair-card--active' : '');
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'scene-pair-card__button';
+          button.addEventListener('click', () => setScenePairFocus(scene.id));
+          const eyebrow = document.createElement('span');
+          eyebrow.className = 'scene-pair-card__eyebrow';
+          eyebrow.textContent = `${cardIndex === 0 ? 'First' : 'Second'} · ${scene.numberLabel || `Scene ${cardIndex + 1}`}`;
+          const title = document.createElement('p');
+          title.className = 'scene-pair-card__title';
+          title.textContent = scene.displayName || scene.slug || 'Untitled scene';
+          const meta = document.createElement('p');
+          meta.className = 'scene-pair-card__meta';
+          meta.textContent = scene.timelineMeta || scene.statusText || 'Timeline metadata coming soon.';
+          button.append(eyebrow, title, meta);
+          card.appendChild(button);
+          cardsFragment.appendChild(card);
+        });
+        scenePairCardsContainer.appendChild(cardsFragment);
+      }
+
+      const focusScene = pair.find(scene => scene && scene.id === scenePairFocusId) || pair.find(Boolean) || null;
+      if (scenePairFocusFigure) {
+        if (!focusScene) {
+          scenePairFocusFigure.hidden = true;
+        } else {
+          scenePairFocusFigure.hidden = false;
+          const previewImages = getScenePreviewImages(focusScene);
+          const previewSrc = previewImages[0] || createScenePreviewData(focusScene);
+          if (scenePairFocusImage) {
+            scenePairFocusImage.src = previewSrc;
+            const focusTitle = focusScene.displayName || focusScene.slug || 'Storyboard preview';
+            const focusNumber = focusScene.numberLabel || 'Scene';
+            scenePairFocusImage.alt = `${focusNumber} · ${focusTitle} preview image`;
+          }
+          if (scenePairFocusLabel) {
+            scenePairFocusLabel.textContent = focusScene.numberLabel || 'Scene';
+          }
+          if (scenePairFocusTitle) {
+            scenePairFocusTitle.textContent = focusScene.displayName || focusScene.slug || 'Storyboard preview';
+          }
+          if (scenePairFocusMeta) {
+            scenePairFocusMeta.textContent = focusScene.timelineMeta || focusScene.statusText || 'Timeline metadata coming soon.';
+          }
+        }
+      }
+
+      if (scenePairGenerateButton) {
+        scenePairGenerateButton.disabled = false;
+        const pairLabels = pair
+          .filter(scene => !!scene)
+          .map(scene => `${scene.numberLabel || 'Scene'} · ${scene.displayName || scene.slug || 'Untitled scene'}`);
+        scenePairGenerateButton.title = pairLabels.length ? `Generate ideas for ${pairLabels.join(' and ')}` : '';
+        if (pairLabels.length) {
+          scenePairGenerateButton.setAttribute('aria-label', `Generate ideas for ${pairLabels.join(' and ')}`);
+        } else {
+          scenePairGenerateButton.setAttribute('aria-label', 'Generate scene pair ideas');
+        }
+      }
+      if (scenePairEngineSelect) {
+        scenePairEngineSelect.disabled = false;
+      }
+    }
+
     function renderTimelineDockScenes() {
+      renderScenePairLab();
       const track = document.getElementById('storyArcSceneSlots');
       if (!track) return;
       track.innerHTML = '';
