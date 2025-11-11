@@ -312,6 +312,47 @@
       .story-arc-scenes__step--active .story-arc-scenes__scene-number { color: var(--active-tab-text); }
       .story-arc-scenes__step--active .story-arc-scenes__scene-label { color: var(--active-tab-text); }
       .story-arc-scenes__empty { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 10px; border: 1px dashed var(--ring); color: var(--muted); font-size: 12px; background: var(--chip); }
+      .story-arc-scenes__container--dense { display: grid; gap: 12px; padding: 12px; background: linear-gradient(135deg, rgba(79,123,255,0.08), rgba(79,123,255,0.02)); }
+      .story-arc-scenes__container--dense .story-arc-scenes__track { padding: 0 4px 6px; }
+      .story-arc-scenes__focus { display: none; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 16px 18px; border-radius: 14px; border: 1px solid var(--ring); background: linear-gradient(135deg, rgba(79,123,255,0.18), rgba(79,123,255,0.04)); box-shadow: 0 14px 32px rgba(8,15,28,0.22); position: relative; overflow: hidden; }
+      .story-arc-scenes__container--dense .story-arc-scenes__focus { display: grid; }
+      .story-arc-scenes__focus::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 16% 18%, rgba(255,255,255,0.35), transparent 58%); pointer-events: none; opacity: 0.7; }
+      .story-arc-scenes__focus-main { position: relative; display: flex; flex-direction: column; gap: 6px; z-index: 1; }
+      .story-arc-scenes__focus-progress { font-size: 11px; letter-spacing: .32px; text-transform: uppercase; color: rgba(15,23,42,0.55); display: inline-flex; align-items: center; gap: 6px; }
+      .story-arc-scenes__focus-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+      .story-arc-scenes__focus-number { font-size: 13px; font-weight: 600; letter-spacing: .28px; text-transform: uppercase; color: rgba(15,23,42,0.68); }
+      .story-arc-scenes__focus-title { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: .2px; color: var(--ink); }
+      .story-arc-scenes__focus-meta { margin: 0; font-size: 13px; line-height: 1.45; max-width: 64ch; color: rgba(15,23,42,0.68); }
+      .story-arc-scenes__focus-neighbors { position: relative; display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; z-index: 1; }
+      .story-arc-scenes__focus-button { border-radius: 999px; border: 1px solid var(--ring); background: var(--chip); color: var(--ink); font-size: 12.5px; font-weight: 600; padding: 9px 16px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+      .story-arc-scenes__focus-button:hover { background: linear-gradient(135deg, rgba(79,123,255,0.16), rgba(79,123,255,0.06)); border-color: var(--acc); box-shadow: 0 10px 26px rgba(79,123,255,0.22); transform: translateY(-1px); }
+      .story-arc-scenes__focus-button:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .story-arc-scenes__focus-button:active { transform: translateY(0); }
+      .story-arc-scenes__focus-button[disabled] { cursor: not-allowed; opacity: 0.45; box-shadow: none; transform: none; }
+      .story-arc-scenes__focus-button--prev::before { content: "‹"; font-size: 14px; }
+      .story-arc-scenes__focus-button--next::after { content: "›"; font-size: 14px; }
+      .story-arc-scenes__focus-button--prev,
+      .story-arc-scenes__focus-button--next { position: relative; }
+      .story-arc-scenes__track--carousel { overflow-x: auto; scrollbar-width: thin; scroll-snap-type: x mandatory; gap: 12px; padding-bottom: 6px; }
+      .story-arc-scenes__track--carousel::-webkit-scrollbar { height: 8px; }
+      .story-arc-scenes__track--carousel::-webkit-scrollbar-thumb { background: rgba(79,123,255,0.4); border-radius: 999px; }
+      .story-arc-scenes__track--carousel::-webkit-scrollbar-track { background: transparent; }
+      .story-arc-scenes__track--carousel .story-arc-scenes__step { flex: 0 0 clamp(140px, 20vw, 220px); scroll-snap-align: center; }
+      .story-arc-scenes__track--carousel .story-arc-scenes__slot { min-width: auto; }
+      .story-arc-scenes__track--carousel .story-arc-scenes__step--active { scroll-snap-align: center; }
+      @media (max-width: 920px) {
+        .story-arc-scenes__focus { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px 16px; }
+        .story-arc-scenes__focus-neighbors { justify-content: flex-start; }
+      }
+      @media (max-width: 640px) {
+        .story-arc-scenes__track--carousel { margin: 0; }
+        .story-arc-scenes__focus-title { font-size: 16px; }
+        .story-arc-scenes__focus-button { padding: 8px 14px; font-size: 12px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .story-arc-scenes__focus,
+        .story-arc-scenes__focus-button { transition: none; }
+      }
       @media (max-width: 820px) {
         .story-arc-layout { flex-direction: column; align-items: stretch; }
         .story-arc-actions { flex-direction: row; justify-content: flex-end; align-items: center; }
@@ -935,6 +976,45 @@
                 </div>
                 <div class="story-arc-scenes" aria-label="Scene timeline">
                   <div class="story-arc-scenes__container">
+                    <div
+                      class="story-arc-scenes__focus"
+                      id="storyArcSceneFocus"
+                      data-story-arc-focus
+                      hidden
+                    >
+                      <div class="story-arc-scenes__focus-main">
+                        <span class="story-arc-scenes__focus-progress" data-story-arc-focus-progress>
+                          Scene 1 of 1
+                        </span>
+                        <div class="story-arc-scenes__focus-heading">
+                          <span class="story-arc-scenes__focus-number" data-story-arc-focus-number>Scene 1</span>
+                          <h3 class="story-arc-scenes__focus-title" data-story-arc-focus-title>
+                            Untitled scene
+                          </h3>
+                        </div>
+                        <p class="story-arc-scenes__focus-meta" data-story-arc-focus-meta>
+                          Timeline metadata not available yet.
+                        </p>
+                      </div>
+                      <div class="story-arc-scenes__focus-neighbors">
+                        <button
+                          class="story-arc-scenes__focus-button story-arc-scenes__focus-button--prev"
+                          type="button"
+                          data-story-arc-focus-prev
+                          aria-label="Go to previous scene"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          class="story-arc-scenes__focus-button story-arc-scenes__focus-button--next"
+                          type="button"
+                          data-story-arc-focus-next
+                          aria-label="Go to next scene"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
                     <ol class="story-arc-scenes__track" id="storyArcSceneSlots" role="list"></ol>
                   </div>
                 </div>
@@ -1551,6 +1631,20 @@
     const sceneMeta = document.querySelector('[data-scene-meta]');
     const timelineGrid = document.querySelector('[data-timeline-grid]');
     const timelineWrapper = document.querySelector('.timeline-wrapper');
+    const storyArcContainer = document.querySelector('.story-arc-scenes__container');
+    const storyArcTrack = document.getElementById('storyArcSceneSlots');
+    const storyArcFocus = document.querySelector('[data-story-arc-focus]');
+    const storyArcFocusElements = storyArcFocus
+      ? {
+          container: storyArcFocus,
+          progress: storyArcFocus.querySelector('[data-story-arc-focus-progress]'),
+          number: storyArcFocus.querySelector('[data-story-arc-focus-number]'),
+          title: storyArcFocus.querySelector('[data-story-arc-focus-title]'),
+          meta: storyArcFocus.querySelector('[data-story-arc-focus-meta]'),
+          prev: storyArcFocus.querySelector('[data-story-arc-focus-prev]'),
+          next: storyArcFocus.querySelector('[data-story-arc-focus-next]'),
+        }
+      : null;
     const aiPromptInput = document.getElementById('aiShotPrompt');
     const aiFrameInput = document.getElementById('aiFrameCount');
     const aiProviderSelect = document.getElementById('aiProvider');
@@ -1588,6 +1682,25 @@
     const apiSoaraInput = apiDialog ? apiDialog.querySelector('[data-api-soara]') : null;
     const apiFeedbackLabel = apiDialog ? apiDialog.querySelector('[data-api-feedback]') : null;
 
+    if (storyArcFocusElements?.prev) {
+      storyArcFocusElements.prev.addEventListener('click', event => {
+        event.preventDefault();
+        const targetId = event.currentTarget?.dataset?.storyArcFocusTarget;
+        if (targetId) {
+          activateScene(targetId);
+        }
+      });
+    }
+    if (storyArcFocusElements?.next) {
+      storyArcFocusElements.next.addEventListener('click', event => {
+        event.preventDefault();
+        const targetId = event.currentTarget?.dataset?.storyArcFocusTarget;
+        if (targetId) {
+          activateScene(targetId);
+        }
+      });
+    }
+
     const API_STORAGE_KEYS = {
       provider: 'ai.provider',
       gemini: 'ai.geminiKey',
@@ -1598,6 +1711,7 @@
     const TIMELINE_STORAGE_KEYS = { dockPinned: 'timelineDockPinned' };
     const TIMELINE_HIDE_DELAY = 3500;
     const SCENE_CAROUSEL_SWIPE_THRESHOLD = 48;
+    const STORY_ARC_DENSE_THRESHOLD = 40;
     let timelinePinned = true;
     let timelineHideTimer = null;
     let timelineHovering = false;
@@ -1619,6 +1733,7 @@
     let sceneCarouselDotsList = [];
     let activeSceneId = null;
     let sceneCarouselDragState = null;
+    let storyArcDenseMode = false;
 
     initialiseAiProviderSelect();
     setupApiDialog();
@@ -2632,23 +2747,34 @@
     }
 
     function renderTimelineDockScenes() {
-      const track = document.getElementById('storyArcSceneSlots');
-      if (!track) return;
-      track.innerHTML = '';
+      if (!storyArcTrack) return;
+      storyArcTrack.innerHTML = '';
       const scenes = Array.isArray(sceneData) ? sceneData : [];
+      const useDenseMode = scenes.length > STORY_ARC_DENSE_THRESHOLD;
+      storyArcDenseMode = useDenseMode;
+
+      if (storyArcContainer) {
+        storyArcContainer.classList.toggle('story-arc-scenes__container--dense', useDenseMode && scenes.length > 0);
+      }
+      storyArcTrack.classList.toggle('story-arc-scenes__track--carousel', useDenseMode && scenes.length > 0);
+      storyArcTrack.setAttribute('data-story-arc-count', String(scenes.length));
+
       if (!scenes.length) {
         const empty = document.createElement('li');
         empty.className = 'story-arc-scenes__empty';
         empty.setAttribute('role', 'listitem');
         empty.textContent = 'Add scenes to build your timeline.';
-        track.appendChild(empty);
+        storyArcTrack.appendChild(empty);
+        updateStoryArcFocus();
         return;
       }
-      const collapseSceneLabels = scenes.length > 8;
+
+      const collapseSceneLabels = useDenseMode || scenes.length > 8;
       scenes.forEach((scene, index) => {
         const step = document.createElement('li');
         step.className = 'story-arc-scenes__step';
         step.dataset.storyArcSceneStep = scene.id;
+        step.dataset.storyArcSceneIndex = String(index);
         step.setAttribute('role', 'listitem');
 
         const slot = document.createElement('div');
@@ -2657,7 +2783,7 @@
         slot.tabIndex = 0;
         slot.setAttribute('role', 'button');
 
-        const sceneNumberLabel = `Scene ${index + 1}`;
+        const sceneNumberLabel = scene?.numberLabel || `Scene ${index + 1}`;
         const rawName = typeof scene?.displayName === 'string' ? scene.displayName.trim() : '';
         const slug = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
         const displayLabel = rawName || slug || sceneNumberLabel;
@@ -2692,9 +2818,125 @@
 
         slot.append(numberSpan, labelSpan);
         step.appendChild(slot);
-        track.appendChild(step);
+        storyArcTrack.appendChild(step);
       });
+
       updateStoryArcActiveState();
+    }
+
+    function buildStoryArcLabel(scene, index = 0) {
+      const fallbackNumber = `Scene ${index + 1}`;
+      const numberLabelRaw = typeof scene?.numberLabel === 'string' ? scene.numberLabel.trim() : '';
+      const numberLabel = numberLabelRaw || fallbackNumber;
+      const displayRaw = typeof scene?.displayName === 'string' ? scene.displayName.trim() : '';
+      const slugRaw = typeof scene?.slug === 'string' ? scene.slug.trim() : '';
+      const displayLabel = displayRaw || slugRaw || numberLabel;
+      const combinedLabel = displayLabel && displayLabel !== numberLabel ? `${numberLabel} • ${displayLabel}` : numberLabel;
+      return { numberLabel, displayLabel, combinedLabel };
+    }
+
+    function truncateText(value, maxLength = 60) {
+      const text = typeof value === 'string' ? value.trim() : '';
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return `${text.slice(0, Math.max(0, maxLength - 1))}…`;
+    }
+
+    function updateStoryArcFocusNeighbor(button, scene, index, direction) {
+      if (!button) return;
+      if (!storyArcDenseMode) {
+        button.disabled = false;
+        button.dataset.storyArcFocusTarget = '';
+        button.textContent = direction === 'previous' ? 'Previous' : 'Next';
+        button.title = direction === 'previous' ? 'Go to previous scene' : 'Go to next scene';
+        button.setAttribute('aria-label', direction === 'previous' ? 'Go to previous scene' : 'Go to next scene');
+        return;
+      }
+
+      if (!scene || !scene.id) {
+        const boundaryLabel = direction === 'previous' ? 'Start of timeline' : 'End of timeline';
+        button.disabled = true;
+        button.dataset.storyArcFocusTarget = '';
+        button.textContent = boundaryLabel;
+        button.title = boundaryLabel;
+        button.setAttribute('aria-label', boundaryLabel);
+        return;
+      }
+
+      const { combinedLabel } = buildStoryArcLabel(scene, index >= 0 ? index : 0);
+      const trimmed = truncateText(combinedLabel, 54);
+      const ariaPrefix = direction === 'previous' ? 'Go to previous scene' : 'Go to next scene';
+      button.disabled = false;
+      button.dataset.storyArcFocusTarget = scene.id;
+      button.textContent = trimmed;
+      button.title = combinedLabel;
+      button.setAttribute('aria-label', `${ariaPrefix}: ${combinedLabel}`);
+    }
+
+    function updateStoryArcFocus() {
+      if (!storyArcFocusElements?.container) return;
+      const scenes = Array.isArray(sceneData) ? sceneData : [];
+
+      if (!storyArcDenseMode || !scenes.length) {
+        storyArcFocusElements.container.hidden = true;
+        storyArcFocusElements.container.setAttribute('aria-hidden', 'true');
+        storyArcFocusElements.container.dataset.storyArcFocusId = '';
+        storyArcFocusElements.container.dataset.storyArcFocusIndex = '';
+        updateStoryArcFocusNeighbor(storyArcFocusElements.prev, null, -1, 'previous');
+        updateStoryArcFocusNeighbor(storyArcFocusElements.next, null, -1, 'next');
+        if (storyArcFocusElements.progress) storyArcFocusElements.progress.textContent = '';
+        if (storyArcFocusElements.number) storyArcFocusElements.number.textContent = '';
+        if (storyArcFocusElements.title) {
+          storyArcFocusElements.title.textContent = '';
+          storyArcFocusElements.title.title = '';
+        }
+        if (storyArcFocusElements.meta) {
+          storyArcFocusElements.meta.textContent = '';
+          storyArcFocusElements.meta.title = '';
+        }
+        return;
+      }
+
+      let focusIndex = scenes.findIndex(scene => scene.id === activeSceneId);
+      if (focusIndex < 0) focusIndex = 0;
+      const focusScene = scenes[focusIndex];
+      const { numberLabel, displayLabel, combinedLabel } = buildStoryArcLabel(focusScene, focusIndex);
+      const metaText = [focusScene?.timelineMeta, focusScene?.statusText, focusScene?.description]
+        .map(value => (typeof value === 'string' ? value.trim() : ''))
+        .find(Boolean)
+        || 'Timeline metadata not available yet.';
+
+      if (storyArcFocusElements.progress) {
+        storyArcFocusElements.progress.textContent = `Scene ${focusIndex + 1} of ${scenes.length}`;
+      }
+      if (storyArcFocusElements.number) {
+        storyArcFocusElements.number.textContent = numberLabel;
+      }
+      if (storyArcFocusElements.title) {
+        const focusTitle = displayLabel || numberLabel;
+        storyArcFocusElements.title.textContent = focusTitle;
+        storyArcFocusElements.title.title = combinedLabel || focusTitle;
+      }
+      if (storyArcFocusElements.meta) {
+        storyArcFocusElements.meta.textContent = metaText;
+        storyArcFocusElements.meta.title = metaText;
+      }
+
+      storyArcFocusElements.container.hidden = false;
+      storyArcFocusElements.container.setAttribute('aria-hidden', 'false');
+      storyArcFocusElements.container.dataset.storyArcFocusId = focusScene?.id || '';
+      storyArcFocusElements.container.dataset.storyArcFocusIndex = String(focusIndex);
+
+      updateStoryArcFocusNeighbor(storyArcFocusElements.prev, scenes[focusIndex - 1] || null, focusIndex - 1, 'previous');
+      updateStoryArcFocusNeighbor(storyArcFocusElements.next, scenes[focusIndex + 1] || null, focusIndex + 1, 'next');
+    }
+
+    function scrollStoryArcStepIntoView(sceneId, behavior = 'smooth') {
+      if (!storyArcDenseMode || !storyArcTrack) return;
+      const step = storyArcTrack.querySelector(`[data-story-arc-scene-step="${sceneId}"]`);
+      if (step && typeof step.scrollIntoView === 'function') {
+        step.scrollIntoView({ behavior, inline: 'center', block: 'nearest' });
+      }
     }
 
     document.addEventListener('storyboard:scene-images-updated', event => {
@@ -2734,6 +2976,7 @@
           slot.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         }
       });
+      updateStoryArcFocus();
     }
 
     function getLastWriterProjectId() {
@@ -3115,6 +3358,10 @@
           }
         }
       });
+      if (storyArcDenseMode) {
+        const behavior = opts && opts.scroll === false ? 'auto' : 'smooth';
+        scrollStoryArcStepIntoView(id, behavior);
+      }
       updateStoryArcActiveState();
       syncCardDialogSceneData();
       syncSceneCarouselActiveState();
