@@ -2607,7 +2607,7 @@ function ensureWorkspaceLauncherStructure(launcher){
     modules.insertAdjacentHTML('afterbegin', WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join(''));
   }
 
-  let assistantToggle = modules.querySelector('[data-workspace-assistant-toggle]');
+  let assistantToggle = panel.querySelector('[data-workspace-assistant-toggle]');
   if (!(assistantToggle instanceof HTMLElement)){
     assistantToggle = document.createElement('button');
     assistantToggle.type = 'button';
@@ -2621,13 +2621,8 @@ function ensureWorkspaceLauncherStructure(launcher){
     </span>
     <span class="sr-only">Open StudioOrganize Assistant</span>
   `;
-  if (assistantToggle.parentElement !== modules){
-    modules.insertBefore(assistantToggle, modules.firstChild);
-  } else if (modules.firstChild !== assistantToggle){
-    modules.insertBefore(assistantToggle, modules.firstChild);
-  }
   assistantToggle.setAttribute('aria-pressed', assistantToggle.getAttribute('aria-pressed') === 'true' ? 'true' : 'false');
-  assistantToggle.setAttribute('aria-expanded', 'false');
+  assistantToggle.setAttribute('aria-expanded', assistantToggle.getAttribute('aria-expanded') === 'true' ? 'true' : 'false');
   assistantToggle.setAttribute('aria-label', 'Open StudioOrganize Assistant');
 
   let quickActions = panel.querySelector('.workspace-launcher__quick-actions');
@@ -2664,7 +2659,7 @@ function ensureWorkspaceLauncherStructure(launcher){
   }
   quickActionsGroup.appendChild(scriptButton);
 
-  [saveButton, storyButton].forEach(button => {
+  [assistantToggle, saveButton, storyButton].forEach(button => {
     if (button instanceof HTMLElement){
       quickActionsGroup.appendChild(button);
     }
@@ -2700,6 +2695,12 @@ function injectGlobalWorkspaceLauncher(){
           <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
             <button type="button" class="workspace-launcher__script" data-workspace-script>
               <span>Story</span>
+            </button>
+            <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
+              </span>
+              <span class="sr-only">Open StudioOrganize Assistant</span>
             </button>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
               <span class="workspace-launcher__module-icon" aria-hidden="true">
@@ -2788,10 +2789,13 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     const assistantToggle = getAssistantToggle(launcher);
     if (!(assistantToggle instanceof HTMLElement)) return;
     const assistant = getAssistant(launcher);
+    const chat = getChatBubble(launcher);
     const assistantVisible = assistant instanceof HTMLElement && !assistant.hidden;
-    assistantToggle.setAttribute('aria-pressed', assistantVisible ? 'true' : 'false');
-    assistantToggle.setAttribute('aria-expanded', assistantVisible ? 'true' : 'false');
-    assistantToggle.setAttribute('aria-label', assistantVisible ? 'Close StudioOrganize Assistant' : 'Open StudioOrganize Assistant');
+    const chatVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
+    const isVisible = assistantVisible || chatVisible;
+    assistantToggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+    assistantToggle.setAttribute('aria-expanded', isVisible ? 'true' : 'false');
+    assistantToggle.setAttribute('aria-label', isVisible ? 'Close StudioOrganize Assistant' : 'Open StudioOrganize Assistant');
   };
 
   const showChatBubble = (launcher, { focusInput = true } = {}) => {
@@ -2859,7 +2863,14 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 
   const showAssistant = (launcher, { revealChat = true, focusInput = true } = {}) => {
     const assistant = getAssistant(launcher);
-    if (!(assistant instanceof HTMLElement)) return;
+    if (!(assistant instanceof HTMLElement)){
+      if (revealChat){
+        showChatBubble(launcher, { focusInput });
+      } else {
+        updateAssistantToggleState(launcher);
+      }
+      return;
+    }
 
     if (assistant.hidden){
       assistant.hidden = false;
@@ -2875,7 +2886,11 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
 
   const hideAssistant = launcher => {
     const assistant = getAssistant(launcher);
-    if (!(assistant instanceof HTMLElement)) return;
+    if (!(assistant instanceof HTMLElement)){
+      hideChatBubble(launcher);
+      updateAssistantToggleState(launcher);
+      return;
+    }
 
     hideChatBubble(launcher);
 
@@ -3005,16 +3020,17 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         event.preventDefault();
         event.stopPropagation();
         const assistant = getAssistant(launcher);
-        const assistantVisible = assistant instanceof HTMLElement && !assistant.hidden;
         const chat = getChatBubble(launcher);
+        const assistantVisible = assistant instanceof HTMLElement && !assistant.hidden;
         const chatVisible = chat instanceof HTMLElement && !chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS);
+        const isVisible = assistantVisible || chatVisible;
 
         if (!launcher.classList.contains(OPEN_CLASS)){
           closeAll(launcher);
           openLauncher(launcher, { focusPanel: false, revealChat: false });
         }
 
-        if (!assistantVisible){
+        if (!isVisible){
           showAssistant(launcher, { revealChat: true, focusInput: false });
           return;
         }
