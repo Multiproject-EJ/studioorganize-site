@@ -517,6 +517,21 @@
       }
       .character-studio-field textarea { min-height: 108px; resize: vertical; }
       .character-studio-field textarea.small { min-height: 78px; }
+      .character-studio-field select {
+        background: var(--field);
+        color: var(--ink);
+        border: 1px solid var(--ring);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 14px;
+        width: 100%;
+        cursor: pointer;
+      }
+      .character-studio-field select:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+        border-color: var(--acc);
+      }
       .character-studio-stats-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
       .character-studio-stat { background: var(--chip); border: 1px solid var(--ring); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
       .character-studio-stat-value { font-size: 22px; font-weight: 700; }
@@ -534,6 +549,26 @@
       .character-studio-status { font-size: 12px; color: var(--muted); min-height: 18px; }
       .character-studio-status[data-state="ready"] { color: var(--acc); }
       .character-studio-status[data-state="warning"] { color: #f97316; }
+      .character-studio-dialog-grid { display: grid; gap: 18px; }
+      @media (min-width: 960px) {
+        .character-studio-dialog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      .character-studio-dialog-column { display: flex; flex-direction: column; gap: 14px; }
+      .character-studio-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .character-studio-dialog-list,
+      .character-studio-dialog-drafts { display: grid; gap: 12px; }
+      .character-studio-dialog-entry,
+      .character-studio-dialog-draft { border: 1px solid var(--ring); border-radius: 16px; padding: 16px; background: var(--panel); display: grid; gap: 8px; }
+      .character-studio-dialog-entry header { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+      .character-studio-dialog-entry strong { font-size: 14px; }
+      .character-studio-dialog-entry p { margin: 0; font-size: 13px; line-height: 1.55; }
+      .character-studio-dialog-meta { font-size: 11px; color: var(--muted); letter-spacing: .25px; text-transform: uppercase; }
+      .character-studio-dialog-draft-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+      .character-studio-dialog-draft-actions .character-studio-field { flex: 1 1 220px; min-width: 180px; }
+      .character-studio-dialog-draft-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .character-studio-dialog-draft-buttons button { border: 1px solid var(--ring); border-radius: 12px; padding: 8px 14px; background: var(--panel); font-size: 12px; font-weight: 600; cursor: pointer; }
+      .character-studio-dialog-draft-buttons button:hover { border-color: var(--acc); }
+      .character-studio-dialog-draft-buttons button:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
       .character-studio-save-status { font-size: 12px; color: var(--muted); min-height: 18px; }
       .character-studio-save-status[data-state="ready"] { color: var(--acc); }
       .character-studio-save-status[data-state="warning"] { color: #f97316; }
@@ -1023,6 +1058,7 @@
       const CHARACTER_TAB_CONFIG = [
         { id: 'profile', label: 'Profile' },
         { id: 'stats', label: 'Stats & Spotlight' },
+        { id: 'dialog', label: 'Dialog' },
         { id: 'traits', label: 'Traits & Personality' },
         { id: 'background', label: 'Background & Family' },
         { id: 'arc', label: 'Character Arc' },
@@ -1105,8 +1141,19 @@
         saveStatusState: '',
         remoteIds: new Set(initialCharacters.map(char => char.id)),
         signedUrlCache: new Map(),
-        poseCache: new Map()
+        poseCache: new Map(),
+        scenes: [],
+        scenesLoaded: false,
+        scenesLoading: false,
+        scenesError: '',
+        dialogDrafts: new Map(),
+        dialogDraftsLoaded: false,
+        dialogStatus: '',
+        dialogStatusState: '',
+        dialogStatusCharacterId: null
       };
+
+      const DIALOG_DRAFT_STORAGE_PREFIX = 'SW_DIALOG_DRAFTS_';
 
       const mobileViewportQuery = window.matchMedia('(max-width: 640px)');
       let mobileGalleryScrollTimer = null;
@@ -1236,6 +1283,131 @@
         } catch (err){
           console.warn('Character Studio failed to load characters from the Writer workspace', err);
         }
+      }
+
+      function getDialogDraftStorageKey(projectId){
+        if (!projectId) return null;
+        return `${DIALOG_DRAFT_STORAGE_PREFIX}${projectId}`;
+      }
+
+      function normalizeDialogDraft(draft){
+        if (!draft || typeof draft !== 'object') return null;
+        const text = typeof draft.text === 'string' ? draft.text.trim() : '';
+        if (!text) return null;
+        const id = typeof draft.id === 'string' && draft.id ? draft.id : createId();
+        const createdAtRaw = draft.createdAt;
+        const createdAt = Number.isFinite(Number(createdAtRaw)) ? Number(createdAtRaw) : Date.now();
+        return { id, text, createdAt };
+      }
+
+      function ensureDialogDraftMap(){
+        if (!(state.dialogDrafts instanceof Map)){
+          state.dialogDrafts = new Map();
+        }
+      }
+
+      function hydrateDialogDrafts(){
+        if (!state.projectId || state.dialogDraftsLoaded) return;
+        ensureDialogDraftMap();
+        state.dialogDraftsLoaded = true;
+        const key = getDialogDraftStorageKey(state.projectId);
+        if (!key) return;
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return;
+          Object.entries(parsed).forEach(([characterId, list]) => {
+            if (!characterId || !Array.isArray(list)) return;
+            const normalized = list.map(normalizeDialogDraft).filter(Boolean);
+            if (normalized.length){
+              state.dialogDrafts.set(characterId, normalized);
+            }
+          });
+        } catch (err){
+          console.warn('Character Studio failed to load dialog drafts', err);
+        }
+      }
+
+      function persistDialogDrafts(){
+        if (!state.projectId) return;
+        ensureDialogDraftMap();
+        const key = getDialogDraftStorageKey(state.projectId);
+        if (!key) return;
+        try {
+          const payload = {};
+          state.dialogDrafts.forEach((drafts, characterId) => {
+            if (!Array.isArray(drafts) || !drafts.length) return;
+            payload[characterId] = drafts.map(entry => ({
+              id: entry.id,
+              text: entry.text,
+              createdAt: Number.isFinite(Number(entry.createdAt)) ? Number(entry.createdAt) : Date.now()
+            }));
+          });
+          if (Object.keys(payload).length){
+            localStorage.setItem(key, JSON.stringify(payload));
+          } else {
+            localStorage.removeItem(key);
+          }
+        } catch (err){
+          console.warn('Character Studio failed to persist dialog drafts', err);
+        }
+      }
+
+      function getDialogDraftsForCharacter(characterId){
+        if (!characterId) return [];
+        ensureDialogDraftMap();
+        const drafts = state.dialogDrafts.get(characterId);
+        if (!Array.isArray(drafts)) return [];
+        return drafts.slice().sort((a, b) => {
+          const aTime = Number.isFinite(Number(a.createdAt)) ? Number(a.createdAt) : 0;
+          const bTime = Number.isFinite(Number(b.createdAt)) ? Number(b.createdAt) : 0;
+          return aTime - bTime;
+        });
+      }
+
+      function addDialogDraftForCharacter(characterId, text){
+        const trimmed = typeof text === 'string' ? text.trim() : '';
+        if (!characterId || !trimmed) return null;
+        const draft = normalizeDialogDraft({ id: createId(), text: trimmed, createdAt: Date.now() });
+        if (!draft) return null;
+        const current = getDialogDraftsForCharacter(characterId);
+        state.dialogDrafts.set(characterId, [...current, draft]);
+        persistDialogDrafts();
+        return draft;
+      }
+
+      function removeDialogDraft(characterId, draftId){
+        if (!characterId || !draftId) return false;
+        const current = getDialogDraftsForCharacter(characterId);
+        const next = current.filter(entry => entry.id !== draftId);
+        if (next.length === current.length) return false;
+        if (next.length){
+          state.dialogDrafts.set(characterId, next);
+        } else {
+          state.dialogDrafts.delete(characterId);
+        }
+        persistDialogDrafts();
+        return true;
+      }
+
+      function applyDialogStatus(context){
+        const root = context || document;
+        const statusEl = root.querySelector('[data-character-dialog-status]');
+        if (!statusEl) return;
+        statusEl.textContent = state.dialogStatus || '';
+        if (state.dialogStatusState){
+          statusEl.dataset.state = state.dialogStatusState;
+        } else {
+          statusEl.removeAttribute('data-state');
+        }
+      }
+
+      function setDialogStatus(message, status = '', characterId = state.activeId){
+        state.dialogStatus = message || '';
+        state.dialogStatusState = status || '';
+        state.dialogStatusCharacterId = characterId || null;
+        applyDialogStatus(document);
       }
 
       function setProjectLabel(text, status = ''){
@@ -1555,6 +1727,108 @@
         const traits = Array.isArray(character?.traits) ? character.traits : [];
         if (!traits.length) return '<span class="muted-text">Add traits to see quick reference chips.</span>';
         return traits.map(trait => `<span class="character-studio-chip"><strong>${escapeHtml(trait)}</strong></span>`).join('');
+      }
+
+      function normalizeSceneElementLite(element){
+        if (!element || typeof element !== 'object'){
+          return { t: 'action', txt: '', ownerId: null, storyPart: null, storyBeat: null };
+        }
+        const type = typeof element.t === 'string' && element.t ? element.t : 'action';
+        const text = typeof element.txt === 'string' ? element.txt : '';
+        const ownerId = typeof element.ownerId === 'string' && element.ownerId ? element.ownerId : null;
+        const storyPart = typeof element.storyPart === 'string' ? element.storyPart : null;
+        const storyBeat = typeof element.storyBeat === 'string' ? element.storyBeat : null;
+        return { t: type, txt: text, ownerId, storyPart, storyBeat };
+      }
+
+      function supabaseRowToScene(row){
+        if (!row || typeof row !== 'object') return null;
+        const elements = Array.isArray(row.elements) ? row.elements.map(normalizeSceneElementLite) : [];
+        const rawOrder = Number.isFinite(row.script_order) ? Number(row.script_order) : null;
+        const sceneNumber = Number.isFinite(row.scene_number) ? Number(row.scene_number) : null;
+        const title = typeof row.title === 'string' ? row.title : '';
+        const slug = typeof row.slug === 'string' ? row.slug : '';
+        return {
+          id: row.id || createId(),
+          title,
+          slug,
+          scriptOrder: rawOrder !== null ? rawOrder : (sceneNumber !== null ? sceneNumber - 1 : 0),
+          sceneNumber,
+          elements
+        };
+      }
+
+      function getSceneDisplayLabel(scene){
+        if (!scene) return 'Untitled scene';
+        const title = typeof scene.title === 'string' ? scene.title.trim() : '';
+        const slug = typeof scene.slug === 'string' ? scene.slug.trim() : '';
+        const sceneNumber = Number.isFinite(scene.sceneNumber) ? scene.sceneNumber : null;
+        if (sceneNumber && title) return `Scene ${sceneNumber}: ${title}`;
+        if (sceneNumber && slug) return `Scene ${sceneNumber}: ${slug}`;
+        if (sceneNumber) return `Scene ${sceneNumber}`;
+        return title || slug || 'Untitled scene';
+      }
+
+      function buildSceneOptionsMarkup(selectedId = ''){
+        const scenes = Array.isArray(state.scenes) ? state.scenes : [];
+        if (!scenes.length){
+          return '<option value="">No scenes available</option>';
+        }
+        const options = scenes.map(scene => {
+          const value = typeof scene.id === 'string' ? scene.id : '';
+          const selected = value && value === selectedId ? ' selected' : '';
+          return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(getSceneDisplayLabel(scene))}</option>`;
+        }).join('');
+        return `<option value="">Select a scene…</option>${options}`;
+      }
+
+      function formatDialogText(text){
+        const trimmed = typeof text === 'string' ? text.trim() : '';
+        if (!trimmed) return '';
+        return escapeHtml(trimmed).replace(/\r?\n/g, '<br />');
+      }
+
+      function gatherCharacterDialogues(character){
+        if (!character) return [];
+        const scenes = Array.isArray(state.scenes) ? state.scenes : [];
+        const characterId = typeof character.id === 'string' ? character.id : '';
+        const name = typeof character.name === 'string' ? character.name.trim() : '';
+        const lowerName = name.toLowerCase();
+        const results = [];
+        scenes.forEach(scene => {
+          const elements = Array.isArray(scene.elements) ? scene.elements : [];
+          elements.forEach((element, index) => {
+            const normalized = normalizeSceneElementLite(element);
+            if (normalized.t !== 'dialogue') return;
+            const text = typeof normalized.txt === 'string' ? normalized.txt.trim() : '';
+            if (!text) return;
+            const ownerId = typeof normalized.ownerId === 'string' ? normalized.ownerId : '';
+            let matchedByName = false;
+            let matches = ownerId && characterId ? ownerId === characterId : false;
+            if (!matches && lowerName){
+              if (text.toLowerCase().includes(lowerName)){
+                matches = true;
+                matchedByName = true;
+              }
+            }
+            if (!matches) return;
+            results.push({
+              id: `${scene.id || 'scene'}-${index}`,
+              sceneId: scene.id || null,
+              sceneLabel: getSceneDisplayLabel(scene),
+              text,
+              index,
+              scriptOrder: Number.isFinite(scene.scriptOrder) ? Number(scene.scriptOrder) : index,
+              matchedByName
+            });
+          });
+        });
+        results.sort((a, b) => {
+          const orderDiff = a.scriptOrder - b.scriptOrder;
+          if (orderDiff !== 0) return orderDiff;
+          return a.index - b.index;
+        });
+        return results;
       }
 
       function isMobileViewport(){
@@ -2064,6 +2338,12 @@
       function renderCharacterDetails(){
         const container = document.querySelector('[data-character-details]');
         if (!container) return;
+        if (!state.dialogDraftsLoaded) hydrateDialogDrafts();
+        if (state.dialogStatusCharacterId !== state.activeId){
+          state.dialogStatus = '';
+          state.dialogStatusState = '';
+          state.dialogStatusCharacterId = state.activeId || null;
+        }
         if (!state.projectId){
           container.innerHTML = `
             <div class="character-studio-empty">
@@ -2129,6 +2409,61 @@
         const traitsPreview = buildTraitsPreviewMarkup(active);
         const aiPrompt = active.ai?.prompt || '';
         const aiNotes = active.ai?.notes || '';
+        const scriptDialogues = gatherCharacterDialogues(active);
+        const dialogDrafts = getDialogDraftsForCharacter(active.id);
+        const canRefreshDialog = Boolean(state.supabase && state.session && state.ownerId && state.projectId);
+        const refreshLabel = state.scenesLoading ? 'Refreshing…' : 'Refresh script lines';
+        const refreshDisabledAttr = state.scenesLoading ? ' disabled' : '';
+        const dialogRefreshButton = canRefreshDialog
+          ? `<button type="button" class="character-studio-tertiary" data-character-dialog-refresh${refreshDisabledAttr}>${escapeHtml(refreshLabel)}</button>`
+          : '';
+        let scriptDialogSection = '';
+        if (!state.projectId){
+          scriptDialogSection = '<p class="muted-text">Link a story to sync script dialog.</p>';
+        } else if (!state.session || !state.ownerId){
+          scriptDialogSection = '<p class="muted-text">Sign in to sync script dialog.</p>';
+        } else if (!state.supabase){
+          scriptDialogSection = '<p class="muted-text">Connecting to Supabase…</p>';
+        } else if (state.scenesLoading){
+          scriptDialogSection = '<p class="muted-text">Loading script dialog…</p>';
+        } else if (state.scenesError){
+          scriptDialogSection = `<p class="muted-text">${escapeHtml(state.scenesError)}</p>`;
+        } else if (!state.scenesLoaded){
+          scriptDialogSection = '<p class="muted-text">Script dialog not synced yet. Use Refresh script lines.</p>';
+        } else if (!state.scenes.length){
+          scriptDialogSection = '<p class="muted-text">No scenes saved yet for this story.</p>';
+        } else if (!scriptDialogues.length){
+          const name = active.name ? escapeHtml(active.name) : 'this character';
+          scriptDialogSection = `<p class="muted-text">No dialogue tagged for ${name} yet.</p>`;
+        } else {
+          const entries = scriptDialogues.map(entry => {
+            const note = entry.matchedByName ? '<span class="character-studio-dialog-meta">Matched by name</span>' : '';
+            return `<article class="character-studio-dialog-entry"><header><strong>${escapeHtml(entry.sceneLabel)}</strong>${note}</header><p>${formatDialogText(entry.text)}</p></article>`;
+          }).join('');
+          scriptDialogSection = `<div class="character-studio-dialog-list">${entries}</div>`;
+        }
+        const disableSceneSelection = !canRefreshDialog || state.scenesLoading || !state.scenes.length;
+        const selectDisabledAttr = disableSceneSelection ? ' disabled' : '';
+        const assignDisabledAttr = disableSceneSelection ? ' disabled' : '';
+        const dialogDraftsMarkup = dialogDrafts.length
+          ? dialogDrafts.map(draft => `
+              <article class="character-studio-dialog-draft" data-dialog-draft="${escapeHtml(draft.id)}">
+                <p>${formatDialogText(draft.text)}</p>
+                <div class="character-studio-dialog-draft-actions">
+                  <label class="character-studio-field">
+                    <span>Assign to scene</span>
+                    <select data-dialog-draft-scene${selectDisabledAttr}>
+                      ${buildSceneOptionsMarkup()}
+                    </select>
+                  </label>
+                  <div class="character-studio-dialog-draft-buttons">
+                    <button type="button" data-dialog-draft-assign="${escapeHtml(draft.id)}"${assignDisabledAttr}>Insert into scene</button>
+                    <button type="button" data-dialog-draft-delete="${escapeHtml(draft.id)}">Remove</button>
+                  </div>
+                </div>
+              </article>
+            `).join('')
+          : '<p class="muted-text">No unassigned lines yet. Draft a new line below.</p>';
 
         if (!CHARACTER_TAB_CONFIG.some(tab => tab.id === state.activeTabId)){
           state.activeTabId = CHARACTER_TAB_CONFIG[0].id;
@@ -2227,6 +2562,35 @@
                     <span>Screen time (minutes)</span>
                     <input type="number" min="0" step="0.1" value="${escapeHtml(String(statsScreenTime))}" data-character-field="stats.screenTime" />
                   </label>
+                </div>
+              </section>
+              <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-dialog" aria-labelledby="character-tab-dialog" data-tab-panel="dialog"${panelAttributes('dialog')}>
+                <h3>Dialog</h3>
+                <p class="muted-text">Review lines assigned to this character and prep new dialog.</p>
+                <div class="character-studio-dialog-grid">
+                  <div class="character-studio-dialog-column">
+                    <div class="character-studio-dialog-header">
+                      <h4>Script highlights</h4>
+                      ${dialogRefreshButton}
+                    </div>
+                    ${scriptDialogSection}
+                  </div>
+                  <div class="character-studio-dialog-column">
+                    <div class="character-studio-dialog-header">
+                      <h4>Scratchpad</h4>
+                    </div>
+                    <form class="character-studio-dialog-form" data-character-dialog-form>
+                      <label class="character-studio-field">
+                        <span>Draft new line</span>
+                        <textarea data-character-dialog-input placeholder="Capture a new line or beat for this character."></textarea>
+                      </label>
+                      <button type="submit" class="character-studio-tertiary">Save to scratchpad</button>
+                    </form>
+                    <span class="character-studio-status" data-character-dialog-status></span>
+                    <div class="character-studio-dialog-drafts" data-character-dialog-drafts>
+                      ${dialogDraftsMarkup}
+                    </div>
+                  </div>
                 </div>
               </section>
               <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-traits" aria-labelledby="character-tab-traits" data-tab-panel="traits"${panelAttributes('traits')}>
@@ -2467,6 +2831,62 @@
         });
 
         activate(state.activeTabId, { focus: false });
+      }
+
+      function setupDialogTab(container, active){
+        if (!container || !active) return;
+        const form = container.querySelector('[data-character-dialog-form]');
+        if (form && form.dataset.bound !== 'true'){
+          form.addEventListener('submit', event => {
+            event.preventDefault();
+            const textarea = form.querySelector('[data-character-dialog-input]');
+            const value = textarea ? textarea.value.trim() : '';
+            if (!value){
+              setDialogStatus('Add some dialog before saving.', 'warning', active.id);
+              applyDialogStatus(container);
+              return;
+            }
+            addDialogDraftForCharacter(active.id, value);
+            if (textarea) textarea.value = '';
+            setDialogStatus('Saved to scratchpad.', 'ready', active.id);
+            renderCharacterDetails();
+          });
+          form.dataset.bound = 'true';
+        }
+        const refreshBtn = container.querySelector('[data-character-dialog-refresh]');
+        if (refreshBtn && refreshBtn.dataset.bound !== 'true'){
+          refreshBtn.addEventListener('click', () => {
+            loadScenesFromSupabase({ showStatus: true });
+          });
+          refreshBtn.dataset.bound = 'true';
+        }
+        const draftsContainer = container.querySelector('[data-character-dialog-drafts]');
+        if (draftsContainer && draftsContainer.dataset.bound !== 'true'){
+          draftsContainer.addEventListener('click', event => {
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            const deleteBtn = target.closest('[data-dialog-draft-delete]');
+            if (deleteBtn){
+              const draftId = deleteBtn.getAttribute('data-dialog-draft-delete');
+              if (draftId && removeDialogDraft(active.id, draftId)){
+                setDialogStatus('Removed from scratchpad.', 'ready', active.id);
+                renderCharacterDetails();
+              }
+              return;
+            }
+            const assignBtn = target.closest('[data-dialog-draft-assign]');
+            if (assignBtn){
+              const draftId = assignBtn.getAttribute('data-dialog-draft-assign');
+              if (!draftId) return;
+              const wrapper = assignBtn.closest('[data-dialog-draft]');
+              const select = wrapper ? wrapper.querySelector('[data-dialog-draft-scene]') : null;
+              const sceneId = select ? select.value : '';
+              assignDialogDraftToScene(active.id, draftId, sceneId);
+            }
+          });
+          draftsContainer.dataset.bound = 'true';
+        }
+        applyDialogStatus(container);
       }
 
       function bindCharacterStudioFields(container, active){
@@ -2840,7 +3260,8 @@
             startFinishThatStory(container, active);
           });
         }
-        
+
+        setupDialogTab(container, active);
         ensureMobileCloseButton(container);
         updateMobileActiveCard();
         scrollMobileGalleryToActive({ smooth: true });
@@ -2907,6 +3328,51 @@
         setProjectLabel(fallback, state.projectId ? '' : 'warning');
       }
 
+      async function loadScenesFromSupabase({ showStatus = false } = {}){
+        if (!state.supabase || !state.projectId || !state.ownerId){
+          state.scenes = [];
+          state.scenesLoaded = false;
+          state.scenesError = '';
+          if (showStatus){
+            setDialogStatus('Sign in to sync script dialog.', 'warning', state.activeId);
+          }
+          return;
+        }
+        state.scenesLoading = true;
+        if (showStatus){
+          setDialogStatus('Refreshing script dialog…', 'saving', state.activeId);
+        }
+        try {
+          const { data, error } = await state.supabase
+            .from('scenes')
+            .select('id, title, slug, scene_number, script_order, elements')
+            .eq('project_id', state.projectId)
+            .eq('owner_id', state.ownerId)
+            .order('script_order', { ascending: true })
+            .order('scene_number', { ascending: true });
+          if (error) throw error;
+          const list = Array.isArray(data) ? data.map(supabaseRowToScene).filter(Boolean) : [];
+          state.scenes = list;
+          state.scenesLoaded = true;
+          state.scenesError = '';
+          if (showStatus){
+            setDialogStatus('Script dialog synced.', 'ready', state.activeId);
+          }
+        } catch (err){
+          console.warn('Character Studio failed to load scenes', err);
+          state.scenesError = 'Unable to load script dialog.';
+          state.scenesLoaded = false;
+          if (showStatus){
+            setDialogStatus('Unable to load script dialog.', 'error', state.activeId);
+          }
+        } finally {
+          state.scenesLoading = false;
+          if (state.activeId){
+            renderCharacterDetails();
+          }
+        }
+      }
+
       async function loadCharactersFromSupabase(){
         if (!state.supabase || !state.projectId || !state.ownerId){
           state.loading = false;
@@ -2951,6 +3417,60 @@
         }
       }
 
+      async function assignDialogDraftToScene(characterId, draftId, sceneId){
+        const activeId = characterId || state.activeId;
+        if (!characterId || !draftId){
+          setDialogStatus('Select a dialog draft to insert.', 'warning', activeId);
+          return false;
+        }
+        if (!sceneId){
+          setDialogStatus('Choose a scene before inserting dialog.', 'warning', activeId);
+          return false;
+        }
+        if (!state.supabase || !state.session || !state.ownerId || !state.projectId){
+          setDialogStatus('Sign in to sync dialog to scenes.', 'warning', activeId);
+          return false;
+        }
+        const scene = Array.isArray(state.scenes) ? state.scenes.find(entry => entry && entry.id === sceneId) : null;
+        if (!scene){
+          setDialogStatus('Scene not found. Refresh script lines and try again.', 'error', activeId);
+          return false;
+        }
+        const draft = getDialogDraftsForCharacter(characterId).find(entry => entry.id === draftId);
+        if (!draft){
+          setDialogStatus('Dialog draft not found.', 'error', activeId);
+          return false;
+        }
+        const text = typeof draft.text === 'string' ? draft.text.trim() : '';
+        if (!text){
+          setDialogStatus('Dialog draft is empty.', 'warning', activeId);
+          return false;
+        }
+        setDialogStatus('Inserting dialog into scene…', 'saving', activeId);
+        const dialogElement = normalizeSceneElementLite({ t: 'dialogue', txt: text, ownerId: characterId });
+        const spacing = [normalizeSceneElementLite({ t: 'action', txt: '' }), normalizeSceneElementLite({ t: 'action', txt: '' })];
+        const existing = Array.isArray(scene.elements) ? scene.elements.map(normalizeSceneElementLite) : [];
+        const nextElements = [dialogElement, ...spacing, ...existing];
+        try {
+          const { error } = await state.supabase
+            .from('scenes')
+            .update({ elements: nextElements })
+            .eq('id', sceneId)
+            .eq('owner_id', state.ownerId)
+            .eq('project_id', state.projectId);
+          if (error) throw error;
+          scene.elements = nextElements.map(normalizeSceneElementLite);
+          removeDialogDraft(characterId, draftId);
+          setDialogStatus(`Dialog added to ${getSceneDisplayLabel(scene)}.`, 'ready', activeId);
+          renderCharacterDetails();
+          return true;
+        } catch (err){
+          console.error('Character Studio failed to assign dialog to scene', err);
+          setDialogStatus('Insert failed. Please try again.', 'error', activeId);
+          return false;
+        }
+      }
+
       async function handleSession(session){
         state.session = session;
         const ownerId = session?.user?.id || null;
@@ -2963,6 +3483,10 @@
           state.activeId = null;
           state.dirty = false;
           state.loading = false;
+          state.scenes = [];
+          state.scenesLoaded = false;
+          state.scenesError = '';
+          state.scenesLoading = false;
           renderCharacterList();
           renderCharacterDetails();
           if (state.projectId){
@@ -2972,6 +3496,10 @@
         }
         if (!state.projectId){
           state.loading = false;
+          state.scenes = [];
+          state.scenesLoaded = false;
+          state.scenesError = '';
+          state.scenesLoading = false;
           renderCharacterList();
           renderCharacterDetails();
           setSaveStatus('Open your story in the Writer to link characters.', 'warning');
@@ -2979,8 +3507,11 @@
         }
         if (previousOwner !== ownerId){
           state.remoteIds = new Set();
+          state.scenes = [];
+          state.scenesLoaded = false;
+          state.scenesError = '';
         }
-        await Promise.all([loadProjectMetadata(), loadCharactersFromSupabase()]);
+        await Promise.all([loadProjectMetadata(), loadCharactersFromSupabase(), loadScenesFromSupabase()]);
       }
 
       async function handleSaveClick(){
@@ -3335,6 +3866,7 @@
       setProjectLabel(initialProjectLabel, state.projectId ? '' : 'warning');
       setSaveStatus('', '');
 
+      hydrateDialogDrafts();
       renderCharacterList();
       renderCharacterDetails();
       updateSaveButtonState();
