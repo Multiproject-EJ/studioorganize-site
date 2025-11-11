@@ -1277,26 +1277,36 @@
         <div class="workspace-launcher__quick-actions">
           <p class="workspace-launcher__quick-actions-label">Quick actions</p>
           <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
-          <button type="button" class="workspace-launcher__script" data-workspace-script>
-            <span>Story</span>
-          </button>
-          <button
-            type="button"
-            class="workspace-launcher__module workspace-launcher__module--assistant"
-            data-workspace-assistant-toggle
-            data-label="Assistant"
-            aria-pressed="false"
-            aria-expanded="false"
-            aria-label="Open StudioOrganize Assistant"
-          >
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
-            </span>
-            <span class="sr-only">Open StudioOrganize Assistant</span>
-          </button>
-          <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <button type="button" class="workspace-launcher__script" data-workspace-script>
+              <span>Story</span>
+            </button>
+            <a
+              class="workspace-launcher__module workspace-launcher__module--creative-hub"
+              href="/creative-hub.html"
+              data-label="Creative Hub"
+            >
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <img src="/assets/img/IMG_6896.webp" alt="" loading="lazy" />
+              </span>
+              <span class="sr-only">Creative Hub</span>
+            </a>
+            <button
+              type="button"
+              class="workspace-launcher__module workspace-launcher__module--assistant"
+              data-workspace-assistant-toggle
+              data-label="Assistant"
+              aria-pressed="false"
+              aria-expanded="false"
+              aria-label="Open StudioOrganize Assistant"
+            >
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
+              </span>
+              <span class="sr-only">Open StudioOrganize Assistant</span>
+            </button>
+            <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                   <polyline points="17 21 17 13 7 13 7 21"></polyline>
                   <polyline points="7 3 7 8 15 8"></polyline>
@@ -1352,12 +1362,6 @@
                 <img src="/assets/img/IMG_6903.webp" alt="" loading="lazy" />
               </span>
               <span class="sr-only">Set Design</span>
-            </a>
-            <a class="workspace-launcher__module" href="/creative-hub.html" data-label="Creative Hub">
-              <span class="workspace-launcher__module-icon" aria-hidden="true">
-                <img src="/assets/img/IMG_6896.webp" alt="" loading="lazy" />
-              </span>
-              <span class="sr-only">Creative Hub</span>
             </a>
           </nav>
         </div>

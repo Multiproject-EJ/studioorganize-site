@@ -2460,7 +2460,6 @@ const WORKSPACE_LAUNCHER_MODULES = [
   { href: '/CharacterStudio.html', label: 'Character Studio', image: '/assets/img/IMG_6894.webp' },
   { href: '/VideoEditing.html', label: 'Video & Editing', image: '/assets/img/IMG_6893.webp' },
   { href: '/use-cases/set-design.html', label: 'Set Design', image: '/assets/img/IMG_6903.webp' },
-  { href: '/creative-hub.html', label: 'Creative Hub', image: CREATIVE_HUB_ICON },
 ];
 
 const WORKSPACE_SAVE_EVENT = 'studioorganize:save-requested';
@@ -2782,6 +2781,21 @@ function ensureWorkspaceLauncherStructure(launcher){
   }
   quickActionsGroup.appendChild(creatorLink);
 
+  let creativeHubLink = quickActionsGroup.querySelector('.workspace-launcher__module--creative-hub');
+  if (!(creativeHubLink instanceof HTMLElement)){
+    creativeHubLink = document.createElement('a');
+    creativeHubLink.className = 'workspace-launcher__module workspace-launcher__module--creative-hub';
+    creativeHubLink.setAttribute('href', '/creative-hub.html');
+    creativeHubLink.setAttribute('data-label', 'Creative Hub');
+    creativeHubLink.innerHTML = `
+      <span class="workspace-launcher__module-icon" aria-hidden="true">
+        <img src="${CREATIVE_HUB_ICON}" alt="" loading="lazy" />
+      </span>
+      <span class="sr-only">Creative Hub</span>
+    `;
+  }
+  quickActionsGroup.appendChild(creativeHubLink);
+
   [assistantToggle, saveButton, storyButton].forEach(button => {
     if (button instanceof HTMLElement){
       quickActionsGroup.appendChild(button);
@@ -2819,6 +2833,12 @@ function injectGlobalWorkspaceLauncher(){
             <button type="button" class="workspace-launcher__script" data-workspace-script>
               <span>Story</span>
             </button>
+            <a class="workspace-launcher__module workspace-launcher__module--creative-hub" href="/creative-hub.html" data-label="Creative Hub">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <img src="${CREATIVE_HUB_ICON}" alt="" loading="lazy" />
+              </span>
+              <span class="sr-only">Creative Hub</span>
+            </a>
             <a class="workspace-launcher__script workspace-launcher__creator" href="/account.html" aria-label="Creator Page">
               <span>Creator Page</span>
             </a>
