@@ -1699,6 +1699,57 @@
         };
       }
 
+      function canonicalizeCharacterRowForVerification(row){
+        const toList = value => Array.isArray(value)
+          ? value.map(item => String(item || '').trim()).filter(Boolean)
+          : [];
+        const id = typeof row.id === 'string' ? row.id : (row.id ? String(row.id) : '');
+        return {
+          id,
+          owner_id: typeof row.owner_id === 'string' ? row.owner_id : (row.owner_id ? String(row.owner_id) : null),
+          project_id: typeof row.project_id === 'string' ? row.project_id : (row.project_id ? String(row.project_id) : null),
+          name: typeof row.name === 'string' ? row.name : '',
+          role: typeof row.role === 'string' && row.role ? row.role : null,
+          archetype: typeof row.archetype === 'string' && row.archetype ? row.archetype : null,
+          pronouns: typeof row.pronouns === 'string' && row.pronouns ? row.pronouns : null,
+          age: typeof row.age === 'string' ? row.age : (row.age === null || typeof row.age === 'undefined' ? null : String(row.age)),
+          summary: typeof row.summary === 'string' && row.summary ? row.summary : null,
+          background: typeof row.background === 'string' && row.background ? row.background : null,
+          family_tree: typeof row.family_tree === 'string' && row.family_tree ? row.family_tree : null,
+          traits: toList(row.traits),
+          stats_scenes: Number.isFinite(row.stats_scenes) ? Number(row.stats_scenes) : 0,
+          stats_dialogue: Number.isFinite(row.stats_dialogue) ? Number(row.stats_dialogue) : 0,
+          stats_screen_time: Number.isFinite(row.stats_screen_time) ? Number(row.stats_screen_time) : 0,
+          arc_setup: typeof row.arc_setup === 'string' && row.arc_setup ? row.arc_setup : null,
+          arc_development: typeof row.arc_development === 'string' && row.arc_development ? row.arc_development : null,
+          arc_resolution: typeof row.arc_resolution === 'string' && row.arc_resolution ? row.arc_resolution : null,
+          look_portrait_url: typeof row.look_portrait_url === 'string' && row.look_portrait_url ? row.look_portrait_url : null,
+          look_turnaround_urls: toList(row.look_turnaround_urls),
+          look_expression_urls: toList(row.look_expression_urls),
+          base_image_url: typeof row.base_image_url === 'string' && row.base_image_url ? row.base_image_url : null,
+          has_pose_library: Boolean(row.has_pose_library),
+          ai_prompt: typeof row.ai_prompt === 'string' && row.ai_prompt ? row.ai_prompt : null,
+          ai_notes: typeof row.ai_notes === 'string' && row.ai_notes ? row.ai_notes : null
+        };
+      }
+
+      function prepareCharacterRowsForVerification(rows){
+        if (!Array.isArray(rows)) return [];
+        return rows
+          .map(canonicalizeCharacterRowForVerification)
+          .sort((a, b) => {
+            const idA = a.id || '';
+            const idB = b.id || '';
+            return idA.localeCompare(idB);
+          })
+          .map(row => ({
+            ...row,
+            traits: row.traits.slice(),
+            look_turnaround_urls: row.look_turnaround_urls.slice(),
+            look_expression_urls: row.look_expression_urls.slice()
+          }));
+      }
+
       function getActiveCharacter(){
         if (!state.activeId) return null;
         return state.characters.find(char => char.id === state.activeId) || null;
@@ -3515,29 +3566,30 @@
       }
 
       async function handleSaveClick(){
-        if (state.saving) return;
+        if (state.saving) return { success: false, reason: 'busy' };
         if (!state.supabase){
           setSaveStatus('Supabase is still initializing. Please try again.', 'warning');
-          return;
+          return { success: false, reason: 'supabase_unavailable' };
         }
         if (!state.session || !state.ownerId){
           setSaveStatus('Sign in to save your cast.', 'warning');
-          return;
+          return { success: false, reason: 'unauthenticated' };
         }
         if (!state.projectId){
           setSaveStatus('Open your story in the Writer to link characters.', 'warning');
-          return;
+          return { success: false, reason: 'missing_project' };
         }
         ensureStateCharacterIds();
+        const rows = state.characters.map(characterToSupabaseRow);
+        const verificationSnapshot = prepareCharacterRowsForVerification(rows);
         if (!state.dirty){
           setSaveStatus('Everything is up to date.', 'ready');
-          return;
+          return { success: true, expectedRows: verificationSnapshot, skipped: true };
         }
         state.saving = true;
         updateSaveButtonState();
         setSaveStatus('Saving…', 'saving');
         try {
-          const rows = state.characters.map(characterToSupabaseRow);
           if (rows.length){
             const { error } = await state.supabase
               .from('characters')
@@ -3558,9 +3610,11 @@
           state.dirty = false;
           await persistCharactersToLocal();
           setSaveStatus('Characters saved!', 'ready');
+          return { success: true, expectedRows: verificationSnapshot };
         } catch (err){
           console.error('Failed to save characters to Supabase', err);
           setSaveStatus('Save failed. Please try again.', 'error');
+          return { success: false, expectedRows: verificationSnapshot, error: err };
         } finally {
           state.saving = false;
           updateSaveButtonState();
@@ -3891,10 +3945,33 @@
         // Create a promise for the save operation
         const savePromise = (async () => {
           try {
-            await handleSaveClick();
-            // Check if save was successful by looking at the status
-            const success = state.saveStatusState === 'ready' || !state.dirty;
-            return { success, handled: true, action, source };
+            const outcome = await handleSaveClick();
+            const success = Boolean(outcome?.success);
+            const expectedRows = Array.isArray(outcome?.expectedRows) ? outcome.expectedRows : [];
+            const canVerify = success && Boolean(state.supabase && state.projectId);
+            return {
+              success,
+              handled: true,
+              action,
+              source,
+              requiresVerification: Boolean(canVerify),
+              verify: canVerify ? async () => {
+                if (!state.supabase) throw new Error('Supabase client unavailable during verification.');
+                const { data, error } = await state.supabase
+                  .from('characters')
+                  .select('id, owner_id, project_id, name, role, archetype, pronouns, age, summary, background, family_tree, traits, stats_scenes, stats_dialogue, stats_screen_time, arc_setup, arc_development, arc_resolution, look_portrait_url, look_turnaround_urls, look_expression_urls, base_image_url, has_pose_library, ai_prompt, ai_notes')
+                  .eq('project_id', state.projectId)
+                  .order('id', { ascending: true });
+                if (error) throw error;
+                const remoteRows = prepareCharacterRowsForVerification(Array.isArray(data) ? data : []);
+                const expected = prepareCharacterRowsForVerification(expectedRows);
+                const verified = JSON.stringify(remoteRows) === JSON.stringify(expected);
+                if (!verified){
+                  console.warn('Character Studio save verification mismatch', { expected, remote: remoteRows });
+                }
+                return { verified, expectedCount: expected.length, remoteCount: remoteRows.length };
+              } : undefined
+            };
           } catch (error){
             console.error('Workspace save failed in Character Studio', error);
             return { success: false, handled: true, action, source, error };

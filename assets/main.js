@@ -2497,6 +2497,101 @@ function requestWorkspaceSave({ action = 'save', source = 'workspace-launcher', 
   });
 }
 
+const SAVE_BUTTON_STATE_CLASSES = {
+  saving: 'is-saving',
+  success: 'is-success',
+  error: 'is-error'
+};
+
+const SAVE_BUTTON_RESET_DELAYS = {
+  success: 1600,
+  error: 2200
+};
+
+const saveButtonResetTimers = new WeakMap();
+
+function clearSaveButtonReset(button){
+  if (!(button instanceof HTMLElement)) return;
+  const existing = saveButtonResetTimers.get(button);
+  if (typeof existing === 'number'){
+    window.clearTimeout(existing);
+    saveButtonResetTimers.delete(button);
+  }
+}
+
+function setSaveButtonState(button, state){
+  if (!(button instanceof HTMLElement)) return;
+  clearSaveButtonReset(button);
+  const normalized = state === 'saving' || state === 'success' || state === 'error' ? state : 'idle';
+  Object.entries(SAVE_BUTTON_STATE_CLASSES).forEach(([, className]) => {
+    button.classList.remove(className);
+  });
+  if (normalized === 'idle'){
+    delete button.dataset.workspaceSaveState;
+    button.disabled = false;
+    return;
+  }
+  Object.entries(SAVE_BUTTON_STATE_CLASSES).forEach(([key, className]) => {
+    button.classList.toggle(className, normalized === key);
+  });
+  button.dataset.workspaceSaveState = normalized;
+  button.disabled = normalized !== 'error';
+}
+
+function scheduleSaveButtonReset(button, delay){
+  if (!(button instanceof HTMLElement)) return;
+  clearSaveButtonReset(button);
+  const timeoutId = window.setTimeout(() => {
+    setSaveButtonState(button, 'idle');
+    saveButtonResetTimers.delete(button);
+  }, typeof delay === 'number' ? delay : SAVE_BUTTON_RESET_DELAYS.success);
+  saveButtonResetTimers.set(button, timeoutId);
+}
+
+async function evaluateSaveResponse(result){
+  const entries = Array.isArray(result?.results) ? result.results : [];
+  let anySuccess = Boolean(result && result.success);
+  let requiresVerification = false;
+  let verifiedSuccess = false;
+  const verificationErrors = [];
+
+  for (const entry of entries){
+    if (!entry || typeof entry !== 'object') continue;
+    if (entry.requiresVerification === true || typeof entry.verify === 'function'){
+      requiresVerification = true;
+    }
+    if (entry.success){
+      anySuccess = true;
+      if (entry.verified === true || entry.confirmed === true){
+        verifiedSuccess = true;
+        continue;
+      }
+      if (entry.verified === false){
+        verificationErrors.push(new Error('Save result reported verification failure.'));
+        continue;
+      }
+      if (typeof entry.verify === 'function'){
+        try {
+          const verificationResult = await entry.verify();
+          const normalized = typeof verificationResult === 'object' && verificationResult !== null
+            ? verificationResult
+            : { verified: Boolean(verificationResult) };
+          if (normalized.verified === true || normalized.success === true){
+            verifiedSuccess = true;
+          } else {
+            verificationErrors.push(new Error('Save verification returned a negative result.'));
+          }
+        } catch (error){
+          verificationErrors.push(error);
+        }
+      }
+    }
+  }
+
+  const verified = verifiedSuccess || (anySuccess && !requiresVerification);
+  return { success: anySuccess, verified, requiresVerification, verificationErrors };
+}
+
 let workspaceLauncherObserver = null;
 let workspaceLauncherObserverScheduled = false;
 
@@ -2581,11 +2676,29 @@ function ensureWorkspaceLauncherStructure(launcher){
   const saveButton = ensureButton('[data-workspace-save]', `
       <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
         <span class="workspace-launcher__module-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-            <polyline points="7 3 7 8 15 8"></polyline>
-          </svg>
+          <span class="workspace-launcher__save-dots" aria-hidden="true">
+            <span class="workspace-launcher__save-dot"></span>
+            <span class="workspace-launcher__save-dot"></span>
+            <span class="workspace-launcher__save-dot"></span>
+          </span>
+          <span class="workspace-launcher__save-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+          </span>
+          <span class="workspace-launcher__save-status workspace-launcher__save-status--success" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="5 13 9 17 19 7"></polyline>
+            </svg>
+          </span>
+          <span class="workspace-launcher__save-status workspace-launcher__save-status--error" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="7" y1="7" x2="17" y2="17"></line>
+              <line x1="17" y1="7" x2="7" y2="17"></line>
+            </svg>
+          </span>
         </span>
         <span class="sr-only">Save Progress</span>
       </button>
@@ -2704,11 +2817,29 @@ function injectGlobalWorkspaceLauncher(){
             </button>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
               <span class="workspace-launcher__module-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
+                <span class="workspace-launcher__save-dots" aria-hidden="true">
+                  <span class="workspace-launcher__save-dot"></span>
+                  <span class="workspace-launcher__save-dot"></span>
+                  <span class="workspace-launcher__save-dot"></span>
+                </span>
+                <span class="workspace-launcher__save-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                </span>
+                <span class="workspace-launcher__save-status workspace-launcher__save-status--success" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="5 13 9 17 19 7"></polyline>
+                  </svg>
+                </span>
+                <span class="workspace-launcher__save-status workspace-launcher__save-status--error" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="7" y1="7" x2="17" y2="17"></line>
+                    <line x1="17" y1="7" x2="7" y2="17"></line>
+                  </svg>
+                </span>
               </span>
               <span class="sr-only">Save Progress</span>
             </button>
@@ -3146,18 +3277,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         event.stopPropagation();
         if (saveButton.dataset.workspaceSaveState === 'saving') return;
 
-        const animationDuration = 600; // matches the CSS animation duration
-        const resetState = () => {
-          window.setTimeout(() => {
-            saveButton.classList.remove('is-saving');
-            saveButton.disabled = false;
-            delete saveButton.dataset.workspaceSaveState;
-          }, animationDuration);
-        };
-
-        saveButton.dataset.workspaceSaveState = 'saving';
-        saveButton.disabled = true;
-        saveButton.classList.add('is-saving');
+        setSaveButtonState(saveButton, 'saving');
 
         try {
           const result = await requestWorkspaceSave({
@@ -3165,16 +3285,41 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
             action: 'save',
             context: { launcherId: launcher.id || null }
           });
+
           if (!result.handled){
             alert('Open a workspace to save your progress.');
-          } else if (!result.success){
-            console.warn('Workspace save request completed without a success response.', result);
+            setSaveButtonState(saveButton, 'idle');
+            return;
           }
+
+          const evaluation = await evaluateSaveResponse(result);
+          if (!evaluation.success){
+            console.warn('Workspace save request completed without a success response.', result);
+            setSaveButtonState(saveButton, 'error');
+            scheduleSaveButtonReset(saveButton, SAVE_BUTTON_RESET_DELAYS.error);
+            return;
+          }
+
+          if (!evaluation.verified){
+            if (evaluation.requiresVerification){
+              if (evaluation.verificationErrors.length){
+                evaluation.verificationErrors.forEach(error => console.error('Workspace save verification error', error));
+              }
+              console.error('Workspace save verification failed.', result);
+              alert('We couldn’t confirm your save reached the cloud. Please try again.');
+              setSaveButtonState(saveButton, 'error');
+              scheduleSaveButtonReset(saveButton, SAVE_BUTTON_RESET_DELAYS.error);
+              return;
+            }
+          }
+
+          setSaveButtonState(saveButton, 'success');
+          scheduleSaveButtonReset(saveButton, SAVE_BUTTON_RESET_DELAYS.success);
         } catch (error){
           console.error('Workspace save request failed', error);
           alert('Saving your workspace failed. Please try again.');
-        } finally {
-          resetState();
+          setSaveButtonState(saveButton, 'error');
+          scheduleSaveButtonReset(saveButton, SAVE_BUTTON_RESET_DELAYS.error);
         }
       });
     }
