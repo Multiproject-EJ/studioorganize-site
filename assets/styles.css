@@ -460,7 +460,7 @@ html.construction-overlay-dismissed .construction-overlay{display:none;}
 .workspace-launcher__chat{position:absolute;top:calc(100% + 16px);left:50%;transform:translate(-50%,-8px);opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;z-index:40}
 .workspace-launcher__chat[hidden]{display:none}
 .workspace-launcher__chat--visible{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-.workspace-launcher__chat--docked{position:static;left:auto;top:auto;transform:none;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.workspace-launcher__chat--docked{position:static;left:auto;top:auto;transform:none;opacity:0;pointer-events:none;transition:opacity .25s ease;margin-bottom:12px;width:100%;max-width:none}
 .workspace-launcher__chat--docked .workspace-launcher__chat-bubble{min-width:0;width:100%;max-width:none}
 .workspace-launcher__chat--docked.workspace-launcher__chat--visible{opacity:1;pointer-events:auto}
 .workspace-launcher__chat-bubble{min-width:260px;max-width:min(320px,calc(100vw - 40px));background:var(--panel);border:1px solid var(--ring);border-radius:18px;box-shadow:0 26px 64px rgba(8,15,28,.55);padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -777,12 +777,14 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
   font-weight:600;
 }
 
-.set-video{
+.set-video,
+.resource-video{
   margin:0 auto clamp(28px,6vw,64px);
   width:min(900px,96vw);
 }
 
-.set-video__card{
+.set-video__card,
+.resource-video__card{
   background:var(--panel);
   border:1px solid var(--ring);
   border-radius:24px;
@@ -790,11 +792,13 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
   box-shadow:0 20px 44px rgba(5,10,18,.3);
 }
 
-.set-video__card h2{
+.set-video__card h2,
+.resource-video__card h2{
   margin:0 0 10px;
 }
 
-.set-video__card p{
+.set-video__card p,
+.resource-video__card p{
   margin:0 0 18px;
   line-height:1.5;
 }
