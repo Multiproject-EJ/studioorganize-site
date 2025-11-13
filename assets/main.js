@@ -2937,6 +2937,26 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     return launcher.querySelector('[data-workspace-chat]');
   };
 
+  const dockChatBubble = launcher => {
+    const chat = getChatBubble(launcher);
+    if (!(chat instanceof HTMLElement)) return;
+    const panel = launcher.querySelector('[data-workspace-panel]');
+    if (!(panel instanceof HTMLElement)) return;
+    const quickActions = panel.querySelector('.workspace-launcher__quick-actions');
+    if (!(quickActions instanceof HTMLElement)) return;
+
+    const label = quickActions.querySelector('.workspace-launcher__quick-actions-label');
+    if (chat.parentElement !== quickActions){
+      if (label instanceof HTMLElement){
+        quickActions.insertBefore(chat, label);
+      } else {
+        quickActions.prepend(chat);
+      }
+    }
+
+    chat.classList.add('workspace-launcher__chat--docked');
+  };
+
   const getChatInput = launcher => {
     return launcher.querySelector('[data-workspace-chat-input]');
   };
@@ -2963,6 +2983,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
   };
 
   const showChatBubble = (launcher, { focusInput = true } = {}) => {
+    dockChatBubble(launcher);
     const chat = getChatBubble(launcher);
     if (!(chat instanceof HTMLElement)) return;
     if (!chat.hidden && chat.classList.contains(CHAT_VISIBLE_CLASS)){
