@@ -511,6 +511,7 @@ html.construction-overlay-dismissed .construction-overlay{display:none;}
 .workspace-launcher__save-status--error svg{stroke:#ef4444}
 .workspace-launcher__module-icon--music{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(79,123,255,.9),rgba(236,72,153,.9));color:#fff;font-size:26px;}
 .workspace-launcher__module-icon--music>span{display:flex;align-items:center;justify-content:center;gap:4px;font-size:24px;}
+.workspace-launcher__module-icon--lessons{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(251,191,36,.92),rgba(249,115,22,.92));color:#1f1b24;font-size:28px;}
 .workspace-launcher__module:hover,.workspace-launcher__module:focus-visible{transform:translateY(-3px);box-shadow:0 0 46px rgba(79,123,255,.56),0 22px 48px rgba(8,15,28,.48);filter:saturate(1.18)}
 .workspace-launcher__module:hover .workspace-launcher__module-icon,.workspace-launcher__module:focus-visible .workspace-launcher__module-icon{transform:translateY(-1px);box-shadow:0 0 40px rgba(79,123,255,.6),0 18px 38px rgba(8,15,28,.42)}
 .workspace-launcher__module--active{box-shadow:0 0 36px rgba(79,123,255,.4),0 18px 40px rgba(8,15,28,.38);filter:saturate(1.15)}
