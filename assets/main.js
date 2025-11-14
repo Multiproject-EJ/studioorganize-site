@@ -109,39 +109,53 @@ let videoLessonDialogController = null;
 // Video lesson library data
 const VIDEO_LESSONS = [
   {
-    id: 'lesson-1',
-    title: 'Understanding Your Antagonist',
-    url: 'https://youtu.be/NFiy-1DxJqs?si=fZ1FiPc0XnUjrmSZ',
+    id: 'lesson-story-premise',
+    title: 'Developing a Story Premise Readers Remember',
+    url: 'https://youtu.be/HLLZdhkXiSQ?si=smWMSTN7ZTEc1eDV',
+    lessonType: 'Story Development',
+    tags: ['premise', 'story idea', 'creative process']
+  },
+  {
+    id: 'lesson-character-arcs',
+    title: 'Building Character Arcs with Emotional Stakes',
+    url: 'https://youtu.be/GMWLIvY-jG0?si=kNloWFwQEf8o65vV',
     lessonType: 'Character Development',
-    tags: ['antagonist', 'conflict', 'character']
+    tags: ['character arc', 'emotion', 'motivation']
   },
   {
-    id: 'lesson-2',
-    title: 'Building Story Tension',
-    url: 'https://youtu.be/jV2OP2YEZII',
+    id: 'lesson-scene-structure',
+    title: 'Scene Structure: Turning Beats into Momentum',
+    url: 'https://youtu.be/TUFHJMuunxA?si=JIHeMxxd3uqPRZr9',
     lessonType: 'Plot Structure',
-    tags: ['tension', 'pacing', 'plot']
+    tags: ['beats', 'pacing', 'scene design']
   },
   {
-    id: 'lesson-3',
-    title: 'Crafting Compelling Dialogue',
-    url: 'https://youtu.be/oHg5SJYRHA0',
+    id: 'lesson-dialogue',
+    title: 'Writing Dialogue that Reveals Character',
+    url: 'https://youtu.be/-Nua3TH1mF4?si=xvabAsf0XOvsv8a4',
     lessonType: 'Writing Technique',
-    tags: ['dialogue', 'character', 'voice']
+    tags: ['dialogue', 'voice', 'subtext']
   },
   {
-    id: 'lesson-4',
-    title: 'Three Act Structure Explained',
-    url: 'https://youtu.be/QH2-TGUlwu4',
+    id: 'lesson-three-act',
+    title: 'Three-Act Structure for Modern Storytellers',
+    url: 'https://youtu.be/3TukzX6R57Y?si=BqdJtnr1ToPekSox',
     lessonType: 'Plot Structure',
-    tags: ['structure', 'plot', 'acts']
+    tags: ['structure', 'acts', 'narrative']
   },
   {
-    id: 'lesson-5',
-    title: 'Creating Memorable Protagonists',
-    url: 'https://youtu.be/9bZkp7q19f0',
-    lessonType: 'Character Development',
-    tags: ['protagonist', 'character', 'hero']
+    id: 'lesson-worldbuilding',
+    title: 'Worldbuilding Foundations for Film & Animation',
+    url: 'https://youtu.be/CsfLB79qhCY?si=LZw-aXnsZVVLoWgH',
+    lessonType: 'Worldbuilding',
+    tags: ['worldbuilding', 'setting', 'visual storytelling']
+  },
+  {
+    id: 'lesson-revision',
+    title: 'Revising Scripts with a Director’s Eye',
+    url: 'https://youtu.be/DGaNVqDD2vA?si=b1opPsyUWaxRRRox',
+    lessonType: 'Editing & Revision',
+    tags: ['script edit', 'feedback', 'iteration']
   }
 ];
 
