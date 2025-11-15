@@ -105,6 +105,7 @@ const SCRIPT_DIALOG_MESSAGE_TYPE = 'so-script-dialog';
 let scriptDialogOverlayController = null;
 
 let videoLessonDialogController = null;
+let musicMoodOverlayController = null;
 
 // Video lesson library data
 const VIDEO_LESSONS = [
@@ -156,6 +157,51 @@ const VIDEO_LESSONS = [
     url: 'https://youtu.be/DGaNVqDD2vA?si=b1opPsyUWaxRRRox',
     lessonType: 'Editing & Revision',
     tags: ['script edit', 'feedback', 'iteration']
+  }
+];
+
+const CREATE_WITH_MUSIC_LIBRARY = [
+  {
+    id: 'music-midnight-flow',
+    title: 'Midnight City Flow',
+    description: 'Floating synth pads and gentle rhythms to keep drafting sessions unhurried.',
+    url: 'https://youtu.be/1dDwdhgxZ8M?si=Uay-GR3DMKYumADX',
+    emotions: ['calm', 'hopeful', 'focus'],
+    source: 'YouTube • Ambient chill mix'
+  },
+  {
+    id: 'music-shadowbeats',
+    title: 'Shadow Beats, Soft Hearts',
+    description: 'Brooding strings that slowly bloom into cathartic drama.',
+    url: 'https://youtu.be/1hhHhLP3_To?si=O6jHidDAkvv6pdkS',
+    emotions: ['sad', 'introspective', 'tension'],
+    source: 'YouTube • Emotional score'
+  },
+  {
+    id: 'music-electric-bounce',
+    title: 'Electric Bounce Draft Sprint',
+    description: 'Upbeat cinematic pulse to keep dialogue playful and bright.',
+    url: 'https://youtu.be/zuuZyT2AVIQ?si=WfIdiaRH9VJyIrJR',
+    emotions: ['happy', 'energetic', 'confident'],
+    source: 'YouTube • Euphoric EDM'
+  },
+  {
+    id: 'music-cozy-chapters',
+    title: 'Cozy Chapters (coming soon)',
+    description: 'Acoustic hums for soft, romantic beats. Drop your favorites soon.',
+    url: '',
+    emotions: ['romantic', 'warm', 'hopeful'],
+    source: 'StudioOrganize',
+    comingSoon: true
+  },
+  {
+    id: 'music-rallying-anthem',
+    title: 'Rallying Anthem (coming soon)',
+    description: 'Big heroic crescendos for climax pages. Placeholder while we mix it.',
+    url: '',
+    emotions: ['epic', 'victorious', 'determined'],
+    source: 'StudioOrganize',
+    comingSoon: true
   }
 ];
 
@@ -666,6 +712,367 @@ if (typeof window.openVideoLessonDialog !== 'function'){
     document.addEventListener('DOMContentLoaded', setupVideoLessonDialog, { once: true });
   } else {
     setupVideoLessonDialog();
+  }
+}
+
+function ensureMusicMoodOverlayController(){
+  if (musicMoodOverlayController) return musicMoodOverlayController;
+  if (!document.body) return null;
+
+  const normalizeEmotion = emotion => typeof emotion === 'string' ? emotion.trim().toLowerCase() : '';
+  const formatEmotion = emotion => {
+    if (!emotion) return '';
+    return emotion.charAt(0).toUpperCase() + emotion.slice(1);
+  };
+
+  const escapeHtml = str => {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  const extractVideoId = url => {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^?&"'>]+)/);
+    return match ? match[1] : null;
+  };
+
+  const normalizedLibrary = CREATE_WITH_MUSIC_LIBRARY.map(track => {
+    const normalizedEmotions = Array.isArray(track.emotions)
+      ? track.emotions.map(normalizeEmotion).filter(Boolean)
+      : [];
+    return { ...track, normalizedEmotions };
+  });
+
+  const overlay = document.createElement('div');
+  overlay.className = 'music-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.hidden = true;
+
+  const renderMusicCard = track => {
+    const safeTitle = escapeHtml(track.title || 'Untitled track');
+    const safeDescription = escapeHtml(track.description || '');
+    const safeSource = escapeHtml(track.source || 'YouTube');
+    const safeId = escapeHtml(track.id || 'music-track');
+    const videoId = extractVideoId(track.url);
+    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg` : '';
+    const moodAttr = track.normalizedEmotions.join(',');
+    const moodTags = track.normalizedEmotions.length
+      ? track.normalizedEmotions.map(mood => `<span class="music-track__emotion">${escapeHtml(formatEmotion(mood))}</span>`).join('')
+      : '<span class="music-track__emotion">Any</span>';
+    const comingSoon = Boolean(track.comingSoon || !track.url);
+    return `
+      <article class="music-track${comingSoon ? ' music-track--soon' : ''}" data-music-track data-music-track-id="${safeId}" data-music-emotions="${escapeHtml(moodAttr)}">
+        <div class="music-track__thumbnail">
+          ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${safeTitle}" loading="lazy" />` : '<div class="music-track__thumbnail-placeholder" aria-hidden="true">🎧</div>'}
+          ${comingSoon
+            ? '<span class="music-track__soon-badge">Coming soon</span>'
+            : `<button type="button" class="music-track__play" data-music-play aria-label="Play ${safeTitle}">▶</button>`}
+        </div>
+        <div class="music-track__body">
+          <p class="music-track__label">${safeSource}</p>
+          <h3 class="music-track__title">${safeTitle}</h3>
+          <p class="music-track__description">${safeDescription}</p>
+          <div class="music-track__emotions">${moodTags}</div>
+        </div>
+      </article>
+    `;
+  };
+
+  const uniqueEmotions = Array.from(new Set(
+    normalizedLibrary.flatMap(track => track.normalizedEmotions)
+  )).sort();
+
+  const filtersMarkup = uniqueEmotions.map(emotion => `
+    <button type="button" class="music-overlay__filter" data-music-filter="${escapeHtml(emotion)}">
+      ${escapeHtml(formatEmotion(emotion))}
+    </button>
+  `).join('');
+
+  const cardsMarkup = normalizedLibrary.map(renderMusicCard).join('');
+
+  overlay.innerHTML = `
+    <div class="music-overlay__backdrop" data-music-overlay-close></div>
+    <div class="music-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="music-overlay-title">
+      <button type="button" class="music-overlay__close" data-music-overlay-close aria-label="Close Create with Music">✕</button>
+      <header class="music-overlay__header">
+        <h2 id="music-overlay-title">🎶 Create with Music</h2>
+        <p>Drop into a mood-matched soundtrack while you outline scenes.</p>
+      </header>
+      <div class="music-overlay__filters" data-music-filters>
+        <button type="button" class="music-overlay__filter is-active" data-music-filter="all">All moods</button>
+        ${filtersMarkup}
+      </div>
+      <div class="music-overlay__body">
+        <section class="music-overlay__player" data-music-player hidden>
+          <div class="music-overlay__now-playing">
+            <p class="music-overlay__now-playing-label">Now playing</p>
+            <h3 class="music-overlay__now-playing-title" data-music-title>Pick a track</h3>
+            <p class="music-overlay__now-playing-source" data-music-source>—</p>
+            <p class="music-overlay__now-playing-moods" data-music-moods></p>
+          </div>
+          <div class="music-overlay__embed" data-music-embed></div>
+          <button type="button" class="music-overlay__stop" data-music-stop hidden>Stop playback</button>
+        </section>
+        <div class="music-overlay__library" data-music-library>
+          <div class="music-overlay__grid" data-music-grid>
+            ${cardsMarkup}
+          </div>
+          <div class="music-overlay__empty" data-music-empty hidden>
+            <p>We’re mixing more <span data-music-empty-label>fresh</span> vibes for that mood.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const closeTriggers = overlay.querySelectorAll('[data-music-overlay-close]');
+  const filterButtons = Array.from(overlay.querySelectorAll('[data-music-filter]'));
+  const cards = Array.from(overlay.querySelectorAll('[data-music-track]'));
+  const player = overlay.querySelector('[data-music-player]');
+  const embedContainer = overlay.querySelector('[data-music-embed]');
+  const stopButton = overlay.querySelector('[data-music-stop]');
+  const nowPlayingTitle = overlay.querySelector('[data-music-title]');
+  const nowPlayingSource = overlay.querySelector('[data-music-source]');
+  const nowPlayingMoods = overlay.querySelector('[data-music-moods]');
+  const emptyState = overlay.querySelector('[data-music-empty]');
+  const emptyLabel = overlay.querySelector('[data-music-empty-label]');
+
+  const trackMap = new Map(normalizedLibrary.map(track => [track.id, track]));
+
+  let iframe = null;
+  let activeTrackId = null;
+  let activeFilter = 'all';
+  let keydownBound = false;
+
+  const ensureIframe = () => {
+    if (!iframe){
+      iframe = document.createElement('iframe');
+      iframe.width = '100%';
+      iframe.height = '100%';
+      iframe.title = 'YouTube music player';
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen', '');
+    }
+    return iframe;
+  };
+
+  const handleKeydown = event => {
+    if (event.key === 'Escape'){
+      event.preventDefault();
+      controller.close();
+    }
+  };
+
+  const bindKeydown = () => {
+    if (keydownBound) return;
+    window.addEventListener('keydown', handleKeydown);
+    keydownBound = true;
+  };
+
+  const unbindKeydown = () => {
+    if (!keydownBound) return;
+    window.removeEventListener('keydown', handleKeydown);
+    keydownBound = false;
+  };
+
+  const setActiveTrack = trackId => {
+    activeTrackId = trackId || null;
+    cards.forEach(card => {
+      const isActive = card.getAttribute('data-music-track-id') === activeTrackId;
+      card.classList.toggle('music-track--active', isActive);
+    });
+  };
+
+  const stopPlayback = () => {
+    if (iframe){
+      try {
+        iframe.removeAttribute('src');
+        iframe.dataset.videoId = '';
+      } catch (error){}
+      try {
+        iframe.remove();
+      } catch (error){}
+    }
+    iframe = null;
+    if (embedContainer) embedContainer.innerHTML = '';
+    if (player) player.hidden = true;
+    if (stopButton) stopButton.hidden = true;
+    if (nowPlayingTitle) nowPlayingTitle.textContent = 'Pick a track';
+    if (nowPlayingSource) nowPlayingSource.textContent = '—';
+    if (nowPlayingMoods) nowPlayingMoods.textContent = '';
+    setActiveTrack(null);
+  };
+
+  const mountIframe = videoId => {
+    if (!embedContainer || !videoId) return;
+    const playerFrame = ensureIframe();
+    const desiredSrc = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0&autoplay=1`;
+    if (playerFrame.dataset.videoId !== videoId){
+      playerFrame.src = desiredSrc;
+      playerFrame.dataset.videoId = videoId;
+    }
+    embedContainer.innerHTML = '';
+    embedContainer.appendChild(playerFrame);
+  };
+
+  const playTrack = track => {
+    if (!track || !track.url) return;
+    const videoId = extractVideoId(track.url);
+    if (!videoId) return;
+    mountIframe(videoId);
+    if (player) player.hidden = false;
+    if (stopButton) stopButton.hidden = false;
+    if (nowPlayingTitle) nowPlayingTitle.textContent = track.title || 'Now Playing';
+    if (nowPlayingSource) nowPlayingSource.textContent = track.source || 'YouTube';
+    if (nowPlayingMoods){
+      nowPlayingMoods.textContent = track.normalizedEmotions.length
+        ? track.normalizedEmotions.map(formatEmotion).join(' • ')
+        : '';
+    }
+    setActiveTrack(track.id);
+  };
+
+  const updateEmptyState = visibleCount => {
+    if (!(emptyState instanceof HTMLElement)) return;
+    if (visibleCount === 0){
+      emptyState.hidden = false;
+      if (emptyLabel instanceof HTMLElement){
+        emptyLabel.textContent = activeFilter === 'all' ? 'fresh' : formatEmotion(activeFilter);
+      }
+    } else {
+      emptyState.hidden = true;
+    }
+  };
+
+  const setFilter = mood => {
+    const normalized = mood && mood !== 'all' ? normalizeEmotion(mood) : 'all';
+    activeFilter = normalized || 'all';
+    filterButtons.forEach(button => {
+      const buttonFilter = button.getAttribute('data-music-filter') || '';
+      button.classList.toggle('is-active', buttonFilter === activeFilter || (activeFilter === 'all' && buttonFilter === 'all'));
+    });
+    let visibleCount = 0;
+    cards.forEach(card => {
+      if (!(card instanceof HTMLElement)) return;
+      const emotionsAttr = card.getAttribute('data-music-emotions') || '';
+      const emotions = emotionsAttr
+        .split(',')
+        .map(normalizeEmotion)
+        .filter(Boolean);
+      const shouldShow = activeFilter === 'all' || emotions.includes(activeFilter);
+      card.hidden = !shouldShow;
+      if (shouldShow) visibleCount++;
+    });
+    updateEmptyState(visibleCount);
+  };
+
+  overlay.addEventListener('click', event => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) return;
+
+    const playButton = target.closest('[data-music-play]');
+    if (playButton){
+      event.preventDefault();
+      const card = playButton.closest('[data-music-track-id]');
+      const trackId = card?.getAttribute('data-music-track-id');
+      const track = trackMap.get(trackId);
+      if (track){
+        playTrack(track);
+      }
+      return;
+    }
+
+    const filterButton = target.closest('[data-music-filter]');
+    if (filterButton){
+      event.preventDefault();
+      const mood = filterButton.getAttribute('data-music-filter') || 'all';
+      setFilter(mood);
+      return;
+    }
+
+    if (target === overlay){
+      controller.close();
+    }
+  });
+
+  if (stopButton instanceof HTMLElement){
+    stopButton.addEventListener('click', event => {
+      event.preventDefault();
+      stopPlayback();
+    });
+  }
+
+  const controller = {
+    open(options = {}){
+      const desiredFilter = typeof options === 'string'
+        ? options
+        : (options && typeof options === 'object' ? options.mood : null);
+      overlay.hidden = false;
+      overlay.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => {
+        overlay.classList.add('is-open');
+      });
+      document.documentElement.classList.add('music-overlay-open');
+      bindKeydown();
+      setFilter(desiredFilter || 'all');
+    },
+    close(){
+      if (!overlay.classList.contains('is-open')) return;
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        overlay.hidden = true;
+        stopPlayback();
+        setFilter('all');
+      }, 250);
+      document.documentElement.classList.remove('music-overlay-open');
+      unbindKeydown();
+    },
+    isOpen(){
+      return overlay.classList.contains('is-open');
+    }
+  };
+
+  closeTriggers.forEach(trigger => {
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      controller.close();
+    });
+  });
+
+  setFilter('all');
+
+  musicMoodOverlayController = controller;
+  return controller;
+}
+
+function setupMusicMoodOverlay(){
+  if (typeof window.openMusicMoodOverlay === 'function') return;
+  const controller = ensureMusicMoodOverlayController();
+  if (!controller) return;
+  window.openMusicMoodOverlay = mood => {
+    if (typeof mood === 'string'){
+      controller.open({ mood });
+      return;
+    }
+    if (mood && typeof mood === 'object'){
+      controller.open(mood);
+      return;
+    }
+    controller.open();
+  };
+  window.closeMusicMoodOverlay = () => controller.close();
+}
+
+if (typeof window.openMusicMoodOverlay !== 'function'){
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', setupMusicMoodOverlay, { once: true });
+  } else {
+    setupMusicMoodOverlay();
   }
 }
 
@@ -2783,7 +3190,6 @@ function ensureWorkspaceLauncherStructure(launcher){
     scriptButton.setAttribute('data-workspace-script', '');
     scriptButton.innerHTML = '<span>Story</span>';
   }
-  quickActionsGroup.appendChild(scriptButton);
 
   let creatorLink = quickActionsGroup.querySelector('.workspace-launcher__creator');
   if (!(creatorLink instanceof HTMLElement)){
@@ -2793,7 +3199,6 @@ function ensureWorkspaceLauncherStructure(launcher){
     creatorLink.setAttribute('aria-label', 'Creator Page');
     creatorLink.innerHTML = '<span>Creator Page</span>';
   }
-  quickActionsGroup.appendChild(creatorLink);
 
   let creativeHubLink = quickActionsGroup.querySelector('.workspace-launcher__module--creative-hub');
   if (!(creativeHubLink instanceof HTMLElement)){
@@ -2808,9 +3213,49 @@ function ensureWorkspaceLauncherStructure(launcher){
       <span class="sr-only">Creative Hub</span>
     `;
   }
-  quickActionsGroup.appendChild(creativeHubLink);
 
-  [assistantToggle, saveButton, storyButton].forEach(button => {
+  let videoLessonsButton = quickActionsGroup.querySelector('[data-video-lessons-open]');
+  if (!(videoLessonsButton instanceof HTMLElement)){
+    videoLessonsButton = document.createElement('button');
+    videoLessonsButton.type = 'button';
+    videoLessonsButton.className = 'workspace-launcher__module workspace-launcher__module--lessons';
+    videoLessonsButton.setAttribute('data-video-lessons-open', '');
+    videoLessonsButton.setAttribute('data-label', 'Video Lessons');
+  }
+  videoLessonsButton.setAttribute('aria-label', 'Open video lesson library');
+  videoLessonsButton.innerHTML = `
+    <span class="workspace-launcher__module-icon workspace-launcher__module-icon--lessons" aria-hidden="true">
+      <span aria-hidden="true">🎬</span>
+    </span>
+    <span class="sr-only">Open video lesson library</span>
+  `;
+
+  let musicButton = quickActionsGroup.querySelector('[data-music-library-open]');
+  if (!(musicButton instanceof HTMLElement)){
+    musicButton = document.createElement('button');
+    musicButton.type = 'button';
+    musicButton.className = 'workspace-launcher__module workspace-launcher__module--music-note';
+    musicButton.setAttribute('data-music-library-open', '');
+    musicButton.setAttribute('data-label', 'Create with Music');
+  }
+  musicButton.setAttribute('aria-label', 'Open Create with Music');
+  musicButton.innerHTML = `
+    <span class="workspace-launcher__module-icon workspace-launcher__module-icon--music-note" aria-hidden="true">
+      <span aria-hidden="true">🎵</span>
+    </span>
+    <span class="sr-only">Open Create with Music</span>
+  `;
+
+  [
+    scriptButton,
+    creatorLink,
+    creativeHubLink,
+    videoLessonsButton,
+    musicButton,
+    assistantToggle,
+    saveButton,
+    storyButton
+  ].forEach(button => {
     if (button instanceof HTMLElement){
       quickActionsGroup.appendChild(button);
     }
@@ -2841,26 +3286,38 @@ function injectGlobalWorkspaceLauncher(){
         </div>
       </div>
       <div class="workspace-launcher__panel" data-workspace-panel aria-hidden="true" hidden tabindex="-1">
-        <div class="workspace-launcher__quick-actions">
-          <p class="workspace-launcher__quick-actions-label">Quick actions</p>
-          <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
-            <button type="button" class="workspace-launcher__script" data-workspace-script>
-              <span>Story</span>
-            </button>
-            <a class="workspace-launcher__module workspace-launcher__module--creative-hub" href="/creative-hub.html" data-label="Creative Hub">
-              <span class="workspace-launcher__module-icon" aria-hidden="true">
-                <img src="${CREATIVE_HUB_ICON}" alt="" loading="lazy" />
-              </span>
-              <span class="sr-only">Creative Hub</span>
-            </a>
-            <a class="workspace-launcher__script workspace-launcher__creator" href="/account.html" aria-label="Creator Page">
-              <span>Creator Page</span>
-            </a>
-            <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
-              <span class="workspace-launcher__module-icon" aria-hidden="true">
-                <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
-              </span>
-              <span class="sr-only">Open StudioOrganize Assistant</span>
+      <div class="workspace-launcher__quick-actions">
+        <p class="workspace-launcher__quick-actions-label">Quick actions</p>
+        <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
+          <button type="button" class="workspace-launcher__script" data-workspace-script>
+            <span>Story</span>
+          </button>
+          <a class="workspace-launcher__script workspace-launcher__creator" href="/account.html" aria-label="Creator Page">
+            <span>Creator Page</span>
+          </a>
+          <a class="workspace-launcher__module workspace-launcher__module--creative-hub" href="/creative-hub.html" data-label="Creative Hub">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <img src="${CREATIVE_HUB_ICON}" alt="" loading="lazy" />
+            </span>
+            <span class="sr-only">Creative Hub</span>
+          </a>
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--lessons" data-video-lessons-open data-label="Video Lessons" aria-label="Open video lesson library">
+            <span class="workspace-launcher__module-icon workspace-launcher__module-icon--lessons" aria-hidden="true">
+              <span aria-hidden="true">🎬</span>
+            </span>
+            <span class="sr-only">Open video lesson library</span>
+          </button>
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--music-note" data-music-library-open data-label="Create with Music" aria-label="Open Create with Music">
+            <span class="workspace-launcher__module-icon workspace-launcher__module-icon--music-note" aria-hidden="true">
+              <span aria-hidden="true">🎵</span>
+            </span>
+            <span class="sr-only">Open Create with Music</span>
+          </button>
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
+            </span>
+            <span class="sr-only">Open StudioOrganize Assistant</span>
             </button>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
               <span class="workspace-launcher__module-icon" aria-hidden="true">
@@ -3398,11 +3855,24 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
       videoLessonsButton.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        
+
         closeAll();
-        
+
         if (typeof window.openVideoLessonDialog === 'function'){
           window.openVideoLessonDialog();
+        }
+      });
+    }
+
+    const musicButton = panel.querySelector('[data-music-library-open]');
+    if (musicButton instanceof HTMLElement && musicButton.dataset.musicLibraryBound !== 'true'){
+      musicButton.dataset.musicLibraryBound = 'true';
+      musicButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeAll();
+        if (typeof window.openMusicMoodOverlay === 'function'){
+          window.openMusicMoodOverlay();
         }
       });
     }
