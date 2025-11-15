@@ -71,17 +71,20 @@
     modules.characters = ensureModule(
       'character-studio-main',
       ['#character-studio', '#character-list', '.character-studio', '[data-character-studio]'],
-      'Characters (mobile)'
+      'Characters (mobile)',
+      { createPlaceholder: false }
     );
     modules.backstories = ensureModule(
       'character-backstories',
       ['#character-backstories'],
-      'Backstories (mobile)'
+      'Backstories (mobile)',
+      { createPlaceholder: false }
     );
     modules.relationships = ensureModule(
       'character-relationships',
       ['#character-relationships'],
-      'Relationships (mobile)'
+      'Relationships (mobile)',
+      { createPlaceholder: false }
     );
   } else {
     // fallback for other pages
