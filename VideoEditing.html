@@ -125,6 +125,7 @@
         border-radius: 16px;
         background: linear-gradient(135deg, rgba(79,123,255,0.12), rgba(79,123,255,0.04));
         box-shadow: 0 18px 36px rgba(15,23,42,0.18);
+        overflow: visible;
       }
       .scene-pair-lab__header {
         margin: 0;
@@ -139,9 +140,11 @@
         gap: 12px;
       }
       .scene-pair-row--all { min-height: 48px; }
-      .scene-pair-row--pair,
+      .scene-pair-row--pair {
+        min-height: auto;
+      }
       .scene-pair-row--focus {
-        min-height: clamp(240px, 32vw, 320px);
+        min-height: auto;
       }
       .scene-pair-grid {
         display: grid;
@@ -451,13 +454,13 @@
         list-style: none;
         padding: 0;
         margin: 0;
-        min-height: clamp(440px, 64vw, 640px);
+        min-height: clamp(380px, 50vw, 520px);
         transform: translateX(var(--scene-carousel-drag-offset, 0));
         transition: transform var(--scene-carousel-drag-transition, .45s cubic-bezier(0.32, 0.72, 0, 1));
         will-change: transform;
         transform-style: preserve-3d;
       }
-      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__track { min-height: clamp(520px, 72vw, 720px); }
+      .scene-carousel-wrapper.scene-carousel--zoomed .scene-carousel__track { min-height: clamp(460px, 60vw, 600px); }
       .scene-carousel__slide { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; transform-style: preserve-3d; }
       .scene-carousel__slide-button { border: none; background: transparent; padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; cursor: pointer; text-align: left; color: inherit; pointer-events: auto; position: relative; transform-style: preserve-3d; transition: transform .45s ease; }
       .scene-carousel__slide-button:focus-visible { outline: none; }
