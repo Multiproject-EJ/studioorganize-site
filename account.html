@@ -344,16 +344,29 @@
   </div>
 
   <div class="app-menu" data-app-menu>
-    <button
-      class="app-menu__toggle"
-      type="button"
-      data-app-menu-toggle
-      aria-haspopup="true"
-      aria-expanded="false"
-    >
-      <span class="app-menu__title">Creator Apps</span>
-      <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
-    </button>
+    <div class="app-menu__actions">
+      <button
+        class="app-menu__toggle"
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="workspacePreferencesModal"
+        data-workspace-preferences-trigger
+      >
+        <span class="app-menu__title">Workspace Preferences</span>
+        <span class="app-menu__subtitle">Pick themes and panel visibility for every module.</span>
+      </button>
+      <button
+        class="app-menu__toggle"
+        type="button"
+        data-app-menu-toggle
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <span class="app-menu__title">Creator Apps</span>
+        <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
+      </button>
+    </div>
     <div class="app-menu__popover" role="menu" data-app-menu-panel hidden>
       <ul class="app-menu__list">
         <li role="none">
@@ -440,111 +453,6 @@
         Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
       </p>
     </div>
-
-    <section class="creator-theme" aria-label="Workspace theme preferences" data-workspace-theme-preferences>
-      <div class="creator-theme__header">
-        <h3>Workspace themes</h3>
-        <p>Select the look that feels right for each workspace. Themes are stored with your account and load whenever you open the module.</p>
-      </div>
-      <div class="creator-theme__grid" data-workspace-theme-list>
-        <div class="creator-theme__item" data-workspace-theme-item="script_writer">
-          <div>
-            <h4>Script Writer</h4>
-            <p class="muted">Applies to the Screenplay Writing workspace.</p>
-          </div>
-          <label class="creator-theme__select">
-            <span class="sr-only">Script Writer theme</span>
-            <select data-workspace-theme-select="script_writer">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-        </div>
-        <div class="creator-theme__item" data-workspace-theme-item="storyboard">
-          <div>
-            <h4>Storyboard</h4>
-            <p class="muted">Applies to Storyboard Pro and related storyboard tools.</p>
-          </div>
-          <label class="creator-theme__select">
-            <span class="sr-only">Storyboard theme</span>
-            <select data-workspace-theme-select="storyboard">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-        </div>
-      </div>
-      <p class="creator-theme__status" data-workspace-theme-status>Sign in to sync themes across devices.</p>
-    </section>
-
-    <section class="creator-visibility" aria-label="Workspace visibility preferences" data-module-visibility-preferences>
-      <div class="creator-theme__header">
-        <h3>Visible – My Preferences</h3>
-        <p>Choose which workspace panels appear each time you open a module. We'll remember your picks across sessions.</p>
-      </div>
-      <div class="creator-visibility__grid">
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="script_writer">
-          <div class="creator-visibility__intro">
-            <h4>Screenplay Writing</h4>
-            <p class="muted">Control the Writer workspace layout when it launches.</p>
-          </div>
-          <div class="creator-visibility__controls" role="group" aria-label="Screenplay Writing visibility preferences">
-            <label class="visibility-toggle" data-visibility-key="scene_panel">
-              <input type="checkbox" data-visibility-input />
-              <span class="visibility-toggle__label">
-                <strong>Scenes panel</strong>
-                <small>Left column that lists every scene in your script.</small>
-              </span>
-            </label>
-            <label class="visibility-toggle" data-visibility-key="workspace_tools">
-              <input type="checkbox" data-visibility-input />
-              <span class="visibility-toggle__label">
-                <strong>Workspace tools</strong>
-                <small>Right rail with Visual, Cast, Set, Sound, Notes, and AI tabs.</small>
-              </span>
-            </label>
-            <label class="visibility-toggle" data-visibility-key="timeline">
-              <input type="checkbox" data-visibility-input />
-              <span class="visibility-toggle__label">
-                <strong>Timeline dock</strong>
-                <small>Storyboard timeline that floats above the editor.</small>
-              </span>
-            </label>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="storyboard">
-          <div class="creator-visibility__intro">
-            <h4>Storyboard Pro</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="character_studio">
-          <div class="creator-visibility__intro">
-            <h4>Character Studio</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="set_design">
-          <div class="creator-visibility__intro">
-            <h4>Set Design</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="video_editing">
-          <div class="creator-visibility__intro">
-            <h4>Video &amp; Editing</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="creative_hub">
-          <div class="creator-visibility__intro">
-            <h4>Creative Hub</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-      </div>
-      <p class="creator-theme__status" data-visibility-status>Sign in to sync visibility preferences across devices.</p>
-    </section>
 
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
@@ -856,6 +764,142 @@
                 </div>
               </form>
             </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="story-goals-modal workspace-preferences-modal"
+      id="workspacePreferencesModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="workspacePreferencesTitle"
+      hidden
+      data-workspace-preferences-modal
+    >
+      <div class="story-goals-modal__overlay" data-workspace-preferences-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="workspacePreferencesTitle">Workspace Preferences</h3>
+            <p class="muted">
+              Select the look and panel visibility for each workspace. These preferences follow your account wherever you sign in.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="story-goals-modal__close"
+            aria-label="Close workspace preferences"
+            data-workspace-preferences-close
+          >
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="creator-theme" aria-label="Workspace theme preferences" data-workspace-theme-preferences>
+            <div class="creator-theme__header">
+              <h3>Workspace themes</h3>
+              <p>Select the look that feels right for each workspace. Themes are stored with your account and load whenever you open the module.</p>
+            </div>
+            <div class="creator-theme__grid" data-workspace-theme-list>
+              <div class="creator-theme__item" data-workspace-theme-item="script_writer">
+                <div>
+                  <h4>Script Writer</h4>
+                  <p class="muted">Applies to the Screenplay Writing workspace.</p>
+                </div>
+                <label class="creator-theme__select">
+                  <span class="sr-only">Script Writer theme</span>
+                  <select data-workspace-theme-select="script_writer">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+              </div>
+              <div class="creator-theme__item" data-workspace-theme-item="storyboard">
+                <div>
+                  <h4>Storyboard</h4>
+                  <p class="muted">Applies to Storyboard Pro and related storyboard tools.</p>
+                </div>
+                <label class="creator-theme__select">
+                  <span class="sr-only">Storyboard theme</span>
+                  <select data-workspace-theme-select="storyboard">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <p class="creator-theme__status" data-workspace-theme-status>Sign in to sync themes across devices.</p>
+          </section>
+
+          <section class="creator-visibility" aria-label="Workspace visibility preferences" data-module-visibility-preferences>
+            <div class="creator-theme__header">
+              <h3>Visible – My Preferences</h3>
+              <p>Choose which workspace panels appear each time you open a module. We'll remember your picks across sessions.</p>
+            </div>
+            <div class="creator-visibility__grid">
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="script_writer">
+                <div class="creator-visibility__intro">
+                  <h4>Screenplay Writing</h4>
+                  <p class="muted">Control the Writer workspace layout when it launches.</p>
+                </div>
+                <div class="creator-visibility__controls" role="group" aria-label="Screenplay Writing visibility preferences">
+                  <label class="visibility-toggle" data-visibility-key="scene_panel">
+                    <input type="checkbox" data-visibility-input />
+                    <span class="visibility-toggle__label">
+                      <strong>Scenes panel</strong>
+                      <small>Left column that lists every scene in your script.</small>
+                    </span>
+                  </label>
+                  <label class="visibility-toggle" data-visibility-key="workspace_tools">
+                    <input type="checkbox" data-visibility-input />
+                    <span class="visibility-toggle__label">
+                      <strong>Workspace tools</strong>
+                      <small>Right rail with Visual, Cast, Set, Sound, Notes, and AI tabs.</small>
+                    </span>
+                  </label>
+                  <label class="visibility-toggle" data-visibility-key="timeline">
+                    <input type="checkbox" data-visibility-input />
+                    <span class="visibility-toggle__label">
+                      <strong>Timeline dock</strong>
+                      <small>Storyboard timeline that floats above the editor.</small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="storyboard">
+                <div class="creator-visibility__intro">
+                  <h4>Storyboard Pro</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="character_studio">
+                <div class="creator-visibility__intro">
+                  <h4>Character Studio</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="set_design">
+                <div class="creator-visibility__intro">
+                  <h4>Set Design</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="video_editing">
+                <div class="creator-visibility__intro">
+                  <h4>Video &amp; Editing</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="creative_hub">
+                <div class="creator-visibility__intro">
+                  <h4>Creative Hub</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+            </div>
+            <p class="creator-theme__status" data-visibility-status>Sign in to sync visibility preferences across devices.</p>
           </section>
         </div>
       </div>
@@ -2436,6 +2480,52 @@
     });
 
     closeMenu();
+  })();
+</script>
+<script>
+  (function(){
+    const trigger = document.querySelector('[data-workspace-preferences-trigger]');
+    const modal = document.querySelector('[data-workspace-preferences-modal]');
+    if (!trigger || !modal) return;
+
+    const closeButton = modal.querySelector('[data-workspace-preferences-close]');
+    const overlay = modal.querySelector('[data-workspace-preferences-overlay]');
+    let previousFocus = null;
+
+    function openModal(){
+      previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : trigger;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      trigger.setAttribute('aria-expanded', 'true');
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      if (modal.hidden) return;
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger.setAttribute('aria-expanded', 'false');
+      (previousFocus ?? trigger).focus();
+    }
+
+    trigger.addEventListener('click', () => {
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
   })();
 </script>
 <script>
