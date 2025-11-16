@@ -366,6 +366,17 @@
         <span class="app-menu__title">Creator Apps</span>
         <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
       </button>
+      <button
+        class="app-menu__toggle"
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="communityProgramsModal"
+        data-community-programs-trigger
+      >
+        <span class="app-menu__title">Community Programs</span>
+        <span class="app-menu__subtitle">Explore collaboration carts, creator challenges, and community coffees.</span>
+      </button>
     </div>
     <div class="app-menu__popover" role="menu" data-app-menu-panel hidden>
       <ul class="app-menu__list">
@@ -904,6 +915,108 @@
         </div>
       </div>
     </div>
+    <div
+      class="story-goals-modal community-programs-modal"
+      id="communityProgramsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="communityProgramsTitle"
+      hidden
+      data-community-programs-modal
+    >
+      <div class="story-goals-modal__overlay" data-community-programs-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="communityProgramsTitle">Community Programs</h3>
+            <p class="muted">
+              Revisit the latest collaboration cart, writing challenges, and community coffee prompts without scrolling through
+              the dashboard.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="story-goals-modal__close"
+            aria-label="Close community programs"
+            data-community-programs-close
+          >
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="community-programs" aria-label="Community updates">
+            <article class="community-program community-program--feature">
+              <div class="community-program__header">
+                <div>
+                  <h4>Collaboration Cart</h4>
+                  <span class="community-program__tag">New beta</span>
+                </div>
+              </div>
+              <p>
+                Publish your latest script, scene outline, or pitch deck and invite the StudioOrganize community to finish the
+                story with you. Drop your brief into the cart, set your needs, and watch collaborators claim roles and deliver
+                polished assets you can ship.
+              </p>
+              <ul>
+                <li><strong>Set &amp; Production:</strong> Request concept art, mood boards, and floor plans for the worlds you imagine.</li>
+                <li><strong>Character Talent:</strong> Ask performers, writers, and designers to inhabit every beat of your cast.</li>
+                <li><strong>Sound &amp; Editorial:</strong> Bring in audio mixers, photo teams, and video directors for a complete finish.</li>
+              </ul>
+              <p>
+                Every contribution is showcased on your creator page so you can credit the artists, track revisions, and celebrate
+                the finished cut together.
+              </p>
+              <p class="muted">
+                Built in collaboration with our sister studio at
+                <a href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a> so stories
+                can travel between platforms without losing their collaborators.
+              </p>
+            </article>
+            <div class="community-programs__grid">
+              <article class="community-program">
+                <div class="community-program__header">
+                  <div>
+                    <h4>Challenge: Writers Set Goals</h4>
+                    <span class="community-program__tag">Try it today</span>
+                  </div>
+                </div>
+                <p>
+                  Pick a focused writing target to keep your momentum going. Whether you are polishing a script or outlining your
+                  next essay, a small commitment today builds the habit.
+                </p>
+                <ul>
+                  <li>Choose a measurable goal like “write 300 words today”.</li>
+                  <li>Block 25 minutes on your calendar to honor the session.</li>
+                  <li>Log the outcome in your dashboard so the streak continues.</li>
+                </ul>
+                <p class="muted">Share your progress with collaborators for extra accountability.</p>
+              </article>
+              <article class="community-program">
+                <div class="community-program__header">
+                  <div>
+                    <h4>Ask for a Coffee</h4>
+                    <span class="community-program__tag">Community moment</span>
+                  </div>
+                </div>
+                <p>
+                  Wrap a screening or table read by inviting guests to linger, share reactions, and offer you a virtual coffee. It
+                  is a light-touch way for fans, collaborators, and curious newcomers to say thanks and unlock a quick
+                  behind-the-scenes update before the next episode drops.
+                </p>
+                <p>
+                  Hosts can schedule small-group conversations, share production stats, and give early access peeks at storyboards
+                  and sets that emerged from the collaboration cart.
+                </p>
+                <p class="muted">
+                  Guest and member financing for stories and episodes is on our roadmap—consider this section a living placeholder
+                  while we explore deeper funding tools with the FinishThatStory community.
+                </p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
 
     <div
       class="story-goals-modal"
@@ -996,32 +1109,6 @@
         <p class="muted">You are on track to surpass last month by <strong>12%</strong>. Keep the streak alive!</p>
       </div>
 
-      <div class="insight-card insight-card--full">
-        <div class="insight-card__header">
-          <h3>Collaboration Cart</h3>
-          <span class="insight-card__tag">New beta</span>
-        </div>
-        <p>
-          Publish your latest script, scene outline, or pitch deck and invite the StudioOrganize community to finish the story
-          with you. Drop your brief into the cart, set your needs, and watch collaborators claim roles and deliver polished
-          assets you can ship.
-        </p>
-        <ul>
-          <li><strong>Set &amp; Production:</strong> Request concept art, mood boards, and floor plans for the worlds you imagine.</li>
-          <li><strong>Character Talent:</strong> Ask performers, writers, and designers to inhabit every beat of your cast.</li>
-          <li><strong>Sound &amp; Editorial:</strong> Bring in audio mixers, photo teams, and video directors for a complete finish.</li>
-        </ul>
-        <p>
-          Every contribution is showcased on your creator page so you can credit the artists, track revisions, and celebrate the
-          finished cut together.
-        </p>
-        <p class="muted">
-          Built in collaboration with our sister studio at
-          <a href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a> so stories can
-          travel between platforms without losing their collaborators.
-        </p>
-      </div>
-
       <div class="insight-card">
         <div class="insight-card__header">
           <h3>Annual Commitment Grid</h3>
@@ -1102,43 +1189,6 @@
           </div>
         </div>
         <p class="muted">Each square celebrates a session. Darker tiles mean deeper focus days.</p>
-      </div>
-
-      <div class="insight-card">
-        <div class="insight-card__header">
-          <h3>Challenge: Writers Set Goals</h3>
-          <span class="insight-card__tag">Try it today</span>
-        </div>
-        <p>
-          Pick a focused writing target to keep your momentum going. Whether you are polishing a script or outlining your next
-          essay, a small commitment today builds the habit.
-        </p>
-        <ul>
-          <li>Choose a measurable goal like “write 300 words today”.</li>
-          <li>Block 25 minutes on your calendar to honor the session.</li>
-          <li>Log the outcome in your dashboard so the streak continues.</li>
-        </ul>
-        <p class="muted">Share your progress with collaborators for extra accountability.</p>
-      </div>
-
-      <div class="insight-card">
-        <div class="insight-card__header">
-          <h3>Ask for a Coffee</h3>
-          <span class="insight-card__tag">Community moment</span>
-        </div>
-        <p>
-          Wrap a screening or table read by inviting guests to linger, share reactions, and offer you a virtual coffee. It is a
-          light-touch way for fans, collaborators, and curious newcomers to say thanks and unlock a quick behind-the-scenes
-          update before the next episode drops.
-        </p>
-        <p>
-          Hosts can schedule small-group conversations, share production stats, and give early access peeks at storyboards and
-          sets that emerged from the collaboration cart.
-        </p>
-        <p class="muted">
-          Guest and member financing for stories and episodes is on our roadmap—consider this section a living placeholder while
-          we explore deeper funding tools with the FinishThatStory community.
-        </p>
       </div>
 
     </div>
@@ -2490,6 +2540,52 @@
 
     const closeButton = modal.querySelector('[data-workspace-preferences-close]');
     const overlay = modal.querySelector('[data-workspace-preferences-overlay]');
+    let previousFocus = null;
+
+    function openModal(){
+      previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : trigger;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      trigger.setAttribute('aria-expanded', 'true');
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      if (modal.hidden) return;
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger.setAttribute('aria-expanded', 'false');
+      (previousFocus ?? trigger).focus();
+    }
+
+    trigger.addEventListener('click', () => {
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+  })();
+</script>
+<script>
+  (function(){
+    const trigger = document.querySelector('[data-community-programs-trigger]');
+    const modal = document.querySelector('[data-community-programs-modal]');
+    if (!trigger || !modal) return;
+
+    const closeButton = modal.querySelector('[data-community-programs-close]');
+    const overlay = modal.querySelector('[data-community-programs-overlay]');
     let previousFocus = null;
 
     function openModal(){
