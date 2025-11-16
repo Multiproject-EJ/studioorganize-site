@@ -281,8 +281,9 @@
     </div>
   </section>
 
-  <section class="creator-goals-tile" aria-label="Story goals tracker">
-    <button type="button" class="creator-overview__goals" data-goals-trigger>
+  <div class="creator-goals-grid">
+    <section class="creator-goals-tile" aria-label="Story goals tracker">
+      <button type="button" class="creator-overview__goals" data-goals-trigger>
       <div class="creator-overview__goals-header">
         <span class="creator-overview__goals-icon" aria-hidden="true">🎯</span>
         <div>
@@ -295,11 +296,11 @@
         <span class="creator-overview__goals-label">overall progress</span>
       </div>
       <p class="creator-overview__goals-note">Click to view detailed story metrics and milestones.</p>
-    </button>
-  </section>
+      </button>
+    </section>
 
-  <section class="creator-goals-tile" aria-label="AI assistant plan">
-    <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
+    <section class="creator-goals-tile" aria-label="AI assistant plan">
+      <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
       <div class="creator-overview__goals-header">
         <span class="creator-overview__goals-icon" aria-hidden="true">🤖</span>
         <div>
@@ -312,20 +313,60 @@
         <span class="creator-overview__goals-label">saved plan</span>
       </div>
       <p class="creator-overview__goals-note">Click to customize AI behavior and coaching style.</p>
-    </button>
-  </section>
+      </button>
+    </section>
+
+    <section class="creator-goals-tile" aria-label="Milestones and reminders">
+      <button type="button" class="creator-overview__goals" data-goal-planner-trigger>
+      <div class="creator-overview__goals-header">
+        <span class="creator-overview__goals-icon" aria-hidden="true">🗓️</span>
+        <div>
+          <p class="creator-overview__goals-title">Milestones &amp; Reminders</p>
+          <p class="creator-overview__goals-subtitle">Stay accountable</p>
+        </div>
+      </div>
+      <div class="creator-overview__goals-stats">
+        <span class="creator-overview__goals-count">Plan</span>
+        <span class="creator-overview__goals-label">a new milestone</span>
+      </div>
+      <p class="creator-overview__goals-note">
+        Set a focus target, pick when it is due, and choose how you would like to be nudged.
+      </p>
+      <p class="creator-overview__goals-note">Goal title · Target date · Email reminders · Add a note (optional) · Save goal</p>
+      <p class="creator-overview__goals-note">Saved goals · Track multiple milestones and update them as you progress.</p>
+      <p class="creator-overview__goals-note">You have not saved any goals yet.</p>
+      <p class="creator-overview__goals-note">
+        Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any
+        time.
+      </p>
+      </button>
+    </section>
+  </div>
 
   <div class="app-menu" data-app-menu>
-    <button
-      class="app-menu__toggle"
-      type="button"
-      data-app-menu-toggle
-      aria-haspopup="true"
-      aria-expanded="false"
-    >
-      <span class="app-menu__title">Creator Apps</span>
-      <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
-    </button>
+    <div class="app-menu__actions">
+      <button
+        class="app-menu__toggle"
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="workspacePreferencesModal"
+        data-workspace-preferences-trigger
+      >
+        <span class="app-menu__title">Workspace Preferences</span>
+        <span class="app-menu__subtitle">Pick themes and panel visibility for every module.</span>
+      </button>
+      <button
+        class="app-menu__toggle"
+        type="button"
+        data-app-menu-toggle
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <span class="app-menu__title">Creator Apps</span>
+        <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
+      </button>
+    </div>
     <div class="app-menu__popover" role="menu" data-app-menu-panel hidden>
       <ul class="app-menu__list">
         <li role="none">
@@ -412,111 +453,6 @@
         Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
       </p>
     </div>
-
-    <section class="creator-theme" aria-label="Workspace theme preferences" data-workspace-theme-preferences>
-      <div class="creator-theme__header">
-        <h3>Workspace themes</h3>
-        <p>Select the look that feels right for each workspace. Themes are stored with your account and load whenever you open the module.</p>
-      </div>
-      <div class="creator-theme__grid" data-workspace-theme-list>
-        <div class="creator-theme__item" data-workspace-theme-item="script_writer">
-          <div>
-            <h4>Script Writer</h4>
-            <p class="muted">Applies to the Screenplay Writing workspace.</p>
-          </div>
-          <label class="creator-theme__select">
-            <span class="sr-only">Script Writer theme</span>
-            <select data-workspace-theme-select="script_writer">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-        </div>
-        <div class="creator-theme__item" data-workspace-theme-item="storyboard">
-          <div>
-            <h4>Storyboard</h4>
-            <p class="muted">Applies to Storyboard Pro and related storyboard tools.</p>
-          </div>
-          <label class="creator-theme__select">
-            <span class="sr-only">Storyboard theme</span>
-            <select data-workspace-theme-select="storyboard">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-        </div>
-      </div>
-      <p class="creator-theme__status" data-workspace-theme-status>Sign in to sync themes across devices.</p>
-    </section>
-
-    <section class="creator-visibility" aria-label="Workspace visibility preferences" data-module-visibility-preferences>
-      <div class="creator-theme__header">
-        <h3>Visible – My Preferences</h3>
-        <p>Choose which workspace panels appear each time you open a module. We'll remember your picks across sessions.</p>
-      </div>
-      <div class="creator-visibility__grid">
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="script_writer">
-          <div class="creator-visibility__intro">
-            <h4>Screenplay Writing</h4>
-            <p class="muted">Control the Writer workspace layout when it launches.</p>
-          </div>
-          <div class="creator-visibility__controls" role="group" aria-label="Screenplay Writing visibility preferences">
-            <label class="visibility-toggle" data-visibility-key="scene_panel">
-              <input type="checkbox" data-visibility-input />
-              <span class="visibility-toggle__label">
-                <strong>Scenes panel</strong>
-                <small>Left column that lists every scene in your script.</small>
-              </span>
-            </label>
-            <label class="visibility-toggle" data-visibility-key="workspace_tools">
-              <input type="checkbox" data-visibility-input />
-              <span class="visibility-toggle__label">
-                <strong>Workspace tools</strong>
-                <small>Right rail with Visual, Cast, Set, Sound, Notes, and AI tabs.</small>
-              </span>
-            </label>
-            <label class="visibility-toggle" data-visibility-key="timeline">
-              <input type="checkbox" data-visibility-input />
-              <span class="visibility-toggle__label">
-                <strong>Timeline dock</strong>
-                <small>Storyboard timeline that floats above the editor.</small>
-              </span>
-            </label>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="storyboard">
-          <div class="creator-visibility__intro">
-            <h4>Storyboard Pro</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="character_studio">
-          <div class="creator-visibility__intro">
-            <h4>Character Studio</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="set_design">
-          <div class="creator-visibility__intro">
-            <h4>Set Design</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="video_editing">
-          <div class="creator-visibility__intro">
-            <h4>Video &amp; Editing</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-        <div class="creator-theme__item creator-visibility__item" data-visibility-module="creative_hub">
-          <div class="creator-visibility__intro">
-            <h4>Creative Hub</h4>
-            <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
-          </div>
-        </div>
-      </div>
-      <p class="creator-theme__status" data-visibility-status>Sign in to sync visibility preferences across devices.</p>
-    </section>
 
     <section class="creator-challenges" aria-label="Creator challenges">
       <div class="creator-challenges__intro">
@@ -833,6 +769,210 @@
       </div>
     </div>
 
+    <div
+      class="story-goals-modal workspace-preferences-modal"
+      id="workspacePreferencesModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="workspacePreferencesTitle"
+      hidden
+      data-workspace-preferences-modal
+    >
+      <div class="story-goals-modal__overlay" data-workspace-preferences-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="workspacePreferencesTitle">Workspace Preferences</h3>
+            <p class="muted">
+              Select the look and panel visibility for each workspace. These preferences follow your account wherever you sign in.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="story-goals-modal__close"
+            aria-label="Close workspace preferences"
+            data-workspace-preferences-close
+          >
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="creator-theme" aria-label="Workspace theme preferences" data-workspace-theme-preferences>
+            <div class="creator-theme__header">
+              <h3>Workspace themes</h3>
+              <p>Select the look that feels right for each workspace. Themes are stored with your account and load whenever you open the module.</p>
+            </div>
+            <div class="creator-theme__grid" data-workspace-theme-list>
+              <div class="creator-theme__item" data-workspace-theme-item="script_writer">
+                <div>
+                  <h4>Script Writer</h4>
+                  <p class="muted">Applies to the Screenplay Writing workspace.</p>
+                </div>
+                <label class="creator-theme__select">
+                  <span class="sr-only">Script Writer theme</span>
+                  <select data-workspace-theme-select="script_writer">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+              </div>
+              <div class="creator-theme__item" data-workspace-theme-item="storyboard">
+                <div>
+                  <h4>Storyboard</h4>
+                  <p class="muted">Applies to Storyboard Pro and related storyboard tools.</p>
+                </div>
+                <label class="creator-theme__select">
+                  <span class="sr-only">Storyboard theme</span>
+                  <select data-workspace-theme-select="storyboard">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <p class="creator-theme__status" data-workspace-theme-status>Sign in to sync themes across devices.</p>
+          </section>
+
+          <section class="creator-visibility" aria-label="Workspace visibility preferences" data-module-visibility-preferences>
+            <div class="creator-theme__header">
+              <h3>Visible – My Preferences</h3>
+              <p>Choose which workspace panels appear each time you open a module. We'll remember your picks across sessions.</p>
+            </div>
+            <div class="creator-visibility__grid">
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="script_writer">
+                <div class="creator-visibility__intro">
+                  <h4>Screenplay Writing</h4>
+                  <p class="muted">Control the Writer workspace layout when it launches.</p>
+                </div>
+                <div class="creator-visibility__controls" role="group" aria-label="Screenplay Writing visibility preferences">
+                  <label class="visibility-toggle" data-visibility-key="scene_panel">
+                    <input type="checkbox" data-visibility-input />
+                    <span class="visibility-toggle__label">
+                      <strong>Scenes panel</strong>
+                      <small>Left column that lists every scene in your script.</small>
+                    </span>
+                  </label>
+                  <label class="visibility-toggle" data-visibility-key="workspace_tools">
+                    <input type="checkbox" data-visibility-input />
+                    <span class="visibility-toggle__label">
+                      <strong>Workspace tools</strong>
+                      <small>Right rail with Visual, Cast, Set, Sound, Notes, and AI tabs.</small>
+                    </span>
+                  </label>
+                  <label class="visibility-toggle" data-visibility-key="timeline">
+                    <input type="checkbox" data-visibility-input />
+                    <span class="visibility-toggle__label">
+                      <strong>Timeline dock</strong>
+                      <small>Storyboard timeline that floats above the editor.</small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="storyboard">
+                <div class="creator-visibility__intro">
+                  <h4>Storyboard Pro</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="character_studio">
+                <div class="creator-visibility__intro">
+                  <h4>Character Studio</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="set_design">
+                <div class="creator-visibility__intro">
+                  <h4>Set Design</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="video_editing">
+                <div class="creator-visibility__intro">
+                  <h4>Video &amp; Editing</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+              <div class="creator-theme__item creator-visibility__item" data-visibility-module="creative_hub">
+                <div class="creator-visibility__intro">
+                  <h4>Creative Hub</h4>
+                  <p class="muted" data-visibility-empty>Visibility controls coming soon.</p>
+                </div>
+              </div>
+            </div>
+            <p class="creator-theme__status" data-visibility-status>Sign in to sync visibility preferences across devices.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="story-goals-modal"
+      id="goalPlannerModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="goalPlannerModalTitle"
+      hidden
+      data-goal-planner-modal
+    >
+      <div class="story-goals-modal__overlay" data-goal-planner-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="goalPlannerModalTitle">Milestones &amp; Reminders</h3>
+            <p class="muted">Stay accountable by planning milestones and letting StudioOrganize nudge you ahead of each deadline.</p>
+          </div>
+          <button type="button" class="story-goals-modal__close" aria-label="Close milestone planner" data-goal-planner-close>
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="goal-planner" aria-label="Milestones and reminders planner">
+            <aside class="goal-planner__form-panel" aria-label="Add a milestone goal">
+              <h4 class="goal-planner__heading">Plan a new milestone</h4>
+              <p class="goal-planner__copy">Set a focus target, pick when it is due, and choose how you would like to be nudged.</p>
+              <form class="goal-form" data-goal-form>
+                <label class="goal-form__field">
+                  <span>Goal title</span>
+                  <input type="text" name="goal" placeholder="Finish storyboard draft" />
+                </label>
+                <label class="goal-form__field">
+                  <span>Target date</span>
+                  <input type="date" name="deadline" />
+                </label>
+                <label class="goal-form__field">
+                  <span>Email reminders</span>
+                  <select name="reminder">
+                    <option value="weekly">Weekly digest</option>
+                    <option value="three-days">3 days before</option>
+                    <option value="day-before">Day before deadline</option>
+                    <option value="off">No reminders</option>
+                  </select>
+                </label>
+                <label class="goal-form__field">
+                  <span>Add a note (optional)</span>
+                  <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
+                </label>
+                <button class="goal-form__submit" type="submit">Save goal</button>
+              </form>
+            </aside>
+            <section class="goal-planner__list-panel" aria-live="polite">
+              <div class="goal-list">
+                <header class="goal-list__header">
+                  <h4>Saved goals</h4>
+                  <p class="muted">Track multiple milestones and update them as you progress.</p>
+                </header>
+                <ol class="goal-list__items" data-goal-list></ol>
+                <p class="goal-list__empty" data-goal-empty hidden>You have not saved any goals yet.</p>
+              </div>
+            </section>
+          </section>
+          <p class="muted goal-form__footnote">
+            Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any time.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div class="creator-dashboard__grid">
       <div class="insight-card">
         <div class="insight-card__header">
@@ -1001,55 +1141,6 @@
         </p>
       </div>
 
-      <div class="insight-card insight-card--full">
-        <div class="insight-card__header">
-          <h3>Milestones &amp; Reminders</h3>
-          <span class="insight-card__tag">Stay accountable</span>
-        </div>
-        <div class="goal-planner">
-          <aside class="goal-planner__form-panel" aria-label="Add a milestone goal">
-            <h4 class="goal-planner__heading">Plan a new milestone</h4>
-            <p class="goal-planner__copy">Set a focus target, pick when it is due, and choose how you would like to be nudged.</p>
-            <form class="goal-form" data-goal-form>
-              <label class="goal-form__field">
-                <span>Goal title</span>
-                <input type="text" name="goal" placeholder="Finish storyboard draft" />
-              </label>
-              <label class="goal-form__field">
-                <span>Target date</span>
-                <input type="date" name="deadline" />
-              </label>
-              <label class="goal-form__field">
-                <span>Email reminders</span>
-                <select name="reminder">
-                  <option value="weekly">Weekly digest</option>
-                  <option value="three-days">3 days before</option>
-                  <option value="day-before">Day before deadline</option>
-                  <option value="off">No reminders</option>
-                </select>
-              </label>
-              <label class="goal-form__field">
-                <span>Add a note (optional)</span>
-                <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
-              </label>
-              <button class="goal-form__submit" type="submit">Save goal</button>
-            </form>
-          </aside>
-          <section class="goal-planner__list-panel" aria-live="polite">
-            <div class="goal-list">
-              <header class="goal-list__header">
-                <h4>Saved goals</h4>
-                <p class="muted">Track multiple milestones and update them as you progress.</p>
-              </header>
-              <ol class="goal-list__items" data-goal-list></ol>
-              <p class="goal-list__empty" data-goal-empty hidden>You have not saved any goals yet.</p>
-            </div>
-          </section>
-        </div>
-        <p class="muted goal-form__footnote">
-          Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any time.
-        </p>
-      </div>
     </div>
   </section>
 </main>
@@ -2393,6 +2484,52 @@
 </script>
 <script>
   (function(){
+    const trigger = document.querySelector('[data-workspace-preferences-trigger]');
+    const modal = document.querySelector('[data-workspace-preferences-modal]');
+    if (!trigger || !modal) return;
+
+    const closeButton = modal.querySelector('[data-workspace-preferences-close]');
+    const overlay = modal.querySelector('[data-workspace-preferences-overlay]');
+    let previousFocus = null;
+
+    function openModal(){
+      previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : trigger;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      trigger.setAttribute('aria-expanded', 'true');
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      if (modal.hidden) return;
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger.setAttribute('aria-expanded', 'false');
+      (previousFocus ?? trigger).focus();
+    }
+
+    trigger.addEventListener('click', () => {
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+  })();
+</script>
+<script>
+  (function(){
     const modal = document.querySelector('[data-story-goals-modal]');
     if (!modal) return;
 
@@ -2525,6 +2662,49 @@
       const detail = event?.detail;
       if (!detail || !detail.projectId) {
         if (aiPlanStatus) aiPlanStatus.textContent = '—';
+      }
+    });
+
+    closeModal();
+  })();
+</script>
+<script>
+  (function(){
+    const modal = document.querySelector('[data-goal-planner-modal]');
+    if (!modal) return;
+
+    const trigger = document.querySelector('[data-goal-planner-trigger]');
+    const closeButton = modal.querySelector('[data-goal-planner-close]');
+    const overlay = modal.querySelector('[data-goal-planner-overlay]');
+
+    if (!trigger) return;
+
+    function openModal(){
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger?.focus();
+    }
+
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
       }
     });
 
