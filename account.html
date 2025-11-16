@@ -281,8 +281,9 @@
     </div>
   </section>
 
-  <section class="creator-goals-tile" aria-label="Story goals tracker">
-    <button type="button" class="creator-overview__goals" data-goals-trigger>
+  <div class="creator-goals-grid">
+    <section class="creator-goals-tile" aria-label="Story goals tracker">
+      <button type="button" class="creator-overview__goals" data-goals-trigger>
       <div class="creator-overview__goals-header">
         <span class="creator-overview__goals-icon" aria-hidden="true">🎯</span>
         <div>
@@ -295,11 +296,11 @@
         <span class="creator-overview__goals-label">overall progress</span>
       </div>
       <p class="creator-overview__goals-note">Click to view detailed story metrics and milestones.</p>
-    </button>
-  </section>
+      </button>
+    </section>
 
-  <section class="creator-goals-tile" aria-label="AI assistant plan">
-    <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
+    <section class="creator-goals-tile" aria-label="AI assistant plan">
+      <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
       <div class="creator-overview__goals-header">
         <span class="creator-overview__goals-icon" aria-hidden="true">🤖</span>
         <div>
@@ -312,8 +313,35 @@
         <span class="creator-overview__goals-label">saved plan</span>
       </div>
       <p class="creator-overview__goals-note">Click to customize AI behavior and coaching style.</p>
-    </button>
-  </section>
+      </button>
+    </section>
+
+    <section class="creator-goals-tile" aria-label="Milestones and reminders">
+      <button type="button" class="creator-overview__goals" data-goal-planner-trigger>
+      <div class="creator-overview__goals-header">
+        <span class="creator-overview__goals-icon" aria-hidden="true">🗓️</span>
+        <div>
+          <p class="creator-overview__goals-title">Milestones &amp; Reminders</p>
+          <p class="creator-overview__goals-subtitle">Stay accountable</p>
+        </div>
+      </div>
+      <div class="creator-overview__goals-stats">
+        <span class="creator-overview__goals-count">Plan</span>
+        <span class="creator-overview__goals-label">a new milestone</span>
+      </div>
+      <p class="creator-overview__goals-note">
+        Set a focus target, pick when it is due, and choose how you would like to be nudged.
+      </p>
+      <p class="creator-overview__goals-note">Goal title · Target date · Email reminders · Add a note (optional) · Save goal</p>
+      <p class="creator-overview__goals-note">Saved goals · Track multiple milestones and update them as you progress.</p>
+      <p class="creator-overview__goals-note">You have not saved any goals yet.</p>
+      <p class="creator-overview__goals-note">
+        Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any
+        time.
+      </p>
+      </button>
+    </section>
+  </div>
 
   <div class="app-menu" data-app-menu>
     <button
@@ -833,6 +861,74 @@
       </div>
     </div>
 
+    <div
+      class="story-goals-modal"
+      id="goalPlannerModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="goalPlannerModalTitle"
+      hidden
+      data-goal-planner-modal
+    >
+      <div class="story-goals-modal__overlay" data-goal-planner-overlay></div>
+      <div class="story-goals-modal__dialog" role="document">
+        <header class="story-goals-modal__header">
+          <div>
+            <h3 id="goalPlannerModalTitle">Milestones &amp; Reminders</h3>
+            <p class="muted">Stay accountable by planning milestones and letting StudioOrganize nudge you ahead of each deadline.</p>
+          </div>
+          <button type="button" class="story-goals-modal__close" aria-label="Close milestone planner" data-goal-planner-close>
+            ×
+          </button>
+        </header>
+        <div class="story-goals-modal__content">
+          <section class="goal-planner" aria-label="Milestones and reminders planner">
+            <aside class="goal-planner__form-panel" aria-label="Add a milestone goal">
+              <h4 class="goal-planner__heading">Plan a new milestone</h4>
+              <p class="goal-planner__copy">Set a focus target, pick when it is due, and choose how you would like to be nudged.</p>
+              <form class="goal-form" data-goal-form>
+                <label class="goal-form__field">
+                  <span>Goal title</span>
+                  <input type="text" name="goal" placeholder="Finish storyboard draft" />
+                </label>
+                <label class="goal-form__field">
+                  <span>Target date</span>
+                  <input type="date" name="deadline" />
+                </label>
+                <label class="goal-form__field">
+                  <span>Email reminders</span>
+                  <select name="reminder">
+                    <option value="weekly">Weekly digest</option>
+                    <option value="three-days">3 days before</option>
+                    <option value="day-before">Day before deadline</option>
+                    <option value="off">No reminders</option>
+                  </select>
+                </label>
+                <label class="goal-form__field">
+                  <span>Add a note (optional)</span>
+                  <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
+                </label>
+                <button class="goal-form__submit" type="submit">Save goal</button>
+              </form>
+            </aside>
+            <section class="goal-planner__list-panel" aria-live="polite">
+              <div class="goal-list">
+                <header class="goal-list__header">
+                  <h4>Saved goals</h4>
+                  <p class="muted">Track multiple milestones and update them as you progress.</p>
+                </header>
+                <ol class="goal-list__items" data-goal-list></ol>
+                <p class="goal-list__empty" data-goal-empty hidden>You have not saved any goals yet.</p>
+              </div>
+            </section>
+          </section>
+          <p class="muted goal-form__footnote">
+            Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any time.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div class="creator-dashboard__grid">
       <div class="insight-card">
         <div class="insight-card__header">
@@ -1001,55 +1097,6 @@
         </p>
       </div>
 
-      <div class="insight-card insight-card--full">
-        <div class="insight-card__header">
-          <h3>Milestones &amp; Reminders</h3>
-          <span class="insight-card__tag">Stay accountable</span>
-        </div>
-        <div class="goal-planner">
-          <aside class="goal-planner__form-panel" aria-label="Add a milestone goal">
-            <h4 class="goal-planner__heading">Plan a new milestone</h4>
-            <p class="goal-planner__copy">Set a focus target, pick when it is due, and choose how you would like to be nudged.</p>
-            <form class="goal-form" data-goal-form>
-              <label class="goal-form__field">
-                <span>Goal title</span>
-                <input type="text" name="goal" placeholder="Finish storyboard draft" />
-              </label>
-              <label class="goal-form__field">
-                <span>Target date</span>
-                <input type="date" name="deadline" />
-              </label>
-              <label class="goal-form__field">
-                <span>Email reminders</span>
-                <select name="reminder">
-                  <option value="weekly">Weekly digest</option>
-                  <option value="three-days">3 days before</option>
-                  <option value="day-before">Day before deadline</option>
-                  <option value="off">No reminders</option>
-                </select>
-              </label>
-              <label class="goal-form__field">
-                <span>Add a note (optional)</span>
-                <textarea name="note" rows="3" placeholder="Share progress with the team…"></textarea>
-              </label>
-              <button class="goal-form__submit" type="submit">Save goal</button>
-            </form>
-          </aside>
-          <section class="goal-planner__list-panel" aria-live="polite">
-            <div class="goal-list">
-              <header class="goal-list__header">
-                <h4>Saved goals</h4>
-                <p class="muted">Track multiple milestones and update them as you progress.</p>
-              </header>
-              <ol class="goal-list__items" data-goal-list></ol>
-              <p class="goal-list__empty" data-goal-empty hidden>You have not saved any goals yet.</p>
-            </div>
-          </section>
-        </div>
-        <p class="muted goal-form__footnote">
-          Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any time.
-        </p>
-      </div>
     </div>
   </section>
 </main>
@@ -2525,6 +2572,49 @@
       const detail = event?.detail;
       if (!detail || !detail.projectId) {
         if (aiPlanStatus) aiPlanStatus.textContent = '—';
+      }
+    });
+
+    closeModal();
+  })();
+</script>
+<script>
+  (function(){
+    const modal = document.querySelector('[data-goal-planner-modal]');
+    if (!modal) return;
+
+    const trigger = document.querySelector('[data-goal-planner-trigger]');
+    const closeButton = modal.querySelector('[data-goal-planner-close]');
+    const overlay = modal.querySelector('[data-goal-planner-overlay]');
+
+    if (!trigger) return;
+
+    function openModal(){
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      closeButton?.focus();
+    }
+
+    function closeModal(){
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      trigger?.focus();
+    }
+
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      openModal();
+    });
+
+    closeButton?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    modal.addEventListener('keydown', event => {
+      if (event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
       }
     });
 
