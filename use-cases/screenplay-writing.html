@@ -11457,27 +11457,22 @@
 
   function activate(id) {
     if (id === 'notes') id = 'ideas';
+    const isMobile = mq.matches;
     Object.keys(modules).forEach((key) => {
       const el = modules[key];
       if (!el) return;
       el.classList.remove('so-mobile-active');
-      if (mq.matches) {
-        if (el !== screenwriterEl) {
-          el.style.display = 'none';
-        }
+      if (isMobile) {
+        el.style.display = 'none';
       } else {
-        if (el === screenwriterEl) {
-          el.style.display = '';
-        } else {
-          el.style.display = 'none';
-        }
+        el.style.removeProperty('display');
       }
     });
 
     const next = modules[id];
     if (next) {
       next.classList.add('so-mobile-active');
-      if (mq.matches) {
+      if (isMobile) {
         next.style.display = '';
       }
     }
