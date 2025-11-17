@@ -71,6 +71,10 @@
   <main class="section">
     <style>
       html,body{height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+      :root{
+        --screenwriter-page-width: 794px;
+        --screenwriter-page-height: 1123px;
+      }
       body{color:var(--ink); --nav-height:72px;}
       main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
       .app{display:grid; grid-template-rows:56px auto 1fr; flex:1; min-height:0; margin-top:0; transition:transform .35s ease, margin-top .35s ease; --timeline-dock-offset:0px}
@@ -281,7 +285,7 @@
       .layout.right-panel-collapsed{--right-panel-track: var(--right-panel-handle-track);}
       .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0}
       .panel h2{font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted); margin:10px 12px}
-      .panel--scenes{position:relative; width:var(--scene-panel-expanded-width); transition:transform .35s ease, box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.32); z-index:2;}
+      .panel--scenes{position:relative; width:var(--scene-panel-expanded-width); transition:transform .35s ease, box-shadow .35s ease; box-shadow:0 16px 34px rgba(8,15,28,0.32); z-index:2; align-self:flex-start; max-height:calc(var(--screenwriter-page-height) + 40px);}
       .panel--scenes[data-open="false"]{box-shadow:none;}
       .layout.scene-panel-collapsed .panel--scenes{transform:translateX(calc(-100% + var(--scene-panel-handle-thickness)));}
       .scene-panel-slot{position:relative; width:var(--scene-panel-track); transition:width .35s ease; min-height:0; overflow:visible; display:flex; align-items:stretch; gap:var(--scene-panel-handle-gap);}
@@ -303,7 +307,7 @@
       .scene-panel-slot[data-pinned="true"] .scene-panel__handle.timeline-dock__handle{background:var(--acc); box-shadow:0 8px 22px rgba(79,123,255,0.35); animation:screenplayPanelHandleRelax .35s ease forwards; animation-delay:1s;}
       .tab-panel__handle .sr-only,
       .scene-panel__handle .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
-      .scenes{overflow:auto; padding:8px}
+      .scenes{overflow:auto; padding:8px; flex:1 1 auto}
       .scene-card{position:relative; background:var(--card); border:1px solid var(--ring); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; display:flex; flex-direction:column; gap:6px; overflow:visible; transition:opacity .25s ease, filter .25s ease, transform .2s ease}
       .scene-card:not(.active):not(.editing){opacity:0.55; filter:saturate(0.7)}
       .scene-card:not(.active):not(.editing):hover,
@@ -396,10 +400,12 @@
       .editor-heading__title{display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0}
       .editor-heading h2{margin:0; font-size:13px; font-weight:600; letter-spacing:.4px; color:var(--muted)}
       .editor-heading__actions{display:flex; align-items:center; gap:8px}
-      .editor-stage{flex:1; display:flex; flex-direction:column; min-height:0; position:relative; --page-width:794px; --page-height:1123px}
-      .editor-scroll{flex:1; overflow:auto; padding:0 12px 12px; display:flex; justify-content:center; align-items:stretch; position:relative; min-height:0}
-      .editor-area{flex:1; max-width:var(--page-width); width:100%; min-height:100%; padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext; border-radius:12px; background:var(--panel); transition:box-shadow .2s ease, background .2s ease}
-      .editor-stage[data-view-mode="scroll"] .editor-area{background-image:linear-gradient(to bottom, transparent calc(var(--page-height) - 2px), rgba(79,123,255,0.35) calc(var(--page-height) - 2px), rgba(79,123,255,0.35) calc(var(--page-height) - 1px), transparent calc(var(--page-height) - 1px)); background-size:100% var(--page-height); background-repeat:repeat-y; background-origin:content-box; box-shadow:none}
+      .editor-stage{flex:1; display:flex; flex-direction:column; min-height:0; position:relative; align-items:center; --page-width:var(--screenwriter-page-width); --page-height:var(--screenwriter-page-height)}
+      .editor-scroll{flex:1; overflow:auto; padding:0 12px 12px; display:flex; justify-content:center; align-items:center; position:relative; min-height:0}
+      .editor-area{flex:1; max-width:var(--page-width); width:100%; min-height:var(--page-height); padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext; border-radius:12px; background:var(--panel); transition:box-shadow .2s ease, background .2s ease}
+      .editor-stage[data-view-mode="scroll"] .editor-scroll{height:calc(var(--page-height) + 40px); overflow:hidden; padding:0}
+      .editor-stage[data-view-mode="scroll"] .editor-area{background-image:linear-gradient(to bottom, transparent calc(var(--page-height) - 2px), rgba(79,123,255,0.35) calc(var(--page-height) - 2px), rgba(79,123,255,0.35) calc(var(--page-height) - 1px), transparent calc(var(--page-height) - 1px)); background-size:100% var(--page-height); background-repeat:repeat-y; background-origin:content-box;}
+      .editor-stage[data-view-mode="scroll"] .editor-area{height:var(--page-height); max-height:var(--page-height); overflow-y:auto; box-shadow:0 18px 48px rgba(15,23,42,0.35)}
       .editor-stage[data-view-mode="pages"]{gap:10px}
       .editor-stage[data-view-mode="pages"] .editor-scroll{height:calc(var(--page-height) + 40px); overflow-y:auto; padding:0; scrollbar-width:none}
       .editor-stage[data-view-mode="pages"] .editor-scroll::-webkit-scrollbar{display:none}
@@ -8257,12 +8263,13 @@
     const sceneNotesListEl = document.getElementById('sceneNotesList');
 
     function scrollEditorToTop({ smooth = false } = {}){
-      if (!editorScrollEl) return;
+      const container = (pageViewMode === 'scroll' && editorEl) ? editorEl : editorScrollEl;
+      if (!container) return;
       const behavior = smooth ? 'smooth' : 'auto';
       try {
-        editorScrollEl.scrollTo({ top: 0, behavior });
+        container.scrollTo({ top: 0, behavior });
       } catch (_error){
-        editorScrollEl.scrollTop = 0;
+        container.scrollTop = 0;
       }
     }
 
@@ -8449,6 +8456,10 @@
       editorStageEl.style.setProperty('--page-height', `${PAGE_VIEW_HEIGHT}px`);
       editorStageEl.style.setProperty('--page-width', `${PAGE_VIEW_WIDTH}px`);
     }
+    if (document.documentElement){
+      document.documentElement.style.setProperty('--screenwriter-page-height', `${PAGE_VIEW_HEIGHT}px`);
+      document.documentElement.style.setProperty('--screenwriter-page-width', `${PAGE_VIEW_WIDTH}px`);
+    }
     function applyPageViewSettingsToProject(){
       if (!project) return;
       project.settings = project.settings || {};
@@ -8594,6 +8605,12 @@
           setPageViewIndex(index, { smooth:false, persist:false, skipScroll:true, force:true });
         }
       });
+      const preventPageScroll = event => {
+        if (pageViewMode !== 'pages') return;
+        event.preventDefault();
+      };
+      editorScrollEl.addEventListener('wheel', preventPageScroll, { passive:false });
+      editorScrollEl.addEventListener('touchmove', preventPageScroll, { passive:false });
     }
     document.addEventListener('selectionchange', ensureSelectionPageVisible);
     refreshPageViewToggle();
