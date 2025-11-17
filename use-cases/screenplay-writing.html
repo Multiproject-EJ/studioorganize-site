@@ -1193,6 +1193,24 @@
       .selection-type-menu{position:fixed; z-index:1450; background:var(--panel); border:1px solid var(--ring); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.35); padding:12px 14px; min-width:220px; display:flex; flex-direction:column; gap:12px}
       .selection-type-menu[hidden]{display:none !important}
       [data-theme="dark"] .selection-menu, [data-theme="dark"] .selection-type-menu{box-shadow:0 30px 70px rgba(8,15,28,0.72), 0 0 0 1px rgba(79,123,255,0.35), 0 0 22px rgba(79,123,255,0.3)}
+      .selection-guide{position:absolute; top:12px; left:16px; bottom:12px; width:74px; pointer-events:none; z-index:80; display:flex; flex-direction:column; align-items:flex-start; gap:8px}
+      body.focus-mode .selection-guide{top:24px}
+      .selection-guide__handle{pointer-events:auto; border-radius:999px; border:1px solid var(--ring); background:var(--panel); color:var(--muted); font-size:11px; font-weight:600; letter-spacing:.35px; text-transform:uppercase; padding:8px 14px; display:inline-flex; align-items:center; gap:10px; cursor:grab; box-shadow:0 16px 32px rgba(8,15,28,0.22); transition:transform .2s ease, box-shadow .2s ease, color .2s ease, border-color .2s ease; user-select:none; -webkit-user-select:none; touch-action:none}
+      .selection-guide__handle:hover{color:var(--ink); border-color:var(--acc); box-shadow:0 20px 40px rgba(79,123,255,0.28)}
+      .selection-guide__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px}
+      .selection-guide__handle:active{cursor:grabbing; transform:translateY(1px)}
+      .selection-guide__dots{display:inline-flex; flex-direction:column; gap:3px}
+      .selection-guide__dot{width:6px; height:6px; border-radius:999px; background:currentColor; opacity:0.85}
+      .selection-guide__label{white-space:nowrap}
+      .selection-guide__preview{position:absolute; left:28px; width:10px; border-radius:999px; background:linear-gradient(180deg, rgba(79,123,255,0.35), rgba(79,123,255,0.1)); box-shadow:0 0 0 1px rgba(79,123,255,0.35), 0 12px 32px rgba(79,123,255,0.25); opacity:0; transition:opacity .18s ease; pointer-events:none}
+      .selection-guide__preview[data-active="true"]{opacity:0.95}
+      .selection-guide__preview[hidden]{display:none !important}
+      .selection-guide__edge{position:absolute; left:50%; width:32px; height:12px; border-radius:999px; border:1px solid rgba(79,123,255,0.45); background:var(--panel); box-shadow:0 10px 20px rgba(79,123,255,0.32)}
+      .selection-guide__edge--start{top:0; transform:translate(-50%, -50%)}
+      .selection-guide__edge--end{bottom:0; transform:translate(-50%, 50%)}
+      @media (max-width: 768px){
+        .selection-guide{display:none}
+      }
 
       @media (max-width: 900px) {
         /* keep page usable on small screens */
@@ -8594,6 +8612,10 @@
     let selectionActionButton = null;
     let selectionOverlayFrame = null;
     let selectionHandleDrag = null;
+    let selectionGuideEl = null;
+    let selectionGuideHandle = null;
+    let selectionGuidePreview = null;
+    let selectionGuideDrag = null;
     let pointerDownHadSelection = false;
     let pointerDownWithinSelection = false;
     const LINE_TYPE_CLASSES = ['slug','action','dialogue','character','parenthetical','transition','exposition'];
@@ -8623,10 +8645,30 @@
       selectionActionButton = document.createElement('button');
       selectionActionButton.type = 'button';
       selectionActionButton.className = 'selection-action-button';
-      selectionActionButton.textContent = 'Add…';
-      selectionActionButton.setAttribute('aria-label', 'Open selection actions');
+      selectionActionButton.textContent = 'Select';
+      selectionActionButton.setAttribute('aria-label', 'Open selection tools');
       selectionActionButton.setAttribute('hidden', '');
       document.body.appendChild(selectionActionButton);
+    }
+    if (editorStageEl && editorEl){
+      selectionGuideEl = document.createElement('div');
+      selectionGuideEl.className = 'selection-guide';
+      selectionGuideEl.innerHTML = `
+        <button type="button" class="selection-guide__handle" data-selection-guide-handle aria-label="Drag to select script lines">
+          <span class="selection-guide__dots" aria-hidden="true">
+            <span class="selection-guide__dot"></span>
+            <span class="selection-guide__dot"></span>
+            <span class="selection-guide__dot"></span>
+          </span>
+          <span class="selection-guide__label">Select</span>
+        </button>
+        <div class="selection-guide__preview" data-selection-guide-preview hidden>
+          <span class="selection-guide__edge selection-guide__edge--start"></span>
+          <span class="selection-guide__edge selection-guide__edge--end"></span>
+        </div>`;
+      editorStageEl.appendChild(selectionGuideEl);
+      selectionGuideHandle = selectionGuideEl.querySelector('[data-selection-guide-handle]');
+      selectionGuidePreview = selectionGuideEl.querySelector('[data-selection-guide-preview]');
     }
 
     function getCaretRangeFromPoint(x, y){
@@ -8708,6 +8750,7 @@
         selectionActionButton.style.left = '';
       }
       stopSelectionHandleDrag();
+      stopSelectionGuideDrag();
     }
 
     function positionSelectionActionButton(range){
@@ -8779,6 +8822,127 @@
         selectionOverlayFrame = null;
         updateSelectionOverlayFromSelection();
       });
+    }
+
+    function getLineNodeFromGuidePoint(y){
+      if (!editorEl) return null;
+      const rect = editorEl.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+      const safeY = Math.max(rect.top + 2, Math.min(y, rect.bottom - 2));
+      const safeX = Math.max(rect.left + 12, Math.min(rect.left + 48, rect.right - 8));
+      const viewportY = Math.max(1, Math.min(window.innerHeight - 2, safeY));
+      const viewportX = Math.max(1, Math.min(window.innerWidth - 2, safeX));
+      let target = document.elementFromPoint(viewportX, viewportY);
+      if (target && target.closest){
+        const line = target.closest('.line');
+        if (line) return line;
+      }
+      return editorEl.querySelector('.line');
+    }
+
+    function orderLineNodes(a, b){
+      if (!a || !b) return [a, b];
+      if (a === b) return [a, b];
+      const pos = a.compareDocumentPosition(b);
+      if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return [a, b];
+      return [b, a];
+    }
+
+    function applyGuideSelectionRange(startLine, endLine){
+      if (!startLine || !endLine) return;
+      const sel = window.getSelection();
+      if (!sel) return;
+      const [first, last] = orderLineNodes(startLine, endLine);
+      if (!first || !last) return;
+      const range = document.createRange();
+      try {
+        range.setStartBefore(first);
+        range.setEndAfter(last);
+      } catch (err) {
+        return;
+      }
+      sel.removeAllRanges();
+      sel.addRange(range);
+      selectionMenuTargetLine = first;
+      refreshSelectionMenuState();
+      scheduleSelectionOverlayUpdate();
+    }
+
+    function updateSelectionGuidePreview(startLine, endLine){
+      if (!selectionGuidePreview || !editorStageEl || !startLine || !endLine){
+        hideSelectionGuidePreview();
+        return;
+      }
+      const [first, last] = orderLineNodes(startLine, endLine);
+      if (!first || !last){
+        hideSelectionGuidePreview();
+        return;
+      }
+      const firstRect = first.getBoundingClientRect();
+      const lastRect = last.getBoundingClientRect();
+      const stageRect = editorStageEl.getBoundingClientRect();
+      const top = Math.max(0, firstRect.top - stageRect.top);
+      const bottom = Math.max(top + 8, lastRect.bottom - stageRect.top);
+      selectionGuidePreview.removeAttribute('hidden');
+      selectionGuidePreview.dataset.active = 'true';
+      selectionGuidePreview.style.top = `${Math.round(top)}px`;
+      selectionGuidePreview.style.height = `${Math.round(bottom - top)}px`;
+    }
+
+    function hideSelectionGuidePreview(){
+      if (!selectionGuidePreview) return;
+      selectionGuidePreview.dataset.active = 'false';
+      selectionGuidePreview.style.top = '';
+      selectionGuidePreview.style.height = '';
+      selectionGuidePreview.setAttribute('hidden', '');
+    }
+
+    function autoScrollEditorForGuide(y){
+      if (!editorScrollEl) return;
+      const threshold = 80;
+      if (y > window.innerHeight - threshold){
+        editorScrollEl.scrollTop += 18;
+      } else if (y < threshold){
+        editorScrollEl.scrollTop -= 18;
+      }
+    }
+
+    function startSelectionGuideDrag(event){
+      if (!editorEl) return;
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        if (typeof editorEl.focus === 'function') editorEl.focus({ preventScroll: true });
+      } catch (err) {
+        editorEl.focus();
+      }
+      const line = getLineNodeFromGuidePoint(event.clientY) || editorEl.querySelector('.line');
+      if (!line) return;
+      selectionGuideDrag = { startLine: line, endLine: line };
+      updateSelectionGuidePreview(line, line);
+      applyGuideSelectionRange(line, line);
+      document.addEventListener('pointermove', handleSelectionGuideDrag);
+      document.addEventListener('pointerup', stopSelectionGuideDrag);
+      document.addEventListener('pointercancel', stopSelectionGuideDrag);
+    }
+
+    function handleSelectionGuideDrag(event){
+      if (!selectionGuideDrag) return;
+      event.preventDefault();
+      autoScrollEditorForGuide(event.clientY);
+      const nextLine = getLineNodeFromGuidePoint(event.clientY);
+      if (!nextLine) return;
+      selectionGuideDrag.endLine = nextLine;
+      updateSelectionGuidePreview(selectionGuideDrag.startLine, nextLine);
+      applyGuideSelectionRange(selectionGuideDrag.startLine, nextLine);
+    }
+
+    function stopSelectionGuideDrag(){
+      document.removeEventListener('pointermove', handleSelectionGuideDrag);
+      document.removeEventListener('pointerup', stopSelectionGuideDrag);
+      document.removeEventListener('pointercancel', stopSelectionGuideDrag);
+      selectionGuideDrag = null;
+      hideSelectionGuidePreview();
     }
 
     function startSelectionHandleDrag(type, event){
@@ -8871,6 +9035,23 @@
         if (line) selectionMenuTargetLine = line;
         refreshSelectionMenuState();
         positionSelectionMenu(range.getBoundingClientRect());
+      });
+    }
+    if (selectionGuideHandle){
+      selectionGuideHandle.addEventListener('pointerdown', startSelectionGuideDrag);
+      selectionGuideHandle.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+        event.preventDefault();
+        try {
+          if (editorEl && typeof editorEl.focus === 'function') editorEl.focus({ preventScroll: true });
+        } catch (err) {
+          if (editorEl) editorEl.focus();
+        }
+        const activeLine = getActiveLineNode() || editorEl?.querySelector('.line');
+        if (!activeLine) return;
+        selectionGuideDrag = null;
+        hideSelectionGuidePreview();
+        applyGuideSelectionRange(activeLine, activeLine);
       });
     }
 
@@ -9257,6 +9438,7 @@
       if (selectionActionButton && selectionActionButton.contains(e.target)) return;
       if (selectionHandleStart && selectionHandleStart.contains(e.target)) return;
       if (selectionHandleEnd && selectionHandleEnd.contains(e.target)) return;
+      if (selectionGuideEl && selectionGuideEl.contains(e.target)) return;
       if (editorEl && editorEl.contains(e.target)) return;
       hideSelectionMenu();
     });
