@@ -74,6 +74,7 @@
       :root{
         --screenwriter-page-width: 794px;
         --screenwriter-page-height: 1123px;
+        --line-handle-space: clamp(32px, 6vw, 52px);
       }
       body{color:var(--ink); --nav-height:72px;}
       main.section{flex:1; display:flex; flex-direction:column; width:100%; max-width:none; padding:0; margin:0;}
@@ -402,7 +403,7 @@
       .editor-heading__actions{display:flex; align-items:center; gap:8px}
       .editor-stage{flex:1; display:flex; flex-direction:column; min-height:0; position:relative; align-items:center; --page-width:var(--screenwriter-page-width); --page-height:var(--screenwriter-page-height)}
       .editor-scroll{flex:1; overflow:auto; padding:0 12px 12px; display:flex; justify-content:center; align-items:center; position:relative; min-height:0}
-      .editor-area{flex:1; max-width:var(--page-width); width:100%; min-height:var(--page-height); padding:16px 20px; line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext; border-radius:12px; background:var(--panel); transition:box-shadow .2s ease, background .2s ease}
+      .editor-area{flex:1; max-width:var(--page-width); width:100%; min-height:var(--page-height); padding:16px 20px; padding-left:calc(20px + var(--line-handle-space)); line-height:1.6; font-size:15px; white-space:pre-wrap; outline:none; direction:ltr; writing-mode:horizontal-tb; unicode-bidi:plaintext; border-radius:12px; background:var(--panel); transition:box-shadow .2s ease, background .2s ease}
       .editor-stage[data-view-mode="scroll"] .editor-scroll{height:calc(var(--page-height) + 40px); overflow:hidden; padding:0}
       .editor-stage[data-view-mode="scroll"] .editor-area{background-image:linear-gradient(to bottom, transparent calc(var(--page-height) - 2px), rgba(79,123,255,0.35) calc(var(--page-height) - 2px), rgba(79,123,255,0.35) calc(var(--page-height) - 1px), transparent calc(var(--page-height) - 1px)); background-size:100% var(--page-height); background-repeat:repeat-y; background-origin:content-box;}
       .editor-stage[data-view-mode="scroll"] .editor-area{height:var(--page-height); max-height:var(--page-height); overflow-y:auto; box-shadow:0 18px 48px rgba(15,23,42,0.35)}
@@ -419,7 +420,7 @@
       body[data-main-view-mode="industry"] .editor-area .line.exposition{display:none !important;}
       body[data-main-view-mode="industry"] .editor-area .line[data-tag-label]{padding-top:0;}
       body[data-main-view-mode="industry"] .editor-area .line[data-tag-label]::after{display:none !important;}
-      body[data-main-view-mode="industry"] .editor-area .line[data-story-part]{border-left:none !important; padding-left:0;}
+      body[data-main-view-mode="industry"] .editor-area .line[data-story-part]{border-left:none !important; padding-left:calc(var(--line-handle-space) + 6px);}
       body[data-main-view-mode="industry"] .editor-area .line[data-story-beat]{background-image:none !important;}
       #exitFocusBtn{display:none; width:30px; height:30px; border-radius:10px; border:1px solid var(--ring); background:var(--chip); color:var(--muted); font-size:16px; line-height:1; align-items:center; justify-content:center; cursor:pointer; transition:background .2s ease, color .2s ease, border-color .2s ease; padding:0}
       #exitFocusBtn:hover{border-color:var(--acc); background:var(--acc); color:var(--active-tab-text)}
@@ -435,6 +436,7 @@
       .scene-view-nav button:hover{border-color:var(--acc)}
       .scene-view-nav button:disabled{opacity:0.5; cursor:not-allowed}
       .scene-view-label{font-size:12px; color:var(--muted)}
+      .editor-area .line{padding-left:calc(var(--line-handle-space) + 6px)}
       .line{margin:6px 0; position:relative}
       .line.slug{letter-spacing:.4px; font-weight:700}
       .line.character{text-transform:uppercase; margin-top:14px; margin-bottom:2px}
@@ -444,6 +446,7 @@
       .line.exposition{
         margin-left:24px;
         padding:8px 12px;
+        padding-left:calc(var(--line-handle-space) + 12px);
         border-radius:12px;
         border-left:3px solid rgba(126,58,242,0.55);
         background:rgba(126,58,242,0.16);
@@ -484,13 +487,78 @@
         box-shadow:0 6px 18px rgba(0,0,0,0.15);
         z-index:2;
       }
-      .line[data-story-part="intro"]{border-left:3px solid var(--acc); padding-left:12px}
-      .line[data-story-part="beginning"]{border-left:3px solid #7c4dff; padding-left:12px}
-      .line[data-story-part="middle"]{border-left:3px solid #18a999; padding-left:12px}
-      .line[data-story-part="end"]{border-left:3px solid #ff6b6b; padding-left:12px}
+      .editor-area .line[data-story-part="intro"]{border-left:3px solid var(--acc); padding-left:calc(var(--line-handle-space) + 12px)}
+      .editor-area .line[data-story-part="beginning"]{border-left:3px solid #7c4dff; padding-left:calc(var(--line-handle-space) + 12px)}
+      .editor-area .line[data-story-part="middle"]{border-left:3px solid #18a999; padding-left:calc(var(--line-handle-space) + 12px)}
+      .editor-area .line[data-story-part="end"]{border-left:3px solid #ff6b6b; padding-left:calc(var(--line-handle-space) + 12px)}
       .line[data-story-beat="setup"]{background-image:linear-gradient(90deg, rgba(79,123,255,0.18), transparent)}
       .line[data-story-beat="confrontation"]{background-image:linear-gradient(90deg, rgba(255,170,64,0.2), transparent)}
       .line[data-story-beat="resolution"]{background-image:linear-gradient(90deg, rgba(24,169,153,0.18), transparent)}
+      .editor-area [data-line-handle]{
+        position:absolute;
+        left:0;
+        top:0;
+        width:var(--line-handle-space);
+        height:100%;
+        border:none;
+        background:none;
+        padding:0;
+        margin:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        pointer-events:auto;
+        opacity:0.75;
+        color:var(--muted);
+        transition:opacity .2s ease;
+        touch-action:none;
+      }
+      .editor-area [data-line-handle][contenteditable="false"]{user-select:none; -webkit-user-select:none;}
+      .editor-area [data-line-handle]:focus-visible{outline:none}
+      .editor-area [data-line-handle]:hover{opacity:1}
+      .line-select-handle__line{
+        display:block;
+        width:2px;
+        height:16px;
+        border-radius:999px;
+        background:linear-gradient(180deg, rgba(126,58,242,0.35), rgba(79,123,255,0.22));
+        box-shadow:0 0 0 1px rgba(79,123,255,0.2);
+        transition:transform .2s ease, box-shadow .2s ease, height .2s ease, background .2s ease;
+      }
+      .editor-area .line[data-guide-preview] [data-line-handle]{opacity:1}
+      .editor-area .line[data-guide-preview] .line-select-handle__line{
+        height:calc(100% - 8px);
+        transform:scaleX(1.8);
+        background:linear-gradient(180deg, rgba(79,123,255,0.9), rgba(126,58,242,0.65));
+        box-shadow:0 0 12px rgba(79,123,255,0.45);
+      }
+      .editor-area [data-line-handle]::before,
+      .editor-area [data-line-handle]::after{
+        content:'';
+        position:absolute;
+        left:calc(var(--line-handle-space) / 2);
+        width:16px;
+        height:16px;
+        border-radius:999px;
+        border:2px solid rgba(79,123,255,0.75);
+        background:var(--panel);
+        box-shadow:0 6px 18px rgba(79,123,255,0.35);
+        opacity:0;
+        transform:translate(-50%, -50%) scale(0.8);
+        transition:opacity .18s ease, transform .18s ease;
+        pointer-events:none;
+      }
+      .editor-area [data-line-handle]::before{top:0}
+      .editor-area [data-line-handle]::after{top:auto; bottom:0; transform:translate(-50%, 50%) scale(0.8)}
+      .editor-area .line[data-guide-edge-start] [data-line-handle]::before{
+        opacity:1;
+        transform:translate(-50%, -50%) scale(1);
+      }
+      .editor-area .line[data-guide-edge-end] [data-line-handle]::after{
+        opacity:1;
+        transform:translate(-50%, 50%) scale(1);
+      }
       .notes{padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto}
       textarea, input, select{background:var(--field); color:var(--ink); border:1px solid var(--ring); border-radius:10px; padding:8px; width:100%}
       .row{display:flex; gap:8px}
@@ -1199,24 +1267,6 @@
       .selection-type-menu{position:fixed; z-index:1450; background:var(--panel); border:1px solid var(--ring); border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.35); padding:12px 14px; min-width:220px; display:flex; flex-direction:column; gap:12px}
       .selection-type-menu[hidden]{display:none !important}
       [data-theme="dark"] .selection-menu, [data-theme="dark"] .selection-type-menu{box-shadow:0 30px 70px rgba(8,15,28,0.72), 0 0 0 1px rgba(79,123,255,0.35), 0 0 22px rgba(79,123,255,0.3)}
-      .selection-guide{position:absolute; top:12px; left:16px; bottom:12px; width:74px; pointer-events:none; z-index:80; display:flex; flex-direction:column; align-items:flex-start; gap:8px}
-      body.focus-mode .selection-guide{top:24px}
-      .selection-guide__handle{pointer-events:auto; border-radius:999px; border:1px solid var(--ring); background:var(--panel); color:var(--muted); font-size:11px; font-weight:600; letter-spacing:.35px; text-transform:uppercase; padding:8px 14px; display:inline-flex; align-items:center; gap:10px; cursor:grab; box-shadow:0 16px 32px rgba(8,15,28,0.22); transition:transform .2s ease, box-shadow .2s ease, color .2s ease, border-color .2s ease; user-select:none; -webkit-user-select:none; touch-action:none}
-      .selection-guide__handle:hover{color:var(--ink); border-color:var(--acc); box-shadow:0 20px 40px rgba(79,123,255,0.28)}
-      .selection-guide__handle:focus-visible{outline:2px solid var(--acc); outline-offset:4px}
-      .selection-guide__handle:active{cursor:grabbing; transform:translateY(1px)}
-      .selection-guide__dots{display:inline-flex; flex-direction:column; gap:3px}
-      .selection-guide__dot{width:6px; height:6px; border-radius:999px; background:currentColor; opacity:0.85}
-      .selection-guide__label{white-space:nowrap}
-      .selection-guide__preview{position:absolute; left:28px; width:10px; border-radius:999px; background:linear-gradient(180deg, rgba(79,123,255,0.35), rgba(79,123,255,0.1)); box-shadow:0 0 0 1px rgba(79,123,255,0.35), 0 12px 32px rgba(79,123,255,0.25); opacity:0; transition:opacity .18s ease; pointer-events:none}
-      .selection-guide__preview[data-active="true"]{opacity:0.95}
-      .selection-guide__preview[hidden]{display:none !important}
-      .selection-guide__edge{position:absolute; left:50%; width:32px; height:12px; border-radius:999px; border:1px solid rgba(79,123,255,0.45); background:var(--panel); box-shadow:0 10px 20px rgba(79,123,255,0.32)}
-      .selection-guide__edge--start{top:0; transform:translate(-50%, -50%)}
-      .selection-guide__edge--end{bottom:0; transform:translate(-50%, 50%)}
-      @media (max-width: 768px){
-        .selection-guide{display:none}
-      }
 
       @media (max-width: 900px) {
         /* keep page usable on small screens */
@@ -5603,6 +5653,31 @@
     }
 
     /* Keep child nodes as .line blocks */
+    function createLineSelectionHandle(){
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'line-select-handle';
+      handle.setAttribute('aria-label', 'Select line');
+      handle.setAttribute('data-line-handle', '');
+      handle.setAttribute('tabindex', '-1');
+      handle.setAttribute('contenteditable', 'false');
+      handle.innerHTML = '<span class="line-select-handle__line" aria-hidden="true"></span>';
+      return handle;
+    }
+
+    function ensureLineSelectionHandle(line){
+      if (!line || !line.classList || !line.classList.contains('line')) return;
+      if (line.querySelector('[data-line-handle]')) return;
+      const handle = createLineSelectionHandle();
+      line.insertBefore(handle, line.firstChild);
+    }
+
+    function ensureAllLineSelectionHandles(){
+      const editor = document.getElementById('editor');
+      if (!editor) return;
+      editor.querySelectorAll('.line').forEach(ensureLineSelectionHandle);
+    }
+
     function normalizeEditorLines(){
       const editor = document.getElementById('editor');
       const children = Array.from(editor.childNodes);
@@ -5616,6 +5691,7 @@
           div.textContent = (n.textContent || '').trim();
           applyLineTypeClass(div);
           updateLineTagLabel(div);
+          ensureLineSelectionHandle(div);
           normalized.push(div);
           changed = true;
         } else if (n.nodeType === 1){ // element
@@ -5623,6 +5699,7 @@
             if (!n.dataset.t) n.dataset.t = 'action';
             applyLineTypeClass(n);
             updateLineTagLabel(n);
+            ensureLineSelectionHandle(n);
             normalized.push(n);
           } else if (n.tagName === 'BR') {
             const div = document.createElement('div');
@@ -5630,6 +5707,7 @@
             div.textContent = '';
             applyLineTypeClass(div);
             updateLineTagLabel(div);
+            ensureLineSelectionHandle(div);
             normalized.push(div);
             changed = true;
           } else {
@@ -5638,6 +5716,7 @@
             div.textContent = n.textContent || '';
             applyLineTypeClass(div);
             updateLineTagLabel(div);
+            ensureLineSelectionHandle(div);
             normalized.push(div);
             changed = true;
           }
@@ -5648,6 +5727,7 @@
 
       editor.innerHTML = '';
       normalized.forEach(d=>editor.appendChild(d));
+      ensureAllLineSelectionHandles();
     }
 
     function syncActiveScene(autoDetect = true){
@@ -8629,9 +8709,6 @@
     let selectionActionButton = null;
     let selectionOverlayFrame = null;
     let selectionHandleDrag = null;
-    let selectionGuideEl = null;
-    let selectionGuideHandle = null;
-    let selectionGuidePreview = null;
     let selectionGuideDrag = null;
     let pointerDownHadSelection = false;
     let pointerDownWithinSelection = false;
@@ -8667,26 +8744,7 @@
       selectionActionButton.setAttribute('hidden', '');
       document.body.appendChild(selectionActionButton);
     }
-    if (editorStageEl && editorEl){
-      selectionGuideEl = document.createElement('div');
-      selectionGuideEl.className = 'selection-guide';
-      selectionGuideEl.innerHTML = `
-        <button type="button" class="selection-guide__handle" data-selection-guide-handle aria-label="Drag to select script lines">
-          <span class="selection-guide__dots" aria-hidden="true">
-            <span class="selection-guide__dot"></span>
-            <span class="selection-guide__dot"></span>
-            <span class="selection-guide__dot"></span>
-          </span>
-          <span class="selection-guide__label">Select</span>
-        </button>
-        <div class="selection-guide__preview" data-selection-guide-preview hidden>
-          <span class="selection-guide__edge selection-guide__edge--start"></span>
-          <span class="selection-guide__edge selection-guide__edge--end"></span>
-        </div>`;
-      editorStageEl.appendChild(selectionGuideEl);
-      selectionGuideHandle = selectionGuideEl.querySelector('[data-selection-guide-handle]');
-      selectionGuidePreview = selectionGuideEl.querySelector('[data-selection-guide-preview]');
-    }
+    
 
     function getCaretRangeFromPoint(x, y){
       if (typeof document.caretRangeFromPoint === 'function'){
@@ -8846,7 +8904,7 @@
       const rect = editorEl.getBoundingClientRect();
       if (!rect.width || !rect.height) return null;
       const safeY = Math.max(rect.top + 2, Math.min(y, rect.bottom - 2));
-      const safeX = Math.max(rect.left + 12, Math.min(rect.left + 48, rect.right - 8));
+      const safeX = Math.max(rect.left + 8, Math.min(rect.left + 80, rect.right - 8));
       const viewportY = Math.max(1, Math.min(window.innerHeight - 2, safeY));
       const viewportX = Math.max(1, Math.min(window.innerWidth - 2, safeX));
       let target = document.elementFromPoint(viewportX, viewportY);
@@ -8886,32 +8944,37 @@
     }
 
     function updateSelectionGuidePreview(startLine, endLine){
-      if (!selectionGuidePreview || !editorStageEl || !startLine || !endLine){
+      if (!editorEl || !startLine || !endLine){
         hideSelectionGuidePreview();
         return;
       }
+      editorEl.querySelectorAll('.line[data-guide-preview]').forEach(line => {
+        delete line.dataset.guidePreview;
+        delete line.dataset.guideEdgeStart;
+        delete line.dataset.guideEdgeEnd;
+      });
       const [first, last] = orderLineNodes(startLine, endLine);
       if (!first || !last){
-        hideSelectionGuidePreview();
         return;
       }
-      const firstRect = first.getBoundingClientRect();
-      const lastRect = last.getBoundingClientRect();
-      const stageRect = editorStageEl.getBoundingClientRect();
-      const top = Math.max(0, firstRect.top - stageRect.top);
-      const bottom = Math.max(top + 8, lastRect.bottom - stageRect.top);
-      selectionGuidePreview.removeAttribute('hidden');
-      selectionGuidePreview.dataset.active = 'true';
-      selectionGuidePreview.style.top = `${Math.round(top)}px`;
-      selectionGuidePreview.style.height = `${Math.round(bottom - top)}px`;
+      let node = first;
+      while (node){
+        if (!node.classList.contains('line')) break;
+        node.dataset.guidePreview = 'true';
+        if (node === first) node.dataset.guideEdgeStart = 'true';
+        if (node === last) node.dataset.guideEdgeEnd = 'true';
+        if (node === last) break;
+        node = node.nextElementSibling;
+      }
     }
 
     function hideSelectionGuidePreview(){
-      if (!selectionGuidePreview) return;
-      selectionGuidePreview.dataset.active = 'false';
-      selectionGuidePreview.style.top = '';
-      selectionGuidePreview.style.height = '';
-      selectionGuidePreview.setAttribute('hidden', '');
+      if (!editorEl) return;
+      editorEl.querySelectorAll('.line[data-guide-preview]').forEach(line => {
+        delete line.dataset.guidePreview;
+        delete line.dataset.guideEdgeStart;
+        delete line.dataset.guideEdgeEnd;
+      });
     }
 
     function autoScrollEditorForGuide(y){
@@ -8924,7 +8987,7 @@
       }
     }
 
-    function startSelectionGuideDrag(event){
+    function startSelectionGuideDrag(event, options = {}){
       if (!editorEl) return;
       event.preventDefault();
       event.stopPropagation();
@@ -8933,7 +8996,7 @@
       } catch (err) {
         editorEl.focus();
       }
-      const line = getLineNodeFromGuidePoint(event.clientY) || editorEl.querySelector('.line');
+      const line = options.line || getLineNodeFromGuidePoint(event.clientY) || editorEl.querySelector('.line');
       if (!line) return;
       selectionGuideDrag = { startLine: line, endLine: line };
       updateSelectionGuidePreview(line, line);
@@ -9054,21 +9117,14 @@
         positionSelectionMenu(range.getBoundingClientRect());
       });
     }
-    if (selectionGuideHandle){
-      selectionGuideHandle.addEventListener('pointerdown', startSelectionGuideDrag);
-      selectionGuideHandle.addEventListener('keydown', event => {
-        if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
-        event.preventDefault();
-        try {
-          if (editorEl && typeof editorEl.focus === 'function') editorEl.focus({ preventScroll: true });
-        } catch (err) {
-          if (editorEl) editorEl.focus();
-        }
-        const activeLine = getActiveLineNode() || editorEl?.querySelector('.line');
-        if (!activeLine) return;
-        selectionGuideDrag = null;
-        hideSelectionGuidePreview();
-        applyGuideSelectionRange(activeLine, activeLine);
+    if (editorEl){
+      editorEl.addEventListener('pointerdown', event => {
+        const handle = event.target.closest('[data-line-handle]');
+        if (!handle) return;
+        if (event.button && event.button !== 0) return;
+        const line = handle.closest('.line');
+        if (!line) return;
+        startSelectionGuideDrag(event, { line });
       });
     }
 
@@ -9455,7 +9511,6 @@
       if (selectionActionButton && selectionActionButton.contains(e.target)) return;
       if (selectionHandleStart && selectionHandleStart.contains(e.target)) return;
       if (selectionHandleEnd && selectionHandleEnd.contains(e.target)) return;
-      if (selectionGuideEl && selectionGuideEl.contains(e.target)) return;
       if (editorEl && editorEl.contains(e.target)) return;
       hideSelectionMenu();
     });
@@ -9513,6 +9568,7 @@
       delete node.dataset.owner;
       delete node.dataset.storyPart;
       delete node.dataset.storyBeat;
+      ensureLineSelectionHandle(node);
       updateLineTagLabel(node);
       const active = getActiveLineNode();
       if (active && active.parentElement === editor) active.after(node);
