@@ -332,7 +332,7 @@
       .scene-card-tags-button:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
       .scene-card-tags-button-icon{display:inline-flex; align-items:center; justify-content:center; font-size:13px; line-height:1}
       .scene-card-tags-button-label{display:inline-flex; align-items:center; line-height:1}
-      .scene-card-drag-handle{border:none; background:var(--chip); color:var(--muted); width:30px; height:30px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; cursor:grab; transition:background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; border:1px solid var(--ring)}
+      .scene-card-drag-handle{border:none; background:var(--chip); color:var(--muted); width:30px; height:30px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; cursor:grab; transition:background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; border:1px solid var(--ring); touch-action:none; user-select:none; -webkit-user-select:none}
       .scene-card-drag-handle:hover{color:var(--ink); border-color:var(--acc)}
       .scene-card-drag-handle:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
       .scene-card-drag-handle:active{cursor:grabbing; background:linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); color:var(--ink); border-color:var(--acc)}
@@ -3004,6 +3004,7 @@
     let timelineHovering = false;
     let lastTimelinePinned = null;
     let sceneDragSceneId = null;
+    let scenePointerDrag = null;
     const SCENE_CARD_CLICK_DELAY = 220;
     let scenePopoverOpenId = null;
     let scenePopoverDismissBound = false;
@@ -5055,6 +5056,14 @@
           dragHandle.setAttribute('aria-disabled', isEditing ? 'true' : 'false');
           dragHandle.addEventListener('dragstart', handleSceneCardDragStart);
           dragHandle.addEventListener('dragend', handleSceneCardDragEnd);
+          dragHandle.addEventListener('pointerdown', event => {
+            event.stopPropagation();
+            const pointerType = (event.pointerType || '').toLowerCase();
+            if (pointerType !== 'touch' && pointerType !== 'pen') return;
+            if (scenePointerDrag || sceneDragSceneId) return;
+            if (sceneInlineRenameId === s.id) return;
+            startScenePointerDrag(event, div);
+          });
           dragHandle.addEventListener('mousedown', event => event.stopPropagation());
           dragHandle.addEventListener('click', event => event.stopPropagation());
         }
@@ -5474,6 +5483,99 @@
       sceneDragSceneId = null;
       moveScene(fromIdx, toIdx);
       if (list) list.classList.remove('drag-over-end');
+    }
+
+    function cleanupScenePointerDragListeners(){
+      document.removeEventListener('pointermove', handleScenePointerMove);
+      document.removeEventListener('pointerup', handleScenePointerPointerUp);
+      document.removeEventListener('pointercancel', handleScenePointerPointerCancel);
+    }
+
+    function startScenePointerDrag(event, card){
+      if (!card || card.classList.contains('editing')) return;
+      if (scenePointerDrag) return;
+      const sceneId = card.dataset.sceneId || null;
+      if (!sceneId) return;
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const startIdx = scenes.findIndex(scene => scene.id === sceneId);
+      if (startIdx < 0) return;
+      sceneDragSceneId = sceneId;
+      scenePointerDrag = {
+        pointerId: event.pointerId,
+        card,
+        startIndex: startIdx,
+        targetIndex: startIdx
+      };
+      card.classList.add('dragging');
+      clearSceneListDropIndicators();
+      document.addEventListener('pointermove', handleScenePointerMove);
+      document.addEventListener('pointerup', handleScenePointerPointerUp);
+      document.addEventListener('pointercancel', handleScenePointerPointerCancel);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    function handleScenePointerMove(event){
+      const drag = scenePointerDrag;
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      event.preventDefault();
+      const list = document.getElementById('sceneList');
+      if (!list) return;
+      const cards = Array.from(list.querySelectorAll('.scene-card'));
+      if (!cards.length) return;
+      clearSceneCardDropIndicators();
+      list.classList.remove('drag-over-end');
+      const pointerY = event.clientY;
+      let targetCard = null;
+      for (const card of cards){
+        const rect = card.getBoundingClientRect();
+        if (pointerY < rect.bottom){
+          targetCard = card;
+          break;
+        }
+      }
+      if (targetCard){
+        const { before, toIdx } = computeSceneDropTarget(targetCard, event);
+        drag.targetIndex = toIdx;
+        targetCard.classList.add('drag-over');
+        targetCard.dataset.dropPosition = before ? 'before' : 'after';
+        return;
+      }
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const insertIndex = scenes.length;
+      let toIdx = insertIndex;
+      if (drag.startIndex < insertIndex) toIdx = insertIndex - 1;
+      toIdx = Math.max(0, Math.min(toIdx, scenes.length - 1));
+      drag.targetIndex = toIdx;
+      list.classList.add('drag-over-end');
+    }
+
+    function handleScenePointerPointerUp(event){
+      const drag = scenePointerDrag;
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      event.preventDefault();
+      finishScenePointerDrag(true);
+    }
+
+    function handleScenePointerPointerCancel(event){
+      const drag = scenePointerDrag;
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      finishScenePointerDrag(false);
+    }
+
+    function finishScenePointerDrag(commit){
+      const drag = scenePointerDrag;
+      if (!drag) return;
+      cleanupScenePointerDragListeners();
+      scenePointerDrag = null;
+      if (drag.card) drag.card.classList.remove('dragging');
+      clearSceneListDropIndicators();
+      const fromIdx = drag.startIndex;
+      const toIdx = drag.targetIndex;
+      const shouldMove = commit && typeof fromIdx === 'number' && typeof toIdx === 'number'
+        && fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx;
+      sceneDragSceneId = null;
+      if (shouldMove) moveScene(fromIdx, toIdx);
     }
 
     /* Keep child nodes as .line blocks */
