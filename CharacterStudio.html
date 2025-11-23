@@ -1110,6 +1110,78 @@
         border-color: var(--acc);
         background: var(--chip);
       }
+      .character-studio-wizard-step-content {
+        display: none;
+      }
+      .character-studio-wizard-step-content.active {
+        display: block;
+      }
+      .character-studio-wizard-preview {
+        position: relative;
+        background: var(--panel);
+        border: 1px dashed var(--ring);
+        border-radius: 12px;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .character-studio-wizard-preview img {
+        max-width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        display: block;
+      }
+      .character-studio-wizard-loading {
+        font-size: 14px;
+        color: var(--muted);
+        text-align: center;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .character-studio-wizard-loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--ring);
+        border-top-color: var(--acc);
+        border-radius: 50%;
+        animation: character-studio-wizard-spin 1s linear infinite;
+      }
+      @keyframes character-studio-wizard-spin {
+        to { transform: rotate(360deg); }
+      }
+      .character-studio-wizard-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .character-studio-wizard-control-btn {
+        flex: 1;
+        min-width: 120px;
+        border: 1px solid var(--ring);
+        border-radius: 10px;
+        padding: 10px 16px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .character-studio-wizard-control-btn:hover {
+        border-color: var(--acc);
+        background: var(--chip);
+      }
+      .character-studio-wizard-control-btn:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
       @media (max-width: 640px) {
         .character-studio-wizard {
           padding: 24px 20px;
@@ -1184,34 +1256,55 @@
   <div class="character-studio-wizard-overlay" data-wizard-overlay>
     <div class="character-studio-wizard" data-wizard>
       <div class="character-studio-wizard-step" data-wizard-step>Step 1 of 3: Choose an archetype</div>
-      <h2 class="character-studio-wizard-title">What kind of character are you creating?</h2>
-      <div class="character-studio-wizard-archetypes" data-wizard-archetypes>
-        <button type="button" class="character-studio-wizard-archetype" data-archetype="hero">
-          <span class="character-studio-wizard-archetype-icon">🦸</span>
-          <span>Hero</span>
-        </button>
-        <button type="button" class="character-studio-wizard-archetype" data-archetype="villain">
-          <span class="character-studio-wizard-archetype-icon">🦹</span>
-          <span>Villain</span>
-        </button>
-        <button type="button" class="character-studio-wizard-archetype" data-archetype="sci-fi">
-          <span class="character-studio-wizard-archetype-icon">🚀</span>
-          <span>Sci-Fi</span>
-        </button>
-        <button type="button" class="character-studio-wizard-archetype" data-archetype="fantasy">
-          <span class="character-studio-wizard-archetype-icon">🧙</span>
-          <span>Fantasy</span>
-        </button>
-        <button type="button" class="character-studio-wizard-archetype" data-archetype="child">
-          <span class="character-studio-wizard-archetype-icon">👶</span>
-          <span>Child</span>
-        </button>
-        <button type="button" class="character-studio-wizard-archetype" data-archetype="robot">
-          <span class="character-studio-wizard-archetype-icon">🤖</span>
-          <span>Robot</span>
-        </button>
+      
+      <!-- Step 1: Choose archetype -->
+      <div class="character-studio-wizard-step-content active" data-wizard-step-content="1">
+        <h2 class="character-studio-wizard-title">What kind of character are you creating?</h2>
+        <div class="character-studio-wizard-archetypes" data-wizard-archetypes>
+          <button type="button" class="character-studio-wizard-archetype" data-archetype="hero">
+            <span class="character-studio-wizard-archetype-icon">🦸</span>
+            <span>Hero</span>
+          </button>
+          <button type="button" class="character-studio-wizard-archetype" data-archetype="villain">
+            <span class="character-studio-wizard-archetype-icon">🦹</span>
+            <span>Villain</span>
+          </button>
+          <button type="button" class="character-studio-wizard-archetype" data-archetype="sci-fi">
+            <span class="character-studio-wizard-archetype-icon">🚀</span>
+            <span>Sci-Fi</span>
+          </button>
+          <button type="button" class="character-studio-wizard-archetype" data-archetype="fantasy">
+            <span class="character-studio-wizard-archetype-icon">🧙</span>
+            <span>Fantasy</span>
+          </button>
+          <button type="button" class="character-studio-wizard-archetype" data-archetype="child">
+            <span class="character-studio-wizard-archetype-icon">👶</span>
+            <span>Child</span>
+          </button>
+          <button type="button" class="character-studio-wizard-archetype" data-archetype="robot">
+            <span class="character-studio-wizard-archetype-icon">🤖</span>
+            <span>Robot</span>
+          </button>
+        </div>
+        <div class="character-studio-wizard-validation" data-wizard-validation></div>
       </div>
-      <div class="character-studio-wizard-validation" data-wizard-validation></div>
+      
+      <!-- Step 2: First visual draft -->
+      <div class="character-studio-wizard-step-content" data-wizard-step-content="2">
+        <h2 class="character-studio-wizard-title">First visual draft</h2>
+        <div class="character-studio-wizard-preview" data-wizard-preview>
+          <div class="character-studio-wizard-loading" data-wizard-loading>
+            <div class="character-studio-wizard-loading-spinner"></div>
+            <span>Generating your first look…</span>
+          </div>
+        </div>
+        <div class="character-studio-wizard-controls">
+          <button type="button" class="character-studio-wizard-control-btn" data-wizard-regenerate>Regenerate</button>
+          <button type="button" class="character-studio-wizard-control-btn" data-wizard-swap-style>Swap Style</button>
+          <button type="button" class="character-studio-wizard-control-btn" data-wizard-try-another>Try Another Idea</button>
+        </div>
+      </div>
+      
       <div class="character-studio-wizard-actions">
         <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-secondary" data-wizard-cancel>Cancel</button>
         <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-primary" data-wizard-continue>Continue</button>
@@ -4096,8 +4189,115 @@
 
       // Character Creation Wizard
       const currentCharacterDraft = {
-        archetype: null
+        archetype: null,
+        style: 'default'
       };
+
+      let wizardCurrentStep = 1;
+
+      // Placeholder images for different archetypes and styles
+      const WIZARD_PLACEHOLDER_IMAGES = {
+        hero: {
+          default: '/assets/img/IMG_6894.webp',
+          alt: '/assets/img/IMG_6892.webp'
+        },
+        villain: {
+          default: '/assets/img/IMG_6893.webp',
+          alt: '/assets/img/IMG_6903.webp'
+        },
+        'sci-fi': {
+          default: '/assets/img/IMG_6896.webp',
+          alt: '/assets/img/IMG_6894.webp'
+        },
+        fantasy: {
+          default: '/assets/img/IMG_6903.webp',
+          alt: '/assets/img/IMG_6892.webp'
+        },
+        child: {
+          default: '/assets/img/IMG_6892.webp',
+          alt: '/assets/img/IMG_6896.webp'
+        },
+        robot: {
+          default: '/assets/img/IMG_6894.webp',
+          alt: '/assets/img/IMG_6893.webp'
+        }
+      };
+
+      async function generateCharacterDraft(draft) {
+        // Simulate network call with setTimeout
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const archetype = draft.archetype || 'hero';
+            const style = draft.style || 'default';
+            const images = WIZARD_PLACEHOLDER_IMAGES[archetype] || WIZARD_PLACEHOLDER_IMAGES.hero;
+            const imageUrl = style === 'default' ? images.default : images.alt;
+            resolve({ imageUrl });
+          }, 1500); // 1.5 second delay to simulate generation
+        });
+      }
+
+      function showWizardLoading(show) {
+        const loadingEl = document.querySelector('[data-wizard-loading]');
+        const previewEl = document.querySelector('[data-wizard-preview]');
+        if (!loadingEl || !previewEl) return;
+        
+        if (show) {
+          previewEl.innerHTML = '<div class="character-studio-wizard-loading" data-wizard-loading><div class="character-studio-wizard-loading-spinner"></div><span>Generating your first look…</span></div>';
+        }
+      }
+
+      function updateWizardPreview(imageUrl) {
+        const previewEl = document.querySelector('[data-wizard-preview]');
+        if (!previewEl) return;
+        
+        if (imageUrl) {
+          previewEl.innerHTML = `<img src="${imageUrl}" alt="Character preview" />`;
+        }
+      }
+
+      async function enterStep2() {
+        wizardCurrentStep = 2;
+        showWizardStep(2);
+        updateWizardStepIndicator();
+        
+        // Show loading state
+        showWizardLoading(true);
+        
+        // Generate the first draft
+        try {
+          const result = await generateCharacterDraft(currentCharacterDraft);
+          updateWizardPreview(result.imageUrl);
+        } catch (error) {
+          console.error('Failed to generate character draft:', error);
+          const previewEl = document.querySelector('[data-wizard-preview]');
+          if (previewEl) {
+            previewEl.innerHTML = '<div class="character-studio-wizard-loading"><span>Failed to generate preview. Please try again.</span></div>';
+          }
+        }
+      }
+
+      function showWizardStep(stepNumber) {
+        const stepContents = document.querySelectorAll('[data-wizard-step-content]');
+        stepContents.forEach(content => {
+          const step = content.getAttribute('data-wizard-step-content');
+          if (step === String(stepNumber)) {
+            content.classList.add('active');
+          } else {
+            content.classList.remove('active');
+          }
+        });
+      }
+
+      function updateWizardStepIndicator() {
+        const stepIndicator = document.querySelector('[data-wizard-step]');
+        if (!stepIndicator) return;
+        
+        if (wizardCurrentStep === 1) {
+          stepIndicator.textContent = 'Step 1 of 3: Choose an archetype';
+        } else if (wizardCurrentStep === 2) {
+          stepIndicator.textContent = 'Step 2 of 3: First visual draft';
+        }
+      }
 
       function openWizard(){
         const overlay = document.querySelector('[data-wizard-overlay]');
@@ -4116,7 +4316,11 @@
       }
 
       function resetWizard(){
+        wizardCurrentStep = 1;
         currentCharacterDraft.archetype = null;
+        currentCharacterDraft.style = 'default';
+        showWizardStep(1);
+        updateWizardStepIndicator();
         const archetypeButtons = document.querySelectorAll('[data-archetype]');
         archetypeButtons.forEach(btn => btn.classList.remove('selected'));
         const validationEl = document.querySelector('[data-wizard-validation]');
@@ -4137,18 +4341,55 @@
         if (validationEl) validationEl.textContent = '';
       }
 
-      function handleWizardContinue(){
+      async function handleWizardContinue(){
         const validationEl = document.querySelector('[data-wizard-validation]');
-        if (!currentCharacterDraft.archetype){
-          if (validationEl){
-            validationEl.textContent = 'Please select an archetype to continue.';
-          }
-          return;
-        }
         
-        // For now, just show an alert since we're only implementing Step 1
-        alert(`Step 1 complete! You selected: ${currentCharacterDraft.archetype}\n\nSteps 2 and 3 coming soon!`);
-        closeWizard();
+        if (wizardCurrentStep === 1) {
+          // Step 1: Validate archetype selection
+          if (!currentCharacterDraft.archetype){
+            if (validationEl){
+              validationEl.textContent = 'Please select an archetype to continue.';
+            }
+            return;
+          }
+          
+          // Move to Step 2
+          await enterStep2();
+        } else if (wizardCurrentStep === 2) {
+          // Step 2: For now, just show completion message
+          alert(`Step 2 complete! Character preview generated.\n\nStep 3 coming soon!`);
+          closeWizard();
+        }
+      }
+
+      async function handleRegenerateClick() {
+        showWizardLoading(true);
+        try {
+          const result = await generateCharacterDraft(currentCharacterDraft);
+          updateWizardPreview(result.imageUrl);
+        } catch (error) {
+          console.error('Failed to regenerate character draft:', error);
+        }
+      }
+
+      async function handleSwapStyleClick() {
+        // Toggle between default and alt style
+        currentCharacterDraft.style = currentCharacterDraft.style === 'default' ? 'alt' : 'default';
+        showWizardLoading(true);
+        try {
+          const result = await generateCharacterDraft(currentCharacterDraft);
+          updateWizardPreview(result.imageUrl);
+        } catch (error) {
+          console.error('Failed to swap style:', error);
+        }
+      }
+
+      function handleTryAnotherClick() {
+        // Return to Step 1
+        wizardCurrentStep = 1;
+        currentCharacterDraft.style = 'default';
+        showWizardStep(1);
+        updateWizardStepIndicator();
       }
 
       // Initialize wizard event listeners
@@ -4169,6 +4410,21 @@
         const continueBtn = document.querySelector('[data-wizard-continue]');
         if (continueBtn){
           continueBtn.addEventListener('click', handleWizardContinue);
+        }
+
+        const regenerateBtn = document.querySelector('[data-wizard-regenerate]');
+        if (regenerateBtn){
+          regenerateBtn.addEventListener('click', handleRegenerateClick);
+        }
+
+        const swapStyleBtn = document.querySelector('[data-wizard-swap-style]');
+        if (swapStyleBtn){
+          swapStyleBtn.addEventListener('click', handleSwapStyleClick);
+        }
+
+        const tryAnotherBtn = document.querySelector('[data-wizard-try-another]');
+        if (tryAnotherBtn){
+          tryAnotherBtn.addEventListener('click', handleTryAnotherClick);
         }
 
         const overlay = document.querySelector('[data-wizard-overlay]');
