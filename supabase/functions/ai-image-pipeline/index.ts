@@ -15,6 +15,12 @@ const CONTINUATION_VARIANTS = 5;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY") ?? "";
+const GOOGLE_IMAGE_MODEL = Deno.env.get("GOOGLE_IMAGE_MODEL") ?? "google-nano-banan";
+const GOOGLE_IMAGE_ENDPOINT =
+  Deno.env.get("GOOGLE_IMAGE_ENDPOINT")
+  ?? `https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_IMAGE_MODEL}:generateContent`;
+const AI_IMAGE_PROVIDER = (Deno.env.get("AI_IMAGE_PROVIDER") ?? "openai").toLowerCase();
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase configuration");
@@ -31,6 +37,14 @@ function decodeBase64Image(input: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+function encodeBase64Image(input: Uint8Array): string {
+  let result = "";
+  for (let i = 0; i < input.length; i += 1) {
+    result += String.fromCharCode(input[i]);
+  }
+  return btoa(result);
 }
 
 const PLACEHOLDER_BYTES = decodeBase64Image(PLACEHOLDER_BASE64);
@@ -249,6 +263,23 @@ async function openAiImageRequest(endpoint: string, body: FormData | Record<stri
   return data;
 }
 
+async function googleImageRequest(body: Record<string, unknown>) {
+  if (!GOOGLE_API_KEY) {
+    throw new Error("Google API key not configured");
+  }
+  const response = await fetch(`${GOOGLE_IMAGE_ENDPOINT}?key=${GOOGLE_API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const message = data?.error?.message || response.statusText;
+    throw new Error(`Google image request failed: ${message}`);
+  }
+  return data;
+}
+
 class OpenAIImageProvider extends PlaceholderProvider {
   name = "openai";
 
@@ -379,10 +410,155 @@ class OpenAIImageProvider extends PlaceholderProvider {
   }
 }
 
+function extractGoogleImages(data: any): { image: Uint8Array; metadata?: Record<string, unknown> }[] {
+  if (!data?.candidates || !Array.isArray(data.candidates)) return [];
+  const results: { image: Uint8Array; metadata?: Record<string, unknown> }[] = [];
+  for (const candidate of data.candidates) {
+    const parts = candidate?.content?.parts;
+    if (!Array.isArray(parts)) continue;
+    for (const part of parts) {
+      const inline = part?.inline_data || part?.inlineData;
+      if (!inline || typeof inline.data !== "string") continue;
+      results.push({
+        image: decodeBase64Image(inline.data),
+        metadata: { safety: candidate?.safetyRatings || candidate?.safety_ratings || [] },
+      });
+    }
+  }
+  return results;
+}
+
+class GoogleImageProvider extends PlaceholderProvider {
+  name = "google";
+
+  private buildPrompt(basePrompt: string, extra: string[]): string {
+    return [
+      basePrompt,
+      "Preserve exact likeness, costume details, and proportions of the supplied reference.",
+      ...extra,
+    ].join(" \n");
+  }
+
+  private basePayload(prompt: string, images: Uint8Array[], candidateCount = 1) {
+    const parts: any[] = [{ text: prompt }];
+    images.forEach(bytes => {
+      parts.push({ inline_data: { mime_type: "image/png", data: encodeBase64Image(bytes) } });
+    });
+    return {
+      contents: [
+        {
+          role: "user",
+          parts,
+        },
+      ],
+      generationConfig: {
+        candidateCount,
+      },
+    };
+  }
+
+  async generatePoseFromCharacter(
+    base: Uint8Array,
+    prompt: string,
+    options?: PoseProviderOptions,
+  ): Promise<ProviderImageResult> {
+    if (!GOOGLE_API_KEY) return super.generatePoseFromCharacter(base, prompt, options);
+    try {
+      const payload = this.basePayload(
+        this.buildPrompt(prompt, ["Return a transparent PNG background if possible."]),
+        [base],
+      );
+      const data = await googleImageRequest(payload);
+      const [image] = extractGoogleImages(data);
+      if (!image) throw new Error("Google did not return pose image");
+      let bytes = image.image;
+      if (options?.transparent) {
+        bytes = await ensureTransparent(bytes);
+      }
+      return { image: bytes, provider: this.name, metadata: { prompt, provider_metadata: image.metadata || {} } };
+    } catch (error) {
+      console.error("Google pose generation failed, using placeholder", error);
+      return super.generatePoseFromCharacter(base, prompt, options);
+    }
+  }
+
+  async generateSceneFromCharacter(
+    base: Uint8Array,
+    poseImage: Uint8Array | null,
+    prompt: string,
+    references: ImageReference[],
+    options?: SceneProviderOptions,
+  ): Promise<ProviderImageResult> {
+    if (!GOOGLE_API_KEY) return super.generateSceneFromCharacter(base, poseImage, prompt, references, options);
+    try {
+      const images = [base];
+      if (poseImage) images.push(poseImage);
+      const extra = [
+        "Render a cohesive scene with cinematic lighting.",
+        `Respect references: ${references.map(ref => `${ref.role}:${ref.path}`).join(", ")}`,
+      ];
+      const payload = this.basePayload(this.buildPrompt(prompt, extra), images);
+      const data = await googleImageRequest(payload);
+      const [image] = extractGoogleImages(data);
+      if (!image) throw new Error("Google did not return scene image");
+      let bytes = image.image;
+      if (options?.transparent) {
+        bytes = await ensureTransparent(bytes);
+      }
+      return {
+        image: bytes,
+        provider: this.name,
+        metadata: { prompt, references, provider_metadata: image.metadata || {} },
+      };
+    } catch (error) {
+      console.error("Google scene generation failed, using placeholder", error);
+      return super.generateSceneFromCharacter(base, poseImage, prompt, references, options);
+    }
+  }
+
+  async generateSceneContinuation(
+    base: Uint8Array,
+    previousFrames: Uint8Array[],
+    prompt: string,
+    references: ImageReference[],
+    options?: SceneProviderOptions,
+  ): Promise<ProviderVariantResult> {
+    if (!GOOGLE_API_KEY) return super.generateSceneContinuation(base, previousFrames, prompt, references, options);
+    try {
+      const images = [base, ...previousFrames];
+      const variants = options?.variants && options.variants > 0 ? options.variants : CONTINUATION_VARIANTS;
+      const payload = this.basePayload(
+        this.buildPrompt(prompt, [
+          "Maintain continuity with previous frames (composition, lighting, palette).",
+          `References included: ${references.map(ref => `${ref.role}:${ref.path}`).join(", ")}`,
+        ]),
+        images,
+        variants,
+      );
+      const data = await googleImageRequest(payload);
+      const imagesOut = extractGoogleImages(data);
+      if (!imagesOut.length) throw new Error("Google did not return continuation variants");
+      return { provider: this.name, images: imagesOut };
+    } catch (error) {
+      console.error("Google continuation failed, using placeholder", error);
+      return super.generateSceneContinuation(base, previousFrames, prompt, references, options);
+    }
+  }
+}
+
 function resolveProvider(): ImageProvider {
-  if (OPENAI_API_KEY) {
+  if (AI_IMAGE_PROVIDER === "google" && GOOGLE_API_KEY) {
+    return new GoogleImageProvider();
+  }
+  if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
     return new OpenAIImageProvider();
   }
+  if (AI_IMAGE_PROVIDER === "auto") {
+    if (GOOGLE_API_KEY) return new GoogleImageProvider();
+    if (OPENAI_API_KEY) return new OpenAIImageProvider();
+  }
+  if (OPENAI_API_KEY) return new OpenAIImageProvider();
+  if (GOOGLE_API_KEY) return new GoogleImageProvider();
   return new PlaceholderProvider();
 }
 
