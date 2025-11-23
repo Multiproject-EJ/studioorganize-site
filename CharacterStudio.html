@@ -4385,11 +4385,15 @@
       }
 
       function handleTryAnotherClick() {
-        // Return to Step 1
+        // Return to Step 1 and clear selection
         wizardCurrentStep = 1;
+        currentCharacterDraft.archetype = null;
         currentCharacterDraft.style = 'default';
         showWizardStep(1);
         updateWizardStepIndicator();
+        // Clear archetype selection
+        const archetypeButtons = document.querySelectorAll('[data-archetype]');
+        archetypeButtons.forEach(btn => btn.classList.remove('selected'));
       }
 
       // Initialize wizard event listeners
