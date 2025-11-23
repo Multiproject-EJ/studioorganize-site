@@ -1305,6 +1305,18 @@
         </div>
       </div>
       
+      <!-- Step 3: Save Character -->
+      <div class="character-studio-wizard-step-content" data-wizard-step-content="3">
+        <h2 class="character-studio-wizard-title">Save your character</h2>
+        <div class="character-studio-wizard-preview" data-wizard-preview-step3>
+          <!-- Preview will be copied here -->
+        </div>
+        <div class="character-studio-wizard-validation" data-wizard-save-status></div>
+        <div style="display: flex; justify-content: center; margin-top: 16px;">
+          <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-primary" data-wizard-save-character style="min-width: 200px;">Save Character</button>
+        </div>
+      </div>
+      
       <div class="character-studio-wizard-actions">
         <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-secondary" data-wizard-cancel>Cancel</button>
         <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-primary" data-wizard-continue>Continue</button>
@@ -4199,6 +4211,156 @@
       let wizardCurrentStep = 1;
 
       /**
+       * Save a character from the wizard draft to Supabase.
+       * Creates a new character row in the 'characters' table with data from currentCharacterDraft.
+       * 
+       * Assumptions about the characters table (from supabase/schema.sql):
+       * - Table name: 'characters'
+       * - Required fields: owner_id, project_id (can be null for now)
+       * - Name field: 'name' (text, not null, defaults to '')
+       * - Archetype field: 'archetype' (text, nullable)
+       * - Portrait field: 'look_portrait_url' (text, nullable) - we'll use image_url from draft
+       * - Storage path: can use 'base_image_url' (text, nullable) to store storage_path
+       * 
+       * @returns {Promise<Object>} The saved character object
+       */
+      async function saveCharacterFromDraft() {
+        const saveStatusEl = document.querySelector('[data-wizard-save-status]');
+        const saveButton = document.querySelector('[data-wizard-save-character]');
+        
+        // Helper to set status message
+        const setStatus = (message, state = '') => {
+          if (saveStatusEl) {
+            saveStatusEl.textContent = message;
+            if (state === 'error') {
+              saveStatusEl.style.color = '#ef4444';
+            } else if (state === 'saving') {
+              saveStatusEl.style.color = 'var(--brand)';
+            } else if (state === 'success') {
+              saveStatusEl.style.color = 'var(--acc)';
+            } else {
+              saveStatusEl.style.color = 'var(--muted)';
+            }
+          }
+        };
+
+        // Validate that we have an image_url
+        if (!currentCharacterDraft.image_url) {
+          setStatus('Please generate a character image before saving.', 'error');
+          return null;
+        }
+
+        // Check Supabase availability
+        if (!state.supabase) {
+          setStatus('Supabase client not ready. Please try again.', 'error');
+          return null;
+        }
+
+        // Check authentication
+        if (!state.session || !state.ownerId) {
+          setStatus('Please sign in to save characters.', 'error');
+          return null;
+        }
+
+        // Disable the save button while saving
+        if (saveButton) {
+          saveButton.disabled = true;
+        }
+
+        setStatus('Saving character…', 'saving');
+
+        try {
+          // Generate a default name based on archetype
+          const archetypeNames = {
+            'hero': 'New Hero',
+            'villain': 'New Villain',
+            'sci-fi': 'New Sci-Fi Character',
+            'fantasy': 'New Fantasy Character',
+            'child': 'New Child Character',
+            'robot': 'New Robot'
+          };
+          const defaultName = archetypeNames[currentCharacterDraft.archetype] || 'New Character';
+
+          // Build the character payload
+          // Note: Using look_portrait_url for the main image URL (as per schema)
+          // and base_image_url for the storage path (optional metadata)
+          const characterPayload = {
+            owner_id: state.ownerId,
+            project_id: state.projectId || null, // Can be null if no project selected
+            name: defaultName,
+            archetype: currentCharacterDraft.archetype || '',
+            look_portrait_url: currentCharacterDraft.image_url,
+            base_image_url: currentCharacterDraft.storage_path || null,
+            // Initialize with defaults for required fields
+            traits: [],
+            stats_scenes: 0,
+            stats_dialogue: 0,
+            stats_screen_time: 0,
+            look_turnaround_urls: [],
+            look_expression_urls: [],
+            has_pose_library: false
+          };
+
+          // Insert into Supabase and return the new row
+          const { data, error } = await state.supabase
+            .from('characters')
+            .insert([characterPayload])
+            .select()
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          if (!data) {
+            throw new Error('No data returned from insert');
+          }
+
+          // Convert the Supabase row to our internal character format
+          const newCharacter = supabaseRowToCharacter(data);
+          
+          // Add to state
+          state.characters.push(newCharacter);
+          ensureStateCharacterIds();
+          state.remoteIds.add(newCharacter.id);
+          state.dirty = false; // We just saved, so not dirty
+          
+          // Set as active character
+          state.activeId = newCharacter.id;
+          
+          // Update UI
+          await persistCharactersToLocal();
+          renderCharacterList();
+          renderCharacterDetails();
+          
+          // Show success and close wizard
+          setStatus('Character saved!', 'success');
+          
+          setTimeout(() => {
+            closeWizard();
+            
+            // Focus the character in the detail view for accessibility
+            const detailsContainer = document.querySelector('[data-character-details]');
+            if (detailsContainer) {
+              detailsContainer.focus();
+              detailsContainer.scrollTop = 0;
+            }
+          }, 800);
+
+          return newCharacter;
+        } catch (error) {
+          console.error('Failed to save character from draft:', error);
+          setStatus('Failed to save character. Please try again.', 'error');
+          return null;
+        } finally {
+          // Re-enable the save button
+          if (saveButton) {
+            saveButton.disabled = false;
+          }
+        }
+      }
+
+      /**
        * Generate a character draft using the AI image pipeline.
        * Calls the Supabase function to create a character image based on archetype and tier.
        * @param {Object} draft - Draft configuration with archetype and style
@@ -4322,6 +4484,8 @@
           stepIndicator.textContent = 'Step 1 of 3: Choose an archetype';
         } else if (wizardCurrentStep === 2) {
           stepIndicator.textContent = 'Step 2 of 3: First visual draft';
+        } else if (wizardCurrentStep === 3) {
+          stepIndicator.textContent = 'Step 3 of 3: Save your character';
         }
       }
 
@@ -4385,9 +4549,25 @@
           // Move to Step 2
           await enterStep2();
         } else if (wizardCurrentStep === 2) {
-          // Step 2: For now, just show completion message
-          alert(`Step 2 complete! Character preview generated.\n\nStep 3 coming soon!`);
-          closeWizard();
+          // Step 2: Move to Step 3 (Save)
+          if (!currentCharacterDraft.image_url) {
+            if (validationEl){
+              validationEl.textContent = 'Please wait for the image to generate.';
+            }
+            return;
+          }
+          
+          // Move to Step 3
+          wizardCurrentStep = 3;
+          showWizardStep(3);
+          updateWizardStepIndicator();
+          
+          // Copy the preview image to Step 3
+          const previewStep2 = document.querySelector('[data-wizard-preview]');
+          const previewStep3 = document.querySelector('[data-wizard-preview-step3]');
+          if (previewStep2 && previewStep3 && currentCharacterDraft.image_url) {
+            previewStep3.innerHTML = `<img src="${currentCharacterDraft.image_url}" alt="Character preview" />`;
+          }
         }
       }
 
@@ -4481,6 +4661,11 @@
         const tryAnotherBtn = document.querySelector('[data-wizard-try-another]');
         if (tryAnotherBtn){
           tryAnotherBtn.addEventListener('click', handleTryAnotherClick);
+        }
+
+        const saveCharacterBtn = document.querySelector('[data-wizard-save-character]');
+        if (saveCharacterBtn){
+          saveCharacterBtn.addEventListener('click', saveCharacterFromDraft);
         }
 
         const overlay = document.querySelector('[data-wizard-overlay]');
