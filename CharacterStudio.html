@@ -1182,6 +1182,19 @@
         outline: 2px solid var(--acc);
         outline-offset: 2px;
       }
+      .character-studio-wizard-save-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+      .character-studio-wizard-save-actions button {
+        min-width: 140px;
+      }
+      .character-studio-wizard-save-actions button[data-wizard-save-character] {
+        min-width: 200px;
+      }
       @media (max-width: 640px) {
         .character-studio-wizard {
           padding: 24px 20px;
@@ -1312,9 +1325,9 @@
           <!-- Preview will be copied here -->
         </div>
         <div class="character-studio-wizard-validation" data-wizard-save-status></div>
-        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap;">
-          <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-secondary" data-wizard-back-to-step2 style="min-width: 140px;">← Back</button>
-          <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-primary" data-wizard-save-character style="min-width: 200px;">Save Character</button>
+        <div class="character-studio-wizard-save-actions">
+          <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-secondary" data-wizard-back-to-step2>← Back</button>
+          <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-primary" data-wizard-save-character>Save Character</button>
         </div>
       </div>
       
@@ -4200,7 +4213,53 @@
         });
       }
 
+      // =========================================================================
       // Character Creation Wizard
+      // =========================================================================
+      //
+      // Three-step wizard for creating characters with AI-generated images:
+      //
+      // STEP 1: Archetype Selection
+      //   - User selects from: hero, villain, sci-fi, fantasy, child, robot
+      //   - Stored in currentCharacterDraft.archetype
+      //   - Validation ensures archetype is selected before continuing
+      //
+      // STEP 2: Visual Draft Generation
+      //   - Automatically generates AI image using archetype + style tier
+      //   - Calls generateCharacterDraft() → ai-image-pipeline Supabase function
+      //   - Returns: image_url, storage_path, draft_id
+      //   - User can:
+      //     * Regenerate: Generate new image with same archetype/tier
+      //     * Swap Style: Toggle between standard/premium tiers
+      //     * Try Another: Reset and go back to Step 1
+      //   - Continue button advances to Step 3 when image_url exists
+      //
+      // STEP 3: Save Character
+      //   - Shows preview of generated image
+      //   - "Save Character" button calls saveCharacterFromDraft()
+      //   - Inserts into characters table with:
+      //     * Default name based on archetype (e.g., "New Hero")
+      //     * look_portrait_url: image_url from draft
+      //     * base_image_url: storage_path from draft
+      //     * archetype: selected archetype
+      //   - On success:
+      //     * Adds to state.characters and sets as active
+      //     * Updates sidebar and detail view
+      //     * Shows "Character saved!" message
+      //     * Closes wizard after 800ms delay
+      //   - Back button returns to Step 2 for modifications
+      //
+      // State Management:
+      //   - currentCharacterDraft: Temporary draft data during wizard flow
+      //   - wizardCurrentStep: Current step number (1, 2, or 3)
+      //   - Wizard resets on close or cancel
+      //
+      // UI Behavior:
+      //   - Steps 1-2: Show Cancel + Continue buttons
+      //   - Step 3: Hide default buttons, show Back + Save Character
+      //   - Status messages show loading, errors, and success states
+      // =========================================================================
+      
       const currentCharacterDraft = {
         archetype: null,
         style: 'default',
@@ -4556,8 +4615,8 @@
         
         if (wizardCurrentStep === 1) {
           // Step 1: Validate archetype selection
-          if (!currentCharacterDraft.archetype){
-            if (validationEl){
+          if (!currentCharacterDraft.archetype) {
+            if (validationEl) {
               validationEl.textContent = 'Please select an archetype to continue.';
             }
             return;
@@ -4568,7 +4627,7 @@
         } else if (wizardCurrentStep === 2) {
           // Step 2: Move to Step 3 (Save)
           if (!currentCharacterDraft.image_url) {
-            if (validationEl){
+            if (validationEl) {
               validationEl.textContent = 'Please wait for the image to generate.';
             }
             return;
@@ -4579,11 +4638,17 @@
           showWizardStep(3);
           updateWizardStepIndicator();
           
-          // Copy the preview image to Step 3
+          // Copy the preview image to Step 3 (safe DOM manipulation)
           const previewStep2 = document.querySelector('[data-wizard-preview]');
           const previewStep3 = document.querySelector('[data-wizard-preview-step3]');
           if (previewStep2 && previewStep3 && currentCharacterDraft.image_url) {
-            previewStep3.innerHTML = `<img src="${currentCharacterDraft.image_url}" alt="Character preview" />`;
+            // Clear existing content
+            previewStep3.textContent = '';
+            // Create image element safely
+            const img = document.createElement('img');
+            img.src = currentCharacterDraft.image_url;
+            img.alt = 'Character preview';
+            previewStep3.appendChild(img);
           }
         }
       }
@@ -4646,7 +4711,7 @@
       }
 
       // Initialize wizard event listeners
-      function initializeWizard(){
+      function initializeWizard() {
         const archetypeButtons = document.querySelectorAll('[data-archetype]');
         archetypeButtons.forEach(btn => {
           btn.addEventListener('click', () => {
@@ -4656,37 +4721,37 @@
         });
 
         const cancelBtn = document.querySelector('[data-wizard-cancel]');
-        if (cancelBtn){
+        if (cancelBtn) {
           cancelBtn.addEventListener('click', closeWizard);
         }
 
         const continueBtn = document.querySelector('[data-wizard-continue]');
-        if (continueBtn){
+        if (continueBtn) {
           continueBtn.addEventListener('click', handleWizardContinue);
         }
 
         const regenerateBtn = document.querySelector('[data-wizard-regenerate]');
-        if (regenerateBtn){
+        if (regenerateBtn) {
           regenerateBtn.addEventListener('click', handleRegenerateClick);
         }
 
         const swapStyleBtn = document.querySelector('[data-wizard-swap-style]');
-        if (swapStyleBtn){
+        if (swapStyleBtn) {
           swapStyleBtn.addEventListener('click', handleSwapStyleClick);
         }
 
         const tryAnotherBtn = document.querySelector('[data-wizard-try-another]');
-        if (tryAnotherBtn){
+        if (tryAnotherBtn) {
           tryAnotherBtn.addEventListener('click', handleTryAnotherClick);
         }
 
         const saveCharacterBtn = document.querySelector('[data-wizard-save-character]');
-        if (saveCharacterBtn){
+        if (saveCharacterBtn) {
           saveCharacterBtn.addEventListener('click', saveCharacterFromDraft);
         }
 
         const backToStep2Btn = document.querySelector('[data-wizard-back-to-step2]');
-        if (backToStep2Btn){
+        if (backToStep2Btn) {
           backToStep2Btn.addEventListener('click', () => {
             wizardCurrentStep = 2;
             showWizardStep(2);
@@ -4700,9 +4765,9 @@
         }
 
         const overlay = document.querySelector('[data-wizard-overlay]');
-        if (overlay){
+        if (overlay) {
           overlay.addEventListener('click', (e) => {
-            if (e.target === overlay){
+            if (e.target === overlay) {
               closeWizard();
             }
           });
