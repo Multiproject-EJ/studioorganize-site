@@ -1312,7 +1312,8 @@
           <!-- Preview will be copied here -->
         </div>
         <div class="character-studio-wizard-validation" data-wizard-save-status></div>
-        <div style="display: flex; justify-content: center; margin-top: 16px;">
+        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap;">
+          <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-secondary" data-wizard-back-to-step2 style="min-width: 140px;">← Back</button>
           <button type="button" class="character-studio-wizard-btn character-studio-wizard-btn-primary" data-wizard-save-character style="min-width: 200px;">Save Character</button>
         </div>
       </div>
@@ -4474,6 +4475,22 @@
             content.classList.remove('active');
           }
         });
+        
+        // Show/hide wizard actions based on step
+        const wizardActions = document.querySelector('.character-studio-wizard-actions');
+        const continueBtn = document.querySelector('[data-wizard-continue]');
+        
+        if (stepNumber === 3) {
+          // On step 3, hide the default actions (user uses Save Character button instead)
+          if (wizardActions) {
+            wizardActions.style.display = 'none';
+          }
+        } else {
+          // On steps 1 and 2, show the default actions
+          if (wizardActions) {
+            wizardActions.style.display = 'flex';
+          }
+        }
       }
 
       function updateWizardStepIndicator() {
@@ -4666,6 +4683,20 @@
         const saveCharacterBtn = document.querySelector('[data-wizard-save-character]');
         if (saveCharacterBtn){
           saveCharacterBtn.addEventListener('click', saveCharacterFromDraft);
+        }
+
+        const backToStep2Btn = document.querySelector('[data-wizard-back-to-step2]');
+        if (backToStep2Btn){
+          backToStep2Btn.addEventListener('click', () => {
+            wizardCurrentStep = 2;
+            showWizardStep(2);
+            updateWizardStepIndicator();
+            // Clear any save status
+            const saveStatusEl = document.querySelector('[data-wizard-save-status]');
+            if (saveStatusEl) {
+              saveStatusEl.textContent = '';
+            }
+          });
         }
 
         const overlay = document.querySelector('[data-wizard-overlay]');
