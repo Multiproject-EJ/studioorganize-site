@@ -33,6 +33,36 @@ SUPABASE_URL=https://ycgqgkwwitqunabowswi.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3Fna3d3aXRxdW5hYm93c3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTg2NTAsImV4cCI6MjA3NDczNDY1MH0.W0mKqZlHVn6tRYSyZ4VRK4zCpCPC1ICwqtqoWrQMBuU
 ```
 
+### AI image provider environment variables
+
+The Character Studio Edge Function (`supabase/functions/ai-image-pipeline`) now supports Google and OpenAI image providers. Configurable environment variables:
+
+```
+AI_IMAGE_PROVIDER=google   # google | openai | auto (auto prefers Google when the key is present, then OpenAI)
+GOOGLE_API_KEY=your-google-key
+GOOGLE_IMAGE_MODEL=google-nano-banan   # Optional, defaults to the Nano/Banan model name
+GOOGLE_IMAGE_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_IMAGE_MODEL}:generateContent
+OPENAI_API_KEY=your-openai-key
+```
+
+Set these in your Supabase Edge Function environment to route Character Studio image generation through the provider you prefer. If neither provider key is set, the pipeline falls back to a transparent placeholder image so the UI remains usable for demo purposes.
+
+To configure these in the Supabase dashboard, open **Edge Functions → Secrets** for your project and create secrets using the exact variable names above (e.g., `AI_IMAGE_PROVIDER`, `GOOGLE_API_KEY`, `OPENAI_API_KEY`). You can also set them from the CLI for the `ai-image-pipeline` function:
+
+```
+supabase functions secrets set \
+  AI_IMAGE_PROVIDER=google \
+  GOOGLE_API_KEY=your-google-key \
+  GOOGLE_IMAGE_MODEL=google-nano-banan \
+  GOOGLE_IMAGE_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_IMAGE_MODEL}:generateContent \
+  OPENAI_API_KEY=your-openai-key --project-ref <your-project-ref>
+
+# Redeploy the function so the new secrets take effect
+supabase functions deploy ai-image-pipeline --project-ref <your-project-ref>
+```
+
+Replace `<your-project-ref>` with your Supabase project ID (for example, `ycgqgkwwitqunabowswi`). Secret names must match exactly for the Edge Function to read them at runtime.
+
 When deploying, configure these values in your hosting platform's environment variable settings.
 
 ### Redirect URLs for Supabase Auth
