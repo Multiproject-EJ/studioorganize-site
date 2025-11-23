@@ -4190,59 +4190,78 @@
       // Character Creation Wizard
       const currentCharacterDraft = {
         archetype: null,
-        style: 'default'
+        style: 'default',
+        image_url: null,
+        storage_path: null,
+        draft_id: null
       };
 
       let wizardCurrentStep = 1;
 
-      // Placeholder images for different archetypes and styles
-      const WIZARD_PLACEHOLDER_IMAGES = {
-        hero: {
-          default: '/assets/img/IMG_6894.webp',
-          alt: '/assets/img/IMG_6892.webp'
-        },
-        villain: {
-          default: '/assets/img/IMG_6893.webp',
-          alt: '/assets/img/IMG_6903.webp'
-        },
-        'sci-fi': {
-          default: '/assets/img/IMG_6896.webp',
-          alt: '/assets/img/IMG_6894.webp'
-        },
-        fantasy: {
-          default: '/assets/img/IMG_6903.webp',
-          alt: '/assets/img/IMG_6892.webp'
-        },
-        child: {
-          default: '/assets/img/IMG_6892.webp',
-          alt: '/assets/img/IMG_6896.webp'
-        },
-        robot: {
-          default: '/assets/img/IMG_6894.webp',
-          alt: '/assets/img/IMG_6893.webp'
-        }
-      };
-
+      /**
+       * Generate a character draft using the AI image pipeline.
+       * Calls the Supabase function to create a character image based on archetype and tier.
+       * @param {Object} draft - Draft configuration with archetype and style
+       * @returns {Promise<Object>} Result with image_url and storage_path
+       */
       async function generateCharacterDraft(draft) {
-        // Simulate network call with setTimeout
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            const archetype = draft.archetype || 'hero';
-            const style = draft.style || 'default';
-            const images = WIZARD_PLACEHOLDER_IMAGES[archetype] || WIZARD_PLACEHOLDER_IMAGES.hero;
-            const imageUrl = style === 'default' ? images.default : images.alt;
-            resolve({ imageUrl });
-          }, 1500); // 1.5 second delay to simulate generation
-        });
+        if (!state.supabase) {
+          throw new Error('Supabase client not initialized');
+        }
+        if (!state.session?.access_token) {
+          throw new Error('Sign in required to generate character drafts');
+        }
+
+        const archetype = draft.archetype || 'hero';
+        const tier = draft.style === 'premium' ? 'premium' : 'standard';
+
+        try {
+          // Call the ai-image-pipeline Supabase function
+          const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
+            body: {
+              action: 'generate-character-draft',
+              archetype: archetype,
+              tier: tier
+            },
+            headers: { 
+              Authorization: `Bearer ${state.session.access_token}` 
+            },
+          });
+
+          if (error) {
+            console.error('Character draft generation error:', error);
+            throw error;
+          }
+
+          // Extract the response
+          const imageUrl = data?.image_url;
+          const storagePath = data?.storage_path;
+          const draftId = data?.draft_id;
+
+          if (!imageUrl || !storagePath) {
+            throw new Error('Invalid response from image pipeline');
+          }
+
+          return {
+            image_url: imageUrl,
+            storage_path: storagePath,
+            draft_id: draftId,
+            provider: data?.provider,
+            archetype: data?.archetype,
+            tier: data?.tier
+          };
+        } catch (error) {
+          console.error('Failed to generate character draft:', error);
+          throw error;
+        }
       }
 
-      function showWizardLoading(show) {
-        const loadingEl = document.querySelector('[data-wizard-loading]');
+      function showWizardLoading(show, message = 'Generating your first look…') {
         const previewEl = document.querySelector('[data-wizard-preview]');
-        if (!loadingEl || !previewEl) return;
+        if (!previewEl) return;
         
         if (show) {
-          previewEl.innerHTML = '<div class="character-studio-wizard-loading" data-wizard-loading><div class="character-studio-wizard-loading-spinner"></div><span>Generating your first look…</span></div>';
+          previewEl.innerHTML = `<div class="character-studio-wizard-loading" data-wizard-loading><div class="character-studio-wizard-loading-spinner"></div><span>${message}</span></div>`;
         }
       }
 
@@ -4261,12 +4280,19 @@
         updateWizardStepIndicator();
         
         // Show loading state
-        showWizardLoading(true);
+        showWizardLoading(true, 'Generating your first look…');
         
         // Generate the first draft
         try {
           const result = await generateCharacterDraft(currentCharacterDraft);
-          updateWizardPreview(result.imageUrl);
+          
+          // Store the result in currentCharacterDraft
+          currentCharacterDraft.image_url = result.image_url;
+          currentCharacterDraft.storage_path = result.storage_path;
+          currentCharacterDraft.draft_id = result.draft_id;
+          
+          // Update the preview
+          updateWizardPreview(result.image_url);
         } catch (error) {
           console.error('Failed to generate character draft:', error);
           const previewEl = document.querySelector('[data-wizard-preview]');
@@ -4319,6 +4345,9 @@
         wizardCurrentStep = 1;
         currentCharacterDraft.archetype = null;
         currentCharacterDraft.style = 'default';
+        currentCharacterDraft.image_url = null;
+        currentCharacterDraft.storage_path = null;
+        currentCharacterDraft.draft_id = null;
         showWizardStep(1);
         updateWizardStepIndicator();
         const archetypeButtons = document.querySelectorAll('[data-archetype]');
@@ -4363,24 +4392,44 @@
       }
 
       async function handleRegenerateClick() {
-        showWizardLoading(true);
+        showWizardLoading(true, 'Regenerating character…');
         try {
           const result = await generateCharacterDraft(currentCharacterDraft);
-          updateWizardPreview(result.imageUrl);
+          
+          // Store the result in currentCharacterDraft
+          currentCharacterDraft.image_url = result.image_url;
+          currentCharacterDraft.storage_path = result.storage_path;
+          currentCharacterDraft.draft_id = result.draft_id;
+          
+          updateWizardPreview(result.image_url);
         } catch (error) {
           console.error('Failed to regenerate character draft:', error);
+          const previewEl = document.querySelector('[data-wizard-preview]');
+          if (previewEl) {
+            previewEl.innerHTML = '<div class="character-studio-wizard-loading"><span>Failed to regenerate. Please try again.</span></div>';
+          }
         }
       }
 
       async function handleSwapStyleClick() {
-        // Toggle between default and alt style
-        currentCharacterDraft.style = currentCharacterDraft.style === 'default' ? 'alt' : 'default';
-        showWizardLoading(true);
+        // Toggle between default (standard) and premium style
+        currentCharacterDraft.style = currentCharacterDraft.style === 'default' ? 'premium' : 'default';
+        showWizardLoading(true, 'Swapping style…');
         try {
           const result = await generateCharacterDraft(currentCharacterDraft);
-          updateWizardPreview(result.imageUrl);
+          
+          // Store the result in currentCharacterDraft
+          currentCharacterDraft.image_url = result.image_url;
+          currentCharacterDraft.storage_path = result.storage_path;
+          currentCharacterDraft.draft_id = result.draft_id;
+          
+          updateWizardPreview(result.image_url);
         } catch (error) {
           console.error('Failed to swap style:', error);
+          const previewEl = document.querySelector('[data-wizard-preview]');
+          if (previewEl) {
+            previewEl.innerHTML = '<div class="character-studio-wizard-loading"><span>Failed to swap style. Please try again.</span></div>';
+          }
         }
       }
 
@@ -4389,6 +4438,9 @@
         wizardCurrentStep = 1;
         currentCharacterDraft.archetype = null;
         currentCharacterDraft.style = 'default';
+        currentCharacterDraft.image_url = null;
+        currentCharacterDraft.storage_path = null;
+        currentCharacterDraft.draft_id = null;
         showWizardStep(1);
         updateWizardStepIndicator();
         // Clear archetype selection
