@@ -3972,17 +3972,28 @@
         const beforePreview = document.querySelector('[data-refine-preview-before]');
         if (beforePreview) {
           const portraitUrl = character.looks?.portrait || character.lookPortraitUrl || '';
+          beforePreview.textContent = ''; // Clear existing content
           if (portraitUrl) {
-            beforePreview.innerHTML = `<img src="${escapeHtml(portraitUrl)}" alt="Current character portrait" />`;
+            const img = document.createElement('img');
+            img.src = portraitUrl;
+            img.alt = 'Current character portrait';
+            beforePreview.appendChild(img);
           } else {
-            beforePreview.innerHTML = '<div class="character-studio-refine-preview-empty">No character portrait available</div>';
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'character-studio-refine-preview-empty';
+            emptyDiv.textContent = 'No character portrait available';
+            beforePreview.appendChild(emptyDiv);
           }
         }
 
         // Clear "after" preview
         const afterPreview = document.querySelector('[data-refine-preview-after]');
         if (afterPreview) {
-          afterPreview.innerHTML = '<div class="character-studio-refine-preview-empty">No refinement generated yet</div>';
+          afterPreview.textContent = ''; // Clear existing content
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'character-studio-refine-preview-empty';
+          emptyDiv.textContent = 'No refinement generated yet';
+          afterPreview.appendChild(emptyDiv);
         }
 
         // Reset all controls to default values
@@ -4030,13 +4041,20 @@
         if (regenerateBtn) regenerateBtn.disabled = true;
         if (saveBtn) saveBtn.disabled = true;
 
-        // Show loading state
-        afterPreview.innerHTML = `
-          <div class="character-studio-refine-loading">
-            <div class="character-studio-refine-loading-spinner"></div>
-            <span>Refining character...</span>
-          </div>
-        `;
+        // Show loading state using safe DOM manipulation
+        afterPreview.textContent = ''; // Clear existing content
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'character-studio-refine-loading';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'character-studio-refine-loading-spinner';
+        loadingDiv.appendChild(spinner);
+        
+        const loadingText = document.createElement('span');
+        loadingText.textContent = 'Refining character...';
+        loadingDiv.appendChild(loadingText);
+        
+        afterPreview.appendChild(loadingDiv);
         setRefineStatus('Refining…', 'refining');
 
         // Simulate API call with setTimeout (stub)
