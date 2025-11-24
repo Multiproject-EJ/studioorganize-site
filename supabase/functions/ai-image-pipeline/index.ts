@@ -164,6 +164,19 @@ type SceneProviderOptions = {
   variants?: number;
 };
 
+/**
+ * Parameters for character refinement based on UI sliders.
+ * Used by the refine-character action to modify an existing character image.
+ */
+type RefineParams = {
+  age?: "younger" | "adult" | "older";
+  mood?: "neutral" | "happy" | "angry" | "sad";
+  hairLength?: "short" | "medium" | "long";
+  eyebrowShape?: "soft" | "sharp" | "thick" | "thin";
+  style?: "anime" | "realistic" | "painterly";
+  detail?: "cheap" | "standard" | "pro";
+};
+
 interface ImageProvider {
   name: string;
   generatePoseFromCharacter(
@@ -1290,6 +1303,272 @@ async function handleGenerateCharacterDraft(
   }
 }
 
+/**
+ * Build a refined prompt by combining base archetype prompt with refinement parameters.
+ * This appends modifier phrases based on the refine object values.
+ */
+function buildRefinePrompt(archetype: string, refine: RefineParams): string {
+  // Base archetype prompts (same as handleGenerateCharacterDraft)
+  const archetypePrompts: Record<string, string> = {
+    "hero": "A heroic character with a confident stance, noble appearance, and strong presence. Full body character design.",
+    "villain": "A menacing villain character with dramatic features and an imposing presence. Full body character design.",
+    "sci-fi": "A futuristic sci-fi character with sleek technological elements and modern styling. Full body character design.",
+    "fantasy": "A fantasy character with mystical or medieval elements, magical aura. Full body character design.",
+    "child": "A young child character with innocent features and playful energy. Full body character design.",
+    "robot": "A robotic character with mechanical features and technological design. Full body character design.",
+  };
+
+  const basePrompt = archetypePrompts[archetype] || `A ${archetype} character. Full body character design.`;
+  const modifiers: string[] = [];
+
+  // Age modifier
+  if (refine.age) {
+    const ageModifiers: Record<string, string> = {
+      "younger": "younger-looking, youthful features",
+      "adult": "adult, mature features",
+      "older": "older-looking, experienced appearance",
+    };
+    if (ageModifiers[refine.age]) {
+      modifiers.push(ageModifiers[refine.age]);
+    }
+  }
+
+  // Mood / Expression modifier
+  if (refine.mood) {
+    const moodModifiers: Record<string, string> = {
+      "neutral": "with a neutral expression",
+      "happy": "with a happy, joyful expression",
+      "angry": "with an angry, fierce expression",
+      "sad": "with a sad, melancholic expression",
+    };
+    if (moodModifiers[refine.mood]) {
+      modifiers.push(moodModifiers[refine.mood]);
+    }
+  }
+
+  // Hair length modifier
+  if (refine.hairLength) {
+    const hairModifiers: Record<string, string> = {
+      "short": "short hair",
+      "medium": "shoulder-length hair",
+      "long": "long flowing hair",
+    };
+    if (hairModifiers[refine.hairLength]) {
+      modifiers.push(hairModifiers[refine.hairLength]);
+    }
+  }
+
+  // Eyebrow shape modifier
+  if (refine.eyebrowShape) {
+    const eyebrowModifiers: Record<string, string> = {
+      "soft": "soft, gentle eyebrows",
+      "sharp": "sharply angled eyebrows",
+      "thick": "thick, prominent eyebrows",
+      "thin": "thin, delicate eyebrows",
+    };
+    if (eyebrowModifiers[refine.eyebrowShape]) {
+      modifiers.push(eyebrowModifiers[refine.eyebrowShape]);
+    }
+  }
+
+  // Style modifier
+  if (refine.style) {
+    const styleModifiers: Record<string, string> = {
+      "anime": "in an anime style",
+      "realistic": "in a cinematic realistic style",
+      "painterly": "in a painterly illustration style",
+    };
+    if (styleModifiers[refine.style]) {
+      modifiers.push(styleModifiers[refine.style]);
+    }
+  }
+
+  // Combine base prompt with modifiers
+  let prompt = basePrompt;
+  if (modifiers.length > 0) {
+    prompt += " " + modifiers.join(", ") + ".";
+  }
+
+  return prompt;
+}
+
+/**
+ * Get quality/resolution settings based on detail level.
+ * Maps the detail parameter to AI provider settings.
+ */
+function getDetailSettings(detail: RefineParams["detail"]): { size: string; quality: string } {
+  switch (detail) {
+    case "cheap":
+      return { size: "512x512", quality: "standard" };
+    case "pro":
+      return { size: "1792x1024", quality: "hd" };
+    case "standard":
+    default:
+      return { size: "1024x1024", quality: "standard" };
+  }
+}
+
+/**
+ * Handle character refinement based on UI slider values.
+ * This generates a new refined image based on archetype and refinement parameters.
+ * 
+ * Request body:
+ * {
+ *   "action": "refine-character",
+ *   "character_id": "uuid-or-null",
+ *   "archetype": "hero",
+ *   "base_image_url": "<existing-image-url>",
+ *   "base_storage_path": "<existing-storage-path>",
+ *   "tier": "standard",
+ *   "refine": {
+ *     "age": "younger" | "adult" | "older",
+ *     "mood": "neutral" | "happy" | "angry" | "sad",
+ *     "hairLength": "short" | "medium" | "long",
+ *     "eyebrowShape": "soft" | "sharp" | "thick" | "thin",
+ *     "style": "anime" | "realistic" | "painterly",
+ *     "detail": "cheap" | "standard" | "pro"
+ *   }
+ * }
+ */
+async function handleRefineCharacter(
+  client: SupabaseClient,
+  userId: string,
+  body: any,
+): Promise<Response> {
+  const archetype = typeof body?.archetype === "string" ? body.archetype.trim() : "";
+  const tier = typeof body?.tier === "string" ? body.tier.trim() : "standard";
+  const characterId = typeof body?.character_id === "string" ? body.character_id : null;
+  const baseImageUrl = typeof body?.base_image_url === "string" ? body.base_image_url : null;
+  const baseStoragePath = typeof body?.base_storage_path === "string" ? body.base_storage_path : null;
+  
+  // Parse refine object
+  const refineInput = body?.refine && typeof body.refine === "object" ? body.refine : {};
+  const refine: RefineParams = {
+    age: ["younger", "adult", "older"].includes(refineInput.age) ? refineInput.age : undefined,
+    mood: ["neutral", "happy", "angry", "sad"].includes(refineInput.mood) ? refineInput.mood : undefined,
+    hairLength: ["short", "medium", "long"].includes(refineInput.hairLength) ? refineInput.hairLength : undefined,
+    eyebrowShape: ["soft", "sharp", "thick", "thin"].includes(refineInput.eyebrowShape) ? refineInput.eyebrowShape : undefined,
+    style: ["anime", "realistic", "painterly"].includes(refineInput.style) ? refineInput.style : undefined,
+    detail: ["cheap", "standard", "pro"].includes(refineInput.detail) ? refineInput.detail : "standard",
+  };
+
+  if (!archetype) {
+    return jsonResponse(400, { error: "archetype is required" });
+  }
+
+  // Build the refined prompt
+  const prompt = buildRefinePrompt(archetype, refine);
+  
+  // Get quality settings based on detail level
+  const detailSettings = getDetailSettings(refine.detail);
+
+  // Adjust prompt based on tier
+  let finalPrompt = prompt;
+  if (tier === "premium") {
+    finalPrompt += " Highly detailed, cinematic quality, professional character art.";
+  } else {
+    finalPrompt += " Clean character design, clear silhouette.";
+  }
+
+  console.log("Refine character prompt:", finalPrompt);
+
+  try {
+    let imageBytes: Uint8Array;
+    let providerName: string;
+    let metadata: Record<string, unknown> = {};
+
+    // TODO: If the AI provider supports image-to-image refinement (e.g., img2img),
+    // we could pass the base_storage_path image as a reference. Currently,
+    // Google Imagen and OpenAI DALL-E primarily support text-to-image for generation.
+    // Image editing with DALL-E requires a mask, which doesn't fit this use case.
+    // For now, we generate a new image based on the refined text prompt.
+    // 
+    // When img2img or identity-locking features become available, this section
+    // should be updated to:
+    // 1. Download the base image from storage using base_storage_path
+    // 2. Pass it to the provider's image editing/refinement endpoint
+    // 3. Maintain character identity while applying refinements
+
+    if (AI_IMAGE_PROVIDER === "google" && GOOGLE_API_KEY) {
+      // Google Imagen API: text-to-image generation with refined prompt
+      const payload = {
+        contents: [{
+          role: "user",
+          parts: [{ text: finalPrompt }],
+        }],
+        generationConfig: {
+          candidateCount: 1,
+        },
+      };
+      const data = await googleImageRequest(payload);
+      const images = extractGoogleImages(data);
+      if (images.length > 0) {
+        imageBytes = images[0].image;
+        providerName = "google";
+        metadata = images[0].metadata || {};
+      } else {
+        throw new Error("No image generated by Google");
+      }
+    } else if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
+      // OpenAI DALL-E: text-to-image generation with refined prompt
+      // Note: DALL-E 3 doesn't support custom sizes beyond the preset options
+      const dalleSize = detailSettings.size === "512x512" ? "1024x1024" : 
+                        detailSettings.size === "1792x1024" ? "1792x1024" : "1024x1024";
+      const requestBody = {
+        model: "dall-e-3",
+        prompt: finalPrompt,
+        n: 1,
+        size: dalleSize,
+        quality: detailSettings.quality,
+        response_format: "b64_json",
+      };
+      const data = await openAiImageRequest("https://api.openai.com/v1/images/generations", requestBody);
+      const base64 = data?.data?.[0]?.b64_json;
+      if (!base64) throw new Error("OpenAI did not return image");
+      imageBytes = decodeBase64Image(base64);
+      providerName = "openai";
+    } else {
+      // Fallback to placeholder when no AI provider is configured
+      imageBytes = PLACEHOLDER_BYTES;
+      providerName = "placeholder";
+      metadata = { note: "Using placeholder - no AI provider configured" };
+    }
+
+    // Generate a unique ID for this refined draft
+    const draftId = crypto.randomUUID();
+    const timestamp = Date.now();
+    
+    // Store in character drafts folder with refine suffix
+    // Path format: story-refs/character-drafts/{userId}/{draftId}-refine-{timestamp}.png
+    const target: StoragePath = {
+      bucket: REF_BUCKET,
+      path: `character-drafts/${userId}/${draftId}-refine-${timestamp}.png`,
+    };
+
+    await uploadToStorage(client, target, imageBytes, "image/png");
+    const signedUrl = await createSignedUrl(client, target);
+
+    return jsonResponse(200, {
+      draft_id: draftId,
+      variant_id: `${draftId}-refine-${timestamp}`,
+      image_url: signedUrl,
+      storage_path: `${target.bucket}/${target.path}`,
+      provider: providerName,
+      archetype,
+      tier,
+      refine,
+      character_id: characterId,
+      base_image_url: baseImageUrl,
+      base_storage_path: baseStoragePath,
+      prompt_used: finalPrompt,
+      metadata,
+    });
+  } catch (error) {
+    console.error("Character refinement failed", error);
+    return jsonResponse(500, { error: "Failed to refine character" });
+  }
+}
+
 serve(async req => {
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "Method not allowed" });
@@ -1321,6 +1600,9 @@ serve(async req => {
   try {
     if (action === "generate-character-draft") {
       return await handleGenerateCharacterDraft(supabase, user.id, body);
+    }
+    if (action === "refine-character") {
+      return await handleRefineCharacter(supabase, user.id, body);
     }
     if (action === "upload-base") {
       return await handleUploadBase(supabase, user.id, body);
