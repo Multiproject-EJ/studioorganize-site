@@ -803,6 +803,187 @@
         .so-mobile-shell[data-page="character-studio"] .so-mobile-bottom-nav { display: none; }
       }
       
+      /* Visual Refinement Panel Styles */
+      .character-studio-refine {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .character-studio-refine-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr);
+        align-items: start;
+      }
+      @media (max-width: 960px) {
+        .character-studio-refine-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .character-studio-refine-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .character-studio-refine-preview-box {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .character-studio-refine-previews {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 640px) {
+        .character-studio-refine-previews {
+          grid-template-columns: 1fr;
+        }
+      }
+      .character-studio-refine-preview-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .character-studio-refine-preview-label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .character-studio-refine-preview {
+        position: relative;
+        background: var(--panel);
+        border: 1px dashed var(--ring);
+        border-radius: 12px;
+        min-height: 200px;
+        aspect-ratio: 3 / 4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .character-studio-refine-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .character-studio-refine-preview-empty {
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+        padding: 16px;
+        line-height: 1.45;
+      }
+      .character-studio-refine-loading {
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .character-studio-refine-loading-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--ring);
+        border-top-color: var(--acc);
+        border-radius: 50%;
+        animation: character-studio-refine-spin 1s linear infinite;
+      }
+      @keyframes character-studio-refine-spin {
+        to { transform: rotate(360deg); }
+      }
+      .character-studio-refine-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .character-studio-refine-actions button {
+        flex: 1;
+        min-width: 140px;
+        border: 1px solid var(--ring);
+        border-radius: 12px;
+        padding: 10px 16px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+      .character-studio-refine-actions button:hover {
+        border-color: var(--acc);
+        background: var(--chip);
+      }
+      .character-studio-refine-actions button:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
+      .character-studio-refine-actions button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .character-studio-refine-actions button.primary {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: var(--active-tab-text);
+      }
+      .character-studio-refine-actions button.primary:hover {
+        box-shadow: 0 8px 24px rgba(79, 123, 255, 0.25);
+      }
+      .character-studio-refine-status {
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 18px;
+        text-align: center;
+      }
+      .character-studio-refine-status[data-state="ready"] {
+        color: var(--acc);
+      }
+      .character-studio-refine-status[data-state="warning"] {
+        color: #f97316;
+      }
+      .character-studio-refine-status[data-state="error"] {
+        color: #ef4444;
+      }
+      .character-studio-refine-status[data-state="refining"] {
+        color: var(--brand);
+      }
+      .character-studio-refine-pill-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .character-studio-refine-pill {
+        border: 1px solid var(--ring);
+        border-radius: 999px;
+        padding: 6px 12px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .character-studio-refine-pill:hover {
+        border-color: var(--acc);
+        background: var(--chip);
+      }
+      .character-studio-refine-pill.selected {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: var(--active-tab-text);
+      }
+      .character-studio-refine-pill:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
+      
       /* FinishThatStory AI Assistant Styles */
       .fts-overlay {
         position: fixed;
@@ -3053,6 +3234,89 @@
                   </div>
                 </div>
               </section>
+              <section class="character-studio-section character-studio-refine" data-character-refine>
+                <h3>Visual Refinement</h3>
+                <p class="muted-text">Fine-tune your character's appearance with adjustable parameters and preview before/after changes.</p>
+                <div class="character-studio-refine-grid">
+                  <div class="character-studio-refine-controls">
+                    <label class="character-studio-field">
+                      <span>Age</span>
+                      <select data-refine-control="age">
+                        <option value="default">Default</option>
+                        <option value="child">Child</option>
+                        <option value="teen">Teen</option>
+                        <option value="young-adult">Young Adult</option>
+                        <option value="middle-aged">Middle Aged</option>
+                        <option value="elderly">Elderly</option>
+                      </select>
+                    </label>
+                    <label class="character-studio-field">
+                      <span>Mood / Expression</span>
+                      <div class="character-studio-refine-pill-group">
+                        <button type="button" class="character-studio-refine-pill selected" data-refine-pill="mood" data-value="neutral">Neutral</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="mood" data-value="happy">Happy</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="mood" data-value="sad">Sad</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="mood" data-value="angry">Angry</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="mood" data-value="surprised">Surprised</button>
+                      </div>
+                    </label>
+                    <label class="character-studio-field">
+                      <span>Hair Length</span>
+                      <div class="character-studio-refine-pill-group">
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="hairLength" data-value="short">Short</button>
+                        <button type="button" class="character-studio-refine-pill selected" data-refine-pill="hairLength" data-value="medium">Medium</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="hairLength" data-value="long">Long</button>
+                      </div>
+                    </label>
+                    <label class="character-studio-field">
+                      <span>Eyebrow Shape</span>
+                      <div class="character-studio-refine-pill-group">
+                        <button type="button" class="character-studio-refine-pill selected" data-refine-pill="eyebrowShape" data-value="soft">Soft</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="eyebrowShape" data-value="sharp">Sharp</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="eyebrowShape" data-value="thick">Thick</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="eyebrowShape" data-value="thin">Thin</button>
+                      </div>
+                    </label>
+                    <label class="character-studio-field">
+                      <span>Style</span>
+                      <div class="character-studio-refine-pill-group">
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="style" data-value="anime">Anime</button>
+                        <button type="button" class="character-studio-refine-pill selected" data-refine-pill="style" data-value="realistic">Realistic</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="style" data-value="painterly">Painterly</button>
+                      </div>
+                    </label>
+                    <label class="character-studio-field">
+                      <span>Detail Level</span>
+                      <div class="character-studio-refine-pill-group">
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="detail" data-value="cheap">Cheap</button>
+                        <button type="button" class="character-studio-refine-pill selected" data-refine-pill="detail" data-value="standard">Standard</button>
+                        <button type="button" class="character-studio-refine-pill" data-refine-pill="detail" data-value="pro">Pro</button>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="character-studio-refine-preview-box">
+                    <div class="character-studio-refine-previews">
+                      <div class="character-studio-refine-preview-item">
+                        <div class="character-studio-refine-preview-label">Before</div>
+                        <div class="character-studio-refine-preview" data-refine-preview-before>
+                          <div class="character-studio-refine-preview-empty">No character portrait available</div>
+                        </div>
+                      </div>
+                      <div class="character-studio-refine-preview-item">
+                        <div class="character-studio-refine-preview-label">After</div>
+                        <div class="character-studio-refine-preview" data-refine-preview-after>
+                          <div class="character-studio-refine-preview-empty">No refinement generated yet</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="character-studio-refine-actions">
+                      <button type="button" class="primary" data-refine-regenerate>Regenerate</button>
+                      <button type="button" data-refine-save-variant>Save Variant</button>
+                    </div>
+                    <div class="character-studio-refine-status" data-refine-status>Ready</div>
+                  </div>
+                </div>
+              </section>
               <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-poses" aria-labelledby="character-tab-poses" data-tab-panel="poses"${panelAttributes('poses')}>
                 <h3>Pose Library</h3>
                 <p class="muted-text">Lock in a transparent base PNG, then spin up labeled poses and expressions that stay true to this character.</p>
@@ -3647,6 +3911,212 @@
         ensureMobileCloseButton(container);
         updateMobileActiveCard();
         scrollMobileGalleryToActive({ smooth: true });
+        
+        // Initialize refinement panel for this character
+        enterRefineModeForCharacter(active);
+      }
+
+      // =========================================================================
+      // Visual Refinement Panel (UI + Stubs)
+      // =========================================================================
+      //
+      // Stage 2: Visual Refinement Tools (UI only, no real API calls yet)
+      //
+      // State:
+      //   - currentRefineState: Holds refinement parameters (age, mood, hair, etc.)
+      //   - isDirty: Tracks if settings have changed
+      //
+      // Functions:
+      //   - enterRefineModeForCharacter(): Populates "before" preview and syncs UI
+      //   - regenerateRefinement(): Stub - simulates refine call with timeout
+      //   - saveRefinedVariant(): Stub - shows status message
+      // =========================================================================
+
+      const currentRefineState = {
+        age: 'default',
+        mood: 'neutral',
+        hairLength: 'medium',
+        eyebrowShape: 'soft',
+        style: 'realistic',
+        detail: 'standard',
+        isDirty: false
+      };
+
+      function setRefineStatus(message, state = '') {
+        const statusEl = document.querySelector('[data-refine-status]');
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        if (state) {
+          statusEl.setAttribute('data-state', state);
+        } else {
+          statusEl.removeAttribute('data-state');
+        }
+      }
+
+      function enterRefineModeForCharacter(character) {
+        if (!character) {
+          setRefineStatus('No character selected', 'warning');
+          return;
+        }
+
+        // Reset state to defaults
+        currentRefineState.age = 'default';
+        currentRefineState.mood = 'neutral';
+        currentRefineState.hairLength = 'medium';
+        currentRefineState.eyebrowShape = 'soft';
+        currentRefineState.style = 'realistic';
+        currentRefineState.detail = 'standard';
+        currentRefineState.isDirty = false;
+
+        // Update "before" preview with current character portrait
+        const beforePreview = document.querySelector('[data-refine-preview-before]');
+        if (beforePreview) {
+          const portraitUrl = character.looks?.portrait || character.lookPortraitUrl || '';
+          if (portraitUrl) {
+            beforePreview.innerHTML = `<img src="${escapeHtml(portraitUrl)}" alt="Current character portrait" />`;
+          } else {
+            beforePreview.innerHTML = '<div class="character-studio-refine-preview-empty">No character portrait available</div>';
+          }
+        }
+
+        // Clear "after" preview
+        const afterPreview = document.querySelector('[data-refine-preview-after]');
+        if (afterPreview) {
+          afterPreview.innerHTML = '<div class="character-studio-refine-preview-empty">No refinement generated yet</div>';
+        }
+
+        // Reset all controls to default values
+        const ageSelect = document.querySelector('[data-refine-control="age"]');
+        if (ageSelect) {
+          ageSelect.value = 'default';
+        }
+
+        // Reset pill buttons
+        document.querySelectorAll('[data-refine-pill]').forEach(pill => {
+          const group = pill.getAttribute('data-refine-pill');
+          const value = pill.getAttribute('data-value');
+          if (
+            (group === 'mood' && value === 'neutral') ||
+            (group === 'hairLength' && value === 'medium') ||
+            (group === 'eyebrowShape' && value === 'soft') ||
+            (group === 'style' && value === 'realistic') ||
+            (group === 'detail' && value === 'standard')
+          ) {
+            pill.classList.add('selected');
+          } else {
+            pill.classList.remove('selected');
+          }
+        });
+
+        setRefineStatus('Ready', 'ready');
+      }
+
+      function regenerateRefinement() {
+        const beforePreview = document.querySelector('[data-refine-preview-before]');
+        const afterPreview = document.querySelector('[data-refine-preview-after]');
+        const regenerateBtn = document.querySelector('[data-refine-regenerate]');
+        const saveBtn = document.querySelector('[data-refine-save-variant]');
+
+        if (!beforePreview || !afterPreview) return;
+
+        // Check if we have a "before" image
+        const beforeImg = beforePreview.querySelector('img');
+        if (!beforeImg) {
+          setRefineStatus('No character portrait to refine', 'warning');
+          return;
+        }
+
+        // Disable buttons during generation
+        if (regenerateBtn) regenerateBtn.disabled = true;
+        if (saveBtn) saveBtn.disabled = true;
+
+        // Show loading state
+        afterPreview.innerHTML = `
+          <div class="character-studio-refine-loading">
+            <div class="character-studio-refine-loading-spinner"></div>
+            <span>Refining character...</span>
+          </div>
+        `;
+        setRefineStatus('Refining…', 'refining');
+
+        // Simulate API call with setTimeout (stub)
+        setTimeout(() => {
+          // For stub: copy the "before" image to "after" (or use a placeholder)
+          const beforeImgSrc = beforeImg.src;
+          afterPreview.innerHTML = `<img src="${beforeImgSrc}" alt="Refined character preview" />`;
+          
+          setRefineStatus('Refined preview ready (stub)', 'ready');
+          
+          // Re-enable buttons
+          if (regenerateBtn) regenerateBtn.disabled = false;
+          if (saveBtn) saveBtn.disabled = false;
+        }, 1500); // 1.5 second simulation
+      }
+
+      function saveRefinedVariant() {
+        const afterPreview = document.querySelector('[data-refine-preview-after]');
+        if (!afterPreview) return;
+
+        const afterImg = afterPreview.querySelector('img');
+        if (!afterImg) {
+          setRefineStatus('Generate a refinement first', 'warning');
+          return;
+        }
+
+        // Stub: Show success message
+        setRefineStatus('Variant would be saved here (stub)', 'ready');
+        
+        // In real implementation, this would:
+        // 1. Call refine API to save the variant
+        // 2. Update character.looks.portrait or add to variants array
+        // 3. Trigger re-render of lookbook
+      }
+
+      // Set up event listeners for refinement controls
+      function setupRefineControls() {
+        // Age select
+        const ageSelect = document.querySelector('[data-refine-control="age"]');
+        if (ageSelect) {
+          ageSelect.addEventListener('change', (e) => {
+            currentRefineState.age = e.target.value;
+            currentRefineState.isDirty = true;
+          });
+        }
+
+        // Pill button groups
+        document.querySelectorAll('[data-refine-pill]').forEach(pill => {
+          pill.addEventListener('click', () => {
+            const group = pill.getAttribute('data-refine-pill');
+            const value = pill.getAttribute('data-value');
+            
+            // Update state
+            if (group === 'mood') currentRefineState.mood = value;
+            else if (group === 'hairLength') currentRefineState.hairLength = value;
+            else if (group === 'eyebrowShape') currentRefineState.eyebrowShape = value;
+            else if (group === 'style') currentRefineState.style = value;
+            else if (group === 'detail') currentRefineState.detail = value;
+            
+            currentRefineState.isDirty = true;
+
+            // Update UI: toggle selected class within the group
+            document.querySelectorAll(`[data-refine-pill="${group}"]`).forEach(p => {
+              p.classList.remove('selected');
+            });
+            pill.classList.add('selected');
+          });
+        });
+
+        // Regenerate button
+        const regenerateBtn = document.querySelector('[data-refine-regenerate]');
+        if (regenerateBtn) {
+          regenerateBtn.addEventListener('click', regenerateRefinement);
+        }
+
+        // Save variant button
+        const saveBtn = document.querySelector('[data-refine-save-variant]');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', saveRefinedVariant);
+        }
       }
 
       async function waitForSupabaseClient(timeoutMs = 6000){
@@ -4810,6 +5280,9 @@
       updateSaveButtonState();
       hydrateCharactersFromLocal();
       initializeSupabase();
+      
+      // Initialize refinement panel controls
+      setupRefineControls();
 
       // Listen for workspace save requests
       document.addEventListener('studioorganize:save-requested', event => {
