@@ -4043,7 +4043,13 @@
         setTimeout(() => {
           // For stub: copy the "before" image to "after" (or use a placeholder)
           const beforeImgSrc = beforeImg.src;
-          afterPreview.innerHTML = `<img src="${beforeImgSrc}" alt="Refined character preview" />`;
+          
+          // Use DOM manipulation instead of innerHTML to avoid XSS
+          afterPreview.textContent = ''; // Clear existing content
+          const img = document.createElement('img');
+          img.src = beforeImgSrc;
+          img.alt = 'Refined character preview';
+          afterPreview.appendChild(img);
           
           setRefineStatus('Refined preview ready (stub)', 'ready');
           
