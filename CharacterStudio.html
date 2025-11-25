@@ -5048,17 +5048,12 @@
           });
           
           if (error) {
-            // Log error to debug console if available
-            if (typeof window.studioDebugLog === 'function') {
-              window.studioDebugLog(action, body, null, error);
-            }
             throw error;
           }
           
-          // Log success to debug console if available (for actions not already logged)
-          // Note: generate-character-draft and refine-character log separately
-          const skipLogging = ['generate-character-draft', 'refine-character'];
-          if (typeof window.studioDebugLog === 'function' && !skipLogging.includes(action)) {
+          // Log success to debug console if available
+          // Note: generate-character-draft and refine-character log separately in their own functions
+          if (typeof window.studioDebugLog === 'function') {
             window.studioDebugLog(action, body, data, null);
           }
           
@@ -5848,16 +5843,17 @@
           ? draft.model.trim()
           : null;
 
+        // Build request body - defined outside try so it's accessible in catch
+        const requestBody = {
+          action: 'generate-character-draft',
+          archetype: archetype,
+          tier: tier
+        };
+        if (model) {
+          requestBody.model = model;
+        }
+
         try {
-          // Build request body - only include model if explicitly set
-          const requestBody = {
-            action: 'generate-character-draft',
-            archetype: archetype,
-            tier: tier
-          };
-          if (model) {
-            requestBody.model = model;
-          }
 
           // DEBUG: Log payload when sending request (prompt enrichment applied server-side)
           console.log('[DEBUG] generate-character-draft payload:', {
@@ -6398,8 +6394,6 @@
           this.createContainer();
           this.createWatermark();
           this.setupKeyboardShortcut();
-          this.wrapImagePipeline();
-          this.wrapGenerateCharacterDraft();
         }
 
         createStyles() {
@@ -7415,116 +7409,6 @@
           const payload = { ...log.payload };
           delete payload.action;
           await this.executeTestRequest(action, payload);
-        }
-
-        // Wrap the invokeImagePipeline function to log requests
-        wrapImagePipeline() {
-          const originalInvoke = invokeImagePipeline;
-          const self = this;
-
-          window.invokeImagePipelineWrapped = async function(action, payload) {
-            const logEntry = {
-              timestamp: new Date().toISOString(),
-              action,
-              archetype: payload?.archetype,
-              model: payload?.model || 'auto',
-              tier: payload?.tier,
-              payload: { ...payload, action },
-              status: 'pending',
-            };
-
-            self.addLog(logEntry);
-            const logIndex = self.logs.length - 1;
-
-            try {
-              const result = await originalInvoke(action, payload);
-
-              logEntry.status = 'completed';
-              logEntry.response = result;
-              logEntry.imageUrl = result?.image_url;
-              logEntry.storagePath = result?.storage_path;
-              logEntry.provider = result?.provider || result?.meta?.provider;
-              logEntry.model = result?.meta?.model || payload?.model || 'auto';
-
-              self.updateLog(logIndex, logEntry);
-              return result;
-            } catch (err) {
-              logEntry.status = 'error';
-              logEntry.error = err.message || 'Unknown error';
-              self.updateLog(logIndex, logEntry);
-              throw err;
-            }
-          };
-
-          // Replace the original function reference
-          // Note: We can't directly replace the function since it's defined in the IIFE scope
-          // Instead, we'll hook into the generateCharacterDraft function
-        }
-
-        // Wrap generateCharacterDraft to capture logs
-        wrapGenerateCharacterDraft() {
-          const originalGenerate = generateCharacterDraft;
-          const self = this;
-
-          // Store original for potential restoration
-          window._originalGenerateCharacterDraft = originalGenerate;
-
-          // Create wrapper that logs requests
-          window._generateCharacterDraftWrapped = async function(draft) {
-            const archetype = draft.archetype || 'hero';
-            const tier = draft.style === 'premium' ? 'premium' : 'standard';
-            const model = draft.model && typeof draft.model === 'string' && draft.model.trim()
-              ? draft.model.trim()
-              : null;
-
-            const logEntry = {
-              timestamp: new Date().toISOString(),
-              action: 'generate-character-draft',
-              archetype,
-              model: model || 'auto',
-              tier,
-              payload: {
-                action: 'generate-character-draft',
-                archetype,
-                tier,
-                model: model || undefined,
-              },
-              status: 'pending',
-            };
-
-            self.addLog(logEntry);
-            const logIndex = self.logs.length - 1;
-
-            try {
-              const result = await originalGenerate(draft);
-
-              logEntry.status = 'completed';
-              logEntry.response = result;
-              logEntry.imageUrl = result?.image_url;
-              logEntry.storagePath = result?.storage_path;
-              logEntry.provider = result?.provider || result?.meta?.provider;
-              logEntry.model = result?.meta?.model || model || 'auto';
-
-              self.updateLog(logIndex, logEntry);
-              
-              // Refresh logs view if visible
-              if (self.isExpanded && self.getCurrentTab() === 'logs') {
-                self.renderContent('logs');
-              }
-
-              return result;
-            } catch (err) {
-              logEntry.status = 'error';
-              logEntry.error = err.message || 'Unknown error';
-              self.updateLog(logIndex, logEntry);
-              
-              if (self.isExpanded && self.getCurrentTab() === 'logs') {
-                self.renderContent('logs');
-              }
-              
-              throw err;
-            }
-          };
         }
 
         addLog(entry) {
