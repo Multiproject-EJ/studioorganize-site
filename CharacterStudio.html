@@ -3917,19 +3917,35 @@
       }
 
       // =========================================================================
-      // Visual Refinement Panel (UI + Stubs)
+      // Visual Refinement Panel
       // =========================================================================
       //
-      // Stage 2: Visual Refinement Tools (UI only, no real API calls yet)
+      // Visual refinement tools for adjusting character appearance using AI.
+      // Calls the Supabase Edge Function 'ai-image-pipeline' with action 'refine-character'.
       //
       // State:
       //   - currentRefineState: Holds refinement parameters (age, mood, hair, etc.)
+      //     and variant metadata (variant_id, storage_path, image_url, draft_id)
       //   - isDirty: Tracks if settings have changed
       //
       // Functions:
       //   - enterRefineModeForCharacter(): Populates "before" preview and syncs UI
-      //   - regenerateRefinement(): Stub - simulates refine call with timeout
-      //   - saveRefinedVariant(): Stub - shows status message
+      //   - regenerateRefinement(): Calls refine-character API and updates preview
+      //   - saveRefinedVariant(): Saves refined image as character's portrait
+      //
+      // API Payload (refine-character):
+      //   - action: 'refine-character'
+      //   - character_id: UUID of active character (or null)
+      //   - archetype: Character's archetype (hero, villain, etc.)
+      //   - base_image_url: Current portrait URL
+      //   - base_storage_path: Storage path for original image
+      //   - tier: 'standard' or 'premium' (mapped from detail setting)
+      //   - refine: { age, mood, hairLength, eyebrowShape, style, detail }
+      //
+      // TODO: Image-to-image refinement is not yet supported by the AI providers.
+      //       Currently generates new images based on refined text prompts.
+      //       When img2img or identity-locking features become available,
+      //       the refinement will use the base image as a reference.
       // =========================================================================
 
       const currentRefineState = {
@@ -3939,7 +3955,12 @@
         eyebrowShape: 'soft',
         style: 'realistic',
         detail: 'standard',
-        isDirty: false
+        isDirty: false,
+        // Variant metadata from the last successful refinement call
+        variant_id: null,
+        storage_path: null,
+        image_url: null,
+        draft_id: null
       };
 
       function setRefineStatus(message, state = '') {
@@ -3967,6 +3988,11 @@
         currentRefineState.style = 'realistic';
         currentRefineState.detail = 'standard';
         currentRefineState.isDirty = false;
+        // Clear variant metadata from previous refinement
+        currentRefineState.variant_id = null;
+        currentRefineState.storage_path = null;
+        currentRefineState.image_url = null;
+        currentRefineState.draft_id = null;
 
         // Update "before" preview with current character portrait
         const beforePreview = document.querySelector('[data-refine-preview-before]');
@@ -4022,7 +4048,12 @@
         setRefineStatus('Ready', 'ready');
       }
 
-      function regenerateRefinement() {
+      /**
+       * Regenerate a refined character image using the AI image pipeline.
+       * Calls the Supabase Edge Function with action "refine-character" and current refine state.
+       * Updates the "after" preview with the returned refined image URL.
+       */
+      async function regenerateRefinement() {
         const beforePreview = document.querySelector('[data-refine-preview-before]');
         const afterPreview = document.querySelector('[data-refine-preview-after]');
         const regenerateBtn = document.querySelector('[data-refine-regenerate]');
@@ -4034,6 +4065,25 @@
         const beforeImg = beforePreview.querySelector('img');
         if (!beforeImg) {
           setRefineStatus('No character portrait to refine', 'warning');
+          return;
+        }
+
+        // Get the active character for context
+        const activeCharacter = getActiveCharacter();
+        if (!activeCharacter) {
+          setRefineStatus('No character selected', 'warning');
+          return;
+        }
+
+        // Check if Supabase is available
+        if (!state.supabase) {
+          setRefineStatus('Supabase client not ready. Please try again.', 'error');
+          return;
+        }
+
+        // Check if user is signed in
+        if (!state.session || !state.session.access_token) {
+          setRefineStatus('Sign in to refine characters', 'warning');
           return;
         }
 
@@ -4057,29 +4107,101 @@
         afterPreview.appendChild(loadingDiv);
         setRefineStatus('Refining…', 'refining');
 
-        // Simulate API call with setTimeout (stub)
-        setTimeout(() => {
-          // For stub: copy the "before" image to "after" (or use a placeholder)
-          const beforeImgSrc = beforeImg.src;
-          
-          // Use DOM manipulation instead of innerHTML to avoid XSS
+        // Map the age 'default' value to 'adult' for API compatibility
+        const ageValue = currentRefineState.age === 'default' ? 'adult' : currentRefineState.age;
+
+        // Map detail setting to tier (cheap/standard/pro -> standard/standard/premium)
+        // The Edge Function uses tier for quality (standard/premium) and refine.detail for resolution
+        const tierMapping = {
+          'cheap': 'standard',
+          'standard': 'standard',
+          'pro': 'premium'
+        };
+        const tier = tierMapping[currentRefineState.detail] || 'standard';
+
+        // Assemble payload for refine-character action
+        // See supabase/functions/ai-image-pipeline/README.md for API documentation
+        const payload = {
+          action: 'refine-character',
+          character_id: activeCharacter.id || null,
+          archetype: activeCharacter.archetype || 'hero',
+          base_image_url: activeCharacter.lookPortraitUrl || activeCharacter.looks?.portrait || null,
+          base_storage_path: activeCharacter.baseImageUrl || null,
+          tier: tier,
+          refine: {
+            age: ageValue,
+            mood: currentRefineState.mood,
+            hairLength: currentRefineState.hairLength,
+            eyebrowShape: currentRefineState.eyebrowShape,
+            style: currentRefineState.style,
+            detail: currentRefineState.detail
+          }
+        };
+
+        try {
+          // Call the Supabase Edge Function via invokeImagePipeline
+          const result = await invokeImagePipeline('refine-character', payload);
+
+          // Validate the response contains an image URL
+          if (!result || !result.image_url) {
+            throw new Error('No image URL returned from refinement');
+          }
+
+          // Store variant metadata on currentRefineState for later save
+          currentRefineState.variant_id = result.variant_id || null;
+          currentRefineState.storage_path = result.storage_path || null;
+          currentRefineState.image_url = result.image_url;
+          currentRefineState.draft_id = result.draft_id || null;
+
+          // Update the "after" preview with the refined image using safe DOM manipulation
           afterPreview.textContent = ''; // Clear existing content
           const img = document.createElement('img');
-          img.src = beforeImgSrc;
+          img.src = result.image_url;
           img.alt = 'Refined character preview';
           afterPreview.appendChild(img);
-          
-          setRefineStatus('Refined preview ready (stub)', 'ready');
-          
+
+          setRefineStatus('Refined preview ready', 'ready');
+
           // Re-enable buttons
           if (regenerateBtn) regenerateBtn.disabled = false;
           if (saveBtn) saveBtn.disabled = false;
-        }, 1500); // 1.5 second simulation
+
+        } catch (error) {
+          console.error('Character refinement failed:', error);
+
+          // Show user-friendly error message
+          const errorMessage = error && error.message ? error.message : 'Refinement failed. Please try again.';
+          setRefineStatus(errorMessage, 'error');
+
+          // Clear the "after" preview and show error state
+          afterPreview.textContent = ''; // Clear existing content
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'character-studio-refine-preview-empty';
+          emptyDiv.textContent = 'Refinement failed';
+          afterPreview.appendChild(emptyDiv);
+
+          // Re-enable buttons so user can retry
+          if (regenerateBtn) regenerateBtn.disabled = false;
+          if (saveBtn) saveBtn.disabled = true; // Keep save disabled since there's no valid image
+        }
       }
 
-      function saveRefinedVariant() {
+      /**
+       * Save the refined variant as the character's portrait.
+       * Validates that a refined image exists from a previous pipeline call,
+       * then updates the character record in Supabase.
+       */
+      async function saveRefinedVariant() {
         const afterPreview = document.querySelector('[data-refine-preview-after]');
+        const saveBtn = document.querySelector('[data-refine-save-variant]');
+        
         if (!afterPreview) return;
+
+        // Check if we have a refined image from the pipeline
+        if (!currentRefineState.image_url) {
+          setRefineStatus('Generate a refinement first', 'warning');
+          return;
+        }
 
         const afterImg = afterPreview.querySelector('img');
         if (!afterImg) {
@@ -4087,13 +4209,111 @@
           return;
         }
 
-        // Stub: Show success message
-        setRefineStatus('Variant would be saved here (stub)', 'ready');
-        
-        // In real implementation, this would:
-        // 1. Call refine API to save the variant
-        // 2. Update character.looks.portrait or add to variants array
-        // 3. Trigger re-render of lookbook
+        // Get the active character
+        const activeCharacter = getActiveCharacter();
+        if (!activeCharacter) {
+          setRefineStatus('No character selected', 'warning');
+          return;
+        }
+
+        // Check if Supabase is available
+        if (!state.supabase) {
+          setRefineStatus('Supabase client not ready. Please try again.', 'error');
+          return;
+        }
+
+        // Check if user is signed in
+        if (!state.session || !state.ownerId) {
+          setRefineStatus('Sign in to save variants', 'warning');
+          return;
+        }
+
+        // Disable save button during save operation
+        if (saveBtn) saveBtn.disabled = true;
+        setRefineStatus('Saving variant…', 'refining');
+
+        try {
+          // Update the character's portrait URL in Supabase
+          // Using the storage_path for base_image_url and image_url for look_portrait_url
+          const updatePayload = {
+            look_portrait_url: currentRefineState.image_url,
+            base_image_url: currentRefineState.storage_path || activeCharacter.baseImageUrl || null
+          };
+
+          const { error } = await state.supabase
+            .from('characters')
+            .update(updatePayload)
+            .eq('id', activeCharacter.id)
+            .eq('owner_id', state.ownerId);
+
+          if (error) {
+            throw error;
+          }
+
+          // Update the local character state
+          const charIndex = state.characters.findIndex(c => c.id === activeCharacter.id);
+          if (charIndex !== -1) {
+            state.characters[charIndex].lookPortraitUrl = currentRefineState.image_url;
+            if (currentRefineState.storage_path) {
+              state.characters[charIndex].baseImageUrl = currentRefineState.storage_path;
+            }
+            // Update looks object if it exists
+            if (state.characters[charIndex].looks) {
+              state.characters[charIndex].looks.portrait = currentRefineState.image_url;
+            }
+          }
+
+          // Persist to local storage
+          await persistCharactersToLocal();
+
+          // Mark state as dirty to trigger save on next workspace save
+          state.dirty = true;
+
+          // Update the sidebar and detail view to reflect the new portrait
+          renderCharacterList();
+          renderCharacterDetails();
+
+          // Update the "before" preview to show the new portrait
+          const beforePreview = document.querySelector('[data-refine-preview-before]');
+          if (beforePreview) {
+            beforePreview.textContent = '';
+            const img = document.createElement('img');
+            img.src = currentRefineState.image_url;
+            img.alt = 'Current character portrait';
+            beforePreview.appendChild(img);
+          }
+
+          // Clear the refined variant metadata since it's now the main portrait
+          currentRefineState.variant_id = null;
+          currentRefineState.storage_path = null;
+          currentRefineState.image_url = null;
+          currentRefineState.draft_id = null;
+
+          // Clear the "after" preview
+          afterPreview.textContent = '';
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'character-studio-refine-preview-empty';
+          emptyDiv.textContent = 'No refinement generated yet';
+          afterPreview.appendChild(emptyDiv);
+
+          setRefineStatus('Variant saved as portrait!', 'ready');
+
+          // Re-enable save button
+          if (saveBtn) saveBtn.disabled = false;
+
+          // TODO: In the future, if a variants table is implemented, we could:
+          // 1. Insert a new row in the character_variants table
+          // 2. Update the sidebar/variant list to show the new variant
+          // 3. Keep track of variant history for the character
+
+        } catch (error) {
+          console.error('Failed to save refined variant:', error);
+          const errorMessage = error && error.message ? error.message : 'Save failed. Please try again.';
+          setRefineStatus(errorMessage, 'error');
+
+          // Re-enable save button so user can retry
+          if (saveBtn) saveBtn.disabled = false;
+        }
       }
 
       // Set up event listeners for refinement controls
