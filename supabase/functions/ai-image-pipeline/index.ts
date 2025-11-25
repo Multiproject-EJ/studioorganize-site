@@ -16,12 +16,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY") ?? "";
-// NOTE: GOOGLE_IMAGE_MODEL is only used after Vertex AI integration; currently gated by ENABLE_VERTEX_AI.
-// Using || instead of ?? intentionally: empty string should fallback to a valid model ID.
-const GOOGLE_IMAGE_MODEL = Deno.env.get("GOOGLE_IMAGE_MODEL") || "imagen-3.0";
-const GOOGLE_IMAGE_ENDPOINT =
-  Deno.env.get("GOOGLE_IMAGE_ENDPOINT")
-  ?? `https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_IMAGE_MODEL}:generateContent`;
+// Google Generative Language API base URL - endpoint is built per-request with the resolved model
+const GOOGLE_GENERATIVE_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const AI_IMAGE_PROVIDER = (Deno.env.get("AI_IMAGE_PROVIDER") ?? "openai").toLowerCase();
 const AI_IMAGE_MODEL = Deno.env.get("AI_IMAGE_MODEL") ?? "";
 // Flag to enable Google/Vertex AI integration (set to "true" to enable)
@@ -32,11 +28,17 @@ const DEBUG = Deno.env.get("DEBUG") === "true";
 // Model Selection: Supported providers and models
 // Priority order: request `model` > env `AI_IMAGE_MODEL` > fallback by provider + detail
 const SUPPORTED_PROVIDERS = ["google", "openai"] as const;
+// Google models split into two groups:
+// - Gemini 3 Pro Image: Generative Language API (uses GOOGLE_API_KEY, returns inline_data)
+// - Imagen 3: Vertex AI (requires ENABLE_VERTEX_AI + service account auth)
 const SUPPORTED_GOOGLE_MODELS = [
+  // Gemini 3 Pro Image (Generative Language API) - available now
+  "gemini-3-pro-image-preview",
+  "gemini-3-pro-image",
+  // Imagen 3 (Vertex AI) - gated behind ENABLE_VERTEX_AI
   "imagen-3.0",
   "imagen-3.0-lite",
   "imagen-3.0-highres",
-  "nano-banana-pro", // TODO: Custom internal alias - map to actual Vertex AI model ID when available
 ] as const;
 const SUPPORTED_OPENAI_MODELS = [
   "dall-e-3",
@@ -124,14 +126,15 @@ function resolveModel({ provider, requestedModel, envModel, detail }: ResolveMod
   // 3. Fallback mapping by provider + detail
   if (isGoogle) {
     // Map detail tier to Google model
-    // TODO: nano-banana-pro should map to a real Vertex AI model ID when configured
+    // Default to Gemini 3 Pro Image (available via Generative Language API)
+    // Imagen 3 models are gated behind ENABLE_VERTEX_AI
     if (detail === "pro") {
-      return { model: "imagen-3.0-highres", provider: "google" };
+      return { model: "gemini-3-pro-image", provider: "google" };
     }
     if (detail === "cheap") {
-      return { model: "imagen-3.0-lite", provider: "google" };
+      return { model: "gemini-3-pro-image-preview", provider: "google" };
     }
-    return { model: "imagen-3.0", provider: "google" };
+    return { model: "gemini-3-pro-image", provider: "google" };
   }
 
   // OpenAI fallback
@@ -260,17 +263,32 @@ function composeRefinementPrompt(archetype: string, refineModifiers: string[], t
 }
 
 /**
- * Check if Google provider is currently enabled.
+ * Check if Imagen 3 (Vertex AI) is enabled.
  * Returns false if ENABLE_VERTEX_AI is not set.
+ * Note: Gemini 3 Pro Image models use the Generative Language API and don't require this flag.
  */
-function isGoogleProviderEnabled(): boolean {
+function isVertexAIEnabled(): boolean {
   if (!ENABLE_VERTEX_AI) {
     if (DEBUG) {
-      console.log("[PROVIDER] Google provider is gated. ENABLE_VERTEX_AI is not set to 'true'.");
+      console.log("[PROVIDER] Imagen 3 (Vertex AI) is gated. ENABLE_VERTEX_AI is not set to 'true'.");
     }
     return false;
   }
   return true;
+}
+
+/**
+ * Check if a model is a Gemini 3 Pro Image model (uses Generative Language API).
+ */
+function isGemini3ProImageModel(model: string): boolean {
+  return model.startsWith("gemini-3-pro-image");
+}
+
+/**
+ * Check if a model is an Imagen 3 model (requires Vertex AI).
+ */
+function isImagen3Model(model: string): boolean {
+  return model.startsWith("imagen-3");
 }
 
 // ============================================================================
@@ -549,16 +567,39 @@ async function openAiImageRequest(endpoint: string, body: FormData | Record<stri
   return data;
 }
 
-async function googleImageRequest(body: Record<string, unknown>) {
+/**
+ * Make a request to the Google Generative Language API.
+ * Builds the endpoint per-request using the provided model.
+ * @param model - The model ID (e.g., 'gemini-3-pro-image-preview', 'gemini-3-pro-image')
+ * @param body - The request body
+ * @returns The API response data
+ */
+async function googleImageRequest(model: string, body: Record<string, unknown>) {
   if (!GOOGLE_API_KEY) {
     throw new Error("Google API key not configured");
   }
-  const response = await fetch(`${GOOGLE_IMAGE_ENDPOINT}?key=${GOOGLE_API_KEY}`, {
+  // Build endpoint per-request with the resolved model
+  const endpoint = `${GOOGLE_GENERATIVE_API_BASE}/${model}:generateContent?key=${GOOGLE_API_KEY}`;
+  
+  if (DEBUG) {
+    console.log("[GOOGLE] Request endpoint:", endpoint.replace(GOOGLE_API_KEY, "***"));
+    console.log("[GOOGLE] Request model:", model);
+  }
+  
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = await response.json();
+  
+  if (DEBUG) {
+    console.log("[GOOGLE] Response status:", response.status);
+    if (!response.ok) {
+      console.log("[GOOGLE] Response data:", JSON.stringify(data));
+    }
+  }
+  
   if (!response.ok) {
     const message = data?.error?.message || response.statusText;
     throw new Error(`Google image request failed: ${message}`);
@@ -716,6 +757,8 @@ function extractGoogleImages(data: any): { image: Uint8Array; metadata?: Record<
 
 class GoogleImageProvider extends PlaceholderProvider {
   name = "google";
+  // Default model for pose/scene generation - uses Gemini 3 Pro Image via Generative Language API
+  private defaultModel = "gemini-3-pro-image";
 
   private buildPrompt(basePrompt: string, extra: string[]): string {
     return [
@@ -754,14 +797,14 @@ class GoogleImageProvider extends PlaceholderProvider {
         this.buildPrompt(prompt, ["Return a transparent PNG background if possible."]),
         [base],
       );
-      const data = await googleImageRequest(payload);
+      const data = await googleImageRequest(this.defaultModel, payload);
       const [image] = extractGoogleImages(data);
       if (!image) throw new Error("Google did not return pose image");
       let bytes = image.image;
       if (options?.transparent) {
         bytes = await ensureTransparent(bytes);
       }
-      return { image: bytes, provider: this.name, metadata: { prompt, provider_metadata: image.metadata || {} } };
+      return { image: bytes, provider: this.name, metadata: { prompt, model: this.defaultModel, provider_metadata: image.metadata || {} } };
     } catch (error) {
       console.error("Google pose generation failed, using placeholder", error);
       return super.generatePoseFromCharacter(base, prompt, options);
@@ -784,7 +827,7 @@ class GoogleImageProvider extends PlaceholderProvider {
         `Respect references: ${references.map(ref => `${ref.role}:${ref.path}`).join(", ")}`,
       ];
       const payload = this.basePayload(this.buildPrompt(prompt, extra), images);
-      const data = await googleImageRequest(payload);
+      const data = await googleImageRequest(this.defaultModel, payload);
       const [image] = extractGoogleImages(data);
       if (!image) throw new Error("Google did not return scene image");
       let bytes = image.image;
@@ -794,7 +837,7 @@ class GoogleImageProvider extends PlaceholderProvider {
       return {
         image: bytes,
         provider: this.name,
-        metadata: { prompt, references, provider_metadata: image.metadata || {} },
+        metadata: { prompt, references, model: this.defaultModel, provider_metadata: image.metadata || {} },
       };
     } catch (error) {
       console.error("Google scene generation failed, using placeholder", error);
@@ -821,7 +864,7 @@ class GoogleImageProvider extends PlaceholderProvider {
         images,
         variants,
       );
-      const data = await googleImageRequest(payload);
+      const data = await googleImageRequest(this.defaultModel, payload);
       const imagesOut = extractGoogleImages(data);
       if (!imagesOut.length) throw new Error("Google did not return continuation variants");
       return { provider: this.name, images: imagesOut };
@@ -833,27 +876,26 @@ class GoogleImageProvider extends PlaceholderProvider {
 }
 
 function resolveProvider(): ImageProvider {
-  // Gate Google provider behind ENABLE_VERTEX_AI flag
+  // Google provider now supports Gemini 3 Pro Image without ENABLE_VERTEX_AI flag
+  // Imagen 3 models still require ENABLE_VERTEX_AI (checked per-request in handlers)
   if (AI_IMAGE_PROVIDER === "google") {
-    if (!isGoogleProviderEnabled()) {
-      console.warn("[PROVIDER] Google provider requested but ENABLE_VERTEX_AI not enabled. Falling back to OpenAI.");
-      if (OPENAI_API_KEY) return new OpenAIImageProvider();
-      return new PlaceholderProvider();
-    }
     if (GOOGLE_API_KEY) {
       return new GoogleImageProvider();
     }
+    console.warn("[PROVIDER] Google provider requested but GOOGLE_API_KEY not configured. Falling back to OpenAI.");
+    if (OPENAI_API_KEY) return new OpenAIImageProvider();
+    return new PlaceholderProvider();
   }
   if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
     return new OpenAIImageProvider();
   }
   if (AI_IMAGE_PROVIDER === "auto") {
-    // For auto mode, prefer OpenAI since Google is gated
+    // For auto mode, prefer OpenAI but allow Google if configured
     if (OPENAI_API_KEY) return new OpenAIImageProvider();
-    if (GOOGLE_API_KEY && isGoogleProviderEnabled()) return new GoogleImageProvider();
+    if (GOOGLE_API_KEY) return new GoogleImageProvider();
   }
   if (OPENAI_API_KEY) return new OpenAIImageProvider();
-  if (GOOGLE_API_KEY && isGoogleProviderEnabled()) return new GoogleImageProvider();
+  if (GOOGLE_API_KEY) return new GoogleImageProvider();
   return new PlaceholderProvider();
 }
 
@@ -1509,11 +1551,16 @@ async function handleGenerateCharacterDraft(
     return jsonResponse(400, { error: message });
   }
 
-  // Check if Google provider is requested but not enabled
-  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+  // Check if Imagen 3 model is selected but Vertex AI is not enabled
+  if (resolvedModel.provider === "google" && isImagen3Model(resolvedModel.model) && !isVertexAIEnabled()) {
+    console.warn("[PROVIDER] Imagen 3 model requested but ENABLE_VERTEX_AI not enabled:", resolvedModel.model);
     return jsonResponse(501, {
-      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
+      error: `Google Imagen 3 (Vertex AI) is disabled. Enable ENABLE_VERTEX_AI and configure service account auth to use ${resolvedModel.model}. Alternatively, select a Gemini 3 Pro Image model.`,
     });
+    // TODO: When Vertex AI integration is complete, implement:
+    // - Vertex AI endpoint: https://us-central1-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/publishers/google/models/{model}:predict
+    // - Authentication: Service account with OAuth2 token or workload identity
+    // - Request format: Vertex AI Imagen predict payload
   }
 
   // Build enriched prompt using the prompt enrichment system
@@ -1541,9 +1588,9 @@ async function handleGenerateCharacterDraft(
     let usedModel: string;
     let metadata: Record<string, unknown> = {};
 
-    if (resolvedModel.provider === "google" && GOOGLE_API_KEY && isGoogleProviderEnabled()) {
-      // Google Imagen API: text-to-image generation
-      // NOTE: Requires ENABLE_VERTEX_AI=true and proper Vertex AI integration
+    if (resolvedModel.provider === "google" && GOOGLE_API_KEY) {
+      // Google Generative Language API: text-to-image generation
+      // Gemini 3 Pro Image models use this endpoint directly with GOOGLE_API_KEY
       const payload = {
         contents: [{
           role: "user",
@@ -1553,7 +1600,7 @@ async function handleGenerateCharacterDraft(
           candidateCount: 1,
         },
       };
-      const data = await googleImageRequest(payload);
+      const data = await googleImageRequest(resolvedModel.model, payload);
       const images = extractGoogleImages(data);
       if (images.length > 0) {
         imageBytes = images[0].image;
@@ -1561,7 +1608,11 @@ async function handleGenerateCharacterDraft(
         usedModel = resolvedModel.model;
         metadata = images[0].metadata || {};
       } else {
-        throw new Error("No image generated by Google");
+        // Check if Google returned an error in the response
+        if (data?.error) {
+          throw new Error(data.error.message || "Google API returned an error");
+        }
+        throw new Error("No image generated by Google - check model compatibility");
       }
     } else if (resolvedModel.provider === "openai" && OPENAI_API_KEY) {
       // OpenAI: text-to-image generation with resolved model
@@ -1837,11 +1888,16 @@ async function handleRefineCharacter(
     return jsonResponse(400, { error: message });
   }
 
-  // Check if Google provider is requested but not enabled
-  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+  // Check if Imagen 3 model is selected but Vertex AI is not enabled
+  if (resolvedModel.provider === "google" && isImagen3Model(resolvedModel.model) && !isVertexAIEnabled()) {
+    console.warn("[PROVIDER] Imagen 3 model requested but ENABLE_VERTEX_AI not enabled:", resolvedModel.model);
     return jsonResponse(501, {
-      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
+      error: `Google Imagen 3 (Vertex AI) is disabled. Enable ENABLE_VERTEX_AI and configure service account auth to use ${resolvedModel.model}. Alternatively, select a Gemini 3 Pro Image model.`,
     });
+    // TODO: When Vertex AI integration is complete, implement:
+    // - Vertex AI endpoint: https://us-central1-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/publishers/google/models/{model}:predict
+    // - Authentication: Service account with OAuth2 token or workload identity
+    // - Request format: Vertex AI Imagen predict payload
   }
 
   // Build refine modifiers for the enriched prompt system
@@ -1885,9 +1941,9 @@ async function handleRefineCharacter(
     // 2. Pass it to the provider's image editing/refinement endpoint
     // 3. Maintain character identity while applying refinements
 
-    if (resolvedModel.provider === "google" && GOOGLE_API_KEY && isGoogleProviderEnabled()) {
-      // Google Imagen API: text-to-image generation with refined prompt
-      // NOTE: Requires ENABLE_VERTEX_AI=true and proper Vertex AI integration
+    if (resolvedModel.provider === "google" && GOOGLE_API_KEY) {
+      // Google Generative Language API: text-to-image generation with refined prompt
+      // Gemini 3 Pro Image models use this endpoint directly with GOOGLE_API_KEY
       const payload = {
         contents: [{
           role: "user",
@@ -1897,7 +1953,7 @@ async function handleRefineCharacter(
           candidateCount: 1,
         },
       };
-      const data = await googleImageRequest(payload);
+      const data = await googleImageRequest(resolvedModel.model, payload);
       const images = extractGoogleImages(data);
       if (images.length > 0) {
         imageBytes = images[0].image;
@@ -1905,7 +1961,11 @@ async function handleRefineCharacter(
         usedModel = resolvedModel.model;
         metadata = images[0].metadata || {};
       } else {
-        throw new Error("No image generated by Google");
+        // Check if Google returned an error in the response
+        if (data?.error) {
+          throw new Error(data.error.message || "Google API returned an error");
+        }
+        throw new Error("No image generated by Google - check model compatibility");
       }
     } else if (resolvedModel.provider === "openai" && OPENAI_API_KEY) {
       // OpenAI: text-to-image generation with resolved model
