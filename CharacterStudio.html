@@ -1626,21 +1626,24 @@
       <div class="character-studio-wizard-step-content" data-wizard-step-content="2">
         <h2 class="character-studio-wizard-title">First visual draft</h2>
         <!-- Model Selection for Wizard Step 2 -->
-        <div class="character-studio-field" style="margin-bottom: 16px;">
+        <!-- NOTE: Google/Imagen models are temporarily hidden until Vertex AI integration is complete -->
+        <div class="character-studio-field" style="margin-bottom: 16px;" title="Prompt enrichment applied for higher-quality, consistent character images">
           <span>Engine / Model</span>
           <select id="characterWizardModelSelect" data-wizard-model-select>
-            <option value="">Auto (use default)</option>
+            <option value="">Auto (recommended)</option>
+            <optgroup label="OpenAI">
+              <option value="dall-e-3">DALL-E 3</option>
+              <option value="gpt-image-1024">GPT Image 1024</option>
+              <option value="gpt-image-512">GPT Image 512</option>
+            </optgroup>
+            <!-- Google Imagen models temporarily disabled (Vertex AI integration pending)
             <optgroup label="Google Imagen">
               <option value="imagen-3.0">Imagen 3.0</option>
               <option value="imagen-3.0-lite">Imagen 3.0 Lite</option>
               <option value="imagen-3.0-highres">Imagen 3.0 Highres</option>
               <option value="nano-banana-pro">Nano Banana Pro (custom)</option>
             </optgroup>
-            <optgroup label="OpenAI">
-              <option value="dall-e-3">DALL-E 3</option>
-              <option value="gpt-image-1024">GPT Image 1024</option>
-              <option value="gpt-image-512">GPT Image 512</option>
-            </optgroup>
+            -->
           </select>
         </div>
         <div class="character-studio-wizard-preview" data-wizard-preview>
@@ -3453,21 +3456,24 @@
                         <button type="button" class="character-studio-refine-pill" data-refine-pill="detail" data-value="pro">Pro</button>
                       </div>
                     </label>
-                    <label class="character-studio-field">
+                    <!-- NOTE: Google/Imagen models are temporarily hidden until Vertex AI integration is complete -->
+                    <label class="character-studio-field" title="Prompt enrichment applied for higher-quality refinement">
                       <span>Engine / Model</span>
                       <select id="characterRefineModelSelect" data-refine-model-select>
-                        <option value="">Auto (use default)</option>
+                        <option value="">Auto (recommended)</option>
+                        <optgroup label="OpenAI">
+                          <option value="dall-e-3">DALL-E 3</option>
+                          <option value="gpt-image-1024">GPT Image 1024</option>
+                          <option value="gpt-image-512">GPT Image 512</option>
+                        </optgroup>
+                        <!-- Google Imagen models temporarily disabled (Vertex AI integration pending)
                         <optgroup label="Google Imagen">
                           <option value="imagen-3.0">Imagen 3.0</option>
                           <option value="imagen-3.0-lite">Imagen 3.0 Lite</option>
                           <option value="imagen-3.0-highres">Imagen 3.0 Highres</option>
                           <option value="nano-banana-pro">Nano Banana Pro (custom)</option>
                         </optgroup>
-                        <optgroup label="OpenAI">
-                          <option value="dall-e-3">DALL-E 3</option>
-                          <option value="gpt-image-1024">GPT Image 1024</option>
-                          <option value="gpt-image-512">GPT Image 512</option>
-                        </optgroup>
+                        -->
                       </select>
                     </label>
                   </div>
@@ -4356,14 +4362,36 @@
           payload.model = model;
         }
 
+        // DEBUG: Log payload when sending request (prompt enrichment applied server-side)
+        console.log('[DEBUG] refine-character payload:', {
+          action: 'refine-character',
+          archetype: payload.archetype,
+          tier: payload.tier,
+          model: payload.model || 'auto',
+          refine: payload.refine
+        });
+
         try {
           // Call the Supabase Edge Function via invokeImagePipeline
           const result = await invokeImagePipeline('refine-character', payload);
+
+          // Check for API error responses (model validation errors, provider gating, etc.)
+          if (result?.error) {
+            // Surface the backend error message directly to the user
+            throw new Error(result.error);
+          }
 
           // Validate the response contains an image URL
           if (!result || !result.image_url) {
             throw new Error('No image URL returned from refinement');
           }
+
+          // DEBUG: Log successful response
+          console.log('[DEBUG] refine-character success:', {
+            provider: result?.provider,
+            model: result?.meta?.model,
+            archetype: result?.archetype
+          });
 
           // Store variant metadata on currentRefineState for later save
           currentRefineState.variant_id = result.variant_id || null;
@@ -4387,7 +4415,7 @@
         } catch (error) {
           console.error('Character refinement failed:', error);
 
-          // Show user-friendly error message
+          // Show the actual error message from the backend if available
           const errorMessage = error && error.message ? error.message : 'Refinement failed. Please try again.';
           setRefineStatus(errorMessage, 'error');
 
@@ -5791,6 +5819,14 @@
             requestBody.model = model;
           }
 
+          // DEBUG: Log payload when sending request (prompt enrichment applied server-side)
+          console.log('[DEBUG] generate-character-draft payload:', {
+            action: requestBody.action,
+            archetype: requestBody.archetype,
+            tier: requestBody.tier,
+            model: requestBody.model || 'auto'
+          });
+
           // Call the ai-image-pipeline Supabase function
           const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
             body: requestBody,
@@ -5801,11 +5837,14 @@
 
           if (error) {
             console.error('Character draft generation error:', error);
-            throw error;
+            // Surface the actual error message from the backend
+            const errorMessage = error?.message || error?.context?.message || 'Network error during generation';
+            throw new Error(errorMessage);
           }
 
-          // Check for API error responses (model validation errors, etc.)
+          // Check for API error responses (model validation errors, provider gating, etc.)
           if (data?.error) {
+            // Surface the backend error message directly to the user
             throw new Error(data.error);
           }
 
@@ -5817,6 +5856,13 @@
           if (!imageUrl || !storagePath) {
             throw new Error('Invalid response from image pipeline');
           }
+
+          // DEBUG: Log successful response
+          console.log('[DEBUG] generate-character-draft success:', {
+            provider: data?.provider,
+            model: data?.meta?.model,
+            archetype: data?.archetype
+          });
 
           return {
             image_url: imageUrl,

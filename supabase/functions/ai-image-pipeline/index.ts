@@ -16,12 +16,17 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY") ?? "";
-const GOOGLE_IMAGE_MODEL = Deno.env.get("GOOGLE_IMAGE_MODEL") ?? "google-nano-banan";
+// NOTE: GOOGLE_IMAGE_MODEL is only used after Vertex AI integration; currently gated by ENABLE_VERTEX_AI.
+const GOOGLE_IMAGE_MODEL = Deno.env.get("GOOGLE_IMAGE_MODEL") || "imagen-3.0";
 const GOOGLE_IMAGE_ENDPOINT =
   Deno.env.get("GOOGLE_IMAGE_ENDPOINT")
   ?? `https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_IMAGE_MODEL}:generateContent`;
 const AI_IMAGE_PROVIDER = (Deno.env.get("AI_IMAGE_PROVIDER") ?? "openai").toLowerCase();
 const AI_IMAGE_MODEL = Deno.env.get("AI_IMAGE_MODEL") ?? "";
+// Flag to enable Google/Vertex AI integration (set to "true" to enable)
+const ENABLE_VERTEX_AI = Deno.env.get("ENABLE_VERTEX_AI") === "true";
+// Debug mode for structured logging
+const DEBUG = Deno.env.get("DEBUG") === "true";
 
 // Model Selection: Supported providers and models
 // Priority order: request `model` > env `AI_IMAGE_MODEL` > fallback by provider + detail
@@ -137,6 +142,139 @@ function resolveModel({ provider, requestedModel, envModel, detail }: ResolveMod
   }
   return { model: "gpt-image-1024", provider: "openai" };
 }
+
+// ============================================================================
+// Prompt Enrichment System
+// ============================================================================
+// Provides richer, more consistent prompts for character generation.
+// Combines archetype-specific base prompts with global quality additions
+// and negative artifact suppression.
+
+/**
+ * Enriched archetype prompts for higher-quality initial generation.
+ * Each archetype has a rich, detailed base prompt.
+ */
+const ENRICHED_ARCHETYPE_PROMPTS: Record<string, string> = {
+  "hero": "A heroic character with a confident stance, noble appearance, and strong presence. Expressive face with determined eyes. Dynamic pose suggesting readiness for action. Well-defined silhouette with balanced proportions.",
+  "villain": "A menacing villain character with dramatic features and an imposing presence. Sharp, angular facial features with intense, calculating eyes. Dark or bold color palette. Powerful stance conveying authority and danger.",
+  "sci-fi": "A futuristic sci-fi character with sleek technological elements and modern styling. Clean lines and metallic accents. Integrated tech elements like visors, holographic interfaces, or cybernetic enhancements. Streamlined silhouette.",
+  "fantasy": "A fantasy character with mystical or medieval elements and magical aura. Ornate costume details with flowing fabrics. Ethereal glow or magical particles. Distinctive accessories like staffs, amulets, or enchanted weapons.",
+  "child": "A young child character with innocent features and playful energy. Soft, rounded facial features with bright, curious eyes. Casual, age-appropriate clothing. Warm, approachable expression.",
+  "robot": "A robotic character with mechanical features and technological design. Precise geometric shapes and articulated joints. Glowing elements like eyes or power cores. Mix of smooth panels and exposed mechanical components.",
+};
+
+/**
+ * Build a rich archetype prompt for character generation.
+ * @param archetype - The character archetype (hero, villain, etc.)
+ * @returns Enriched prompt string for the archetype
+ */
+function buildArchetypePrompt(archetype: string): string {
+  const normalized = archetype.toLowerCase().trim();
+  return ENRICHED_ARCHETYPE_PROMPTS[normalized] || `A ${archetype} character with distinctive features and clear visual identity.`;
+}
+
+/**
+ * Global additions for quality, lighting, and composition.
+ * @param tier - Quality tier (standard or premium)
+ * @returns Array of quality enhancement phrases
+ */
+function buildGlobalAdditions(tier: string): string[] {
+  const base = [
+    "Full body character design",
+    "Clean edges suitable for compositing",
+    "Professional character art",
+    "Balanced lighting with subtle shadows",
+    "Clear silhouette",
+  ];
+
+  if (tier === "premium") {
+    return [
+      ...base,
+      "Highly detailed",
+      "Cinematic quality",
+      "Studio lighting",
+      "4K resolution",
+    ];
+  }
+
+  return base;
+}
+
+/**
+ * Negative artifact suppression phrases.
+ * These help prevent common AI generation artifacts.
+ */
+const NEGATIVE_ARTIFACT_SUPPRESSION = [
+  "No text",
+  "No watermark",
+  "Avoid distorted hands",
+  "Avoid extra limbs",
+  "Avoid blurry faces",
+  "No cropped body parts",
+  "Anatomically correct proportions",
+];
+
+/**
+ * Compose a complete enriched prompt for initial character generation.
+ * Combines archetype prompt + global additions + negative suppression.
+ * @param archetype - Character archetype
+ * @param tier - Quality tier
+ * @returns Complete enriched prompt string
+ */
+function composeInitialPrompt(archetype: string, tier: string): string {
+  const archetypePrompt = buildArchetypePrompt(archetype);
+  const globalAdditions = buildGlobalAdditions(tier);
+  const negativeSuppressions = NEGATIVE_ARTIFACT_SUPPRESSION;
+
+  const promptParts = [
+    archetypePrompt,
+    ...globalAdditions,
+    ...negativeSuppressions,
+  ];
+
+  return promptParts.join(". ") + ".";
+}
+
+/**
+ * Compose an enriched prompt for character refinement.
+ * Combines archetype prompt + refine modifiers + global additions + negative suppression.
+ * @param archetype - Character archetype
+ * @param refineModifiers - Array of modifier phrases from refine params
+ * @param tier - Quality tier
+ * @returns Complete enriched refinement prompt string
+ */
+function composeRefinementPrompt(archetype: string, refineModifiers: string[], tier: string): string {
+  const archetypePrompt = buildArchetypePrompt(archetype);
+  const globalAdditions = buildGlobalAdditions(tier);
+  const negativeSuppressions = NEGATIVE_ARTIFACT_SUPPRESSION;
+
+  const promptParts = [
+    archetypePrompt,
+    ...refineModifiers,
+    ...globalAdditions,
+    ...negativeSuppressions,
+  ];
+
+  return promptParts.join(". ") + ".";
+}
+
+/**
+ * Check if Google provider is currently enabled.
+ * Returns false if ENABLE_VERTEX_AI is not set.
+ */
+function isGoogleProviderEnabled(): boolean {
+  if (!ENABLE_VERTEX_AI) {
+    if (DEBUG) {
+      console.log("[PROVIDER] Google provider is gated. ENABLE_VERTEX_AI is not set to 'true'.");
+    }
+    return false;
+  }
+  return true;
+}
+
+// ============================================================================
+// End Prompt Enrichment System
+// ============================================================================
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase configuration");
@@ -694,18 +832,27 @@ class GoogleImageProvider extends PlaceholderProvider {
 }
 
 function resolveProvider(): ImageProvider {
-  if (AI_IMAGE_PROVIDER === "google" && GOOGLE_API_KEY) {
-    return new GoogleImageProvider();
+  // Gate Google provider behind ENABLE_VERTEX_AI flag
+  if (AI_IMAGE_PROVIDER === "google") {
+    if (!isGoogleProviderEnabled()) {
+      console.warn("[PROVIDER] Google provider requested but ENABLE_VERTEX_AI not enabled. Falling back to OpenAI.");
+      if (OPENAI_API_KEY) return new OpenAIImageProvider();
+      return new PlaceholderProvider();
+    }
+    if (GOOGLE_API_KEY) {
+      return new GoogleImageProvider();
+    }
   }
   if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
     return new OpenAIImageProvider();
   }
   if (AI_IMAGE_PROVIDER === "auto") {
-    if (GOOGLE_API_KEY) return new GoogleImageProvider();
+    // For auto mode, prefer OpenAI since Google is gated
     if (OPENAI_API_KEY) return new OpenAIImageProvider();
+    if (GOOGLE_API_KEY && isGoogleProviderEnabled()) return new GoogleImageProvider();
   }
   if (OPENAI_API_KEY) return new OpenAIImageProvider();
-  if (GOOGLE_API_KEY) return new GoogleImageProvider();
+  if (GOOGLE_API_KEY && isGoogleProviderEnabled()) return new GoogleImageProvider();
   return new PlaceholderProvider();
 }
 
@@ -1361,24 +1508,27 @@ async function handleGenerateCharacterDraft(
     return jsonResponse(400, { error: message });
   }
 
-  // Build a prompt based on the archetype
-  const archetypePrompts: Record<string, string> = {
-    "hero": "A heroic character with a confident stance, noble appearance, and strong presence. Full body character design.",
-    "villain": "A menacing villain character with dramatic features and an imposing presence. Full body character design.",
-    "sci-fi": "A futuristic sci-fi character with sleek technological elements and modern styling. Full body character design.",
-    "fantasy": "A fantasy character with mystical or medieval elements, magical aura. Full body character design.",
-    "child": "A young child character with innocent features and playful energy. Full body character design.",
-    "robot": "A robotic character with mechanical features and technological design. Full body character design.",
-  };
+  // Check if Google provider is requested but not enabled
+  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+    return jsonResponse(501, {
+      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
+    });
+  }
 
-  const basePrompt = archetypePrompts[archetype] || `A ${archetype} character. Full body character design.`;
+  // Build enriched prompt using the prompt enrichment system
+  const prompt = composeInitialPrompt(archetype, tier);
 
-  // Adjust prompt based on tier
-  let prompt = basePrompt;
-  if (tier === "premium") {
-    prompt += " Highly detailed, cinematic quality, professional character art.";
-  } else {
-    prompt += " Clean character design, clear silhouette.";
+  // DEBUG logging
+  if (DEBUG) {
+    console.log("[PROMPT] generate-character-draft:", {
+      archetype,
+      tier,
+      detail,
+      provider: resolvedModel.provider,
+      model: resolvedModel.model,
+      promptLength: prompt.length,
+    });
+    console.log("[PROMPT] Full prompt:", prompt);
   }
 
   // Generate character draft from text prompt using the resolved model
@@ -1390,9 +1540,9 @@ async function handleGenerateCharacterDraft(
     let usedModel: string;
     let metadata: Record<string, unknown> = {};
 
-    if (resolvedModel.provider === "google" && GOOGLE_API_KEY) {
+    if (resolvedModel.provider === "google" && GOOGLE_API_KEY && isGoogleProviderEnabled()) {
       // Google Imagen API: text-to-image generation
-      // TODO: If nano-banana-pro is used, map to actual Vertex AI model ID
+      // NOTE: Requires ENABLE_VERTEX_AI=true and proper Vertex AI integration
       const payload = {
         contents: [{
           role: "user",
@@ -1481,7 +1631,8 @@ async function handleGenerateCharacterDraft(
     });
   } catch (error) {
     console.error("Character draft generation failed", error);
-    return jsonResponse(500, { error: "Failed to generate character draft" });
+    const errorMessage = error instanceof Error ? error.message : "Failed to generate character draft";
+    return jsonResponse(500, { error: errorMessage });
   }
 }
 
@@ -1489,18 +1640,12 @@ async function handleGenerateCharacterDraft(
  * Build a refined prompt by combining base archetype prompt with refinement parameters.
  * This appends modifier phrases based on the refine object values.
  */
-function buildRefinePrompt(archetype: string, refine: RefineParams): string {
-  // Base archetype prompts (same as handleGenerateCharacterDraft)
-  const archetypePrompts: Record<string, string> = {
-    "hero": "A heroic character with a confident stance, noble appearance, and strong presence. Full body character design.",
-    "villain": "A menacing villain character with dramatic features and an imposing presence. Full body character design.",
-    "sci-fi": "A futuristic sci-fi character with sleek technological elements and modern styling. Full body character design.",
-    "fantasy": "A fantasy character with mystical or medieval elements, magical aura. Full body character design.",
-    "child": "A young child character with innocent features and playful energy. Full body character design.",
-    "robot": "A robotic character with mechanical features and technological design. Full body character design.",
-  };
-
-  const basePrompt = archetypePrompts[archetype] || `A ${archetype} character. Full body character design.`;
+/**
+ * Build a list of modifier phrases from refinement parameters.
+ * @param refine - Refinement parameters object
+ * @returns Array of modifier phrases
+ */
+function buildRefineModifiers(refine: RefineParams): string[] {
   const modifiers: string[] = [];
 
   // Age modifier
@@ -1564,6 +1709,14 @@ function buildRefinePrompt(archetype: string, refine: RefineParams): string {
       modifiers.push(styleModifiers[refine.style]);
     }
   }
+
+  return modifiers;
+}
+
+function buildRefinePrompt(archetype: string, refine: RefineParams): string {
+  // Use enriched archetype prompt
+  const basePrompt = buildArchetypePrompt(archetype);
+  const modifiers = buildRefineModifiers(refine);
 
   // Combine base prompt with modifiers
   let prompt = basePrompt;
@@ -1683,21 +1836,35 @@ async function handleRefineCharacter(
     return jsonResponse(400, { error: message });
   }
 
-  // Build the refined prompt
-  const prompt = buildRefinePrompt(archetype, refine);
+  // Check if Google provider is requested but not enabled
+  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+    return jsonResponse(501, {
+      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
+    });
+  }
+
+  // Build refine modifiers for the enriched prompt system
+  const refineModifiers = buildRefineModifiers(refine);
+
+  // Use the enriched refinement prompt composition
+  const finalPrompt = composeRefinementPrompt(archetype, refineModifiers, tier);
 
   // Get quality settings based on detail level
   const detailSettings = getDetailSettings(refine.detail);
 
-  // Adjust prompt based on tier
-  let finalPrompt = prompt;
-  if (tier === "premium") {
-    finalPrompt += " Highly detailed, cinematic quality, professional character art.";
-  } else {
-    finalPrompt += " Clean character design, clear silhouette.";
+  // DEBUG logging
+  if (DEBUG) {
+    console.log("[PROMPT] refine-character:", {
+      archetype,
+      tier,
+      detail: refine.detail,
+      provider: resolvedModel.provider,
+      model: resolvedModel.model,
+      refineModifiers,
+      promptLength: finalPrompt.length,
+    });
+    console.log("[PROMPT] Full prompt:", finalPrompt);
   }
-
-  console.log("Refine character prompt:", finalPrompt);
 
   try {
     let imageBytes: Uint8Array;
@@ -1717,9 +1884,9 @@ async function handleRefineCharacter(
     // 2. Pass it to the provider's image editing/refinement endpoint
     // 3. Maintain character identity while applying refinements
 
-    if (resolvedModel.provider === "google" && GOOGLE_API_KEY) {
+    if (resolvedModel.provider === "google" && GOOGLE_API_KEY && isGoogleProviderEnabled()) {
       // Google Imagen API: text-to-image generation with refined prompt
-      // TODO: If nano-banana-pro is used, map to actual Vertex AI model ID
+      // NOTE: Requires ENABLE_VERTEX_AI=true and proper Vertex AI integration
       const payload = {
         contents: [{
           role: "user",
@@ -1809,7 +1976,8 @@ async function handleRefineCharacter(
     });
   } catch (error) {
     console.error("Character refinement failed", error);
-    return jsonResponse(500, { error: "Failed to refine character" });
+    const errorMessage = error instanceof Error ? error.message : "Failed to refine character";
+    return jsonResponse(500, { error: errorMessage });
   }
 }
 
