@@ -1540,17 +1540,18 @@ async function handleGenerateCharacterDraft(
     return jsonResponse(400, { error: message });
   }
 
-  // Check if Google provider is requested but not enabled
-  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
-    return jsonResponse(501, {
-      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
-    });
-  }
-
   // Check if Gemini image model is requested but not enabled
+  // This must be checked first because Gemini models are a subset of Google models
   if (isGeminiImageModel(resolvedModel.model) && !isGeminiImageEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto.",
+    });
+  }
+
+  // Check if Google provider is requested but not enabled (for non-Gemini models)
+  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+    return jsonResponse(501, {
+      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
     });
   }
 
@@ -1875,17 +1876,18 @@ async function handleRefineCharacter(
     return jsonResponse(400, { error: message });
   }
 
-  // Check if Google provider is requested but not enabled
-  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
-    return jsonResponse(501, {
-      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
-    });
-  }
-
   // Check if Gemini image model is requested but not enabled
+  // This must be checked first because Gemini models are a subset of Google models
   if (isGeminiImageModel(resolvedModel.model) && !isGeminiImageEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto.",
+    });
+  }
+
+  // Check if Google provider is requested but not enabled (for non-Gemini models)
+  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+    return jsonResponse(501, {
+      error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
     });
   }
 
