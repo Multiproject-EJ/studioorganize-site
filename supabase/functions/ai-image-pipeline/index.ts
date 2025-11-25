@@ -21,6 +21,122 @@ const GOOGLE_IMAGE_ENDPOINT =
   Deno.env.get("GOOGLE_IMAGE_ENDPOINT")
   ?? `https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_IMAGE_MODEL}:generateContent`;
 const AI_IMAGE_PROVIDER = (Deno.env.get("AI_IMAGE_PROVIDER") ?? "openai").toLowerCase();
+const AI_IMAGE_MODEL = Deno.env.get("AI_IMAGE_MODEL") ?? "";
+
+// Model Selection: Supported providers and models
+// Priority order: request `model` > env `AI_IMAGE_MODEL` > fallback by provider + detail
+const SUPPORTED_PROVIDERS = ["google", "openai"] as const;
+const SUPPORTED_GOOGLE_MODELS = [
+  "imagen-3.0",
+  "imagen-3.0-lite",
+  "imagen-3.0-highres",
+  "nano-banana-pro", // TODO: Custom internal alias - map to actual Vertex AI model ID when available
+] as const;
+const SUPPORTED_OPENAI_MODELS = [
+  "dall-e-3",
+  "gpt-image-1024",
+  "gpt-image-512",
+] as const;
+
+type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
+type SupportedGoogleModel = typeof SUPPORTED_GOOGLE_MODELS[number];
+type SupportedOpenAIModel = typeof SUPPORTED_OPENAI_MODELS[number];
+type SupportedModel = SupportedGoogleModel | SupportedOpenAIModel;
+
+/**
+ * Parameters for resolving the final model to use.
+ */
+type ResolveModelParams = {
+  provider: string;
+  requestedModel?: string | null;
+  envModel?: string;
+  detail?: "cheap" | "standard" | "pro";
+};
+
+/**
+ * Result from model resolution.
+ */
+type ResolvedModel = {
+  model: SupportedModel;
+  provider: SupportedProvider;
+};
+
+/**
+ * Resolve the final model based on priority order:
+ * 1. Request body `model`
+ * 2. Environment variable `AI_IMAGE_MODEL`
+ * 3. Fallback mapping by provider + detail
+ *
+ * @throws Error if the requested model is not supported for the provider
+ */
+function resolveModel({ provider, requestedModel, envModel, detail }: ResolveModelParams): ResolvedModel {
+  const normalizedProvider = provider.toLowerCase();
+  const isGoogle = normalizedProvider === "google";
+  const isOpenAI = normalizedProvider === "openai";
+
+  // Check if the provider is supported
+  if (!isGoogle && !isOpenAI) {
+    throw new Error(`Unsupported provider: ${provider}. Supported providers: ${SUPPORTED_PROVIDERS.join(", ")}`);
+  }
+
+  // 1. Check request body model first
+  if (requestedModel && typeof requestedModel === "string" && requestedModel.trim()) {
+    const model = requestedModel.trim().toLowerCase();
+
+    // Validate model against provider's allowed list
+    if (isGoogle) {
+      if (SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
+        return { model: model as SupportedGoogleModel, provider: "google" };
+      }
+      throw new Error(
+        `Unsupported model '${model}' for Google provider. Supported: ${SUPPORTED_GOOGLE_MODELS.join(", ")}`
+      );
+    }
+    if (isOpenAI) {
+      if (SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
+        return { model: model as SupportedOpenAIModel, provider: "openai" };
+      }
+      throw new Error(
+        `Unsupported model '${model}' for OpenAI provider. Supported: ${SUPPORTED_OPENAI_MODELS.join(", ")}`
+      );
+    }
+  }
+
+  // 2. Check environment variable model
+  if (envModel && typeof envModel === "string" && envModel.trim()) {
+    const model = envModel.trim().toLowerCase();
+
+    if (isGoogle && SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
+      return { model: model as SupportedGoogleModel, provider: "google" };
+    }
+    if (isOpenAI && SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
+      return { model: model as SupportedOpenAIModel, provider: "openai" };
+    }
+    // If env model doesn't match provider, fall through to default
+  }
+
+  // 3. Fallback mapping by provider + detail
+  if (isGoogle) {
+    // Map detail tier to Google model
+    // TODO: nano-banana-pro should map to a real Vertex AI model ID when configured
+    if (detail === "pro") {
+      return { model: "imagen-3.0-highres", provider: "google" };
+    }
+    if (detail === "cheap") {
+      return { model: "imagen-3.0-lite", provider: "google" };
+    }
+    return { model: "imagen-3.0", provider: "google" };
+  }
+
+  // OpenAI fallback
+  if (detail === "pro") {
+    return { model: "dall-e-3", provider: "openai" };
+  }
+  if (detail === "cheap") {
+    return { model: "gpt-image-512", provider: "openai" };
+  }
+  return { model: "gpt-image-1024", provider: "openai" };
+}
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase configuration");
@@ -1210,6 +1326,11 @@ async function handleSceneContinuation(
 /**
  * Handle generation of character draft images for the wizard flow.
  * This generates a standalone character image based on archetype and tier.
+ *
+ * Model selection priority:
+ * 1. Request body `model`
+ * 2. Environment variable `AI_IMAGE_MODEL`
+ * 3. Fallback by provider + detail/tier
  */
 async function handleGenerateCharacterDraft(
   client: SupabaseClient,
@@ -1218,9 +1339,26 @@ async function handleGenerateCharacterDraft(
 ): Promise<Response> {
   const archetype = typeof body?.archetype === "string" ? body.archetype.trim() : "";
   const tier = typeof body?.tier === "string" ? body.tier.trim() : "standard";
-  
+  const requestedModel = typeof body?.model === "string" ? body.model.trim() : null;
+  // Map tier to detail for model resolution
+  const detail: "cheap" | "standard" | "pro" = tier === "premium" ? "pro" : "standard";
+
   if (!archetype) {
     return jsonResponse(400, { error: "archetype is required" });
+  }
+
+  // Resolve the model to use based on priority order
+  let resolvedModel: ResolvedModel;
+  try {
+    resolvedModel = resolveModel({
+      provider: AI_IMAGE_PROVIDER,
+      requestedModel,
+      envModel: AI_IMAGE_MODEL,
+      detail,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid model selection";
+    return jsonResponse(400, { error: message });
   }
 
   // Build a prompt based on the archetype
@@ -1234,7 +1372,7 @@ async function handleGenerateCharacterDraft(
   };
 
   const basePrompt = archetypePrompts[archetype] || `A ${archetype} character. Full body character design.`;
-  
+
   // Adjust prompt based on tier
   let prompt = basePrompt;
   if (tier === "premium") {
@@ -1243,18 +1381,18 @@ async function handleGenerateCharacterDraft(
     prompt += " Clean character design, clear silhouette.";
   }
 
-  const provider = resolveProvider();
-  
-  // Generate character draft from text prompt using the configured AI provider
+  // Generate character draft from text prompt using the resolved model
   // This creates a new character image without requiring a base reference image
-  
+
   try {
     let imageBytes: Uint8Array;
     let providerName: string;
+    let usedModel: string;
     let metadata: Record<string, unknown> = {};
 
-    if (AI_IMAGE_PROVIDER === "google" && GOOGLE_API_KEY) {
+    if (resolvedModel.provider === "google" && GOOGLE_API_KEY) {
       // Google Imagen API: text-to-image generation
+      // TODO: If nano-banana-pro is used, map to actual Vertex AI model ID
       const payload = {
         contents: [{
           role: "user",
@@ -1269,17 +1407,33 @@ async function handleGenerateCharacterDraft(
       if (images.length > 0) {
         imageBytes = images[0].image;
         providerName = "google";
+        usedModel = resolvedModel.model;
         metadata = images[0].metadata || {};
       } else {
         throw new Error("No image generated by Google");
       }
-    } else if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
-      // OpenAI DALL-E: text-to-image generation
+    } else if (resolvedModel.provider === "openai" && OPENAI_API_KEY) {
+      // OpenAI: text-to-image generation with resolved model
+      // Map our model names to OpenAI API model names
+      const openaiModelMap: Record<string, string> = {
+        "dall-e-3": "dall-e-3",
+        "gpt-image-1024": "gpt-image-1",
+        "gpt-image-512": "gpt-image-1",
+      };
+      const apiModel = openaiModelMap[resolvedModel.model] || "dall-e-3";
+      // Determine size based on model
+      const sizeMap: Record<string, string> = {
+        "dall-e-3": "1024x1024",
+        "gpt-image-1024": "1024x1024",
+        "gpt-image-512": "1024x1024", // DALL-E 3 min is 1024x1024
+      };
+      const size = sizeMap[resolvedModel.model] || "1024x1024";
+
       const requestBody = {
-        model: "dall-e-3",
+        model: apiModel,
         prompt: prompt,
         n: 1,
-        size: "1024x1024",
+        size: size,
         response_format: "b64_json",
       };
       const data = await openAiImageRequest("https://api.openai.com/v1/images/generations", requestBody);
@@ -1287,16 +1441,18 @@ async function handleGenerateCharacterDraft(
       if (!base64) throw new Error("OpenAI did not return image");
       imageBytes = decodeBase64Image(base64);
       providerName = "openai";
+      usedModel = resolvedModel.model;
     } else {
       // Fallback to placeholder when no AI provider is configured
       imageBytes = PLACEHOLDER_BYTES;
       providerName = "placeholder";
+      usedModel = "placeholder";
       metadata = { note: "Using placeholder - no AI provider configured" };
     }
 
     // Generate a unique ID for this draft
     const draftId = crypto.randomUUID();
-    
+
     // Store in character drafts folder
     const target: StoragePath = {
       bucket: REF_BUCKET,
@@ -1314,6 +1470,14 @@ async function handleGenerateCharacterDraft(
       archetype,
       tier,
       metadata,
+      // Meta block with resolved model and provider info
+      meta: {
+        provider: providerName,
+        model: usedModel,
+        detail,
+        archetype,
+        action: "generate-character" as const,
+      },
     });
   } catch (error) {
     console.error("Character draft generation failed", error);
@@ -1453,7 +1617,12 @@ function validateEnumValue<T extends string>(
 /**
  * Handle character refinement based on UI slider values.
  * This generates a new refined image based on archetype and refinement parameters.
- * 
+ *
+ * Model selection priority:
+ * 1. Request body `model`
+ * 2. Environment variable `AI_IMAGE_MODEL`
+ * 3. Fallback by provider + detail
+ *
  * Request body:
  * {
  *   "action": "refine-character",
@@ -1462,6 +1631,7 @@ function validateEnumValue<T extends string>(
  *   "base_image_url": "<existing-image-url>",
  *   "base_storage_path": "<existing-storage-path>",
  *   "tier": "standard",
+ *   "model": "imagen-3.0-highres",  // Optional: explicit model override
  *   "refine": {
  *     "age": "younger" | "adult" | "older",
  *     "mood": "neutral" | "happy" | "angry" | "sad",
@@ -1482,7 +1652,8 @@ async function handleRefineCharacter(
   const characterId = typeof body?.character_id === "string" ? body.character_id : null;
   const baseImageUrl = typeof body?.base_image_url === "string" ? body.base_image_url : null;
   const baseStoragePath = typeof body?.base_storage_path === "string" ? body.base_storage_path : null;
-  
+  const requestedModel = typeof body?.model === "string" ? body.model.trim() : null;
+
   // Parse refine object with validated enum values
   const refineInput = body?.refine && typeof body.refine === "object" ? body.refine : {};
   const refine: RefineParams = {
@@ -1498,9 +1669,23 @@ async function handleRefineCharacter(
     return jsonResponse(400, { error: "archetype is required" });
   }
 
+  // Resolve the model to use based on priority order
+  let resolvedModel: ResolvedModel;
+  try {
+    resolvedModel = resolveModel({
+      provider: AI_IMAGE_PROVIDER,
+      requestedModel,
+      envModel: AI_IMAGE_MODEL,
+      detail: refine.detail,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid model selection";
+    return jsonResponse(400, { error: message });
+  }
+
   // Build the refined prompt
   const prompt = buildRefinePrompt(archetype, refine);
-  
+
   // Get quality settings based on detail level
   const detailSettings = getDetailSettings(refine.detail);
 
@@ -1517,6 +1702,7 @@ async function handleRefineCharacter(
   try {
     let imageBytes: Uint8Array;
     let providerName: string;
+    let usedModel: string;
     let metadata: Record<string, unknown> = {};
 
     // TODO: If the AI provider supports image-to-image refinement (e.g., img2img),
@@ -1524,15 +1710,16 @@ async function handleRefineCharacter(
     // Google Imagen and OpenAI DALL-E primarily support text-to-image for generation.
     // Image editing with DALL-E requires a mask, which doesn't fit this use case.
     // For now, we generate a new image based on the refined text prompt.
-    // 
+    //
     // When img2img or identity-locking features become available, this section
     // should be updated to:
     // 1. Download the base image from storage using base_storage_path
     // 2. Pass it to the provider's image editing/refinement endpoint
     // 3. Maintain character identity while applying refinements
 
-    if (AI_IMAGE_PROVIDER === "google" && GOOGLE_API_KEY) {
+    if (resolvedModel.provider === "google" && GOOGLE_API_KEY) {
       // Google Imagen API: text-to-image generation with refined prompt
+      // TODO: If nano-banana-pro is used, map to actual Vertex AI model ID
       const payload = {
         contents: [{
           role: "user",
@@ -1547,15 +1734,22 @@ async function handleRefineCharacter(
       if (images.length > 0) {
         imageBytes = images[0].image;
         providerName = "google";
+        usedModel = resolvedModel.model;
         metadata = images[0].metadata || {};
       } else {
         throw new Error("No image generated by Google");
       }
-    } else if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
-      // OpenAI DALL-E: text-to-image generation with refined prompt
+    } else if (resolvedModel.provider === "openai" && OPENAI_API_KEY) {
+      // OpenAI: text-to-image generation with resolved model
+      const openaiModelMap: Record<string, string> = {
+        "dall-e-3": "dall-e-3",
+        "gpt-image-1024": "gpt-image-1",
+        "gpt-image-512": "gpt-image-1",
+      };
+      const apiModel = openaiModelMap[resolvedModel.model] || "dall-e-3";
       const dalleSize = mapToDalleSize(detailSettings.size);
       const requestBody = {
-        model: "dall-e-3",
+        model: apiModel,
         prompt: finalPrompt,
         n: 1,
         size: dalleSize,
@@ -1567,17 +1761,19 @@ async function handleRefineCharacter(
       if (!base64) throw new Error("OpenAI did not return image");
       imageBytes = decodeBase64Image(base64);
       providerName = "openai";
+      usedModel = resolvedModel.model;
     } else {
       // Fallback to placeholder when no AI provider is configured
       imageBytes = PLACEHOLDER_BYTES;
       providerName = "placeholder";
+      usedModel = "placeholder";
       metadata = { note: "Using placeholder - no AI provider configured" };
     }
 
     // Generate a unique ID for this refined draft
     const draftId = crypto.randomUUID();
     const timestamp = Date.now();
-    
+
     // Store in character drafts folder with refine suffix
     // Path format: story-refs/character-drafts/{userId}/{draftId}-refine-{timestamp}.png
     const target: StoragePath = {
@@ -1602,6 +1798,14 @@ async function handleRefineCharacter(
       base_storage_path: baseStoragePath,
       prompt_used: finalPrompt,
       metadata,
+      // Meta block with resolved model and provider info
+      meta: {
+        provider: providerName,
+        model: usedModel,
+        detail: refine.detail,
+        archetype,
+        action: "refine-character" as const,
+      },
     });
   } catch (error) {
     console.error("Character refinement failed", error);
