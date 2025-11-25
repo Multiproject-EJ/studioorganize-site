@@ -17,6 +17,7 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY") ?? "";
 // NOTE: GOOGLE_IMAGE_MODEL is only used after Vertex AI integration; currently gated by ENABLE_VERTEX_AI.
+// Using || instead of ?? intentionally: empty string should fallback to a valid model ID.
 const GOOGLE_IMAGE_MODEL = Deno.env.get("GOOGLE_IMAGE_MODEL") || "imagen-3.0";
 const GOOGLE_IMAGE_ENDPOINT =
   Deno.env.get("GOOGLE_IMAGE_ENDPOINT")
@@ -170,7 +171,7 @@ const ENRICHED_ARCHETYPE_PROMPTS: Record<string, string> = {
  */
 function buildArchetypePrompt(archetype: string): string {
   const normalized = archetype.toLowerCase().trim();
-  return ENRICHED_ARCHETYPE_PROMPTS[normalized] || `A ${archetype} character with distinctive features and clear visual identity.`;
+  return ENRICHED_ARCHETYPE_PROMPTS[normalized] || `A ${normalized} character with distinctive features and clear visual identity.`;
 }
 
 /**
