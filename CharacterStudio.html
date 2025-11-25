@@ -4399,6 +4399,11 @@
             archetype: result?.archetype
           });
 
+          // Log to debug console if available
+          if (typeof window.studioDebugLog === 'function') {
+            window.studioDebugLog('refine-character', payload, result, null);
+          }
+
           // Store variant metadata on currentRefineState for later save
           currentRefineState.variant_id = result.variant_id || null;
           currentRefineState.storage_path = result.storage_path || null;
@@ -4420,6 +4425,11 @@
 
         } catch (error) {
           console.error('Character refinement failed:', error);
+
+          // Log error to debug console if available
+          if (typeof window.studioDebugLog === 'function') {
+            window.studioDebugLog('refine-character', payload, null, error);
+          }
 
           // Show the actual error message from the backend if available
           const errorMessage = error && error.message ? error.message : 'Refinement failed. Please try again.';
@@ -5030,12 +5040,31 @@
           throw new Error('Sign in to generate AI assets.');
         }
         const body = { ...(payload || {}), action };
-        const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
-          body,
-          headers: { Authorization: `Bearer ${state.session.access_token}` },
-        });
-        if (error) throw error;
-        return data;
+        
+        try {
+          const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
+            body,
+            headers: { Authorization: `Bearer ${state.session.access_token}` },
+          });
+          
+          if (error) {
+            throw error;
+          }
+          
+          // Log success to debug console if available
+          // Note: generate-character-draft and refine-character log separately in their own functions
+          if (typeof window.studioDebugLog === 'function') {
+            window.studioDebugLog(action, body, data, null);
+          }
+          
+          return data;
+        } catch (err) {
+          // Log error to debug console if available
+          if (typeof window.studioDebugLog === 'function') {
+            window.studioDebugLog(action, body, null, err);
+          }
+          throw err;
+        }
       }
 
       async function loadProjectMetadata(){
@@ -5814,16 +5843,17 @@
           ? draft.model.trim()
           : null;
 
+        // Build request body - defined outside try so it's accessible in catch
+        const requestBody = {
+          action: 'generate-character-draft',
+          archetype: archetype,
+          tier: tier
+        };
+        if (model) {
+          requestBody.model = model;
+        }
+
         try {
-          // Build request body - only include model if explicitly set
-          const requestBody = {
-            action: 'generate-character-draft',
-            archetype: archetype,
-            tier: tier
-          };
-          if (model) {
-            requestBody.model = model;
-          }
 
           // DEBUG: Log payload when sending request (prompt enrichment applied server-side)
           console.log('[DEBUG] generate-character-draft payload:', {
@@ -5870,7 +5900,7 @@
             archetype: data?.archetype
           });
 
-          return {
+          const result = {
             image_url: imageUrl,
             storage_path: storagePath,
             draft_id: draftId,
@@ -5879,8 +5909,19 @@
             tier: data?.tier,
             meta: data?.meta  // Contains resolved model, provider, detail, etc.
           };
+
+          // Log to debug console if available
+          if (typeof window.studioDebugLog === 'function') {
+            window.studioDebugLog('generate-character-draft', requestBody, result, null);
+          }
+
+          return result;
         } catch (error) {
           console.error('Failed to generate character draft:', error);
+          // Log error to debug console if available
+          if (typeof window.studioDebugLog === 'function') {
+            window.studioDebugLog('generate-character-draft', requestBody, null, error);
+          }
           throw error;
         }
       }
@@ -6298,6 +6339,1160 @@
           detail.waitUntil(savePromise);
         }
       });
+
+      // =========================================================================
+      // StudioDebugConsole - In-page debug console for Character Studio
+      // =========================================================================
+      // Feature gated: Only active with ?debug=1 query param or localStorage studio_debug=true
+      // Provides:
+      // - Real-time logging of image-related requests/responses
+      // - Auth session state display
+      // - Environment indicators
+      // - Manual test request form
+      // - Retry functionality for logged requests
+      // - Download/clear logs
+      // =========================================================================
+
+      class StudioDebugConsole {
+        constructor() {
+          this.isActive = false;
+          this.isExpanded = false;
+          this.logs = [];
+          this.container = null;
+          this.panel = null;
+          this.toggleBtn = null;
+          this.watermark = null;
+          this.maxLogs = 100;
+
+          // Check if debug mode should be enabled
+          this.isActive = this.checkDebugEnabled();
+          
+          if (this.isActive) {
+            this.init();
+          }
+        }
+
+        checkDebugEnabled() {
+          // Check query param
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('debug') === '1') {
+            return true;
+          }
+          // Check localStorage
+          try {
+            if (localStorage.getItem('studio_debug') === 'true') {
+              return true;
+            }
+          } catch (e) {
+            // localStorage may be blocked
+          }
+          return false;
+        }
+
+        init() {
+          this.createStyles();
+          this.createContainer();
+          this.createWatermark();
+          this.setupKeyboardShortcut();
+        }
+
+        createStyles() {
+          const style = document.createElement('style');
+          style.textContent = `
+            .studio-debug-toggle {
+              position: fixed;
+              bottom: 16px;
+              right: 16px;
+              z-index: 99999;
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #7c3aed, #22d3ee);
+              border: 2px solid var(--ring);
+              color: white;
+              font-size: 18px;
+              font-weight: 700;
+              cursor: pointer;
+              box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .studio-debug-toggle:hover {
+              transform: scale(1.05);
+              box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+            }
+            .studio-debug-toggle:focus-visible {
+              outline: 2px solid var(--acc);
+              outline-offset: 2px;
+            }
+            .studio-debug-panel {
+              position: fixed;
+              bottom: 70px;
+              right: 16px;
+              z-index: 99998;
+              width: 400px;
+              max-width: calc(100vw - 32px);
+              max-height: 70vh;
+              background: var(--panel);
+              border: 1px solid var(--ring);
+              border-radius: 16px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+              display: none;
+              flex-direction: column;
+              overflow: hidden;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              font-size: 12px;
+            }
+            .studio-debug-panel.is-expanded {
+              display: flex;
+            }
+            .studio-debug-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 12px 16px;
+              border-bottom: 1px solid var(--ring);
+              background: var(--chip);
+            }
+            .studio-debug-title {
+              font-weight: 700;
+              font-size: 13px;
+              color: var(--ink);
+              margin: 0;
+            }
+            .studio-debug-header-actions {
+              display: flex;
+              gap: 8px;
+            }
+            .studio-debug-btn {
+              border: 1px solid var(--ring);
+              border-radius: 8px;
+              padding: 4px 10px;
+              background: var(--panel);
+              color: var(--ink);
+              font-size: 11px;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+            .studio-debug-btn:hover {
+              border-color: var(--acc);
+              background: var(--chip);
+            }
+            .studio-debug-btn:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+            .studio-debug-tabs {
+              display: flex;
+              border-bottom: 1px solid var(--ring);
+              background: var(--card);
+            }
+            .studio-debug-tab {
+              flex: 1;
+              padding: 8px 12px;
+              border: none;
+              background: transparent;
+              color: var(--muted);
+              font-size: 11px;
+              font-weight: 600;
+              cursor: pointer;
+              border-bottom: 2px solid transparent;
+              transition: all 0.2s ease;
+            }
+            .studio-debug-tab.is-active {
+              color: var(--acc);
+              border-bottom-color: var(--acc);
+            }
+            .studio-debug-tab:hover:not(.is-active) {
+              color: var(--ink);
+            }
+            .studio-debug-content {
+              flex: 1;
+              overflow-y: auto;
+              padding: 12px;
+            }
+            .studio-debug-section {
+              margin-bottom: 16px;
+            }
+            .studio-debug-section-title {
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: var(--muted);
+              margin-bottom: 8px;
+              font-weight: 600;
+            }
+            .studio-debug-log-entry {
+              background: var(--chip);
+              border: 1px solid var(--ring);
+              border-radius: 8px;
+              padding: 10px;
+              margin-bottom: 8px;
+              cursor: pointer;
+              transition: border-color 0.2s ease;
+            }
+            .studio-debug-log-entry:hover {
+              border-color: var(--acc);
+            }
+            .studio-debug-log-entry.is-expanded .studio-debug-log-details {
+              display: block;
+            }
+            .studio-debug-log-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 8px;
+            }
+            .studio-debug-log-action {
+              font-weight: 600;
+              color: var(--acc);
+              font-size: 11px;
+            }
+            .studio-debug-log-time {
+              font-size: 10px;
+              color: var(--muted);
+            }
+            .studio-debug-log-status {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              padding: 2px 6px;
+              border-radius: 999px;
+              font-size: 10px;
+              font-weight: 600;
+            }
+            .studio-debug-log-status.is-success {
+              background: rgba(34, 197, 94, 0.15);
+              color: #22c55e;
+            }
+            .studio-debug-log-status.is-error {
+              background: rgba(239, 68, 68, 0.15);
+              color: #ef4444;
+            }
+            .studio-debug-log-status.is-pending {
+              background: rgba(251, 191, 36, 0.15);
+              color: #fbbf24;
+            }
+            .studio-debug-log-details {
+              display: none;
+              margin-top: 10px;
+              padding-top: 10px;
+              border-top: 1px solid var(--ring);
+            }
+            .studio-debug-log-detail-row {
+              display: flex;
+              gap: 8px;
+              margin-bottom: 6px;
+              font-size: 11px;
+            }
+            .studio-debug-log-detail-label {
+              color: var(--muted);
+              min-width: 80px;
+              flex-shrink: 0;
+            }
+            .studio-debug-log-detail-value {
+              color: var(--ink);
+              word-break: break-all;
+              flex: 1;
+            }
+            .studio-debug-log-payload {
+              background: var(--card);
+              border-radius: 6px;
+              padding: 8px;
+              margin-top: 8px;
+              overflow-x: auto;
+              white-space: pre-wrap;
+              font-size: 10px;
+              max-height: 200px;
+              overflow-y: auto;
+            }
+            .studio-debug-log-actions {
+              display: flex;
+              gap: 6px;
+              margin-top: 8px;
+            }
+            .studio-debug-auth-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 8px 0;
+              border-bottom: 1px solid var(--ring);
+              font-size: 11px;
+            }
+            .studio-debug-auth-row:last-child {
+              border-bottom: none;
+            }
+            .studio-debug-auth-label {
+              color: var(--muted);
+            }
+            .studio-debug-auth-value {
+              color: var(--ink);
+              font-family: ui-monospace, monospace;
+            }
+            .studio-debug-token-value {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            }
+            .studio-debug-env-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 6px 0;
+              font-size: 11px;
+            }
+            .studio-debug-env-label {
+              color: var(--muted);
+            }
+            .studio-debug-env-value {
+              color: var(--ink);
+              padding: 2px 6px;
+              background: var(--chip);
+              border-radius: 4px;
+            }
+            .studio-debug-test-form {
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            }
+            .studio-debug-field {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+            .studio-debug-field-label {
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: var(--muted);
+            }
+            .studio-debug-field select,
+            .studio-debug-field input {
+              background: var(--field);
+              border: 1px solid var(--ring);
+              border-radius: 8px;
+              padding: 8px 10px;
+              font-size: 12px;
+              color: var(--ink);
+            }
+            .studio-debug-field select:focus,
+            .studio-debug-field input:focus {
+              outline: none;
+              border-color: var(--acc);
+            }
+            .studio-debug-test-actions {
+              display: flex;
+              gap: 8px;
+              margin-top: 4px;
+            }
+            .studio-debug-test-btn {
+              flex: 1;
+              border: 1px solid var(--acc);
+              border-radius: 8px;
+              padding: 10px;
+              background: var(--acc);
+              color: var(--active-tab-text);
+              font-size: 12px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+            .studio-debug-test-btn:hover {
+              box-shadow: 0 4px 12px rgba(79, 123, 255, 0.3);
+            }
+            .studio-debug-test-btn:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+            .studio-debug-test-btn.is-secondary {
+              background: var(--panel);
+              color: var(--ink);
+              border-color: var(--ring);
+            }
+            .studio-debug-empty {
+              text-align: center;
+              padding: 24px;
+              color: var(--muted);
+              font-size: 12px;
+            }
+            .studio-debug-watermark {
+              position: fixed;
+              top: 80px;
+              right: 16px;
+              z-index: 99997;
+              padding: 4px 10px;
+              background: rgba(239, 68, 68, 0.9);
+              color: white;
+              font-size: 10px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              border-radius: 4px;
+              box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            }
+            @media (max-width: 640px) {
+              .studio-debug-panel {
+                width: calc(100vw - 24px);
+                right: 12px;
+                bottom: 68px;
+                max-height: 60vh;
+              }
+              .studio-debug-toggle {
+                width: 40px;
+                height: 40px;
+                bottom: 12px;
+                right: 12px;
+              }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        createContainer() {
+          // Create toggle button
+          this.toggleBtn = document.createElement('button');
+          this.toggleBtn.className = 'studio-debug-toggle';
+          this.toggleBtn.type = 'button';
+          this.toggleBtn.setAttribute('aria-label', 'Toggle debug console');
+          this.toggleBtn.setAttribute('aria-expanded', 'false');
+          this.toggleBtn.textContent = '🐛';
+          this.toggleBtn.addEventListener('click', () => this.toggle());
+
+          // Create panel
+          this.panel = document.createElement('div');
+          this.panel.className = 'studio-debug-panel';
+          this.panel.setAttribute('role', 'dialog');
+          this.panel.setAttribute('aria-label', 'Debug Console');
+
+          // Create header
+          const header = document.createElement('div');
+          header.className = 'studio-debug-header';
+
+          const title = document.createElement('h3');
+          title.className = 'studio-debug-title';
+          title.textContent = 'Debug Console';
+          header.appendChild(title);
+
+          const headerActions = document.createElement('div');
+          headerActions.className = 'studio-debug-header-actions';
+
+          const downloadBtn = document.createElement('button');
+          downloadBtn.className = 'studio-debug-btn';
+          downloadBtn.textContent = '⬇ Download';
+          downloadBtn.addEventListener('click', () => this.downloadLogs());
+          headerActions.appendChild(downloadBtn);
+
+          const clearBtn = document.createElement('button');
+          clearBtn.className = 'studio-debug-btn';
+          clearBtn.textContent = '🗑 Clear';
+          clearBtn.addEventListener('click', () => this.clearLogs());
+          headerActions.appendChild(clearBtn);
+
+          header.appendChild(headerActions);
+          this.panel.appendChild(header);
+
+          // Create tabs
+          const tabs = document.createElement('div');
+          tabs.className = 'studio-debug-tabs';
+
+          const tabNames = ['Logs', 'Auth', 'Env', 'Test'];
+          tabNames.forEach((name, index) => {
+            const tab = document.createElement('button');
+            tab.className = 'studio-debug-tab';
+            if (index === 0) tab.classList.add('is-active');
+            tab.textContent = name;
+            tab.dataset.tab = name.toLowerCase();
+            tab.addEventListener('click', () => this.switchTab(name.toLowerCase()));
+            tabs.appendChild(tab);
+          });
+          this.panel.appendChild(tabs);
+
+          // Create content area
+          const content = document.createElement('div');
+          content.className = 'studio-debug-content';
+          content.dataset.debugContent = '';
+          this.panel.appendChild(content);
+
+          // Append to body
+          document.body.appendChild(this.toggleBtn);
+          document.body.appendChild(this.panel);
+
+          // Initial render
+          this.renderContent('logs');
+        }
+
+        createWatermark() {
+          this.watermark = document.createElement('div');
+          this.watermark.className = 'studio-debug-watermark';
+          this.watermark.textContent = 'DEBUG MODE';
+          document.body.appendChild(this.watermark);
+        }
+
+        setupKeyboardShortcut() {
+          document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift+D (or Cmd+Shift+D on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+              e.preventDefault();
+              this.toggle();
+            }
+          });
+
+          // Mobile: tap-hold on toggle button for 500ms
+          let holdTimer = null;
+          this.toggleBtn.addEventListener('touchstart', () => {
+            holdTimer = setTimeout(() => {
+              // Long press detected - could be used for additional features
+            }, 500);
+          });
+          this.toggleBtn.addEventListener('touchend', () => {
+            if (holdTimer) clearTimeout(holdTimer);
+          });
+        }
+
+        toggle() {
+          this.isExpanded = !this.isExpanded;
+          this.panel.classList.toggle('is-expanded', this.isExpanded);
+          this.toggleBtn.setAttribute('aria-expanded', String(this.isExpanded));
+          
+          if (this.isExpanded) {
+            // Refresh auth info when opening
+            this.renderContent(this.getCurrentTab());
+          }
+        }
+
+        getCurrentTab() {
+          const activeTab = this.panel.querySelector('.studio-debug-tab.is-active');
+          return activeTab ? activeTab.dataset.tab : 'logs';
+        }
+
+        switchTab(tabName) {
+          const tabs = this.panel.querySelectorAll('.studio-debug-tab');
+          tabs.forEach(tab => {
+            tab.classList.toggle('is-active', tab.dataset.tab === tabName);
+          });
+          this.renderContent(tabName);
+        }
+
+        renderContent(tabName) {
+          const content = this.panel.querySelector('[data-debug-content]');
+          if (!content) return;
+
+          // Clear content safely
+          content.textContent = '';
+
+          switch (tabName) {
+            case 'logs':
+              this.renderLogs(content);
+              break;
+            case 'auth':
+              this.renderAuth(content);
+              break;
+            case 'env':
+              this.renderEnv(content);
+              break;
+            case 'test':
+              this.renderTest(content);
+              break;
+          }
+        }
+
+        renderLogs(container) {
+          if (this.logs.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'studio-debug-empty';
+            empty.textContent = 'No requests logged yet. Generate an image to see logs here.';
+            container.appendChild(empty);
+            return;
+          }
+
+          // Render logs in reverse order (newest first)
+          const reversedLogs = [...this.logs].reverse();
+          reversedLogs.forEach((log, index) => {
+            const entry = this.createLogEntry(log, this.logs.length - 1 - index);
+            container.appendChild(entry);
+          });
+        }
+
+        createLogEntry(log, logIndex) {
+          const entry = document.createElement('div');
+          entry.className = 'studio-debug-log-entry';
+          entry.dataset.logIndex = logIndex;
+          entry.addEventListener('click', (e) => {
+            if (e.target.closest('.studio-debug-btn')) return;
+            entry.classList.toggle('is-expanded');
+          });
+
+          // Header
+          const header = document.createElement('div');
+          header.className = 'studio-debug-log-header';
+
+          const actionSpan = document.createElement('span');
+          actionSpan.className = 'studio-debug-log-action';
+          actionSpan.textContent = log.action || 'unknown';
+          header.appendChild(actionSpan);
+
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'studio-debug-log-time';
+          timeSpan.textContent = this.formatTime(log.timestamp);
+          header.appendChild(timeSpan);
+
+          const statusSpan = document.createElement('span');
+          statusSpan.className = 'studio-debug-log-status';
+          if (log.status === 'pending') {
+            statusSpan.classList.add('is-pending');
+            statusSpan.textContent = '⏳ Pending';
+          } else if (log.error) {
+            statusSpan.classList.add('is-error');
+            statusSpan.textContent = '❌ Error';
+          } else {
+            statusSpan.classList.add('is-success');
+            statusSpan.textContent = '✓ Success';
+          }
+          header.appendChild(statusSpan);
+
+          entry.appendChild(header);
+
+          // Details
+          const details = document.createElement('div');
+          details.className = 'studio-debug-log-details';
+
+          // Add detail rows
+          const detailRows = [
+            { label: 'Action', value: log.action },
+            { label: 'Archetype', value: log.archetype || 'N/A' },
+            { label: 'Model', value: log.model || 'auto' },
+            { label: 'Provider', value: log.provider || 'N/A' },
+            { label: 'Status', value: log.status || 'completed' },
+          ];
+
+          if (log.imageUrl) {
+            detailRows.push({ label: 'Image URL', value: this.truncateUrl(log.imageUrl) });
+          }
+          if (log.storagePath) {
+            detailRows.push({ label: 'Storage Path', value: log.storagePath });
+          }
+          if (log.error) {
+            detailRows.push({ label: 'Error', value: log.error });
+          }
+
+          detailRows.forEach(row => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'studio-debug-log-detail-row';
+
+            const labelEl = document.createElement('span');
+            labelEl.className = 'studio-debug-log-detail-label';
+            labelEl.textContent = row.label + ':';
+            rowEl.appendChild(labelEl);
+
+            const valueEl = document.createElement('span');
+            valueEl.className = 'studio-debug-log-detail-value';
+            valueEl.textContent = row.value;
+            rowEl.appendChild(valueEl);
+
+            details.appendChild(rowEl);
+          });
+
+          // Payload section
+          if (log.payload) {
+            const payloadLabel = document.createElement('div');
+            payloadLabel.className = 'studio-debug-section-title';
+            payloadLabel.textContent = 'Request Payload';
+            payloadLabel.style.marginTop = '8px';
+            details.appendChild(payloadLabel);
+
+            const payloadPre = document.createElement('pre');
+            payloadPre.className = 'studio-debug-log-payload';
+            payloadPre.textContent = JSON.stringify(log.payload, null, 2);
+            details.appendChild(payloadPre);
+          }
+
+          // Response section
+          if (log.response) {
+            const responseLabel = document.createElement('div');
+            responseLabel.className = 'studio-debug-section-title';
+            responseLabel.textContent = 'Response';
+            responseLabel.style.marginTop = '8px';
+            details.appendChild(responseLabel);
+
+            const responsePre = document.createElement('pre');
+            responsePre.className = 'studio-debug-log-payload';
+            responsePre.textContent = JSON.stringify(log.response, null, 2);
+            details.appendChild(responsePre);
+          }
+
+          // Actions
+          const actions = document.createElement('div');
+          actions.className = 'studio-debug-log-actions';
+
+          const retryBtn = document.createElement('button');
+          retryBtn.className = 'studio-debug-btn';
+          retryBtn.textContent = '🔄 Retry';
+          retryBtn.disabled = !log.payload;
+          retryBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.retryRequest(log);
+          });
+          actions.appendChild(retryBtn);
+
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'studio-debug-btn';
+          copyBtn.textContent = '📋 Copy';
+          copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.copyLog(log);
+          });
+          actions.appendChild(copyBtn);
+
+          details.appendChild(actions);
+          entry.appendChild(details);
+
+          return entry;
+        }
+
+        renderAuth(container) {
+          const section = document.createElement('div');
+          section.className = 'studio-debug-section';
+
+          const title = document.createElement('div');
+          title.className = 'studio-debug-section-title';
+          title.textContent = 'Session State';
+          section.appendChild(title);
+
+          // Get auth info from state
+          const session = state.session;
+          const userId = state.ownerId;
+
+          const rows = [
+            { label: 'User ID', value: userId || 'Not signed in' },
+            { label: 'Signed In', value: session ? 'Yes' : 'No' },
+          ];
+
+          if (session) {
+            // Truncated access token
+            const token = session.access_token || '';
+            const truncatedToken = token.length > 32 
+              ? token.slice(0, 16) + '…' + token.slice(-16)
+              : token;
+
+            rows.push({ label: 'Token', value: truncatedToken, copyable: token });
+
+            // Token expiry
+            if (session.expires_at) {
+              const expiresAt = new Date(session.expires_at * 1000);
+              const now = new Date();
+              const secondsUntilExpiry = Math.floor((expiresAt - now) / 1000);
+              rows.push({ 
+                label: 'Expires', 
+                value: secondsUntilExpiry > 0 
+                  ? `${Math.floor(secondsUntilExpiry / 60)}m ${secondsUntilExpiry % 60}s` 
+                  : 'Expired'
+              });
+            }
+          }
+
+          rows.forEach(row => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'studio-debug-auth-row';
+
+            const labelEl = document.createElement('span');
+            labelEl.className = 'studio-debug-auth-label';
+            labelEl.textContent = row.label;
+            rowEl.appendChild(labelEl);
+
+            if (row.copyable) {
+              const valueWrapper = document.createElement('div');
+              valueWrapper.className = 'studio-debug-token-value';
+
+              const valueEl = document.createElement('span');
+              valueEl.className = 'studio-debug-auth-value';
+              valueEl.textContent = row.value;
+              valueWrapper.appendChild(valueEl);
+
+              const copyBtn = document.createElement('button');
+              copyBtn.className = 'studio-debug-btn';
+              copyBtn.textContent = '📋';
+              copyBtn.style.padding = '2px 6px';
+              copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(row.copyable).then(() => {
+                  copyBtn.textContent = '✓';
+                  setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
+                });
+              });
+              valueWrapper.appendChild(copyBtn);
+
+              rowEl.appendChild(valueWrapper);
+            } else {
+              const valueEl = document.createElement('span');
+              valueEl.className = 'studio-debug-auth-value';
+              valueEl.textContent = row.value;
+              rowEl.appendChild(valueEl);
+            }
+
+            section.appendChild(rowEl);
+          });
+
+          container.appendChild(section);
+
+          // Refresh button
+          const refreshBtn = document.createElement('button');
+          refreshBtn.className = 'studio-debug-btn';
+          refreshBtn.textContent = '🔄 Refresh Session Info';
+          refreshBtn.style.marginTop = '12px';
+          refreshBtn.addEventListener('click', () => this.renderContent('auth'));
+          container.appendChild(refreshBtn);
+        }
+
+        renderEnv(container) {
+          const section = document.createElement('div');
+          section.className = 'studio-debug-section';
+
+          const title = document.createElement('div');
+          title.className = 'studio-debug-section-title';
+          title.textContent = 'Environment Indicators';
+          section.appendChild(title);
+
+          // Note: These values are inferred from client-side behavior
+          // The actual env vars are server-side only
+          const envRows = [
+            { label: 'Debug Mode', value: 'Enabled' },
+            { label: 'Supabase Client', value: state.supabase ? 'Ready' : 'Not Ready' },
+            { label: 'Project ID', value: state.projectId ? state.projectId.slice(0, 8) + '...' : 'None' },
+            { label: 'Page URL', value: window.location.hostname },
+          ];
+
+          envRows.forEach(row => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'studio-debug-env-row';
+
+            const labelEl = document.createElement('span');
+            labelEl.className = 'studio-debug-env-label';
+            labelEl.textContent = row.label;
+            rowEl.appendChild(labelEl);
+
+            const valueEl = document.createElement('span');
+            valueEl.className = 'studio-debug-env-value';
+            valueEl.textContent = row.value;
+            rowEl.appendChild(valueEl);
+
+            section.appendChild(rowEl);
+          });
+
+          container.appendChild(section);
+
+          // Add note about server-side env vars
+          const note = document.createElement('div');
+          note.style.marginTop = '12px';
+          note.style.padding = '8px';
+          note.style.background = 'var(--chip)';
+          note.style.borderRadius = '8px';
+          note.style.fontSize = '11px';
+          note.style.color = 'var(--muted)';
+          note.textContent = 'Note: AI_IMAGE_PROVIDER, AI_IMAGE_MODEL, and ENABLE_VERTEX_AI are server-side environment variables. Check Edge Function logs for resolved values.';
+          container.appendChild(note);
+        }
+
+        renderTest(container) {
+          // Check if user is signed in
+          if (!state.session || !state.session.access_token) {
+            const warning = document.createElement('div');
+            warning.className = 'studio-debug-empty';
+            warning.textContent = 'Sign in to send test requests';
+            container.appendChild(warning);
+            return;
+          }
+
+          const form = document.createElement('div');
+          form.className = 'studio-debug-test-form';
+
+          // Archetype select
+          const archetypeField = this.createField('Archetype', 'select', 'test-archetype', [
+            { value: 'hero', label: 'Hero' },
+            { value: 'villain', label: 'Villain' },
+            { value: 'sci-fi', label: 'Sci-Fi' },
+            { value: 'fantasy', label: 'Fantasy' },
+            { value: 'child', label: 'Child' },
+            { value: 'robot', label: 'Robot' },
+          ]);
+          form.appendChild(archetypeField);
+
+          // Model select
+          const modelField = this.createField('Model', 'select', 'test-model', [
+            { value: '', label: 'Auto (default)' },
+            { value: 'gemini-3-pro-image', label: 'Gemini 3 Pro Image' },
+            { value: 'gemini-3-pro-image-preview', label: 'Gemini 3 Pro Preview' },
+            { value: 'dall-e-3', label: 'DALL-E 3' },
+          ]);
+          form.appendChild(modelField);
+
+          // Tier select
+          const tierField = this.createField('Tier', 'select', 'test-tier', [
+            { value: 'standard', label: 'Standard' },
+            { value: 'premium', label: 'Premium' },
+          ]);
+          form.appendChild(tierField);
+
+          // Test action buttons
+          const actions = document.createElement('div');
+          actions.className = 'studio-debug-test-actions';
+
+          const draftBtn = document.createElement('button');
+          draftBtn.className = 'studio-debug-test-btn';
+          draftBtn.textContent = 'Send Test Draft';
+          draftBtn.addEventListener('click', () => this.sendTestDraft());
+          actions.appendChild(draftBtn);
+
+          const refineBtn = document.createElement('button');
+          refineBtn.className = 'studio-debug-test-btn is-secondary';
+          refineBtn.textContent = 'Send Test Refine';
+          refineBtn.addEventListener('click', () => this.sendTestRefine());
+          actions.appendChild(refineBtn);
+
+          form.appendChild(actions);
+          container.appendChild(form);
+
+          // Refine parameters (collapsed by default)
+          const refineSection = document.createElement('div');
+          refineSection.className = 'studio-debug-section';
+          refineSection.style.marginTop = '16px';
+
+          const refineTitle = document.createElement('div');
+          refineTitle.className = 'studio-debug-section-title';
+          refineTitle.textContent = 'Refine Parameters';
+          refineSection.appendChild(refineTitle);
+
+          // Age
+          const ageField = this.createField('Age', 'select', 'test-age', [
+            { value: 'adult', label: 'Adult' },
+            { value: 'younger', label: 'Younger' },
+            { value: 'older', label: 'Older' },
+          ]);
+          refineSection.appendChild(ageField);
+
+          // Mood
+          const moodField = this.createField('Mood', 'select', 'test-mood', [
+            { value: 'neutral', label: 'Neutral' },
+            { value: 'happy', label: 'Happy' },
+            { value: 'angry', label: 'Angry' },
+            { value: 'sad', label: 'Sad' },
+          ]);
+          refineSection.appendChild(moodField);
+
+          // Style
+          const styleField = this.createField('Style', 'select', 'test-style', [
+            { value: 'realistic', label: 'Realistic' },
+            { value: 'anime', label: 'Anime' },
+            { value: 'painterly', label: 'Painterly' },
+          ]);
+          refineSection.appendChild(styleField);
+
+          container.appendChild(refineSection);
+        }
+
+        createField(label, type, id, options) {
+          const field = document.createElement('div');
+          field.className = 'studio-debug-field';
+
+          const labelEl = document.createElement('label');
+          labelEl.className = 'studio-debug-field-label';
+          labelEl.textContent = label;
+          labelEl.setAttribute('for', id);
+          field.appendChild(labelEl);
+
+          if (type === 'select') {
+            const select = document.createElement('select');
+            select.id = id;
+            options.forEach(opt => {
+              const option = document.createElement('option');
+              option.value = opt.value;
+              option.textContent = opt.label;
+              select.appendChild(option);
+            });
+            field.appendChild(select);
+          } else {
+            const input = document.createElement('input');
+            input.type = type;
+            input.id = id;
+            field.appendChild(input);
+          }
+
+          return field;
+        }
+
+        async sendTestDraft() {
+          const archetype = document.getElementById('test-archetype')?.value || 'hero';
+          const model = document.getElementById('test-model')?.value || null;
+          const tier = document.getElementById('test-tier')?.value || 'standard';
+
+          const payload = {
+            archetype,
+            tier,
+          };
+          if (model) payload.model = model;
+
+          await this.executeTestRequest('generate-character-draft', payload);
+        }
+
+        async sendTestRefine() {
+          const archetype = document.getElementById('test-archetype')?.value || 'hero';
+          const model = document.getElementById('test-model')?.value || null;
+          const tier = document.getElementById('test-tier')?.value || 'standard';
+          const age = document.getElementById('test-age')?.value || 'adult';
+          const mood = document.getElementById('test-mood')?.value || 'neutral';
+          const style = document.getElementById('test-style')?.value || 'realistic';
+
+          const payload = {
+            archetype,
+            tier,
+            refine: {
+              age,
+              mood,
+              style,
+            },
+          };
+          if (model) payload.model = model;
+
+          await this.executeTestRequest('refine-character', payload);
+        }
+
+        async executeTestRequest(action, payload) {
+          if (!state.supabase || !state.session?.access_token) {
+            console.error('[Debug Console] Cannot execute test: not signed in');
+            return;
+          }
+
+          const logEntry = {
+            timestamp: new Date().toISOString(),
+            action,
+            archetype: payload.archetype,
+            model: payload.model || 'auto',
+            tier: payload.tier,
+            payload: { ...payload, action },
+            status: 'pending',
+          };
+
+          this.addLog(logEntry);
+
+          try {
+            const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
+              body: { ...payload, action },
+              headers: { Authorization: `Bearer ${state.session.access_token}` },
+            });
+
+            logEntry.status = 'completed';
+            
+            if (error) {
+              logEntry.error = error.message || 'Request failed';
+            } else if (data?.error) {
+              logEntry.error = data.error;
+            } else {
+              logEntry.response = data;
+              logEntry.imageUrl = data?.image_url;
+              logEntry.storagePath = data?.storage_path;
+              logEntry.provider = data?.provider || data?.meta?.provider;
+              logEntry.model = data?.meta?.model || payload.model || 'auto';
+            }
+          } catch (err) {
+            logEntry.status = 'error';
+            logEntry.error = err.message || 'Unknown error';
+          }
+
+          this.updateLog(this.logs.length - 1, logEntry);
+          this.renderContent('logs');
+        }
+
+        async retryRequest(log) {
+          if (!log.payload) return;
+          const action = log.action;
+          const payload = { ...log.payload };
+          delete payload.action;
+          await this.executeTestRequest(action, payload);
+        }
+
+        addLog(entry) {
+          this.logs.push(entry);
+          if (this.logs.length > this.maxLogs) {
+            this.logs.shift();
+          }
+          
+          // Auto-refresh if viewing logs
+          if (this.isExpanded && this.getCurrentTab() === 'logs') {
+            this.renderContent('logs');
+          }
+        }
+
+        updateLog(index, entry) {
+          if (index >= 0 && index < this.logs.length) {
+            this.logs[index] = entry;
+          }
+        }
+
+        clearLogs() {
+          this.logs = [];
+          this.renderContent('logs');
+        }
+
+        downloadLogs() {
+          const data = JSON.stringify(this.logs, null, 2);
+          const blob = new Blob([data], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `character-studio-debug-${new Date().toISOString().slice(0, 10)}.json`;
+          a.click();
+          
+          URL.revokeObjectURL(url);
+        }
+
+        copyLog(log) {
+          const data = JSON.stringify(log, null, 2);
+          navigator.clipboard.writeText(data).then(() => {
+            console.log('[Debug Console] Log copied to clipboard');
+          });
+        }
+
+        formatTime(timestamp) {
+          const date = new Date(timestamp);
+          return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+          });
+        }
+
+        truncateUrl(url) {
+          if (!url) return 'N/A';
+          if (url.length <= 60) return url;
+          return url.slice(0, 30) + '…' + url.slice(-25);
+        }
+      }
+
+      // Initialize debug console (feature gated)
+      const studioDebugConsole = new StudioDebugConsole();
+
+      // Expose log method for external use
+      if (studioDebugConsole.isActive) {
+        window.studioDebugLog = (action, payload, response, error) => {
+          const logEntry = {
+            timestamp: new Date().toISOString(),
+            action,
+            archetype: payload?.archetype,
+            model: payload?.model || 'auto',
+            tier: payload?.tier,
+            payload,
+            status: error ? 'error' : 'completed',
+            response: error ? undefined : response,
+            imageUrl: response?.image_url,
+            storagePath: response?.storage_path,
+            provider: response?.provider || response?.meta?.provider,
+            error: error?.message || error,
+          };
+          studioDebugConsole.addLog(logEntry);
+        };
+      }
     })();
   </script>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
