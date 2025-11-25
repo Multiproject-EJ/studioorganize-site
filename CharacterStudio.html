@@ -4620,19 +4620,19 @@
         setRefineStatus('Saving variant…', 'refining');
 
         try {
-          // Build the variant payload
+          // Build the variant payload with validated/defaulted refine_params
           const variantPayload = {
             character_id: activeCharacter.id,
             image_url: currentRefineState.image_url,
             storage_path: currentRefineState.storage_path || '',
             refine_params: {
-              age: currentRefineState.age,
-              mood: currentRefineState.mood,
-              hairLength: currentRefineState.hairLength,
-              eyebrowShape: currentRefineState.eyebrowShape,
-              style: currentRefineState.style,
-              detail: currentRefineState.detail,
-              model: currentRefineState.model
+              age: currentRefineState.age || 'default',
+              mood: currentRefineState.mood || 'neutral',
+              hairLength: currentRefineState.hairLength || 'medium',
+              eyebrowShape: currentRefineState.eyebrowShape || 'soft',
+              style: currentRefineState.style || 'realistic',
+              detail: currentRefineState.detail || 'standard',
+              model: currentRefineState.model || null
             },
             prompt_meta: currentRefineState.pipelineMeta || {},
             is_main: false
@@ -4650,7 +4650,7 @@
           }
 
           if (!data) {
-            throw new Error('No data returned from insert');
+            throw new Error('Variant insert failed for character ' + activeCharacter.id + ': no data returned');
           }
 
           // Add to local variants and re-render
@@ -4726,6 +4726,11 @@
         setVariantsStatus('Setting as main portrait…', '');
 
         try {
+          // TODO: These updates lack atomicity - if a later update fails after an earlier
+          // one succeeds, the data could be in an inconsistent state. Consider using a
+          // Supabase Edge Function with a database transaction for atomic updates.
+          // For now, we perform the updates in order and rely on the UI to show any errors.
+
           // 1. Update all variants for this character: is_main = false
           const { error: clearError } = await state.supabase
             .from('character_image_variants')
@@ -4837,14 +4842,14 @@
           return;
         }
 
-        // Find the variant in local state
+        // Find the variant in local state (for UI feedback)
         const variant = state.currentVariants.find(v => v.id === variantId);
         if (!variant) {
           setVariantsStatus('Variant not found', 'error');
           return;
         }
 
-        // Prevent deleting the main variant
+        // Prevent deleting the main variant (local check for quick feedback)
         if (variant.is_main) {
           setVariantsStatus('Cannot delete the main variant. Set another variant as main first.', 'warning');
           return;
@@ -4862,6 +4867,24 @@
         setVariantsStatus('Deleting variant…', '');
 
         try {
+          // Server-side verification: ensure the variant is not marked as main in the database
+          // This guards against stale local state
+          const { data: serverVariant, error: fetchError } = await state.supabase
+            .from('character_image_variants')
+            .select('id, is_main')
+            .eq('id', variantId)
+            .single();
+
+          if (fetchError) throw fetchError;
+
+          if (serverVariant && serverVariant.is_main) {
+            setVariantsStatus('Cannot delete the main variant. Set another variant as main first.', 'warning');
+            // Refresh local state to match server
+            await loadCharacterVariants(activeCharacter.id, { force: true });
+            renderVariantsList();
+            return;
+          }
+
           const { error } = await state.supabase
             .from('character_image_variants')
             .delete()

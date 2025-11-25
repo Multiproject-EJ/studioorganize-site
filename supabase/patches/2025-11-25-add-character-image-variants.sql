@@ -1,6 +1,11 @@
 -- Character Image Variants
 -- Migration to add persistent variants for refined character images
 -- Enables saving multiple visual iterations instead of overwriting the main portrait
+--
+-- Note: This migration is additive and does not affect existing character portraits.
+-- Existing portrait URLs in the characters table (look_portrait_url, base_image_url) 
+-- remain unchanged. Users can optionally migrate existing portraits to variants 
+-- by manually inserting rows with is_main = true.
 
 -- ---------------------------------------------------------------------------
 -- character_image_variants table
