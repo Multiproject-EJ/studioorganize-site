@@ -4121,8 +4121,8 @@
 
         // Assemble payload for refine-character action
         // See supabase/functions/ai-image-pipeline/README.md for API documentation
+        // Note: action is added by invokeImagePipeline, so we don't include it here
         const payload = {
-          action: 'refine-character',
           character_id: activeCharacter.id || null,
           archetype: activeCharacter.archetype || 'hero',
           base_image_url: activeCharacter.lookPortraitUrl || activeCharacter.looks?.portrait || null,
