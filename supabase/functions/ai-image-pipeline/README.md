@@ -2,9 +2,89 @@
 
 This Edge Function provides AI-powered image generation for character creation and scene rendering in StudioOrganize.
 
+## Prompt Enrichment & Provider Gating
+
+### Prompt Enrichment System
+
+The AI Image Pipeline uses an enriched prompt system to produce higher-quality, more consistent character images. Prompts are automatically enhanced with:
+
+**1. Archetype Base Prompts**
+Each archetype has a rich, detailed base prompt:
+- `hero`: Confident stance, noble appearance, dynamic pose, well-defined silhouette
+- `villain`: Dramatic features, imposing presence, sharp angular features, dark palette
+- `sci-fi`: Sleek technological elements, clean lines, cybernetic enhancements
+- `fantasy`: Mystical elements, ornate costume details, ethereal glow
+- `child`: Innocent features, soft rounded face, playful energy
+- `robot`: Precise geometric shapes, articulated joints, glowing elements
+
+**2. Global Quality Additions**
+- Full body character design
+- Clean edges suitable for compositing
+- Professional character art
+- Balanced lighting with subtle shadows
+- Clear silhouette
+- (Premium tier adds: Highly detailed, Cinematic quality, Studio lighting, 4K resolution)
+
+**3. Negative Artifact Suppression**
+The following phrases are automatically appended to prevent common AI artifacts:
+- No text
+- No watermark
+- Avoid distorted hands
+- Avoid extra limbs
+- Avoid blurry faces
+- No cropped body parts
+- Anatomically correct proportions
+
+**4. Refinement Modifiers**
+For `refine-character` action, additional modifiers are added based on UI sliders:
+- Age: younger/adult/older
+- Mood: neutral/happy/angry/sad expressions
+- Hair length: short/medium/long
+- Eyebrow shape: soft/sharp/thick/thin
+- Style: anime/realistic/painterly
+
+### Temporary Google Provider Gating
+
+**Important:** Google Imagen models are temporarily disabled until Vertex AI integration is complete.
+
+**Environment Flag:** `ENABLE_VERTEX_AI`
+- Set to `"true"` to enable Google provider
+- When not set or set to any other value, Google requests return 501 error
+
+**Behavior when Google is gated:**
+- Requests for Google models return: `{ "error": "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto." }`
+- Status code: **501 Not Implemented**
+- Auto provider selection prefers OpenAI
+- Frontend model dropdowns hide Google/Imagen options
+
+**Future:** Once Vertex AI integration is implemented, set `ENABLE_VERTEX_AI=true` to enable Google models.
+
+### DEBUG Flag
+
+Set `DEBUG=true` environment variable to enable structured logging:
+
+```bash
+supabase functions secrets set DEBUG=true
+```
+
+When enabled, the following is logged:
+- `[PROVIDER]` - Provider selection and gating decisions
+- `[PROMPT]` - Prompt construction details (archetype, tier, model, full prompt)
+
+Example log output:
+```
+[PROVIDER] Google provider is gated. ENABLE_VERTEX_AI is not set to 'true'.
+[PROMPT] generate-character-draft: { archetype: 'hero', tier: 'standard', provider: 'openai', model: 'dall-e-3', promptLength: 423 }
+[PROMPT] Full prompt: A heroic character with a confident stance...
+```
+
+---
+
 ## Model Selection
 
 The AI Image Pipeline supports explicit model selection for both character generation and refinement actions.
+
+**Note:** Google models are temporarily disabled (see Provider Gating above).
 
 ### Priority Order
 
