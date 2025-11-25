@@ -177,6 +177,24 @@ type RefineParams = {
   detail?: "cheap" | "standard" | "pro";
 };
 
+/**
+ * Valid image size options for AI providers.
+ */
+type ImageSize = "512x512" | "1024x1024" | "1792x1024";
+
+/**
+ * Valid quality options for AI providers.
+ */
+type ImageQuality = "standard" | "hd";
+
+/**
+ * Detail settings for image generation.
+ */
+type DetailSettings = {
+  size: ImageSize;
+  quality: ImageQuality;
+};
+
 interface ImageProvider {
   name: string;
   generatePoseFromCharacter(
@@ -1396,16 +1414,40 @@ function buildRefinePrompt(archetype: string, refine: RefineParams): string {
  * Get quality/resolution settings based on detail level.
  * Maps the detail parameter to AI provider settings.
  */
-function getDetailSettings(detail: RefineParams["detail"]): { size: string; quality: string } {
-  switch (detail) {
-    case "cheap":
-      return { size: "512x512", quality: "standard" };
-    case "pro":
-      return { size: "1792x1024", quality: "hd" };
-    case "standard":
-    default:
-      return { size: "1024x1024", quality: "standard" };
+function getDetailSettings(detail: RefineParams["detail"]): DetailSettings {
+  const settingsMap: Record<NonNullable<RefineParams["detail"]>, DetailSettings> = {
+    "cheap": { size: "512x512", quality: "standard" },
+    "standard": { size: "1024x1024", quality: "standard" },
+    "pro": { size: "1792x1024", quality: "hd" },
+  };
+  return settingsMap[detail ?? "standard"];
+}
+
+/**
+ * Map detail size to DALL-E 3 compatible size.
+ * DALL-E 3 only supports specific sizes: 1024x1024, 1024x1792, 1792x1024
+ */
+function mapToDalleSize(size: ImageSize): "1024x1024" | "1024x1792" | "1792x1024" {
+  const sizeMap: Record<ImageSize, "1024x1024" | "1024x1792" | "1792x1024"> = {
+    "512x512": "1024x1024",
+    "1024x1024": "1024x1024",
+    "1792x1024": "1792x1024",
+  };
+  return sizeMap[size];
+}
+
+/**
+ * Validate that a value is one of the allowed options.
+ * Returns the value if valid, otherwise returns undefined.
+ */
+function validateEnumValue<T extends string>(
+  value: unknown,
+  allowedValues: readonly T[],
+): T | undefined {
+  if (typeof value === "string" && allowedValues.includes(value as T)) {
+    return value as T;
   }
+  return undefined;
 }
 
 /**
@@ -1441,15 +1483,15 @@ async function handleRefineCharacter(
   const baseImageUrl = typeof body?.base_image_url === "string" ? body.base_image_url : null;
   const baseStoragePath = typeof body?.base_storage_path === "string" ? body.base_storage_path : null;
   
-  // Parse refine object
+  // Parse refine object with validated enum values
   const refineInput = body?.refine && typeof body.refine === "object" ? body.refine : {};
   const refine: RefineParams = {
-    age: ["younger", "adult", "older"].includes(refineInput.age) ? refineInput.age : undefined,
-    mood: ["neutral", "happy", "angry", "sad"].includes(refineInput.mood) ? refineInput.mood : undefined,
-    hairLength: ["short", "medium", "long"].includes(refineInput.hairLength) ? refineInput.hairLength : undefined,
-    eyebrowShape: ["soft", "sharp", "thick", "thin"].includes(refineInput.eyebrowShape) ? refineInput.eyebrowShape : undefined,
-    style: ["anime", "realistic", "painterly"].includes(refineInput.style) ? refineInput.style : undefined,
-    detail: ["cheap", "standard", "pro"].includes(refineInput.detail) ? refineInput.detail : "standard",
+    age: validateEnumValue(refineInput.age, ["younger", "adult", "older"] as const),
+    mood: validateEnumValue(refineInput.mood, ["neutral", "happy", "angry", "sad"] as const),
+    hairLength: validateEnumValue(refineInput.hairLength, ["short", "medium", "long"] as const),
+    eyebrowShape: validateEnumValue(refineInput.eyebrowShape, ["soft", "sharp", "thick", "thin"] as const),
+    style: validateEnumValue(refineInput.style, ["anime", "realistic", "painterly"] as const),
+    detail: validateEnumValue(refineInput.detail, ["cheap", "standard", "pro"] as const) ?? "standard",
   };
 
   if (!archetype) {
@@ -1511,9 +1553,7 @@ async function handleRefineCharacter(
       }
     } else if (AI_IMAGE_PROVIDER === "openai" && OPENAI_API_KEY) {
       // OpenAI DALL-E: text-to-image generation with refined prompt
-      // Note: DALL-E 3 doesn't support custom sizes beyond the preset options
-      const dalleSize = detailSettings.size === "512x512" ? "1024x1024" : 
-                        detailSettings.size === "1792x1024" ? "1792x1024" : "1024x1024";
+      const dalleSize = mapToDalleSize(detailSettings.size);
       const requestBody = {
         model: "dall-e-3",
         prompt: finalPrompt,
