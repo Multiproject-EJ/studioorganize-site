@@ -1541,7 +1541,7 @@ async function handleGenerateCharacterDraft(
   }
 
   // Check if Gemini image model is requested but not enabled
-  // This must be checked first because Gemini models are a subset of Google models
+  // Gemini models require ENABLE_GEMINI_IMAGE=true
   if (isGeminiImageModel(resolvedModel.model) && !isGeminiImageEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto.",
@@ -1549,7 +1549,8 @@ async function handleGenerateCharacterDraft(
   }
 
   // Check if Google provider is requested but not enabled (for non-Gemini models)
-  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+  // Skip this check for Gemini models since they have their own flag
+  if (resolvedModel.provider === "google" && !isGeminiImageModel(resolvedModel.model) && !isGoogleProviderEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
     });
@@ -1877,7 +1878,7 @@ async function handleRefineCharacter(
   }
 
   // Check if Gemini image model is requested but not enabled
-  // This must be checked first because Gemini models are a subset of Google models
+  // Gemini models require ENABLE_GEMINI_IMAGE=true
   if (isGeminiImageModel(resolvedModel.model) && !isGeminiImageEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto.",
@@ -1885,7 +1886,8 @@ async function handleRefineCharacter(
   }
 
   // Check if Google provider is requested but not enabled (for non-Gemini models)
-  if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
+  // Skip this check for Gemini models since they have their own flag
+  if (resolvedModel.provider === "google" && !isGeminiImageModel(resolvedModel.model) && !isGoogleProviderEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
     });
