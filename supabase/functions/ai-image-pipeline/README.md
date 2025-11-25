@@ -2,6 +2,99 @@
 
 This Edge Function provides AI-powered image generation for character creation and scene rendering in StudioOrganize.
 
+## Model Selection
+
+The AI Image Pipeline supports explicit model selection for both character generation and refinement actions.
+
+### Priority Order
+
+Model resolution follows this priority:
+
+1. **Request body `model`** - Explicit model specified in the request
+2. **Environment variable `AI_IMAGE_MODEL`** - Default model from environment
+3. **Fallback mapping** - Provider + detail/tier based mapping
+
+### Supported Models
+
+**Google (Imagen):**
+- `imagen-3.0` - Standard quality
+- `imagen-3.0-lite` - Fast/cheap generation
+- `imagen-3.0-highres` - High resolution output
+- `nano-banana-pro` - Custom internal alias (TODO: map to Vertex AI model ID)
+
+**OpenAI:**
+- `dall-e-3` - DALL-E 3 standard
+- `gpt-image-1024` - GPT Image 1024x1024
+- `gpt-image-512` - GPT Image (maps to 1024x1024 minimum)
+
+### Fallback Mapping
+
+When no explicit model is provided:
+
+| Provider | Detail | Resolved Model |
+|----------|--------|----------------|
+| Google | `pro` | `imagen-3.0-highres` |
+| Google | `standard` | `imagen-3.0` |
+| Google | `cheap` | `imagen-3.0-lite` |
+| OpenAI | `pro` | `dall-e-3` |
+| OpenAI | `standard` | `gpt-image-1024` |
+| OpenAI | `cheap` | `gpt-image-512` |
+
+### Example Requests
+
+**Generate with explicit model:**
+```json
+{
+  "action": "generate-character-draft",
+  "archetype": "hero",
+  "tier": "standard",
+  "model": "imagen-3.0-highres"
+}
+```
+
+**Refine with explicit model:**
+```json
+{
+  "action": "refine-character",
+  "archetype": "hero",
+  "model": "dall-e-3",
+  "detail": "pro",
+  "refine": { "age": "young-adult", "style": "painterly" }
+}
+```
+
+### Response Meta Block
+
+Both `generate-character-draft` and `refine-character` responses include a `meta` block:
+
+```json
+{
+  "draft_id": "uuid",
+  "image_url": "https://...",
+  "meta": {
+    "provider": "google",
+    "model": "imagen-3.0-highres",
+    "detail": "pro",
+    "archetype": "hero",
+    "action": "generate-character"
+  }
+}
+```
+
+### Error Handling
+
+If an unsupported model is requested for the configured provider:
+
+```json
+{
+  "error": "Unsupported model 'invalid-model' for Google provider. Supported: imagen-3.0, imagen-3.0-lite, imagen-3.0-highres, nano-banana-pro"
+}
+```
+
+Status code: **400 Bad Request**
+
+---
+
 ## Actions
 
 ### 1. `generate-character-draft`
@@ -13,7 +106,8 @@ Generates a character image from a text description based on archetype and quali
 {
   "action": "generate-character-draft",
   "archetype": "hero",  // hero | villain | sci-fi | fantasy | child | robot
-  "tier": "standard"    // standard | premium
+  "tier": "standard",   // standard | premium
+  "model": "imagen-3.0" // Optional: explicit model override
 }
 ```
 
@@ -26,7 +120,14 @@ Generates a character image from a text description based on archetype and quali
   "provider": "google",  // google | openai | placeholder
   "archetype": "hero",
   "tier": "standard",
-  "metadata": {}
+  "metadata": {},
+  "meta": {
+    "provider": "google",
+    "model": "imagen-3.0",
+    "detail": "standard",
+    "archetype": "hero",
+    "action": "generate-character"
+  }
 }
 ```
 
@@ -37,7 +138,8 @@ const { data, error } = await supabase.functions.invoke('ai-image-pipeline', {
   body: {
     action: 'generate-character-draft',
     archetype: 'hero',
-    tier: 'standard'
+    tier: 'standard',
+    model: 'imagen-3.0-highres'  // Optional
   },
   headers: { 
     Authorization: `Bearer ${session.access_token}` 
@@ -47,6 +149,7 @@ const { data, error } = await supabase.functions.invoke('ai-image-pipeline', {
 if (!error) {
   const imageUrl = data.image_url;  // Display this URL in your UI
   const storagePath = data.storage_path;  // Store for later reference
+  console.log('Used model:', data.meta.model);
 }
 ```
 
@@ -60,6 +163,7 @@ Refines an existing character image based on UI slider values. Generates a new v
   "action": "refine-character",
   "archetype": "hero",                              // Required: hero | villain | sci-fi | fantasy | child | robot
   "tier": "standard",                               // Optional: standard | premium
+  "model": "dall-e-3",                              // Optional: explicit model override
   "character_id": "uuid-or-null",                   // Optional: existing character ID
   "base_image_url": "https://...",                  // Optional: URL of the original image
   "base_storage_path": "story-refs/character-drafts/...", // Optional: storage path of original
@@ -89,7 +193,14 @@ Refines an existing character image based on UI slider values. Generates a new v
   "base_image_url": "https://...",
   "base_storage_path": "story-refs/...",
   "prompt_used": "A heroic character...",
-  "metadata": {}
+  "metadata": {},
+  "meta": {
+    "provider": "openai",
+    "model": "dall-e-3",
+    "detail": "pro",
+    "archetype": "hero",
+    "action": "refine-character"
+  }
 }
 ```
 
@@ -232,6 +343,9 @@ Set these environment variables in Supabase Edge Functions:
 # AI Provider Selection
 AI_IMAGE_PROVIDER=google  # google | openai | auto
 
+# Default Model Selection (optional - overrides fallback mapping)
+AI_IMAGE_MODEL=imagen-3.0  # See Model Selection section for supported models
+
 # Google Imagen API
 GOOGLE_API_KEY=your-google-api-key
 GOOGLE_IMAGE_MODEL=google-nano-banan  # Optional
@@ -250,6 +364,7 @@ Configure via Supabase CLI:
 ```bash
 supabase functions secrets set \
   AI_IMAGE_PROVIDER=google \
+  AI_IMAGE_MODEL=imagen-3.0-highres \
   GOOGLE_API_KEY=your-key \
   --project-ref your-project-ref
 

@@ -1486,6 +1486,24 @@
       <!-- Step 2: First visual draft -->
       <div class="character-studio-wizard-step-content" data-wizard-step-content="2">
         <h2 class="character-studio-wizard-title">First visual draft</h2>
+        <!-- Model Selection for Wizard Step 2 -->
+        <div class="character-studio-field" style="margin-bottom: 16px;">
+          <span>Engine / Model</span>
+          <select id="characterWizardModelSelect" data-wizard-model-select>
+            <option value="">Auto (use default)</option>
+            <optgroup label="Google Imagen">
+              <option value="imagen-3.0">Imagen 3.0</option>
+              <option value="imagen-3.0-lite">Imagen 3.0 Lite</option>
+              <option value="imagen-3.0-highres">Imagen 3.0 Highres</option>
+              <option value="nano-banana-pro">Nano Banana Pro (custom)</option>
+            </optgroup>
+            <optgroup label="OpenAI">
+              <option value="dall-e-3">DALL-E 3</option>
+              <option value="gpt-image-1024">GPT Image 1024</option>
+              <option value="gpt-image-512">GPT Image 512</option>
+            </optgroup>
+          </select>
+        </div>
         <div class="character-studio-wizard-preview" data-wizard-preview>
           <div class="character-studio-wizard-loading" data-wizard-loading>
             <div class="character-studio-wizard-loading-spinner"></div>
@@ -3293,6 +3311,23 @@
                         <button type="button" class="character-studio-refine-pill" data-refine-pill="detail" data-value="pro">Pro</button>
                       </div>
                     </label>
+                    <label class="character-studio-field">
+                      <span>Engine / Model</span>
+                      <select id="characterRefineModelSelect" data-refine-model-select>
+                        <option value="">Auto (use default)</option>
+                        <optgroup label="Google Imagen">
+                          <option value="imagen-3.0">Imagen 3.0</option>
+                          <option value="imagen-3.0-lite">Imagen 3.0 Lite</option>
+                          <option value="imagen-3.0-highres">Imagen 3.0 Highres</option>
+                          <option value="nano-banana-pro">Nano Banana Pro (custom)</option>
+                        </optgroup>
+                        <optgroup label="OpenAI">
+                          <option value="dall-e-3">DALL-E 3</option>
+                          <option value="gpt-image-1024">GPT Image 1024</option>
+                          <option value="gpt-image-512">GPT Image 512</option>
+                        </optgroup>
+                      </select>
+                    </label>
                   </div>
                   <div class="character-studio-refine-preview-box">
                     <div class="character-studio-refine-previews">
@@ -3940,7 +3975,13 @@
       //   - base_image_url: Current portrait URL
       //   - base_storage_path: Storage path for original image
       //   - tier: 'standard' or 'premium' (mapped from detail setting)
+      //   - model: Explicit model selection (null = auto/fallback)
       //   - refine: { age, mood, hairLength, eyebrowShape, style, detail }
+      //
+      // Model selection priority (handled by backend):
+      // 1. Request body `model` (from this state)
+      // 2. Environment variable `AI_IMAGE_MODEL`
+      // 3. Fallback by provider + detail/tier
       //
       // TODO: Image-to-image refinement is not yet supported by the AI providers.
       //       Currently generates new images based on refined text prompts.
@@ -3955,6 +3996,7 @@
         eyebrowShape: 'soft',
         style: 'realistic',
         detail: 'standard',
+        model: null,  // null = auto, or explicit model name like 'imagen-3.0', 'dall-e-3'
         isDirty: false,
         // Variant metadata from the last successful refinement call
         variant_id: null,
@@ -3987,12 +4029,19 @@
         currentRefineState.eyebrowShape = 'soft';
         currentRefineState.style = 'realistic';
         currentRefineState.detail = 'standard';
+        currentRefineState.model = null;  // Reset model to auto
         currentRefineState.isDirty = false;
         // Clear variant metadata from previous refinement
         currentRefineState.variant_id = null;
         currentRefineState.storage_path = null;
         currentRefineState.image_url = null;
         currentRefineState.draft_id = null;
+
+        // Reset the model select dropdown
+        const refineModelSelect = document.getElementById('characterRefineModelSelect');
+        if (refineModelSelect) {
+          refineModelSelect.value = '';
+        }
 
         // Update "before" preview with current character portrait
         const beforePreview = document.querySelector('[data-refine-preview-before]');
@@ -4119,9 +4168,17 @@
         };
         const tier = tierMapping[currentRefineState.detail] || 'standard';
 
+        // Only include model if explicitly set (non-empty string)
+        const model = currentRefineState.model && typeof currentRefineState.model === 'string' && currentRefineState.model.trim()
+          ? currentRefineState.model.trim()
+          : null;
+
         // Assemble payload for refine-character action
         // See supabase/functions/ai-image-pipeline/README.md for API documentation
-        // Note: action is added by invokeImagePipeline, so we don't include it here
+        // Model selection priority (handled by backend):
+        // 1. Request body `model` (from currentRefineState)
+        // 2. Environment variable `AI_IMAGE_MODEL`
+        // 3. Fallback by provider + detail/tier
         const payload = {
           character_id: activeCharacter.id || null,
           archetype: activeCharacter.archetype || 'hero',
@@ -4137,6 +4194,10 @@
             detail: currentRefineState.detail
           }
         };
+        // Only add model to payload if explicitly set (avoid sending null/empty)
+        if (model) {
+          payload.model = model;
+        }
 
         try {
           // Call the Supabase Edge Function via invokeImagePipeline
@@ -4349,6 +4410,16 @@
             pill.classList.add('selected');
           });
         });
+
+        // Model select for refinement panel
+        const refineModelSelect = document.getElementById('characterRefineModelSelect');
+        if (refineModelSelect) {
+          refineModelSelect.addEventListener('change', (e) => {
+            // Store the selected model (empty string means "auto")
+            currentRefineState.model = e.target.value || null;
+            currentRefineState.isDirty = true;
+          });
+        }
 
         // Regenerate button
         const regenerateBtn = document.querySelector('[data-refine-regenerate]');
@@ -4974,9 +5045,24 @@
       //   - Status messages show loading, errors, and success states
       // =========================================================================
       
+      /**
+       * Temporary draft data during the wizard flow.
+       * - archetype: Selected character archetype (hero, villain, etc.)
+       * - style: Quality tier ('default' or 'premium')
+       * - model: Selected AI model (null = auto/fallback, or explicit model name)
+       * - image_url: Generated image URL
+       * - storage_path: Storage path for the generated image
+       * - draft_id: Unique draft identifier
+       *
+       * Model selection priority (handled by backend):
+       * 1. Request body `model` (from this state)
+       * 2. Environment variable `AI_IMAGE_MODEL`
+       * 3. Fallback by provider + detail/tier
+       */
       const currentCharacterDraft = {
         archetype: null,
         style: 'default',
+        model: null,  // null = auto, or explicit model name like 'imagen-3.0', 'dall-e-3'
         image_url: null,
         storage_path: null,
         draft_id: null
@@ -5136,9 +5222,15 @@
 
       /**
        * Generate a character draft using the AI image pipeline.
-       * Calls the Supabase function to create a character image based on archetype and tier.
-       * @param {Object} draft - Draft configuration with archetype and style
-       * @returns {Promise<Object>} Result with image_url and storage_path
+       * Calls the Supabase function to create a character image based on archetype, tier, and model.
+       *
+       * Model selection flow:
+       * - If draft.model is set (non-empty string), it's included in the request
+       * - Backend resolves model based on priority: request model > env model > fallback
+       * - Response includes meta.model with the resolved model used
+       *
+       * @param {Object} draft - Draft configuration with archetype, style, and optional model
+       * @returns {Promise<Object>} Result with image_url, storage_path, and meta
        */
       async function generateCharacterDraft(draft) {
         if (!state.supabase) {
@@ -5150,23 +5242,38 @@
 
         const archetype = draft.archetype || 'hero';
         const tier = draft.style === 'premium' ? 'premium' : 'standard';
+        // Only include model if explicitly set (non-empty string)
+        const model = draft.model && typeof draft.model === 'string' && draft.model.trim()
+          ? draft.model.trim()
+          : null;
 
         try {
+          // Build request body - only include model if explicitly set
+          const requestBody = {
+            action: 'generate-character-draft',
+            archetype: archetype,
+            tier: tier
+          };
+          if (model) {
+            requestBody.model = model;
+          }
+
           // Call the ai-image-pipeline Supabase function
           const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
-            body: {
-              action: 'generate-character-draft',
-              archetype: archetype,
-              tier: tier
-            },
-            headers: { 
-              Authorization: `Bearer ${state.session.access_token}` 
+            body: requestBody,
+            headers: {
+              Authorization: `Bearer ${state.session.access_token}`
             },
           });
 
           if (error) {
             console.error('Character draft generation error:', error);
             throw error;
+          }
+
+          // Check for API error responses (model validation errors, etc.)
+          if (data?.error) {
+            throw new Error(data.error);
           }
 
           // Extract the response
@@ -5184,7 +5291,8 @@
             draft_id: draftId,
             provider: data?.provider,
             archetype: data?.archetype,
-            tier: data?.tier
+            tier: data?.tier,
+            meta: data?.meta  // Contains resolved model, provider, detail, etc.
           };
         } catch (error) {
           console.error('Failed to generate character draft:', error);
@@ -5299,11 +5407,17 @@
         wizardCurrentStep = 1;
         currentCharacterDraft.archetype = null;
         currentCharacterDraft.style = 'default';
+        currentCharacterDraft.model = null;  // Reset model to auto
         currentCharacterDraft.image_url = null;
         currentCharacterDraft.storage_path = null;
         currentCharacterDraft.draft_id = null;
         showWizardStep(1);
         updateWizardStepIndicator();
+        // Reset the model select dropdown
+        const wizardModelSelect = document.getElementById('characterWizardModelSelect');
+        if (wizardModelSelect) {
+          wizardModelSelect.value = '';
+        }
         const archetypeButtons = document.querySelectorAll('[data-archetype]');
         archetypeButtons.forEach(btn => btn.classList.remove('selected'));
         const validationEl = document.querySelector('[data-wizard-validation]');
@@ -5414,6 +5528,7 @@
         wizardCurrentStep = 1;
         currentCharacterDraft.archetype = null;
         currentCharacterDraft.style = 'default';
+        currentCharacterDraft.model = null;  // Reset model to auto
         currentCharacterDraft.image_url = null;
         currentCharacterDraft.storage_path = null;
         currentCharacterDraft.draft_id = null;
@@ -5422,6 +5537,11 @@
         // Clear archetype selection
         const archetypeButtons = document.querySelectorAll('[data-archetype]');
         archetypeButtons.forEach(btn => btn.classList.remove('selected'));
+        // Reset the model select dropdown
+        const wizardModelSelect = document.getElementById('characterWizardModelSelect');
+        if (wizardModelSelect) {
+          wizardModelSelect.value = '';
+        }
       }
 
       // Initialize wizard event listeners
@@ -5442,6 +5562,15 @@
         const continueBtn = document.querySelector('[data-wizard-continue]');
         if (continueBtn) {
           continueBtn.addEventListener('click', handleWizardContinue);
+        }
+
+        // Model select for wizard Step 2
+        const wizardModelSelect = document.getElementById('characterWizardModelSelect');
+        if (wizardModelSelect) {
+          wizardModelSelect.addEventListener('change', (e) => {
+            // Store the selected model (empty string means "auto")
+            currentCharacterDraft.model = e.target.value || null;
+          });
         }
 
         const regenerateBtn = document.querySelector('[data-wizard-regenerate]');
