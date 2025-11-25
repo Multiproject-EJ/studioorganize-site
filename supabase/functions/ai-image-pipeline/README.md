@@ -43,21 +43,32 @@ For `refine-character` action, additional modifiers are added based on UI slider
 - Eyebrow shape: soft/sharp/thick/thin
 - Style: anime/realistic/painterly
 
-### Temporary Google Provider Gating
+### Google Provider Model Gating
 
-**Important:** Google Imagen models are temporarily disabled until Vertex AI integration is complete.
+The AI Image Pipeline supports two types of Google image models with different requirements:
+
+#### Gemini 3 Pro Image (Available)
+- **Models**: `gemini-3-pro-image-preview`, `gemini-3-pro-image`
+- **API**: Generative Language API
+- **Auth**: `GOOGLE_API_KEY` environment variable
+- **No special flags required** - works out of the box
+
+#### Imagen 3 (Vertex AI - Gated)
+- **Models**: `imagen-3.0`, `imagen-3.0-lite`, `imagen-3.0-highres`
+- **API**: Vertex AI
+- **Auth**: Service account with OAuth2 or workload identity
+- **Requires**: `ENABLE_VERTEX_AI=true` flag
 
 **Environment Flag:** `ENABLE_VERTEX_AI`
-- Set to `"true"` to enable Google provider
-- When not set or set to any other value, Google requests return 501 error
+- Set to `"true"` to enable Imagen 3 models
+- When not set, Imagen 3 requests return 501 error with descriptive message
+- Gemini 3 Pro Image models work without this flag
 
-**Behavior when Google is gated:**
-- Requests for Google models return: `{ "error": "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto." }`
+**Behavior when Imagen 3 is gated:**
+- Requests for Imagen 3 models return: `{ "error": "Google Imagen 3 (Vertex AI) is disabled. Enable ENABLE_VERTEX_AI and configure service account auth to use imagen-3.0. Alternatively, select a Gemini 3 Pro Image model." }`
 - Status code: **501 Not Implemented**
-- Auto provider selection prefers OpenAI
-- Frontend model dropdowns hide Google/Imagen options
-
-**Future:** Once Vertex AI integration is implemented, set `ENABLE_VERTEX_AI=true` to enable Google models.
+- Frontend shows Imagen options as disabled with tooltip
+- Gemini 3 Pro Image models work normally
 
 ### DEBUG Flag
 
@@ -69,12 +80,15 @@ supabase functions secrets set DEBUG=true
 
 When enabled, the following is logged:
 - `[PROVIDER]` - Provider selection and gating decisions
+- `[GOOGLE]` - Google API request/response details
 - `[PROMPT]` - Prompt construction details (archetype, tier, model, full prompt)
 
 Example log output:
 ```
-[PROVIDER] Google provider is gated. ENABLE_VERTEX_AI is not set to 'true'.
-[PROMPT] generate-character-draft: { archetype: 'hero', tier: 'standard', provider: 'openai', model: 'dall-e-3', promptLength: 423 }
+[PROVIDER] Imagen 3 (Vertex AI) is gated. ENABLE_VERTEX_AI is not set to 'true'.
+[GOOGLE] Request endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=***
+[GOOGLE] Request model: gemini-3-pro-image-preview
+[PROMPT] generate-character-draft: { archetype: 'hero', tier: 'standard', provider: 'google', model: 'gemini-3-pro-image-preview', promptLength: 423 }
 [PROMPT] Full prompt: A heroic character with a confident stance...
 ```
 
@@ -84,8 +98,6 @@ Example log output:
 
 The AI Image Pipeline supports explicit model selection for both character generation and refinement actions.
 
-**Note:** Google models are temporarily disabled (see Provider Gating above).
-
 ### Priority Order
 
 Model resolution follows this priority:
@@ -94,28 +106,113 @@ Model resolution follows this priority:
 2. **Environment variable `AI_IMAGE_MODEL`** - Default model from environment
 3. **Fallback mapping** - Provider + detail/tier based mapping
 
+---
+
+## Google Models (Generative Language API)
+
+Gemini 3 Pro Image models use the **Generative Language API** and are available with just a `GOOGLE_API_KEY`. No Vertex AI setup required.
+
 ### Supported Models
 
-**Google (Imagen):**
-- `imagen-3.0` - Standard quality
-- `imagen-3.0-lite` - Fast/cheap generation
-- `imagen-3.0-highres` - High resolution output
-- `nano-banana-pro` - Custom internal alias (TODO: map to Vertex AI model ID)
+| Model ID | Description |
+|----------|-------------|
+| `gemini-3-pro-image-preview` | Preview version - faster, suitable for iteration |
+| `gemini-3-pro-image` | Stable version - higher quality output |
+
+### Features
+
+- **Dynamic Endpoint**: The endpoint is built per-request using the resolved model: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+- **Authentication**: Uses `GOOGLE_API_KEY` environment variable
+- **Response Format**: Returns `inline_data` containing base64-encoded images
+- **No Vertex AI Required**: Works without `ENABLE_VERTEX_AI` flag
+
+### Example Request
+
+```json
+{
+  "action": "generate-character-draft",
+  "archetype": "hero",
+  "tier": "standard",
+  "model": "gemini-3-pro-image-preview"
+}
+```
+
+### Response
+
+```json
+{
+  "draft_id": "uuid",
+  "image_url": "https://...",
+  "provider": "google",
+  "meta": {
+    "provider": "google",
+    "model": "gemini-3-pro-image-preview",
+    "detail": "standard",
+    "archetype": "hero",
+    "action": "generate-character"
+  }
+}
+```
+
+---
+
+## Imagen 3 (Vertex AI)
+
+Imagen 3 models require Vertex AI integration and are gated behind the `ENABLE_VERTEX_AI` flag.
+
+### Supported Models
+
+| Model ID | Description |
+|----------|-------------|
+| `imagen-3.0` | Standard quality |
+| `imagen-3.0-lite` | Fast/cheap generation |
+| `imagen-3.0-highres` | High resolution output |
+
+### Requirements
+
+- **Flag**: `ENABLE_VERTEX_AI=true` environment variable
+- **Authentication**: Service account with OAuth2 token or workload identity
+- **Endpoint**: Vertex AI endpoint (implementation pending)
+
+### Current Status
+
+Imagen 3 models are **disabled by default**. Selecting them returns:
+
+```json
+{
+  "error": "Google Imagen 3 (Vertex AI) is disabled. Enable ENABLE_VERTEX_AI and configure service account auth to use imagen-3.0. Alternatively, select a Gemini 3 Pro Image model."
+}
+```
+
+Status code: **501 Not Implemented**
+
+### Future Integration
+
+When Vertex AI integration is complete:
+- Set `ENABLE_VERTEX_AI=true`
+- Configure service account credentials
+- Endpoint format: `https://us-central1-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/publishers/google/models/{model}:predict`
+
+---
+
+## OpenAI Models
 
 **OpenAI:**
 - `dall-e-3` - DALL-E 3 standard
 - `gpt-image-1024` - GPT Image 1024x1024
 - `gpt-image-512` - GPT Image (maps to 1024x1024 minimum)
 
-### Fallback Mapping
+---
+
+## Fallback Mapping
 
 When no explicit model is provided:
 
 | Provider | Detail | Resolved Model |
 |----------|--------|----------------|
-| Google | `pro` | `imagen-3.0-highres` |
-| Google | `standard` | `imagen-3.0` |
-| Google | `cheap` | `imagen-3.0-lite` |
+| Google | `pro` | `gemini-3-pro-image` |
+| Google | `standard` | `gemini-3-pro-image` |
+| Google | `cheap` | `gemini-3-pro-image-preview` |
 | OpenAI | `pro` | `dall-e-3` |
 | OpenAI | `standard` | `gpt-image-1024` |
 | OpenAI | `cheap` | `gpt-image-512` |
