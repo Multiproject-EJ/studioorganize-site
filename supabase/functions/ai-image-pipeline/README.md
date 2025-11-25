@@ -50,7 +50,121 @@ if (!error) {
 }
 ```
 
-### 2. `upload-base`
+### 2. `refine-character`
+
+Refines an existing character image based on UI slider values. Generates a new variant with modified age, mood, hair, eyebrows, style, and detail level.
+
+**Request:**
+```json
+{
+  "action": "refine-character",
+  "archetype": "hero",                              // Required: hero | villain | sci-fi | fantasy | child | robot
+  "tier": "standard",                               // Optional: standard | premium
+  "character_id": "uuid-or-null",                   // Optional: existing character ID
+  "base_image_url": "https://...",                  // Optional: URL of the original image
+  "base_storage_path": "story-refs/character-drafts/...", // Optional: storage path of original
+  "refine": {
+    "age": "younger",           // younger | adult | older
+    "mood": "happy",            // neutral | happy | angry | sad
+    "hairLength": "long",       // short | medium | long
+    "eyebrowShape": "sharp",    // soft | sharp | thick | thin
+    "style": "anime",           // anime | realistic | painterly
+    "detail": "pro"             // cheap | standard | pro
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "draft_id": "uuid-string",
+  "variant_id": "uuid-refine-timestamp",
+  "image_url": "https://...",
+  "storage_path": "story-refs/character-drafts/user-id/draft-id-refine-timestamp.png",
+  "provider": "openai",
+  "archetype": "hero",
+  "tier": "standard",
+  "refine": { ... },
+  "character_id": "uuid-or-null",
+  "base_image_url": "https://...",
+  "base_storage_path": "story-refs/...",
+  "prompt_used": "A heroic character...",
+  "metadata": {}
+}
+```
+
+**Slider Value Mappings:**
+
+| Slider | Value | Prompt Modifier |
+|--------|-------|-----------------|
+| Age | `younger` | "younger-looking, youthful features" |
+| Age | `adult` | "adult, mature features" |
+| Age | `older` | "older-looking, experienced appearance" |
+| Mood | `neutral` | "with a neutral expression" |
+| Mood | `happy` | "with a happy, joyful expression" |
+| Mood | `angry` | "with an angry, fierce expression" |
+| Mood | `sad` | "with a sad, melancholic expression" |
+| Hair Length | `short` | "short hair" |
+| Hair Length | `medium` | "shoulder-length hair" |
+| Hair Length | `long` | "long flowing hair" |
+| Eyebrow Shape | `soft` | "soft, gentle eyebrows" |
+| Eyebrow Shape | `sharp` | "sharply angled eyebrows" |
+| Eyebrow Shape | `thick` | "thick, prominent eyebrows" |
+| Eyebrow Shape | `thin` | "thin, delicate eyebrows" |
+| Style | `anime` | "in an anime style" |
+| Style | `realistic` | "in a cinematic realistic style" |
+| Style | `painterly` | "in a painterly illustration style" |
+
+**Detail Level Quality Settings:**
+
+| Detail | Resolution | Quality |
+|--------|------------|---------|
+| `cheap` | 512x512* | standard |
+| `standard` | 1024x1024 | standard |
+| `pro` | 1792x1024 | hd |
+
+*Note: DALL-E 3 minimum is 1024x1024, so `cheap` uses standard resolution with standard quality.
+
+**Usage in Frontend (CharacterStudio.html):**
+
+```javascript
+const { data, error } = await supabase.functions.invoke('ai-image-pipeline', {
+  body: {
+    action: 'refine-character',
+    archetype: currentCharacterDraft.archetype,
+    tier: 'standard',
+    character_id: activeCharacterId,
+    base_image_url: currentCharacterDraft.image_url,
+    base_storage_path: currentCharacterDraft.storage_path,
+    refine: {
+      age: ageSliderValue,
+      mood: moodPillValue,
+      hairLength: hairLengthPillValue,
+      eyebrowShape: eyebrowPillValue,
+      style: stylePillValue,
+      detail: detailPillValue
+    }
+  },
+  headers: { 
+    Authorization: `Bearer ${session.access_token}` 
+  },
+});
+
+if (!error) {
+  // Update the "after" preview with the refined image
+  refinedPreviewEl.src = data.image_url;
+  currentCharacterDraft.refined_storage_path = data.storage_path;
+  currentCharacterDraft.variant_id = data.variant_id;
+}
+```
+
+**Provider Limitations:**
+
+- **Image-to-Image Refinement**: Currently, both Google Imagen and OpenAI DALL-E are used for text-to-image generation. The `base_image_url` and `base_storage_path` are stored in the response for reference, but true image-to-image conditioning (using the original image as a reference) is not yet implemented.
+- **Identity Locking**: Maintaining consistent character identity across refinements requires additional provider features (e.g., ControlNet, IP-Adapter, or provider-specific identity preservation). This is marked as a TODO in the codebase.
+- **Future Enhancement**: When img2img or identity-locking features become available, the refinement will download the base image and pass it to the provider for more consistent results.
+
+### 3. `upload-base`
 
 Uploads a base character PNG for pose generation.
 
@@ -63,7 +177,7 @@ Uploads a base character PNG for pose generation.
 }
 ```
 
-### 3. `generate-poses`
+### 4. `generate-poses`
 
 Generates character poses from a base image.
 
@@ -81,7 +195,7 @@ Generates character poses from a base image.
 }
 ```
 
-### 4. `generate-scene`
+### 5. `generate-scene`
 
 Generates a scene frame with a character.
 
@@ -96,7 +210,7 @@ Generates a scene frame with a character.
 }
 ```
 
-### 5. `continue-scene`
+### 6. `continue-scene`
 
 Generates continuation frames for a scene with variants.
 
@@ -151,6 +265,7 @@ The function uses two Supabase storage buckets:
   - `characters/{owner_id}/{character_id}/character-{id}-base.png`
   - `character-poses/{owner_id}/{character_id}/{pose_id}.png`
   - `character-drafts/{owner_id}/{draft_id}.png`
+  - `character-drafts/{owner_id}/{draft_id}-refine-{timestamp}.png` (refinement variants)
 
 - **`story-renders`**: Scene renders and frames
   - `scene-frames/{owner_id}/{scene_id}/{frame_id}.png`
@@ -167,6 +282,16 @@ The function uses two Supabase storage buckets:
 6. **Signed URL returned** to frontend (expires in 1 hour)
 7. **Frontend displays** image in wizard preview
 
+### Character Refinement Flow
+
+1. **User adjusts sliders** in CharacterStudio.html refinement panel
+2. **Frontend calls** `refine-character` action with slider values
+3. **Backend builds refined prompt** by combining archetype prompt with modifier phrases
+4. **AI provider generates** new image based on refined prompt
+5. **Image saved** to `story-refs/character-drafts/{userId}/{draftId}-refine-{timestamp}.png`
+6. **Signed URL returned** with variant_id for tracking
+7. **Frontend displays** side-by-side comparison (before/after)
+
 ### AI Provider Fallback
 
 If no AI provider is configured (missing API keys), the function returns a 1x1 transparent placeholder PNG. This allows the UI to function in demo mode without requiring API credentials.
@@ -176,10 +301,11 @@ If no AI provider is configured (missing API keys), the function returns a 1x1 t
 Prompts are built dynamically based on the action:
 
 - **Character drafts**: `archetype → base prompt + tier-specific details`
+- **Character refinements**: `archetype → base prompt + age/mood/hair/eyebrow/style modifiers + tier`
 - **Poses**: `character name + pose label + description + use case`
 - **Scenes**: `character + pose + scene description + lighting/framing instructions`
 
-See `buildPosePrompt()` and `buildScenePrompt()` functions for details.
+See `buildPosePrompt()`, `buildScenePrompt()`, and `buildRefinePrompt()` functions for details.
 
 ## Development
 
