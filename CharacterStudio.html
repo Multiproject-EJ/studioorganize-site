@@ -984,6 +984,145 @@
         outline-offset: 2px;
       }
       
+      /* Character Variants Section Styles */
+      .character-studio-variants {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .character-studio-variants-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+      }
+      .character-studio-variant-card {
+        position: relative;
+        background: var(--chip);
+        border: 1px solid var(--ring);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .character-studio-variant-card:hover {
+        border-color: var(--acc);
+        box-shadow: 0 8px 24px rgba(79, 123, 255, 0.15);
+      }
+      .character-studio-variant-card.is-main {
+        border-color: var(--acc);
+        box-shadow: 0 0 0 2px rgba(79, 123, 255, 0.25);
+      }
+      .character-studio-variant-thumb {
+        aspect-ratio: 3 / 4;
+        background: var(--panel);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .character-studio-variant-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .character-studio-variant-meta {
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .character-studio-variant-time {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.3px;
+      }
+      .character-studio-variant-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 10px;
+        text-transform: uppercase;
+        background: rgba(79, 123, 255, 0.12);
+        color: var(--acc);
+        border: 1px solid rgba(79, 123, 255, 0.4);
+        font-weight: 600;
+      }
+      .character-studio-variant-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 0 8px 8px;
+      }
+      .character-studio-variant-actions button {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid var(--ring);
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+      .character-studio-variant-actions button:hover {
+        border-color: var(--acc);
+        background: var(--chip);
+      }
+      .character-studio-variant-actions button:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
+      .character-studio-variant-actions button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .character-studio-variant-actions button.primary {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: var(--active-tab-text);
+      }
+      .character-studio-variant-actions button.destructive {
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.4);
+      }
+      .character-studio-variant-actions button.destructive:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+      }
+      .character-studio-variants-empty {
+        border: 1px dashed var(--ring);
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .character-studio-variants-status {
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 18px;
+        text-align: center;
+      }
+      .character-studio-variants-status[data-state="ready"] {
+        color: var(--acc);
+      }
+      .character-studio-variants-status[data-state="warning"] {
+        color: #f97316;
+      }
+      .character-studio-variants-status[data-state="error"] {
+        color: #ef4444;
+      }
+      
       /* FinishThatStory AI Assistant Styles */
       .fts-overlay {
         position: fixed;
@@ -1672,6 +1811,9 @@
         remoteIds: new Set(initialCharacters.map(char => char.id)),
         signedUrlCache: new Map(),
         poseCache: new Map(),
+        variantsCache: new Map(),
+        currentVariants: [],
+        variantsLoading: false,
         scenes: [],
         scenesLoaded: false,
         scenesLoading: false,
@@ -3352,6 +3494,14 @@
                   </div>
                 </div>
               </section>
+              <section class="character-studio-section character-studio-variants" data-character-variants>
+                <h3>Variants</h3>
+                <p class="muted-text">Browse saved visual variants of this character. Set any variant as the main portrait.</p>
+                <div class="character-studio-variants-grid" data-variants-grid>
+                  <div class="character-studio-variants-empty" data-variants-empty>No variants saved yet. Generate and save refinements above to build your variant library.</div>
+                </div>
+                <div class="character-studio-variants-status" data-variants-status></div>
+              </section>
               <section class="character-studio-section" role="tabpanel" tabindex="0" id="character-panel-poses" aria-labelledby="character-tab-poses" data-tab-panel="poses"${panelAttributes('poses')}>
                 <h3>Pose Library</h3>
                 <p class="muted-text">Lock in a transparent base PNG, then spin up labeled poses and expressions that stay true to this character.</p>
@@ -3949,6 +4099,13 @@
         
         // Initialize refinement panel for this character
         enterRefineModeForCharacter(active);
+        
+        // Load and render character variants
+        loadCharacterVariants(active.id).then(() => {
+          renderVariantsList();
+        }).catch(err => {
+          console.warn('Character variants load failed', err);
+        });
       }
 
       // =========================================================================
@@ -4247,10 +4404,179 @@
         }
       }
 
+      // =========================================================================
+      // Character Image Variants Functions
+      // =========================================================================
+
       /**
-       * Save the refined variant as the character's portrait.
+       * Set variant status message in the Variants section.
+       */
+      function setVariantsStatus(message, statusState = '') {
+        const statusEl = document.querySelector('[data-variants-status]');
+        if (!statusEl) return;
+        statusEl.textContent = message || '';
+        if (statusState) {
+          statusEl.dataset.state = statusState;
+        } else {
+          statusEl.removeAttribute('data-state');
+        }
+      }
+
+      /**
+       * Load character variants from Supabase.
+       * @param {string} characterId - The character's UUID
+       * @param {Object} options - Options like { force: boolean }
+       */
+      async function loadCharacterVariants(characterId, { force = false } = {}) {
+        if (!characterId) {
+          state.currentVariants = [];
+          return [];
+        }
+        if (!state.supabase) {
+          console.warn('Supabase client not ready for variants fetch');
+          state.currentVariants = [];
+          return [];
+        }
+        // Use cache unless forced
+        if (!force && state.variantsCache.has(characterId)) {
+          state.currentVariants = state.variantsCache.get(characterId) || [];
+          return state.currentVariants;
+        }
+        
+        state.variantsLoading = true;
+        try {
+          const { data, error } = await state.supabase
+            .from('character_image_variants')
+            .select('*')
+            .eq('character_id', characterId)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            throw error;
+          }
+
+          const variants = Array.isArray(data) ? data : [];
+          state.variantsCache.set(characterId, variants);
+          state.currentVariants = variants;
+          return variants;
+        } catch (err) {
+          console.error('Failed to load character variants:', err);
+          state.currentVariants = [];
+          return [];
+        } finally {
+          state.variantsLoading = false;
+        }
+      }
+
+      /**
+       * Format a date for display in variant cards.
+       * @param {string} dateStr - ISO date string
+       */
+      function formatVariantDate(dateStr) {
+        if (!dateStr) return '';
+        try {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+          return '';
+        }
+      }
+
+      /**
+       * Render the variants list in the Variants section.
+       * Uses safe DOM manipulation (createElement, appendChild, textContent).
+       */
+      function renderVariantsList() {
+        const grid = document.querySelector('[data-variants-grid]');
+        const emptyEl = document.querySelector('[data-variants-empty]');
+        if (!grid) return;
+
+        // Clear existing content except the empty placeholder
+        const existingCards = grid.querySelectorAll('.character-studio-variant-card');
+        existingCards.forEach(card => card.remove());
+
+        const variants = state.currentVariants || [];
+
+        if (!variants.length) {
+          if (emptyEl) emptyEl.hidden = false;
+          return;
+        }
+
+        if (emptyEl) emptyEl.hidden = true;
+
+        const activeCharacter = getActiveCharacter();
+        const safeName = activeCharacter?.name || 'Character';
+
+        variants.forEach(variant => {
+          const card = document.createElement('div');
+          card.className = 'character-studio-variant-card';
+          if (variant.is_main) {
+            card.classList.add('is-main');
+          }
+
+          // Thumbnail
+          const thumb = document.createElement('div');
+          thumb.className = 'character-studio-variant-thumb';
+          if (variant.image_url) {
+            const img = document.createElement('img');
+            img.src = variant.image_url;
+            img.alt = safeName + ' variant';
+            img.loading = 'lazy';
+            thumb.appendChild(img);
+          }
+          card.appendChild(thumb);
+
+          // Meta section
+          const meta = document.createElement('div');
+          meta.className = 'character-studio-variant-meta';
+
+          const timeLabel = document.createElement('span');
+          timeLabel.className = 'character-studio-variant-time';
+          timeLabel.textContent = formatVariantDate(variant.created_at);
+          meta.appendChild(timeLabel);
+
+          if (variant.is_main) {
+            const badge = document.createElement('span');
+            badge.className = 'character-studio-variant-badge';
+            badge.textContent = 'Main';
+            meta.appendChild(badge);
+          }
+
+          card.appendChild(meta);
+
+          // Actions
+          const actions = document.createElement('div');
+          actions.className = 'character-studio-variant-actions';
+
+          // Set as Main button (only show if not already main)
+          if (!variant.is_main) {
+            const setMainBtn = document.createElement('button');
+            setMainBtn.type = 'button';
+            setMainBtn.className = 'primary';
+            setMainBtn.textContent = 'Set Main';
+            setMainBtn.addEventListener('click', () => setVariantAsMain(variant.id));
+            actions.appendChild(setMainBtn);
+          }
+
+          // Delete button (only if not main)
+          if (!variant.is_main) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'destructive';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => deleteVariant(variant.id));
+            actions.appendChild(deleteBtn);
+          }
+
+          card.appendChild(actions);
+          grid.appendChild(card);
+        });
+      }
+
+      /**
+       * Save the refined variant to the character_image_variants table.
        * Validates that a refined image exists from a previous pipeline call,
-       * then updates the character record in Supabase.
+       * then inserts a new variant row.
        */
       async function saveRefinedVariant() {
         const afterPreview = document.querySelector('[data-refine-preview-after]');
@@ -4294,58 +4620,46 @@
         setRefineStatus('Saving variant…', 'refining');
 
         try {
-          // Update the character's portrait URL in Supabase
-          // Using the storage_path for base_image_url and image_url for look_portrait_url
-          const updatePayload = {
-            look_portrait_url: currentRefineState.image_url,
-            base_image_url: currentRefineState.storage_path || activeCharacter.baseImageUrl || null
+          // Build the variant payload
+          const variantPayload = {
+            character_id: activeCharacter.id,
+            image_url: currentRefineState.image_url,
+            storage_path: currentRefineState.storage_path || '',
+            refine_params: {
+              age: currentRefineState.age,
+              mood: currentRefineState.mood,
+              hairLength: currentRefineState.hairLength,
+              eyebrowShape: currentRefineState.eyebrowShape,
+              style: currentRefineState.style,
+              detail: currentRefineState.detail,
+              model: currentRefineState.model
+            },
+            prompt_meta: currentRefineState.pipelineMeta || {},
+            is_main: false
           };
 
-          const { error } = await state.supabase
-            .from('characters')
-            .update(updatePayload)
-            .eq('id', activeCharacter.id)
-            .eq('owner_id', state.ownerId);
+          // Insert into character_image_variants table
+          const { data, error } = await state.supabase
+            .from('character_image_variants')
+            .insert([variantPayload])
+            .select()
+            .single();
 
           if (error) {
             throw error;
           }
 
-          // Update the local character state
-          const charIndex = state.characters.findIndex(c => c.id === activeCharacter.id);
-          if (charIndex !== -1) {
-            state.characters[charIndex].lookPortraitUrl = currentRefineState.image_url;
-            if (currentRefineState.storage_path) {
-              state.characters[charIndex].baseImageUrl = currentRefineState.storage_path;
-            }
-            // Update looks object if it exists
-            if (state.characters[charIndex].looks) {
-              state.characters[charIndex].looks.portrait = currentRefineState.image_url;
-            }
+          if (!data) {
+            throw new Error('No data returned from insert');
           }
 
-          // Persist to local storage
-          await persistCharactersToLocal();
+          // Add to local variants and re-render
+          state.currentVariants.unshift(data);
+          state.variantsCache.set(activeCharacter.id, state.currentVariants);
+          renderVariantsList();
 
-          // Mark state as dirty to trigger save on next workspace save
-          state.dirty = true;
-
-          // Update the sidebar and detail view to reflect the new portrait
-          renderCharacterList();
-          renderCharacterDetails();
-
-          // Update the "before" preview to show the new portrait
-          const beforePreview = document.querySelector('[data-refine-preview-before]');
-          if (beforePreview) {
-            beforePreview.textContent = '';
-            const img = document.createElement('img');
-            img.src = currentRefineState.image_url;
-            img.alt = 'Current character portrait';
-            beforePreview.appendChild(img);
-          }
-
-          // Clear the refined variant metadata since it's now the main portrait
-          currentRefineState.variant_id = null;
+          // Clear the refined state since it's now saved
+          currentRefineState.variant_id = data.id;
           currentRefineState.storage_path = null;
           currentRefineState.image_url = null;
           currentRefineState.draft_id = null;
@@ -4357,15 +4671,10 @@
           emptyDiv.textContent = 'No refinement generated yet';
           afterPreview.appendChild(emptyDiv);
 
-          setRefineStatus('Variant saved as portrait!', 'ready');
+          setRefineStatus('Variant saved! View it in the Variants section below.', 'ready');
 
           // Re-enable save button
           if (saveBtn) saveBtn.disabled = false;
-
-          // TODO: In the future, if a variants table is implemented, we could:
-          // 1. Insert a new row in the character_variants table
-          // 2. Update the sidebar/variant list to show the new variant
-          // 3. Keep track of variant history for the character
 
         } catch (error) {
           console.error('Failed to save refined variant:', error);
@@ -4374,6 +4683,207 @@
 
           // Re-enable save button so user can retry
           if (saveBtn) saveBtn.disabled = false;
+        }
+      }
+
+      /**
+       * Set a variant as the main portrait for the character.
+       * Updates all variants for this character to is_main = false,
+       * then sets the chosen variant to is_main = true,
+       * and updates the character's look_portrait_url and base_image_url.
+       * @param {string} variantId - The variant's UUID
+       */
+      async function setVariantAsMain(variantId) {
+        if (!variantId) return;
+
+        const activeCharacter = getActiveCharacter();
+        if (!activeCharacter) {
+          setVariantsStatus('No character selected', 'warning');
+          return;
+        }
+
+        if (!state.supabase) {
+          setVariantsStatus('Supabase client not ready', 'error');
+          return;
+        }
+
+        if (!state.session || !state.ownerId) {
+          setVariantsStatus('Sign in to modify variants', 'warning');
+          return;
+        }
+
+        // Find the variant in local state
+        const variant = state.currentVariants.find(v => v.id === variantId);
+        if (!variant) {
+          setVariantsStatus('Variant not found', 'error');
+          return;
+        }
+
+        // Disable all variant action buttons during operation
+        const buttons = document.querySelectorAll('.character-studio-variant-actions button');
+        buttons.forEach(btn => btn.disabled = true);
+
+        setVariantsStatus('Setting as main portrait…', '');
+
+        try {
+          // 1. Update all variants for this character: is_main = false
+          const { error: clearError } = await state.supabase
+            .from('character_image_variants')
+            .update({ is_main: false })
+            .eq('character_id', activeCharacter.id);
+
+          if (clearError) throw clearError;
+
+          // 2. Update the chosen variant: is_main = true
+          const { error: setError } = await state.supabase
+            .from('character_image_variants')
+            .update({ is_main: true })
+            .eq('id', variantId);
+
+          if (setError) throw setError;
+
+          // 3. Update the character's portrait URLs
+          const updatePayload = {
+            look_portrait_url: variant.image_url,
+            base_image_url: variant.storage_path || activeCharacter.baseImageUrl || null
+          };
+
+          const { error: charError } = await state.supabase
+            .from('characters')
+            .update(updatePayload)
+            .eq('id', activeCharacter.id)
+            .eq('owner_id', state.ownerId);
+
+          if (charError) throw charError;
+
+          // 4. Update local state
+          state.currentVariants.forEach(v => {
+            v.is_main = v.id === variantId;
+          });
+          state.variantsCache.set(activeCharacter.id, state.currentVariants);
+
+          // Update the local character
+          const charIndex = state.characters.findIndex(c => c.id === activeCharacter.id);
+          if (charIndex !== -1) {
+            state.characters[charIndex].lookPortraitUrl = variant.image_url;
+            if (variant.storage_path) {
+              state.characters[charIndex].baseImageUrl = variant.storage_path;
+            }
+            if (state.characters[charIndex].looks) {
+              state.characters[charIndex].looks.portrait = variant.image_url;
+            }
+          }
+
+          // Persist to local storage
+          await persistCharactersToLocal();
+          state.dirty = true;
+
+          // Re-render UI
+          renderVariantsList();
+          renderCharacterList();
+
+          // Update the "before" preview in refinement panel
+          const beforePreview = document.querySelector('[data-refine-preview-before]');
+          if (beforePreview) {
+            beforePreview.textContent = '';
+            const img = document.createElement('img');
+            img.src = variant.image_url;
+            img.alt = 'Current character portrait';
+            beforePreview.appendChild(img);
+          }
+
+          // Update profile portrait
+          const profilePortrait = document.querySelector('[data-profile-portrait]');
+          if (profilePortrait && variant.image_url) {
+            profilePortrait.textContent = '';
+            const img = document.createElement('img');
+            img.src = variant.image_url;
+            img.alt = (activeCharacter.name || 'Character') + ' portrait';
+            profilePortrait.appendChild(img);
+          }
+
+          setVariantsStatus('Set as main portrait!', 'ready');
+
+        } catch (error) {
+          console.error('Failed to set variant as main:', error);
+          setVariantsStatus('Failed to set as main. Please try again.', 'error');
+        } finally {
+          // Re-enable buttons
+          buttons.forEach(btn => btn.disabled = false);
+        }
+      }
+
+      /**
+       * Delete a variant from the character_image_variants table.
+       * Does not allow deleting the main variant.
+       * @param {string} variantId - The variant's UUID
+       */
+      async function deleteVariant(variantId) {
+        if (!variantId) return;
+
+        const activeCharacter = getActiveCharacter();
+        if (!activeCharacter) {
+          setVariantsStatus('No character selected', 'warning');
+          return;
+        }
+
+        if (!state.supabase) {
+          setVariantsStatus('Supabase client not ready', 'error');
+          return;
+        }
+
+        if (!state.session || !state.ownerId) {
+          setVariantsStatus('Sign in to delete variants', 'warning');
+          return;
+        }
+
+        // Find the variant in local state
+        const variant = state.currentVariants.find(v => v.id === variantId);
+        if (!variant) {
+          setVariantsStatus('Variant not found', 'error');
+          return;
+        }
+
+        // Prevent deleting the main variant
+        if (variant.is_main) {
+          setVariantsStatus('Cannot delete the main variant. Set another variant as main first.', 'warning');
+          return;
+        }
+
+        // Confirm deletion
+        if (!window.confirm('Delete this variant? This action cannot be undone.')) {
+          return;
+        }
+
+        // Disable all variant action buttons during operation
+        const buttons = document.querySelectorAll('.character-studio-variant-actions button');
+        buttons.forEach(btn => btn.disabled = true);
+
+        setVariantsStatus('Deleting variant…', '');
+
+        try {
+          const { error } = await state.supabase
+            .from('character_image_variants')
+            .delete()
+            .eq('id', variantId);
+
+          if (error) throw error;
+
+          // Remove from local state
+          state.currentVariants = state.currentVariants.filter(v => v.id !== variantId);
+          state.variantsCache.set(activeCharacter.id, state.currentVariants);
+
+          // Re-render
+          renderVariantsList();
+
+          setVariantsStatus('Variant deleted.', 'ready');
+
+        } catch (error) {
+          console.error('Failed to delete variant:', error);
+          setVariantsStatus('Failed to delete variant. Please try again.', 'error');
+        } finally {
+          // Re-enable buttons
+          buttons.forEach(btn => btn.disabled = false);
         }
       }
 

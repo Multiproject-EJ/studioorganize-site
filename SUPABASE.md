@@ -134,6 +134,57 @@ Key columns:
 - `arc_setup`, `arc_development`, `arc_resolution` – notes that power the Character Arc panel.
 - `ai_prompt`, `ai_notes` – prompt history for the AI image integration.
 
+### Character image variants
+
+The `public.character_image_variants` table stores refined visual variants for characters. This enables users to iterate on character visuals multiple times without overwriting the main portrait, provides quick A/B comparisons, and lets users set any variant as the main portrait without losing history.
+
+**Purpose:** Save refined character generations as separate variants instead of directly overwriting the main portrait. Each variant preserves the image URL, storage path, refinement parameters, and prompt metadata used to generate it.
+
+**Key columns:**
+
+- `id` – UUID primary key (auto-generated)
+- `character_id` – UUID referencing `characters(id)`, cascades on delete
+- `image_url` – Public URL of the variant image
+- `storage_path` – Path in Supabase Storage for the variant
+- `refine_params` – JSONB containing refinement settings (age, mood, hairLength, eyebrowShape, style, detail, model)
+- `prompt_meta` – JSONB containing pipeline metadata from generation
+- `is_main` – Boolean flag indicating if this variant is the current main portrait
+- `created_at` – Timestamp when the variant was created
+
+**Indexes:**
+
+- `idx_variants_character_created_at` – Optimizes queries by character ordered by creation date
+- `idx_variants_character_is_main` – Optimizes lookup of the main variant
+
+**Example insert:**
+
+```sql
+insert into public.character_image_variants (character_id, image_url, storage_path, refine_params, is_main)
+values (
+  '550e8400-e29b-41d4-a716-446655440000',
+  'https://example.com/variant.png',
+  'character-images/my-variant.png',
+  '{"age": "young-adult", "mood": "happy", "style": "realistic"}'::jsonb,
+  false
+);
+```
+
+**Example select (all variants for a character, newest first):**
+
+```sql
+select * from public.character_image_variants
+where character_id = '550e8400-e29b-41d4-a716-446655440000'
+order by created_at desc;
+```
+
+**UI integration:** The Variants section in Character Studio displays all saved variants for the active character in a thumbnail grid. Users can:
+
+- **Save Variant** – After generating a refinement, save it to the variants table
+- **Set as Main** – Promote any variant to the main portrait (updates `is_main` flag and character's `look_portrait_url`)
+- **Delete** – Remove a variant (except the main variant)
+
+Row Level Security mirrors the `characters` table policies, ensuring only the character owner can view/insert/update/delete variants.
+
 ### Scenes & connected data
 
 Run the latest [`supabase/schema.sql`](supabase/schema.sql) file to create the new scene tables. The script is additive—it only provisions the scene-related tables, indexes, policies, and triggers, and safely skips objects (like `public.profiles`) that are already in your project. Because trigger creation is wrapped in guards, you can run it multiple times without conflicting with existing infrastructure.
