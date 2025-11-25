@@ -1626,7 +1626,7 @@
       <div class="character-studio-wizard-step-content" data-wizard-step-content="2">
         <h2 class="character-studio-wizard-title">First visual draft</h2>
         <!-- Model Selection for Wizard Step 2 -->
-        <!-- NOTE: Google/Imagen models are temporarily hidden until Vertex AI integration is complete -->
+        <!-- NOTE: Gemini/Google models are hidden by default; set ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI=true to expose -->
         <div class="character-studio-field" style="margin-bottom: 16px;" title="Prompt enrichment applied for higher-quality, consistent character images">
           <span>Engine / Model</span>
           <select id="characterWizardModelSelect" data-wizard-model-select>
@@ -1636,15 +1636,20 @@
               <option value="gpt-image-1024">GPT Image 1024</option>
               <option value="gpt-image-512">GPT Image 512</option>
             </optgroup>
-            <!-- Google Imagen models temporarily disabled (Vertex AI integration pending)
+            <!-- Experimental Gemini 3 Pro Image models: hidden by default, exposed via ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI -->
+            <optgroup label="Google (Experimental)" data-experimental-gemini-group hidden>
+              <option value="gemini-3-pro-image">Gemini 3 Pro Image</option>
+              <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (Preview)</option>
+            </optgroup>
+            <!-- Legacy Google Imagen models (Vertex AI integration pending)
             <optgroup label="Google Imagen">
               <option value="imagen-3.0">Imagen 3.0</option>
               <option value="imagen-3.0-lite">Imagen 3.0 Lite</option>
               <option value="imagen-3.0-highres">Imagen 3.0 Highres</option>
-              <option value="nano-banana-pro">Nano Banana Pro (custom)</option>
             </optgroup>
             -->
           </select>
+          <small class="character-studio-small-note" data-gemini-model-note hidden style="color: var(--muted);">⚠️ Gemini models require backend flag ENABLE_GEMINI_IMAGE and correct endpoint auth.</small>
         </div>
         <div class="character-studio-wizard-preview" data-wizard-preview>
           <div class="character-studio-wizard-loading" data-wizard-loading>
@@ -1827,6 +1832,56 @@
         dialogStatusState: '',
         dialogStatusCharacterId: null
       };
+
+      // =========================================================================
+      // Experimental Gemini Image UI Configuration
+      // =========================================================================
+      // When ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI is set to true (via a data attribute
+      // or config block), the Gemini 3 Pro Image model options are exposed in dropdowns.
+      // These models still require the backend ENABLE_GEMINI_IMAGE flag to function.
+      // =========================================================================
+
+      // Debug flag for frontend logging
+      const DEBUG = false;
+
+      const ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI = (() => {
+        // Check for data attribute on body or html
+        const bodyFlag = document.body.dataset.allowExperimentalGeminiImageUi;
+        const htmlFlag = document.documentElement.dataset.allowExperimentalGeminiImageUi;
+        // Check for a hidden config element
+        const configEl = document.querySelector('[data-config-allow-experimental-gemini-image-ui]');
+        const configFlag = configEl ? configEl.dataset.configAllowExperimentalGeminiImageUi : null;
+        // Any of these being "true" enables the experimental UI
+        return bodyFlag === 'true' || htmlFlag === 'true' || configFlag === 'true';
+      })();
+
+      /**
+       * Initialize experimental Gemini image UI if flag is enabled.
+       * Shows the hidden optgroups and attaches change handlers for notes.
+       */
+      function initializeExperimentalGeminiUI() {
+        if (!ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI) {
+          return;
+        }
+        // Unhide all experimental Gemini optgroups
+        document.querySelectorAll('[data-experimental-gemini-group]').forEach(group => {
+          group.hidden = false;
+        });
+        // Attach change handlers to show warning note when Gemini model is selected
+        const geminiModelIds = ['gemini-3-pro-image', 'gemini-3-pro-image-preview'];
+        document.querySelectorAll('[data-wizard-model-select], [data-refine-model-select]').forEach(select => {
+          const noteEl = select.parentElement?.querySelector('[data-gemini-model-note]');
+          if (noteEl) {
+            select.addEventListener('change', (e) => {
+              const selectedModel = e.target.value || '';
+              noteEl.hidden = !geminiModelIds.includes(selectedModel);
+            });
+          }
+        });
+        if (DEBUG) {
+          console.log('[UI] Experimental Gemini Image UI enabled');
+        }
+      }
 
       const DIALOG_DRAFT_STORAGE_PREFIX = 'SW_DIALOG_DRAFTS_';
 
@@ -3456,7 +3511,7 @@
                         <button type="button" class="character-studio-refine-pill" data-refine-pill="detail" data-value="pro">Pro</button>
                       </div>
                     </label>
-                    <!-- NOTE: Google/Imagen models are temporarily hidden until Vertex AI integration is complete -->
+                    <!-- NOTE: Gemini/Google models are hidden by default; set ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI=true to expose -->
                     <label class="character-studio-field" title="Prompt enrichment applied for higher-quality refinement">
                       <span>Engine / Model</span>
                       <select id="characterRefineModelSelect" data-refine-model-select>
@@ -3466,15 +3521,20 @@
                           <option value="gpt-image-1024">GPT Image 1024</option>
                           <option value="gpt-image-512">GPT Image 512</option>
                         </optgroup>
-                        <!-- Google Imagen models temporarily disabled (Vertex AI integration pending)
+                        <!-- Experimental Gemini 3 Pro Image models: hidden by default, exposed via ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI -->
+                        <optgroup label="Google (Experimental)" data-experimental-gemini-group hidden>
+                          <option value="gemini-3-pro-image">Gemini 3 Pro Image</option>
+                          <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (Preview)</option>
+                        </optgroup>
+                        <!-- Legacy Google Imagen models (Vertex AI integration pending)
                         <optgroup label="Google Imagen">
                           <option value="imagen-3.0">Imagen 3.0</option>
                           <option value="imagen-3.0-lite">Imagen 3.0 Lite</option>
                           <option value="imagen-3.0-highres">Imagen 3.0 Highres</option>
-                          <option value="nano-banana-pro">Nano Banana Pro (custom)</option>
                         </optgroup>
                         -->
                       </select>
+                      <small class="character-studio-small-note" data-gemini-model-note hidden style="color: var(--muted);">⚠️ Gemini models require backend flag ENABLE_GEMINI_IMAGE and correct endpoint auth.</small>
                     </label>
                   </div>
                   <div class="character-studio-refine-preview-box">
@@ -5920,7 +5980,9 @@
           console.error('Failed to generate character draft:', error);
           const previewEl = document.querySelector('[data-wizard-preview]');
           if (previewEl) {
-            previewEl.innerHTML = '<div class="character-studio-wizard-loading"><span>Failed to generate preview. Please try again.</span></div>';
+            // Surface the actual error message from the backend
+            const errorMessage = error?.message || 'Failed to generate preview. Please try again.';
+            previewEl.innerHTML = `<div class="character-studio-wizard-loading"><span style="color: var(--muted);">${errorMessage}</span></div>`;
           }
         }
       }
@@ -6075,7 +6137,9 @@
           console.error('Failed to regenerate character draft:', error);
           const previewEl = document.querySelector('[data-wizard-preview]');
           if (previewEl) {
-            previewEl.innerHTML = '<div class="character-studio-wizard-loading"><span>Failed to regenerate. Please try again.</span></div>';
+            // Surface the actual error message from the backend
+            const errorMessage = error?.message || 'Failed to regenerate. Please try again.';
+            previewEl.innerHTML = `<div class="character-studio-wizard-loading"><span style="color: var(--muted);">${errorMessage}</span></div>`;
           }
         }
       }
@@ -6097,7 +6161,9 @@
           console.error('Failed to swap style:', error);
           const previewEl = document.querySelector('[data-wizard-preview]');
           if (previewEl) {
-            previewEl.innerHTML = '<div class="character-studio-wizard-loading"><span>Failed to swap style. Please try again.</span></div>';
+            // Surface the actual error message from the backend
+            const errorMessage = error?.message || 'Failed to swap style. Please try again.';
+            previewEl.innerHTML = `<div class="character-studio-wizard-loading"><span style="color: var(--muted);">${errorMessage}</span></div>`;
           }
         }
       }
@@ -6214,6 +6280,9 @@
 
       // Initialize wizard functionality
       initializeWizard();
+
+      // Initialize experimental Gemini Image UI if enabled
+      initializeExperimentalGeminiUI();
 
       const saveButton = document.getElementById('characterStudioSaveBtn');
       if (saveButton){

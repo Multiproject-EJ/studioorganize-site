@@ -45,19 +45,31 @@ For `refine-character` action, additional modifiers are added based on UI slider
 
 ### Temporary Google Provider Gating
 
-**Important:** Google Imagen models are temporarily disabled until Vertex AI integration is complete.
+**Important:** Google Imagen and Gemini Image models are temporarily disabled until Vertex AI / Gemini Image integration is complete.
 
-**Environment Flag:** `ENABLE_VERTEX_AI`
-- Set to `"true"` to enable Google provider
-- When not set or set to any other value, Google requests return 501 error
+**Environment Flags:**
+- `ENABLE_VERTEX_AI` - Set to `"true"` to enable Google Imagen provider
+- `ENABLE_GEMINI_IMAGE` - Set to `"true"` to enable experimental Gemini 3 Pro Image models
 
-**Behavior when Google is gated:**
-- Requests for Google models return: `{ "error": "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto." }`
+**Client-side Flag:**
+- `ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI` - Set to `"true"` (via data attribute) to expose Gemini 3 Pro Image options in the frontend model dropdowns
+
+**Behavior when gated:**
+- Requests for Google/Gemini models return: `{ "error": "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto." }`
 - Status code: **501 Not Implemented**
 - Auto provider selection prefers OpenAI
-- Frontend model dropdowns hide Google/Imagen options
+- Frontend model dropdowns hide Google/Gemini options by default
 
-**Future:** Once Vertex AI integration is implemented, set `ENABLE_VERTEX_AI=true` to enable Google models.
+**To enable experimental Gemini Image UI:**
+Add a data attribute to the `<body>` or `<html>` tag:
+```html
+<body data-allow-experimental-gemini-image-ui="true">
+```
+
+**Future:** Once Vertex AI / Gemini Image integration is implemented:
+1. Set `ENABLE_GEMINI_IMAGE=true` to enable Gemini 3 Pro Image models on the backend
+2. Set `ALLOW_EXPERIMENTAL_GEMINI_IMAGE_UI=true` on the frontend to expose options
+3. Configure the correct Gemini Image endpoint and authentication
 
 ### DEBUG Flag
 
@@ -100,7 +112,10 @@ Model resolution follows this priority:
 - `imagen-3.0` - Standard quality
 - `imagen-3.0-lite` - Fast/cheap generation
 - `imagen-3.0-highres` - High resolution output
-- `nano-banana-pro` - Custom internal alias (TODO: map to Vertex AI model ID)
+
+**Google (Experimental Gemini Image):**
+- `gemini-3-pro-image` - Gemini 3 Pro Image (requires `ENABLE_GEMINI_IMAGE=true`)
+- `gemini-3-pro-image-preview` - Gemini 3 Pro Image Preview (requires `ENABLE_GEMINI_IMAGE=true`)
 
 **OpenAI:**
 - `dall-e-3` - DALL-E 3 standard
@@ -540,3 +555,26 @@ Common error codes:
 - **404**: Resource not found (character/scene)
 - **405**: Method not allowed (must be POST)
 - **500**: Internal server error (API failure, storage error)
+- **501**: Feature not implemented (experimental models not enabled)
+
+### Troubleshooting 501 Errors (Experimental Models)
+
+If you receive a 501 error when selecting a Gemini 3 Pro Image model:
+
+```json
+{
+  "error": "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto."
+}
+```
+
+**Cause:** Gemini 3 Pro Image models are experimental and gated behind environment flags.
+
+**Solutions:**
+1. **Use OpenAI models instead** - Select DALL-E 3 or GPT Image models (fully functional)
+2. **Use Auto selection** - Let the system choose the best available provider
+3. **Enable experimental flag (for testing only):**
+   ```bash
+   supabase functions secrets set ENABLE_GEMINI_IMAGE=true --project-ref your-project-ref
+   supabase functions deploy ai-image-pipeline
+   ```
+   Note: Actual image generation via Gemini requires proper Vertex AI / Gemini Image endpoint configuration (follow-up PR).

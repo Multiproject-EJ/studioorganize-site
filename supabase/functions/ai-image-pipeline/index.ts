@@ -26,6 +26,8 @@ const AI_IMAGE_PROVIDER = (Deno.env.get("AI_IMAGE_PROVIDER") ?? "openai").toLowe
 const AI_IMAGE_MODEL = Deno.env.get("AI_IMAGE_MODEL") ?? "";
 // Flag to enable Google/Vertex AI integration (set to "true" to enable)
 const ENABLE_VERTEX_AI = Deno.env.get("ENABLE_VERTEX_AI") === "true";
+// Flag to enable experimental Gemini 3 Pro Image models (set to "true" to enable)
+const ENABLE_GEMINI_IMAGE = Deno.env.get("ENABLE_GEMINI_IMAGE") === "true";
 // Debug mode for structured logging
 const DEBUG = Deno.env.get("DEBUG") === "true";
 
@@ -36,7 +38,9 @@ const SUPPORTED_GOOGLE_MODELS = [
   "imagen-3.0",
   "imagen-3.0-lite",
   "imagen-3.0-highres",
-  "nano-banana-pro", // TODO: Custom internal alias - map to actual Vertex AI model ID when available
+  // Experimental Gemini 3 Pro Image models - gated by ENABLE_GEMINI_IMAGE
+  "gemini-3-pro-image",
+  "gemini-3-pro-image-preview",
 ] as const;
 const SUPPORTED_OPENAI_MODELS = [
   "dall-e-3",
@@ -267,6 +271,33 @@ function isGoogleProviderEnabled(): boolean {
   if (!ENABLE_VERTEX_AI) {
     if (DEBUG) {
       console.log("[PROVIDER] Google provider is gated. ENABLE_VERTEX_AI is not set to 'true'.");
+    }
+    return false;
+  }
+  return true;
+}
+
+/**
+ * List of experimental Gemini 3 Pro Image model IDs.
+ * These require ENABLE_GEMINI_IMAGE=true and proper Vertex/Gemini Image endpoint configuration.
+ */
+const GEMINI_IMAGE_MODELS = ["gemini-3-pro-image", "gemini-3-pro-image-preview"] as const;
+
+/**
+ * Check if a model ID is an experimental Gemini Image model.
+ */
+function isGeminiImageModel(model: string): boolean {
+  return GEMINI_IMAGE_MODELS.includes(model as typeof GEMINI_IMAGE_MODELS[number]);
+}
+
+/**
+ * Check if Gemini image generation is enabled.
+ * Returns false if ENABLE_GEMINI_IMAGE is not set.
+ */
+function isGeminiImageEnabled(): boolean {
+  if (!ENABLE_GEMINI_IMAGE) {
+    if (DEBUG) {
+      console.log("[PROVIDER] Gemini image models are gated. ENABLE_GEMINI_IMAGE is not set to 'true'.");
     }
     return false;
   }
@@ -1516,6 +1547,13 @@ async function handleGenerateCharacterDraft(
     });
   }
 
+  // Check if Gemini image model is requested but not enabled
+  if (isGeminiImageModel(resolvedModel.model) && !isGeminiImageEnabled()) {
+    return jsonResponse(501, {
+      error: "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto.",
+    });
+  }
+
   // Build enriched prompt using the prompt enrichment system
   const prompt = composeInitialPrompt(archetype, tier);
 
@@ -1841,6 +1879,13 @@ async function handleRefineCharacter(
   if (resolvedModel.provider === "google" && !isGoogleProviderEnabled()) {
     return jsonResponse(501, {
       error: "Google image generation not enabled (Vertex AI integration pending). Please use OpenAI models or leave model selection on Auto.",
+    });
+  }
+
+  // Check if Gemini image model is requested but not enabled
+  if (isGeminiImageModel(resolvedModel.model) && !isGeminiImageEnabled()) {
+    return jsonResponse(501, {
+      error: "Google image generation not enabled (Gemini/Vertex integration pending). Please use OpenAI models or leave model selection on Auto.",
     });
   }
 
