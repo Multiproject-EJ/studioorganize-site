@@ -170,6 +170,56 @@ function maskEmail(email: string | undefined): string | undefined {
   return "***@***";
 }
 
+/**
+ * Check if a JWT appears to be an anon/public key (service key) rather than a user JWT.
+ * Anon keys typically lack a 'sub' claim or have role='anon' or 'service_role'.
+ * 
+ * @param claims - Decoded JWT claims
+ * @returns Object with isAnon flag and reason string
+ */
+function detectAnonOrPublicKey(claims: ReturnType<typeof safeDecodeJwt>): {
+  isAnon: boolean;
+  reason: string | null;
+} {
+  if (!claims) {
+    return { isAnon: false, reason: null };
+  }
+  
+  // Check for missing sub claim (typical of anon keys)
+  if (!claims.sub) {
+    return { isAnon: true, reason: "missing sub claim (anon/public key detected)" };
+  }
+  
+  // Check for anon or service_role roles
+  if (claims.role === "anon") {
+    return { isAnon: true, reason: "token has role=anon (anon key detected)" };
+  }
+  if (claims.role === "service_role") {
+    return { isAnon: true, reason: "token has role=service_role (service key detected)" };
+  }
+  
+  return { isAnon: false, reason: null };
+}
+
+/**
+ * Build a compact claimsInfo object for diagnostic logging.
+ * 
+ * @param claims - Decoded JWT claims
+ * @returns Compact object with hasSub, iss, aud, exp, role
+ */
+function buildClaimsInfo(claims: ReturnType<typeof safeDecodeJwt>): Record<string, unknown> {
+  if (!claims) {
+    return { decoded: false };
+  }
+  return {
+    hasSub: !!claims.sub,
+    iss: claims.iss ?? null,
+    aud: claims.aud ?? null,
+    exp: claims.exp ?? null,
+    role: claims.role ?? null,
+  };
+}
+
 // ============================================================================
 // End Authentication Diagnostics Helpers
 // ============================================================================
@@ -2241,7 +2291,10 @@ serve(async req => {
 
   if (!userToken) {
     console.warn("[AUTH] No user token found (need X-Client-Auth or Authorization: Bearer <jwt>)");
-    return jsonResponse(401, { error: "Missing access token" }, requestOrigin);
+    return jsonResponse(401, { 
+      error: "Unauthorized", 
+      reason: "missing access token - provide X-Client-Auth header or Authorization: Bearer <jwt>" 
+    }, requestOrigin);
   }
 
   // Alias for backward compatibility with downstream code
@@ -2249,31 +2302,53 @@ serve(async req => {
 
   // Decode and log non-sensitive JWT claims for diagnostics
   const claims = safeDecodeJwt(accessToken);
+  
+  // Log compact claimsInfo for debugging (per acceptance criteria)
+  const claimsInfo = buildClaimsInfo(claims);
+  console.log("[AUTH] claimsInfo:", JSON.stringify(claimsInfo));
+  
   if (claims) {
     // Basic JWT payload logging (sub, exp) to aid debugging per acceptance criteria
     console.log("[AUTH] JWT payload - sub:", maskIdentifier(claims.sub, 8), "exp:", claims.exp, "role:", claims.role);
-    console.log("[AUTH] JWT claims:", JSON.stringify({
-      iss: claims.iss,
-      aud: claims.aud,
-      sub: maskIdentifier(claims.sub, 8),
-      exp: claims.exp,
-      iat: claims.iat,
-      email: maskEmail(claims.email),
-      role: claims.role,
-    }));
+    
+    // Detect if token is anon/public key vs user JWT
+    const anonCheck = detectAnonOrPublicKey(claims);
+    if (anonCheck.isAnon) {
+      console.warn("[AUTH] Anon/public key detected:", anonCheck.reason);
+      return jsonResponse(401, { 
+        error: "Unauthorized", 
+        reason: anonCheck.reason 
+      }, requestOrigin);
+    }
 
     // Compare issuer to expected Supabase auth issuer
     const expectedIssuer = `${SUPABASE_URL}/auth/v1`;
     if (claims.iss && claims.iss !== expectedIssuer) {
       console.warn("[AUTH] Issuer mismatch! Got:", claims.iss, "Expected:", expectedIssuer);
+      return jsonResponse(401, { 
+        error: "Unauthorized", 
+        reason: "issuer mismatch",
+        details: {
+          got: claims.iss,
+          expected: expectedIssuer,
+        }
+      }, requestOrigin);
     }
 
-    // Check if token is expired - return 401 early if expired
+    // Check if token is expired - return 401 early if expired with exp/now details
     if (claims.exp) {
       const now = Math.floor(Date.now() / 1000);
       if (claims.exp < now) {
         console.warn("[AUTH] Token expired. exp:", claims.exp, "now:", now, "diff:", now - claims.exp);
-        return jsonResponse(401, { error: "Token expired" }, requestOrigin);
+        return jsonResponse(401, { 
+          error: "Unauthorized", 
+          reason: "token expired",
+          details: {
+            exp: claims.exp,
+            now: now,
+            expiredSecondsAgo: now - claims.exp,
+          }
+        }, requestOrigin);
       }
     }
 
@@ -2283,6 +2358,10 @@ serve(async req => {
     }
   } else {
     console.warn("[AUTH] Could not decode JWT claims - token may be malformed");
+    return jsonResponse(401, { 
+      error: "Unauthorized", 
+      reason: "malformed token - could not decode JWT claims" 
+    }, requestOrigin);
   }
 
   // Verify token with Supabase Auth
@@ -2294,10 +2373,13 @@ serve(async req => {
   } = await supabase.auth.getUser(accessToken);
   
   if (error || !user) {
+    // Pass through the supabase.auth.getUser error message (per acceptance criteria)
     const errorMessage = error?.message || "Invalid or expired token";
     console.log("[AUTH] supabase.auth.getUser failed:", errorMessage);
-    // Return 401 for missing/invalid/expired tokens only
-    return jsonResponse(401, { error: `Unauthorized: ${errorMessage}` }, requestOrigin);
+    return jsonResponse(401, { 
+      error: "Unauthorized", 
+      reason: errorMessage 
+    }, requestOrigin);
   }
 
   // Only log masked user.id when DEBUG mode is enabled for privacy
