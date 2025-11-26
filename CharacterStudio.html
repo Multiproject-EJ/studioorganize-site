@@ -7662,6 +7662,9 @@
               navigator.clipboard.writeText(token).then(() => {
                 copyBtn.textContent = '✓ Copied';
                 setTimeout(() => { copyBtn.textContent = '📋 Copy Access Token'; }, 1500);
+              }).catch(() => {
+                copyBtn.textContent = '❌ Failed';
+                setTimeout(() => { copyBtn.textContent = '📋 Copy Access Token'; }, 1500);
               });
             }
           });
@@ -7672,7 +7675,11 @@
           if (tokenInfo.issMismatch) {
             const warning = document.createElement('div');
             warning.className = 'studio-debug-header-check-warning';
-            warning.innerHTML = '<strong>⚠️ Issuer Mismatch</strong><br>Token issuer does not match the Supabase URL. This may cause 401 errors.';
+            const warningTitle = document.createElement('strong');
+            warningTitle.textContent = '⚠️ Issuer Mismatch';
+            warning.appendChild(warningTitle);
+            warning.appendChild(document.createElement('br'));
+            warning.appendChild(document.createTextNode('Token issuer does not match the Supabase URL. This may cause 401 errors.'));
             headerCheck.appendChild(warning);
           }
 
@@ -7680,7 +7687,11 @@
           if (!tokenInfo.hasSub && tokenInfo.kind !== 'NONE') {
             const warning = document.createElement('div');
             warning.className = 'studio-debug-header-check-warning';
-            warning.innerHTML = '<strong>⚠️ Missing sub claim</strong><br>This token does not contain a user identity. Edge Functions requiring auth will return 401.';
+            const warningTitle = document.createElement('strong');
+            warningTitle.textContent = '⚠️ Missing sub claim';
+            warning.appendChild(warningTitle);
+            warning.appendChild(document.createElement('br'));
+            warning.appendChild(document.createTextNode('This token does not contain a user identity. Edge Functions requiring auth will return 401.'));
             headerCheck.appendChild(warning);
           }
 
