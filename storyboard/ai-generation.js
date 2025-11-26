@@ -315,7 +315,10 @@ async function invokeImagePipeline(action, payload, session) {
   const body = { ...(payload || {}), action };
   const { data, error } = await supabase.functions.invoke('ai-image-pipeline', {
     body,
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'X-Client-Auth': token,
+    },
   });
   if (error) {
     throw new Error(error.message || 'AI image pipeline request failed');

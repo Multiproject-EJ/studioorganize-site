@@ -7315,12 +7315,50 @@
           title.textContent = 'Environment Indicators';
           section.appendChild(title);
 
+          // Extract the Supabase URL from the client
+          const supabaseUrl = state.supabase?.supabaseUrl || 'Not available';
+          const clientProjectRef = extractProjectRef(supabaseUrl);
+
+          // Decode the token issuer from the user's JWT
+          let tokenIssuer = 'Not signed in';
+          let tokenProjectRef = '';
+          let isMismatch = false;
+          if (state.session?.access_token) {
+            try {
+              const parts = state.session.access_token.split('.');
+              if (parts.length === 3) {
+                // Handle base64url encoding (replace - and _ with + and /)
+                let base64Payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                // Add padding if needed
+                while (base64Payload.length % 4) {
+                  base64Payload += '=';
+                }
+                const payload = JSON.parse(atob(base64Payload));
+                tokenIssuer = payload.iss || 'Unknown';
+                // Try to extract project ref from issuer URL first, then fall back to ref claim
+                const issuerRef = extractProjectRef(payload.iss);
+                tokenProjectRef = (issuerRef !== 'unknown') ? issuerRef : (payload.ref || '');
+              }
+            } catch (e) {
+              tokenIssuer = 'Unable to decode';
+            }
+          }
+
+          // Check for mismatch between client URL and token issuer
+          if (tokenProjectRef && clientProjectRef !== 'unknown' && tokenProjectRef !== clientProjectRef) {
+            isMismatch = true;
+          }
+
           // Note: These values are inferred from client-side behavior
           // The actual env vars are server-side only
           const envRows = [
             { label: 'Debug Mode', value: 'Enabled' },
             { label: 'Supabase Client', value: state.supabase ? 'Ready' : 'Not Ready' },
-            { label: 'Project ID', value: state.projectId ? state.projectId.slice(0, 8) + '...' : 'None' },
+            { label: 'Supabase URL', value: supabaseUrl },
+            { label: 'Client Project Ref', value: clientProjectRef },
+            { label: 'Token Issuer', value: tokenIssuer },
+            { label: 'Token Project Ref', value: tokenProjectRef || 'N/A' },
+            { label: 'Story Project ID', value: state.projectId ? state.projectId.slice(0, 8) + '...' : 'None' },
             { label: 'Page URL', value: window.location.hostname },
           ];
 
@@ -7342,6 +7380,24 @@
           });
 
           container.appendChild(section);
+
+          // Add mismatch warning if token issuer doesn't match client URL
+          if (isMismatch) {
+            const warning = document.createElement('div');
+            warning.style.marginTop = '12px';
+            warning.style.padding = '10px';
+            warning.style.background = 'rgba(239, 68, 68, 0.15)';
+            warning.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+            warning.style.borderRadius = '8px';
+            warning.style.fontSize = '12px';
+            warning.style.color = '#ef4444';
+            warning.innerHTML = '<strong>⚠️ Project Mismatch Detected</strong><br>' +
+              'The Supabase client is configured for project <code>' + clientProjectRef + '</code>, ' +
+              'but your session token was issued by project <code>' + tokenProjectRef + '</code>. ' +
+              'This will cause 401 errors when invoking Edge Functions. ' +
+              'Please sign in again or verify the Supabase client configuration.';
+            container.appendChild(warning);
+          }
 
           // Add note about server-side env vars
           const note = document.createElement('div');
