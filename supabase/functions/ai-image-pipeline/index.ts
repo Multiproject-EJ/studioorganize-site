@@ -2250,6 +2250,8 @@ serve(async req => {
   // Decode and log non-sensitive JWT claims for diagnostics
   const claims = safeDecodeJwt(accessToken);
   if (claims) {
+    // Basic JWT payload logging (sub, exp) to aid debugging per acceptance criteria
+    console.log("[AUTH] JWT payload - sub:", maskIdentifier(claims.sub, 8), "exp:", claims.exp, "role:", claims.role);
     console.log("[AUTH] JWT claims:", JSON.stringify({
       iss: claims.iss,
       aud: claims.aud,
@@ -2266,18 +2268,25 @@ serve(async req => {
       console.warn("[AUTH] Issuer mismatch! Got:", claims.iss, "Expected:", expectedIssuer);
     }
 
-    // Check if token is expired
+    // Check if token is expired - return 401 early if expired
     if (claims.exp) {
       const now = Math.floor(Date.now() / 1000);
       if (claims.exp < now) {
-        console.warn("[AUTH] Token appears expired. exp:", claims.exp, "now:", now);
+        console.warn("[AUTH] Token expired. exp:", claims.exp, "now:", now, "diff:", now - claims.exp, "seconds ago");
+        return jsonResponse(401, { error: "Token expired" }, requestOrigin);
       }
+    }
+
+    // Log role for debugging - accept authenticated role tokens
+    if (claims.role && claims.role !== "authenticated") {
+      console.log("[AUTH] Token role is:", claims.role, "(expected: authenticated)");
     }
   } else {
     console.warn("[AUTH] Could not decode JWT claims - token may be malformed");
   }
 
   // Verify token with Supabase Auth
+  // Using service role key to verify user tokens - this accepts any valid user JWT
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const {
     data: { user },
@@ -2287,6 +2296,7 @@ serve(async req => {
   if (error || !user) {
     const errorMessage = error?.message || "Invalid or expired token";
     console.log("[AUTH] supabase.auth.getUser failed:", errorMessage);
+    // Return 401 for missing/invalid/expired tokens only
     return jsonResponse(401, { error: `Unauthorized: ${errorMessage}` }, requestOrigin);
   }
 
