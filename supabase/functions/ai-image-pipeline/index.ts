@@ -117,8 +117,8 @@ function safeDecodeJwt(token: string): {
 function maskIdentifier(value: string | undefined, showChars = 8): string | undefined {
   if (!value) return undefined;
   if (value.length <= showChars) {
-    // For very short strings, show fewer characters
-    const safeLen = Math.min(4, value.length);
+    // For short strings, show at most 2 characters for privacy
+    const safeLen = Math.min(2, value.length);
     return `${value.substring(0, safeLen)}...`;
   }
   return `${value.substring(0, showChars)}...`;
