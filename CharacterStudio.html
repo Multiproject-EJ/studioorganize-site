@@ -7327,14 +7327,17 @@
             try {
               const parts = state.session.access_token.split('.');
               if (parts.length === 3) {
-                const payload = JSON.parse(atob(parts[1]));
-                tokenIssuer = payload.iss || 'Unknown';
-                // Extract project ref from issuer if it's a Supabase URL
-                if (typeof payload.iss === 'string' && payload.iss.includes('.supabase.co')) {
-                  tokenProjectRef = extractProjectRef(payload.iss);
-                } else if (payload.ref) {
-                  tokenProjectRef = payload.ref;
+                // Handle base64url encoding (replace - and _ with + and /)
+                let base64Payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                // Add padding if needed
+                while (base64Payload.length % 4) {
+                  base64Payload += '=';
                 }
+                const payload = JSON.parse(atob(base64Payload));
+                tokenIssuer = payload.iss || 'Unknown';
+                // Try to extract project ref from issuer URL first, then fall back to ref claim
+                const issuerRef = extractProjectRef(payload.iss);
+                tokenProjectRef = (issuerRef !== 'unknown') ? issuerRef : (payload.ref || '');
               }
             } catch (e) {
               tokenIssuer = 'Unable to decode';
