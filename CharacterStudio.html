@@ -6363,7 +6363,7 @@
       // Validates the URL format and ensures safe extraction
       function extractProjectRef(supabaseUrl) {
         if (!supabaseUrl || typeof supabaseUrl !== 'string') return 'unknown';
-        // Match only valid Supabase URLs (ends at .supabase.co or .supabase.co/)
+        // Match valid Supabase URLs: https://{projectRef}.supabase.co with optional path
         const match = supabaseUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co(?:\/.*)?$/i);
         return match ? match[1] : 'unknown';
       }
@@ -7557,7 +7557,7 @@
             logEntry.error_name = info.name;
             logEntry.error_message = info.message;
             logEntry.error_stack = info.stack;
-            // Keep backward compat: set error field for existing UI
+            // Keep backward compatibility: set error field for existing UI
             logEntry.error = info.name + ': ' + info.message;
           }
 
