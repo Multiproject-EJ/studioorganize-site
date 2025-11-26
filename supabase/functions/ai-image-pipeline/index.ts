@@ -83,7 +83,11 @@ function safeDecodeJwt(token: string): {
     // Decode the payload (second part)
     const payloadB64 = parts[1];
     // Handle URL-safe base64 and add padding if needed
-    const padded = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+    let padded = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+    // Add padding to make length a multiple of 4
+    while (padded.length % 4 !== 0) {
+      padded += "=";
+    }
     const decoded = atob(padded);
     const parsed = JSON.parse(decoded);
     
@@ -2148,13 +2152,31 @@ serve(async req => {
   // Decode and log non-sensitive JWT claims for diagnostics
   const claims = safeDecodeJwt(accessToken);
   if (claims) {
+    // Safely mask sub (handle short strings)
+    const maskedSub = claims.sub 
+      ? (claims.sub.length > 8 ? `${claims.sub.substring(0, 8)}...` : `${claims.sub.substring(0, Math.min(4, claims.sub.length))}...`)
+      : undefined;
+    
+    // Safely mask email (handle missing @ or short usernames)
+    let maskedEmail: string | undefined;
+    if (claims.email) {
+      const atIndex = claims.email.indexOf("@");
+      if (atIndex > 0) {
+        const localPart = claims.email.substring(0, atIndex);
+        const maskLen = Math.min(3, localPart.length);
+        maskedEmail = `${localPart.substring(0, maskLen)}...@***`;
+      } else {
+        maskedEmail = "***@***";
+      }
+    }
+
     console.log("[AUTH] JWT claims:", JSON.stringify({
       iss: claims.iss,
       aud: claims.aud,
-      sub: claims.sub ? `${claims.sub.substring(0, 8)}...` : undefined,
+      sub: maskedSub,
       exp: claims.exp,
       iat: claims.iat,
-      email: claims.email ? `${claims.email.split("@")[0].substring(0, 3)}...@***` : undefined,
+      email: maskedEmail,
       role: claims.role,
     }));
 
