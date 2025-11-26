@@ -106,6 +106,42 @@ function safeDecodeJwt(token: string): {
   }
 }
 
+/**
+ * Safely mask a string identifier for logging.
+ * Shows the first few characters followed by "...".
+ * 
+ * @param value - The string to mask
+ * @param showChars - Number of characters to show (default: 8)
+ * @returns Masked string or undefined if value is falsy
+ */
+function maskIdentifier(value: string | undefined, showChars = 8): string | undefined {
+  if (!value) return undefined;
+  if (value.length <= showChars) {
+    // For very short strings, show fewer characters
+    const safeLen = Math.min(4, value.length);
+    return `${value.substring(0, safeLen)}...`;
+  }
+  return `${value.substring(0, showChars)}...`;
+}
+
+/**
+ * Safely mask an email address for logging.
+ * Shows the first few characters of the local part followed by "...@***".
+ * 
+ * @param email - The email address to mask
+ * @returns Masked email or undefined if email is falsy
+ */
+function maskEmail(email: string | undefined): string | undefined {
+  if (!email) return undefined;
+  const atIndex = email.indexOf("@");
+  if (atIndex > 0) {
+    const localPart = email.substring(0, atIndex);
+    const maskLen = Math.min(3, localPart.length);
+    return `${localPart.substring(0, maskLen)}...@***`;
+  }
+  return "***@***";
+}
+
 // ============================================================================
 // End Authentication Diagnostics Helpers
 // ============================================================================
@@ -2152,31 +2188,13 @@ serve(async req => {
   // Decode and log non-sensitive JWT claims for diagnostics
   const claims = safeDecodeJwt(accessToken);
   if (claims) {
-    // Safely mask sub (handle short strings)
-    const maskedSub = claims.sub 
-      ? (claims.sub.length > 8 ? `${claims.sub.substring(0, 8)}...` : `${claims.sub.substring(0, Math.min(4, claims.sub.length))}...`)
-      : undefined;
-    
-    // Safely mask email (handle missing @ or short usernames)
-    let maskedEmail: string | undefined;
-    if (claims.email) {
-      const atIndex = claims.email.indexOf("@");
-      if (atIndex > 0) {
-        const localPart = claims.email.substring(0, atIndex);
-        const maskLen = Math.min(3, localPart.length);
-        maskedEmail = `${localPart.substring(0, maskLen)}...@***`;
-      } else {
-        maskedEmail = "***@***";
-      }
-    }
-
     console.log("[AUTH] JWT claims:", JSON.stringify({
       iss: claims.iss,
       aud: claims.aud,
-      sub: maskedSub,
+      sub: maskIdentifier(claims.sub, 8),
       exp: claims.exp,
       iat: claims.iat,
-      email: maskedEmail,
+      email: maskEmail(claims.email),
       role: claims.role,
     }));
 
@@ -2210,7 +2228,12 @@ serve(async req => {
     return jsonResponse(401, { error: `Unauthorized: ${errorMessage}` });
   }
 
-  console.log("[AUTH] User authenticated successfully, user.id:", user.id.substring(0, 8) + "...");
+  // Only log masked user.id when DEBUG mode is enabled for privacy
+  if (DEBUG) {
+    console.log("[AUTH] User authenticated successfully, user.id:", maskIdentifier(user.id, 8));
+  } else {
+    console.log("[AUTH] User authenticated successfully");
+  }
   // ============================================================================
   // End Authentication Diagnostics Block
   // ============================================================================
