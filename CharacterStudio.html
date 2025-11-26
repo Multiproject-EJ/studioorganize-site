@@ -6459,6 +6459,7 @@
       // Helper: Call ai-image-pipeline via supabase.functions.invoke
       // Sends Authorization: Bearer <user_jwt> for Supabase gateway JWT verification (verify_jwt=true)
       // Also sends X-Client-Auth: <user_jwt> for server-side convenience (backend reads either header)
+      // Returns: { data, sdkDiagnostics } where sdkDiagnostics contains SDK error/response details
       async function callImagePipelineViaSupabase(action, payload) {
         if (!state.supabase) {
           throw new Error('Supabase client not initialized');
@@ -6480,18 +6481,125 @@
             'X-Client-Auth': session.access_token,
           },
         });
+
+        // Build SDK diagnostics object for debugging
+        const sdkDiagnostics = {
+          sdk_error_status: error?.status ?? null,
+          sdk_error_message: error?.message ?? null,
+          response_raw: null,
+        };
+
+        // Capture raw response data (stringify for inspection)
+        if (data !== undefined && data !== null) {
+          try {
+            sdkDiagnostics.response_raw = JSON.stringify(data);
+          } catch (e) {
+            sdkDiagnostics.response_raw = String(data);
+          }
+        }
+
         if (error) {
           const err = new Error(error.message || 'Function error (' + (error.status || 'unknown') + ')');
           err.name = 'InvokeError';
+          err.sdkDiagnostics = sdkDiagnostics;
           throw err;
         }
         // Check for error in response body
         if (data && data.error) {
           const err = new Error(data.error);
           err.name = 'InvokeError';
+          err.sdkDiagnostics = sdkDiagnostics;
           throw err;
         }
-        return data;
+        return { data, sdkDiagnostics };
+      }
+
+      // Helper: Direct fetch to Edge Function (bypasses supabase.functions.invoke)
+      // Returns: { ok, status, statusText, data, responseText, fetchDiagnostics }
+      async function directFetchEdgeFunction(action, payload) {
+        const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
+        if (!isValidProjectRef(projectRef)) {
+          throw new Error('Invalid project reference');
+        }
+
+        const sessionResult = await state.supabase.auth.getSession();
+        const session = sessionResult?.data?.session;
+        if (!session) {
+          const err = new Error('Not signed in');
+          err.name = 'AuthError';
+          throw err;
+        }
+
+        const url = 'https://' + projectRef + '.supabase.co/functions/v1/ai-image-pipeline';
+        const anonKey = window.StudioOrganize?.SUPABASE_ANON_KEY || '';
+        const body = { ...payload, action };
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'X-Client-Auth': session.access_token,
+        };
+        if (anonKey) {
+          headers['apikey'] = anonKey;
+        }
+
+        const fetchDiagnostics = {
+          url,
+          method: 'POST',
+          headers_sent: Object.keys(headers).join(', '),
+        };
+
+        let response;
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+          });
+        } catch (fetchErr) {
+          const err = new Error('Network error: ' + (fetchErr.message || 'fetch failed'));
+          err.name = 'FetchError';
+          err.fetchDiagnostics = fetchDiagnostics;
+          throw err;
+        }
+
+        fetchDiagnostics.status = response.status;
+        fetchDiagnostics.statusText = response.statusText;
+        fetchDiagnostics.ok = response.ok;
+
+        // Read response body as text first
+        let responseText = '';
+        try {
+          responseText = await response.text();
+        } catch (e) {
+          responseText = '[Unable to read response body]';
+        }
+        fetchDiagnostics.response_text = responseText;
+
+        // Try to parse as JSON
+        let data = null;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          // Not JSON, keep as text
+        }
+
+        if (!response.ok) {
+          const err = new Error('HTTP ' + response.status + ': ' + (data?.error || response.statusText || 'Request failed'));
+          err.name = 'DirectFetchError';
+          err.fetchDiagnostics = fetchDiagnostics;
+          throw err;
+        }
+
+        // Check for error in response body
+        if (data && data.error) {
+          const err = new Error(data.error);
+          err.name = 'DirectFetchError';
+          err.fetchDiagnostics = fetchDiagnostics;
+          throw err;
+        }
+
+        return { data, responseText, fetchDiagnostics };
       }
 
       class StudioDebugConsole {
@@ -7210,6 +7318,19 @@
             detailRows.push({ label: 'Error', value: log.error });
           }
 
+          // SDK diagnostics (from supabase.functions.invoke)
+          if (log.sdk_error_status !== null && log.sdk_error_status !== undefined) {
+            detailRows.push({ label: 'SDK Error Status', value: String(log.sdk_error_status) });
+          }
+          if (log.sdk_error_message) {
+            detailRows.push({ label: 'SDK Error Message', value: log.sdk_error_message });
+          }
+
+          // Direct Fetch diagnostics
+          if (log.fetch_status !== null && log.fetch_status !== undefined) {
+            detailRows.push({ label: 'HTTP Status', value: log.fetch_status + ' ' + (log.fetch_status_text || '') });
+          }
+
           detailRows.forEach(row => {
             const rowEl = document.createElement('div');
             rowEl.className = 'studio-debug-log-detail-row';
@@ -7268,6 +7389,22 @@
             responsePre.className = 'studio-debug-log-payload';
             responsePre.textContent = JSON.stringify(log.response, null, 2);
             details.appendChild(responsePre);
+          }
+
+          // Raw response section (SDK raw or Direct Fetch text)
+          const rawBody = log.response_raw || log.response_text;
+          if (rawBody && rawBody !== JSON.stringify(log.response)) {
+            const rawLabel = document.createElement('div');
+            rawLabel.className = 'studio-debug-section-title';
+            rawLabel.textContent = log.response_text ? 'Raw Response Body (Direct Fetch)' : 'Raw Response (SDK)';
+            rawLabel.style.marginTop = '8px';
+            details.appendChild(rawLabel);
+
+            const rawPre = document.createElement('pre');
+            rawPre.className = 'studio-debug-log-payload';
+            rawPre.style.maxHeight = '150px';
+            rawPre.textContent = rawBody;
+            details.appendChild(rawPre);
           }
 
           // Image thumbnail (if response includes image_url or frame.signed_url)
@@ -7744,6 +7881,42 @@
           actions.appendChild(refineBtn);
 
           form.appendChild(actions);
+
+          // Direct Fetch section - bypasses supabase.functions.invoke for isolation testing
+          const directSection = document.createElement('div');
+          directSection.className = 'studio-debug-section';
+          directSection.style.marginTop = '16px';
+
+          const directTitle = document.createElement('div');
+          directTitle.className = 'studio-debug-section-title';
+          directTitle.textContent = 'Direct Fetch Test';
+          directSection.appendChild(directTitle);
+
+          const directNote = document.createElement('div');
+          directNote.style.fontSize = '11px';
+          directNote.style.color = 'var(--muted)';
+          directNote.style.marginBottom = '8px';
+          directNote.textContent = 'Bypasses supabase.functions.invoke to POST directly to the Edge Function. Shows exact HTTP status and raw response body.';
+          directSection.appendChild(directNote);
+
+          const directActions = document.createElement('div');
+          directActions.className = 'studio-debug-test-actions';
+
+          const directDraftBtn = document.createElement('button');
+          directDraftBtn.className = 'studio-debug-test-btn';
+          directDraftBtn.textContent = '🔗 Direct Fetch Draft';
+          directDraftBtn.addEventListener('click', () => this.sendTestDraft(true));
+          directActions.appendChild(directDraftBtn);
+
+          const directRefineBtn = document.createElement('button');
+          directRefineBtn.className = 'studio-debug-test-btn is-secondary';
+          directRefineBtn.textContent = '🔗 Direct Fetch Refine';
+          directRefineBtn.addEventListener('click', () => this.sendTestRefine(true));
+          directActions.appendChild(directRefineBtn);
+
+          directSection.appendChild(directActions);
+          form.appendChild(directSection);
+
           container.appendChild(form);
 
           // Refine parameters (collapsed by default)
@@ -7814,7 +7987,7 @@
           return field;
         }
 
-        async sendTestDraft() {
+        async sendTestDraft(useDirect = false) {
           const archetype = document.getElementById('test-archetype')?.value || 'hero';
           const model = document.getElementById('test-model')?.value || null;
           const tier = document.getElementById('test-tier')?.value || 'standard';
@@ -7825,10 +7998,10 @@
           };
           if (model) payload.model = model;
 
-          await this.executeTestRequest('generate-character-draft', payload);
+          await this.executeTestRequest('generate-character-draft', payload, useDirect);
         }
 
-        async sendTestRefine() {
+        async sendTestRefine(useDirect = false) {
           const archetype = document.getElementById('test-archetype')?.value || 'hero';
           const model = document.getElementById('test-model')?.value || null;
           const tier = document.getElementById('test-tier')?.value || 'standard';
@@ -7847,10 +8020,10 @@
           };
           if (model) payload.model = model;
 
-          await this.executeTestRequest('refine-character', payload);
+          await this.executeTestRequest('refine-character', payload, useDirect);
         }
 
-        async executeTestRequest(action, payload) {
+        async executeTestRequest(action, payload, useDirect = false) {
           // Derive projectRef from supabase URL for reachability and logging
           const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
@@ -7865,7 +8038,9 @@
             model: payload.model || 'auto',
             tier: payload.tier,
             payload: { ...payload, action },
-            client_endpoint: 'invoke: ai-image-pipeline (projectRef=' + projectRef + ')',
+            client_endpoint: useDirect
+              ? 'direct-fetch: ai-image-pipeline (projectRef=' + projectRef + ')'
+              : 'invoke: ai-image-pipeline (projectRef=' + projectRef + ')',
             reachability: null,
             status: 'pending',
             error_name: null,
@@ -7880,6 +8055,13 @@
             auth_token_has_sub: tokenClassification.hasSub,
             auth_sub: tokenClassification.sub || null,
             auth_exp_iso: tokenClassification.expIso || null,
+            // SDK/Fetch diagnostics for debugging
+            sdk_error_status: null,
+            sdk_error_message: null,
+            response_raw: null,
+            fetch_status: null,
+            fetch_status_text: null,
+            response_text: null,
           };
 
           this.addLog(logEntry);
@@ -7892,13 +8074,33 @@
           }
 
           try {
-            const data = await callImagePipelineViaSupabase(action, payload);
-            logEntry.status = 'completed';
-            logEntry.response = data;
-            logEntry.imageUrl = data?.image_url;
-            logEntry.storagePath = data?.storage_path;
-            logEntry.provider = data?.provider || data?.meta?.provider;
-            logEntry.model = data?.meta?.model || payload.model || 'auto';
+            if (useDirect) {
+              // Direct fetch bypasses supabase.functions.invoke
+              const result = await directFetchEdgeFunction(action, payload);
+              logEntry.status = 'completed';
+              logEntry.response = result.data;
+              logEntry.imageUrl = result.data?.image_url;
+              logEntry.storagePath = result.data?.storage_path;
+              logEntry.provider = result.data?.provider || result.data?.meta?.provider;
+              logEntry.model = result.data?.meta?.model || payload.model || 'auto';
+              // Capture fetch diagnostics
+              logEntry.fetch_status = result.fetchDiagnostics?.status ?? null;
+              logEntry.fetch_status_text = result.fetchDiagnostics?.statusText ?? null;
+              logEntry.response_text = result.responseText ?? null;
+            } else {
+              // Use supabase.functions.invoke
+              const result = await callImagePipelineViaSupabase(action, payload);
+              logEntry.status = 'completed';
+              logEntry.response = result.data;
+              logEntry.imageUrl = result.data?.image_url;
+              logEntry.storagePath = result.data?.storage_path;
+              logEntry.provider = result.data?.provider || result.data?.meta?.provider;
+              logEntry.model = result.data?.meta?.model || payload.model || 'auto';
+              // Capture SDK diagnostics
+              logEntry.sdk_error_status = result.sdkDiagnostics?.sdk_error_status ?? null;
+              logEntry.sdk_error_message = result.sdkDiagnostics?.sdk_error_message ?? null;
+              logEntry.response_raw = result.sdkDiagnostics?.response_raw ?? null;
+            }
           } catch (err) {
             const info = describeError(err);
             logEntry.status = 'error';
@@ -7907,6 +8109,17 @@
             logEntry.error_stack = info.stack;
             // Keep backward compatibility: set error field for existing UI
             logEntry.error = info.name + ': ' + info.message;
+            // Capture SDK/Fetch diagnostics from error
+            if (err.sdkDiagnostics) {
+              logEntry.sdk_error_status = err.sdkDiagnostics.sdk_error_status ?? null;
+              logEntry.sdk_error_message = err.sdkDiagnostics.sdk_error_message ?? null;
+              logEntry.response_raw = err.sdkDiagnostics.response_raw ?? null;
+            }
+            if (err.fetchDiagnostics) {
+              logEntry.fetch_status = err.fetchDiagnostics.status ?? null;
+              logEntry.fetch_status_text = err.fetchDiagnostics.statusText ?? null;
+              logEntry.response_text = err.fetchDiagnostics.response_text ?? null;
+            }
           }
 
           this.updateLog(this.logs.length - 1, logEntry);
@@ -7985,7 +8198,7 @@
 
       // Expose log method for external use
       if (studioDebugConsole.isActive) {
-        window.studioDebugLog = (action, payload, response, error) => {
+        window.studioDebugLog = (action, payload, response, error, sdkDiagnostics) => {
           // Derive projectRef from supabase URL
           const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
@@ -8017,6 +8230,13 @@
             auth_token_has_sub: tokenClassification.hasSub,
             auth_sub: tokenClassification.sub || null,
             auth_exp_iso: tokenClassification.expIso || null,
+            // SDK/Fetch diagnostics for debugging
+            sdk_error_status: sdkDiagnostics?.sdk_error_status ?? error?.sdkDiagnostics?.sdk_error_status ?? null,
+            sdk_error_message: sdkDiagnostics?.sdk_error_message ?? error?.sdkDiagnostics?.sdk_error_message ?? null,
+            response_raw: sdkDiagnostics?.response_raw ?? error?.sdkDiagnostics?.response_raw ?? null,
+            fetch_status: sdkDiagnostics?.status ?? error?.fetchDiagnostics?.status ?? null,
+            fetch_status_text: sdkDiagnostics?.statusText ?? error?.fetchDiagnostics?.statusText ?? null,
+            response_text: sdkDiagnostics?.response_text ?? error?.fetchDiagnostics?.response_text ?? null,
           };
           studioDebugConsole.addLog(logEntry);
         };
