@@ -1427,6 +1427,9 @@ window.StudioOrganize = window.StudioOrganize || {};
 window.StudioOrganize.workspaceThemes = workspaceThemes;
 window.StudioOrganize.workspaceVisibility = workspaceVisibility;
 window.StudioOrganize.requestWorkspaceSave = requestWorkspaceSave;
+// Expose Supabase config for debug console Header Check feature
+window.StudioOrganize.SUPABASE_URL = SUPABASE_URL;
+window.StudioOrganize.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 document.dispatchEvent(new CustomEvent('studioorganize:workspace-themes-ready', { detail: { workspaceThemes } }));
 document.dispatchEvent(new CustomEvent('studioorganize:workspace-visibility-ready', { detail: { workspaceVisibility } }));
 

@@ -6368,6 +6368,51 @@
         return match ? match[1] : 'unknown';
       }
 
+      // Helper: Decode JWT payload (does not verify signature)
+      function decodeJwt(token) {
+        if (!token || typeof token !== 'string') return null;
+        try {
+          const parts = token.split('.');
+          if (parts.length !== 3) return null;
+          // Handle base64url encoding (replace - and _ with + and /)
+          let base64Payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          // Add padding if needed
+          while (base64Payload.length % 4) {
+            base64Payload += '=';
+          }
+          return JSON.parse(atob(base64Payload));
+        } catch {
+          return null;
+        }
+      }
+
+      // Helper: Truncate token for safe display (first 8 + '...' + last 6 = 17 chars total)
+      function truncateToken(token) {
+        if (!token || typeof token !== 'string') return '—';
+        if (token.length <= 17) return token;
+        return token.slice(0, 8) + '...' + token.slice(-6);
+      }
+
+      // Helper: Classify access token to determine if it contains user identity (sub claim)
+      function classifyAccessToken(token, supabaseUrl) {
+        if (!token) return { kind: 'NONE', hasSub: false, sub: null, exp: null, expIso: null, iss: null, issMismatch: false };
+        const claims = decodeJwt(token);
+        if (!claims) return { kind: 'UNKNOWN', hasSub: false, sub: null, exp: null, expIso: null, iss: null, issMismatch: false };
+        const hasSub = Boolean(claims.sub);
+        const expectedIss = supabaseUrl ? supabaseUrl.replace(/\/$/, '') + '/auth/v1' : null;
+        const issMismatch = Boolean(expectedIss && claims.iss && claims.iss !== expectedIss);
+        const expIso = claims.exp ? new Date(claims.exp * 1000).toISOString() : null;
+        return {
+          kind: hasSub ? 'USER' : 'ANON_OR_INVALID',
+          hasSub,
+          sub: claims.sub || null,
+          exp: claims.exp || null,
+          expIso,
+          iss: claims.iss || null,
+          issMismatch
+        };
+      }
+
       // Helper: Validate projectRef is safe for URL construction
       // Only allows alphanumeric characters and hyphens
       function isValidProjectRef(projectRef) {
@@ -6814,6 +6859,65 @@
               color: var(--muted);
               font-size: 12px;
             }
+            .studio-debug-header-check {
+              background: var(--chip);
+              border: 1px solid var(--ring);
+              border-radius: 8px;
+              padding: 10px 12px;
+              margin-bottom: 12px;
+            }
+            .studio-debug-header-check-title {
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: var(--muted);
+              margin-bottom: 8px;
+            }
+            .studio-debug-header-check-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 4px 0;
+              font-size: 11px;
+            }
+            .studio-debug-header-check-label {
+              color: var(--muted);
+            }
+            .studio-debug-header-check-value {
+              color: var(--ink);
+              font-family: ui-monospace, monospace;
+              font-size: 10px;
+            }
+            .studio-debug-header-check-value.is-user {
+              color: #22c55e;
+            }
+            .studio-debug-header-check-value.is-anon {
+              color: #f59e0b;
+            }
+            .studio-debug-header-check-value.is-none {
+              color: #ef4444;
+            }
+            .studio-debug-header-check-warning {
+              margin-top: 8px;
+              padding: 6px 8px;
+              background: rgba(239, 68, 68, 0.15);
+              border: 1px solid rgba(239, 68, 68, 0.4);
+              border-radius: 6px;
+              font-size: 10px;
+              color: #ef4444;
+            }
+            .studio-debug-header-check-copy {
+              padding: 2px 6px;
+              font-size: 10px;
+              background: var(--field);
+              border: 1px solid var(--ring);
+              border-radius: 4px;
+              color: var(--ink);
+              cursor: pointer;
+            }
+            .studio-debug-header-check-copy:hover {
+              border-color: var(--acc);
+            }
             .studio-debug-watermark {
               position: fixed;
               top: 80px;
@@ -7063,6 +7167,20 @@
             { label: 'Provider', value: log.provider || 'N/A' },
             { label: 'Status', value: log.status || 'completed' },
           ];
+
+          // Add token classification info (if present)
+          if (log.auth_token_kind) {
+            detailRows.push({ label: 'Auth Token Kind', value: log.auth_token_kind });
+          }
+          if (log.auth_token_has_sub !== undefined) {
+            detailRows.push({ label: 'Has sub', value: log.auth_token_has_sub ? 'Yes' : 'No' });
+          }
+          if (log.auth_sub) {
+            detailRows.push({ label: 'sub (User ID)', value: truncateToken(log.auth_sub) });
+          }
+          if (log.auth_exp_iso) {
+            detailRows.push({ label: 'Token Expiry', value: log.auth_exp_iso });
+          }
 
           // Add client endpoint
           if (log.client_endpoint) {
@@ -7421,6 +7539,153 @@
             return;
           }
 
+          // Header Check panel - shows token classification before sending requests
+          const headerCheck = document.createElement('div');
+          headerCheck.className = 'studio-debug-header-check';
+
+          const headerTitle = document.createElement('div');
+          headerTitle.className = 'studio-debug-header-check-title';
+          headerTitle.textContent = 'Header Check';
+          headerCheck.appendChild(headerTitle);
+
+          // Classify the current access token
+          const supabaseUrl = state.supabase?.supabaseUrl || '';
+          const tokenInfo = classifyAccessToken(state.session?.access_token, supabaseUrl);
+
+          // Token classification row
+          const tokenRow = document.createElement('div');
+          tokenRow.className = 'studio-debug-header-check-row';
+
+          const tokenLabel = document.createElement('span');
+          tokenLabel.className = 'studio-debug-header-check-label';
+          tokenLabel.textContent = 'Authorization Token';
+          tokenRow.appendChild(tokenLabel);
+
+          const tokenValue = document.createElement('span');
+          tokenValue.className = 'studio-debug-header-check-value';
+          if (tokenInfo.kind === 'USER') {
+            tokenValue.classList.add('is-user');
+            tokenValue.textContent = 'USER (sub present)';
+          } else if (tokenInfo.kind === 'ANON_OR_INVALID') {
+            tokenValue.classList.add('is-anon');
+            tokenValue.textContent = 'ANON / INVALID (no sub)';
+          } else if (tokenInfo.kind === 'NONE') {
+            tokenValue.classList.add('is-none');
+            tokenValue.textContent = 'NONE';
+          } else {
+            tokenValue.textContent = tokenInfo.kind;
+          }
+          tokenRow.appendChild(tokenValue);
+          headerCheck.appendChild(tokenRow);
+
+          // Sub claim row (if present)
+          if (tokenInfo.sub) {
+            const subRow = document.createElement('div');
+            subRow.className = 'studio-debug-header-check-row';
+
+            const subLabel = document.createElement('span');
+            subLabel.className = 'studio-debug-header-check-label';
+            subLabel.textContent = 'sub (User ID)';
+            subRow.appendChild(subLabel);
+
+            const subValue = document.createElement('span');
+            subValue.className = 'studio-debug-header-check-value';
+            subValue.textContent = truncateToken(tokenInfo.sub);
+            subRow.appendChild(subValue);
+            headerCheck.appendChild(subRow);
+          }
+
+          // Token expiry row (if present)
+          if (tokenInfo.expIso) {
+            const expRow = document.createElement('div');
+            expRow.className = 'studio-debug-header-check-row';
+
+            const expLabel = document.createElement('span');
+            expLabel.className = 'studio-debug-header-check-label';
+            expLabel.textContent = 'exp (Expiry)';
+            expRow.appendChild(expLabel);
+
+            const expValue = document.createElement('span');
+            expValue.className = 'studio-debug-header-check-value';
+            expValue.textContent = tokenInfo.expIso;
+            expRow.appendChild(expValue);
+            headerCheck.appendChild(expRow);
+          }
+
+          // Issuer row (if present)
+          if (tokenInfo.iss) {
+            const issRow = document.createElement('div');
+            issRow.className = 'studio-debug-header-check-row';
+
+            const issLabel = document.createElement('span');
+            issLabel.className = 'studio-debug-header-check-label';
+            issLabel.textContent = 'iss (Issuer)';
+            issRow.appendChild(issLabel);
+
+            const issValue = document.createElement('span');
+            issValue.className = 'studio-debug-header-check-value';
+            issValue.textContent = tokenInfo.iss;
+            issRow.appendChild(issValue);
+            headerCheck.appendChild(issRow);
+          }
+
+          // apikey header info (anon key presence)
+          const anonKey = window.StudioOrganize?.SUPABASE_ANON_KEY || '';
+          if (anonKey) {
+            const apikeyRow = document.createElement('div');
+            apikeyRow.className = 'studio-debug-header-check-row';
+
+            const apikeyLabel = document.createElement('span');
+            apikeyLabel.className = 'studio-debug-header-check-label';
+            apikeyLabel.textContent = 'apikey header';
+            apikeyRow.appendChild(apikeyLabel);
+
+            const apikeyValue = document.createElement('span');
+            apikeyValue.className = 'studio-debug-header-check-value';
+            apikeyValue.textContent = 'will be sent (anon key: ' + truncateToken(anonKey) + ')';
+            apikeyRow.appendChild(apikeyValue);
+            headerCheck.appendChild(apikeyRow);
+          }
+
+          // Copy token button
+          const copyRow = document.createElement('div');
+          copyRow.className = 'studio-debug-header-check-row';
+          copyRow.style.justifyContent = 'flex-end';
+          copyRow.style.marginTop = '4px';
+
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'studio-debug-header-check-copy';
+          copyBtn.textContent = '📋 Copy Access Token';
+          copyBtn.addEventListener('click', () => {
+            const token = state.session?.access_token;
+            if (token) {
+              navigator.clipboard.writeText(token).then(() => {
+                copyBtn.textContent = '✓ Copied';
+                setTimeout(() => { copyBtn.textContent = '📋 Copy Access Token'; }, 1500);
+              });
+            }
+          });
+          copyRow.appendChild(copyBtn);
+          headerCheck.appendChild(copyRow);
+
+          // Issuer mismatch warning
+          if (tokenInfo.issMismatch) {
+            const warning = document.createElement('div');
+            warning.className = 'studio-debug-header-check-warning';
+            warning.innerHTML = '<strong>⚠️ Issuer Mismatch</strong><br>Token issuer does not match the Supabase URL. This may cause 401 errors.';
+            headerCheck.appendChild(warning);
+          }
+
+          // Warning if no sub claim (likely anon key being used)
+          if (!tokenInfo.hasSub && tokenInfo.kind !== 'NONE') {
+            const warning = document.createElement('div');
+            warning.className = 'studio-debug-header-check-warning';
+            warning.innerHTML = '<strong>⚠️ Missing sub claim</strong><br>This token does not contain a user identity. Edge Functions requiring auth will return 401.';
+            headerCheck.appendChild(warning);
+          }
+
+          container.appendChild(headerCheck);
+
           const form = document.createElement('div');
           form.className = 'studio-debug-test-form';
 
@@ -7578,6 +7843,10 @@
           // Derive projectRef from supabase URL for reachability and logging
           const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
+          // Classify the access token for diagnostic logging
+          const supabaseUrl = state.supabase?.supabaseUrl || '';
+          const tokenClassification = classifyAccessToken(state.session?.access_token, supabaseUrl);
+
           const logEntry = {
             timestamp: new Date().toISOString(),
             action,
@@ -7595,6 +7864,11 @@
             imageUrl: null,
             storagePath: null,
             provider: null,
+            // Token classification fields for diagnostics
+            auth_token_kind: tokenClassification.kind,
+            auth_token_has_sub: tokenClassification.hasSub,
+            auth_sub: tokenClassification.sub || null,
+            auth_exp_iso: tokenClassification.expIso || null,
           };
 
           this.addLog(logEntry);
@@ -7704,6 +7978,10 @@
           // Derive projectRef from supabase URL
           const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
+          // Classify the access token for diagnostic logging
+          const supabaseUrl = state.supabase?.supabaseUrl || '';
+          const tokenClassification = classifyAccessToken(state.session?.access_token, supabaseUrl);
+
           const errorInfo = error ? describeError(error) : null;
           const logEntry = {
             timestamp: new Date().toISOString(),
@@ -7723,6 +8001,11 @@
             storagePath: response?.storage_path,
             provider: response?.provider || response?.meta?.provider,
             error: errorInfo ? (errorInfo.name + ': ' + errorInfo.message) : null,
+            // Token classification fields for diagnostics
+            auth_token_kind: tokenClassification.kind,
+            auth_token_has_sub: tokenClassification.hasSub,
+            auth_sub: tokenClassification.sub || null,
+            auth_exp_iso: tokenClassification.expIso || null,
           };
           studioDebugConsole.addLog(logEntry);
         };
