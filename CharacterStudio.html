@@ -6515,7 +6515,7 @@
       }
 
       // Helper: Direct fetch to Edge Function (bypasses supabase.functions.invoke)
-      // Returns: { ok, status, statusText, data, responseText, fetchDiagnostics }
+      // Returns: { data, responseText, fetchDiagnostics } where fetchDiagnostics contains status, statusText, url, etc.
       async function directFetchEdgeFunction(action, payload) {
         const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
         if (!isValidProjectRef(projectRef)) {
@@ -7393,18 +7393,32 @@
 
           // Raw response section (SDK raw or Direct Fetch text)
           const rawBody = log.response_raw || log.response_text;
-          if (rawBody && rawBody !== JSON.stringify(log.response)) {
-            const rawLabel = document.createElement('div');
-            rawLabel.className = 'studio-debug-section-title';
-            rawLabel.textContent = log.response_text ? 'Raw Response Body (Direct Fetch)' : 'Raw Response (SDK)';
-            rawLabel.style.marginTop = '8px';
-            details.appendChild(rawLabel);
+          // Only show raw section if there's content and it differs from the parsed response
+          // Use fetch_status to reliably distinguish between Direct Fetch and SDK requests
+          const isDirectFetch = log.fetch_status !== null && log.fetch_status !== undefined;
+          if (rawBody) {
+            // Skip showing raw if it's identical to the stringified response (avoid redundancy)
+            let showRaw = true;
+            if (log.response) {
+              try {
+                showRaw = rawBody !== JSON.stringify(log.response);
+              } catch (e) {
+                // If stringify fails, show raw anyway
+              }
+            }
+            if (showRaw) {
+              const rawLabel = document.createElement('div');
+              rawLabel.className = 'studio-debug-section-title';
+              rawLabel.textContent = isDirectFetch ? 'Raw Response Body (Direct Fetch)' : 'Raw Response (SDK)';
+              rawLabel.style.marginTop = '8px';
+              details.appendChild(rawLabel);
 
-            const rawPre = document.createElement('pre');
-            rawPre.className = 'studio-debug-log-payload';
-            rawPre.style.maxHeight = '150px';
-            rawPre.textContent = rawBody;
-            details.appendChild(rawPre);
+              const rawPre = document.createElement('pre');
+              rawPre.className = 'studio-debug-log-payload';
+              rawPre.style.maxHeight = '150px';
+              rawPre.textContent = rawBody;
+              details.appendChild(rawPre);
+            }
           }
 
           // Image thumbnail (if response includes image_url or frame.signed_url)
