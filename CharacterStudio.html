@@ -6390,6 +6390,27 @@
         }
       }
 
+      // Helper: Validate that a URL is from a trusted Supabase storage domain
+      // Uses URL API for robust hostname validation
+      function isTrustedSupabaseStorageUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        try {
+          const parsed = new URL(url);
+          // Must be HTTPS
+          if (parsed.protocol !== 'https:') return false;
+          // Hostname must end with .supabase.co or .supabase.in
+          const hostname = parsed.hostname.toLowerCase();
+          const isSupabaseHost = hostname.endsWith('.supabase.co') || hostname.endsWith('.supabase.in');
+          if (!isSupabaseHost) return false;
+          // Path must be a storage path
+          const path = parsed.pathname.toLowerCase();
+          return path.startsWith('/storage/');
+        } catch {
+          // Invalid URL
+          return false;
+        }
+      }
+
       // Helper: Call ai-image-pipeline via supabase.functions.invoke with Authorization header
       async function callImagePipelineViaSupabase(action, payload) {
         if (!state.supabase) {
@@ -7127,13 +7148,7 @@
           // Image thumbnail (if response includes image_url or frame.signed_url)
           // Only display images from trusted Supabase storage domains
           const thumbUrl = log.imageUrl || log.response?.image_url || log.response?.frame?.signed_url;
-          const isTrustedImageUrl = thumbUrl && typeof thumbUrl === 'string' && (
-            thumbUrl.startsWith('https://') && (
-              thumbUrl.includes('.supabase.co/storage/') ||
-              thumbUrl.includes('.supabase.in/storage/')
-            )
-          );
-          if (isTrustedImageUrl) {
+          if (isTrustedSupabaseStorageUrl(thumbUrl)) {
             const thumbLabel = document.createElement('div');
             thumbLabel.className = 'studio-debug-section-title';
             thumbLabel.textContent = 'Image Preview';
@@ -7153,7 +7168,10 @@
             thumbImg.style.cursor = 'pointer';
             thumbImg.addEventListener('click', (e) => {
               e.stopPropagation();
-              window.open(thumbUrl, '_blank', 'noopener,noreferrer');
+              // Re-validate URL before opening
+              if (isTrustedSupabaseStorageUrl(thumbUrl)) {
+                window.open(thumbUrl, '_blank', 'noopener,noreferrer');
+              }
             });
             thumbWrapper.appendChild(thumbImg);
             details.appendChild(thumbWrapper);
