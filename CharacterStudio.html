@@ -6353,6 +6353,95 @@
       // - Download/clear logs
       // =========================================================================
 
+      // Helper: Extract error details for consistent logging
+      function describeError(err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        return { name: e.name || 'Error', message: e.message || String(err), stack: e.stack || '' };
+      }
+
+      // Helper: Extract projectRef from Supabase URL
+      // Validates the URL format and ensures safe extraction
+      function extractProjectRef(supabaseUrl) {
+        if (!supabaseUrl || typeof supabaseUrl !== 'string') return 'unknown';
+        // Match valid Supabase URLs: https://{projectRef}.supabase.co with optional path
+        const match = supabaseUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co(?:\/.*)?$/i);
+        return match ? match[1] : 'unknown';
+      }
+
+      // Helper: Validate projectRef is safe for URL construction
+      // Only allows alphanumeric characters and hyphens
+      function isValidProjectRef(projectRef) {
+        return typeof projectRef === 'string' && /^[a-z0-9-]+$/i.test(projectRef) && projectRef !== 'unknown';
+      }
+
+      // Helper: Probe edge function reachability with a GET request (expect 405)
+      async function probeFunctionReachability(projectRef) {
+        // Validate projectRef to prevent URL injection
+        if (!isValidProjectRef(projectRef)) {
+          return { ok: false, status: 0, statusText: 'Invalid project reference' };
+        }
+        const url = 'https://' + projectRef + '.supabase.co/functions/v1/ai-image-pipeline';
+        try {
+          const res = await fetch(url, { method: 'GET' });
+          return { ok: res.ok, status: res.status, statusText: res.statusText };
+        } catch (e) {
+          const info = describeError(e);
+          return { ok: false, status: 0, statusText: info.message };
+        }
+      }
+
+      // Helper: Validate that a URL is from a trusted Supabase storage domain
+      // Uses URL API for robust hostname validation
+      function isTrustedSupabaseStorageUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        try {
+          const parsed = new URL(url);
+          // Must be HTTPS
+          if (parsed.protocol !== 'https:') return false;
+          // Hostname must end with .supabase.co or .supabase.in
+          const hostname = parsed.hostname.toLowerCase();
+          const isSupabaseHost = hostname.endsWith('.supabase.co') || hostname.endsWith('.supabase.in');
+          if (!isSupabaseHost) return false;
+          // Path must be a storage path
+          const path = parsed.pathname.toLowerCase();
+          return path.startsWith('/storage/');
+        } catch {
+          // Invalid URL
+          return false;
+        }
+      }
+
+      // Helper: Call ai-image-pipeline via supabase.functions.invoke with Authorization header
+      async function callImagePipelineViaSupabase(action, payload) {
+        if (!state.supabase) {
+          throw new Error('Supabase client not initialized');
+        }
+        const sessionResult = await state.supabase.auth.getSession();
+        const session = sessionResult?.data?.session;
+        if (!session) {
+          const err = new Error('Not signed in');
+          err.name = 'AuthError';
+          throw err;
+        }
+        const body = { ...payload, action };
+        const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
+          body,
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        });
+        if (error) {
+          const err = new Error(error.message || 'Function error (' + (error.status || 'unknown') + ')');
+          err.name = 'InvokeError';
+          throw err;
+        }
+        // Check for error in response body
+        if (data && data.error) {
+          const err = new Error(data.error);
+          err.name = 'InvokeError';
+          throw err;
+        }
+        return data;
+      }
+
       class StudioDebugConsole {
         constructor() {
           this.isActive = false;
@@ -6968,13 +7057,31 @@
             { label: 'Status', value: log.status || 'completed' },
           ];
 
+          // Add client endpoint
+          if (log.client_endpoint) {
+            detailRows.push({ label: 'Endpoint', value: log.client_endpoint });
+          }
+
+          // Add reachability info
+          if (log.reachability) {
+            const reachStr = 'status=' + log.reachability.status + ' (' + (log.reachability.statusText || 'N/A') + ')';
+            detailRows.push({ label: 'Reachability', value: reachStr });
+          }
+
           if (log.imageUrl) {
             detailRows.push({ label: 'Image URL', value: this.truncateUrl(log.imageUrl) });
           }
           if (log.storagePath) {
             detailRows.push({ label: 'Storage Path', value: log.storagePath });
           }
-          if (log.error) {
+
+          // Enhanced error display with name/message/stack
+          // Priority: error_name/error_message (structured) > error (legacy string)
+          if (log.error_name || log.error_message) {
+            detailRows.push({ label: 'Error Name', value: log.error_name || 'Error' });
+            detailRows.push({ label: 'Error Message', value: log.error_message || 'Unknown error' });
+          } else if (log.error) {
+            // Legacy error format (single string)
             detailRows.push({ label: 'Error', value: log.error });
           }
 
@@ -6994,6 +7101,21 @@
 
             details.appendChild(rowEl);
           });
+
+          // Error stack trace (if available)
+          if (log.error_stack) {
+            const stackLabel = document.createElement('div');
+            stackLabel.className = 'studio-debug-section-title';
+            stackLabel.textContent = 'Stack Trace';
+            stackLabel.style.marginTop = '8px';
+            details.appendChild(stackLabel);
+
+            const stackPre = document.createElement('pre');
+            stackPre.className = 'studio-debug-log-payload';
+            stackPre.style.maxHeight = '120px';
+            stackPre.textContent = log.error_stack;
+            details.appendChild(stackPre);
+          }
 
           // Payload section
           if (log.payload) {
@@ -7021,6 +7143,38 @@
             responsePre.className = 'studio-debug-log-payload';
             responsePre.textContent = JSON.stringify(log.response, null, 2);
             details.appendChild(responsePre);
+          }
+
+          // Image thumbnail (if response includes image_url or frame.signed_url)
+          // Only display images from trusted Supabase storage domains
+          const thumbUrl = log.imageUrl || log.response?.image_url || log.response?.frame?.signed_url;
+          if (isTrustedSupabaseStorageUrl(thumbUrl)) {
+            const thumbLabel = document.createElement('div');
+            thumbLabel.className = 'studio-debug-section-title';
+            thumbLabel.textContent = 'Image Preview';
+            thumbLabel.style.marginTop = '8px';
+            details.appendChild(thumbLabel);
+
+            const thumbWrapper = document.createElement('div');
+            thumbWrapper.style.marginTop = '6px';
+
+            const thumbImg = document.createElement('img');
+            thumbImg.src = thumbUrl;
+            thumbImg.alt = 'Generated image thumbnail';
+            thumbImg.style.maxWidth = '140px';
+            thumbImg.style.maxHeight = '140px';
+            thumbImg.style.borderRadius = '8px';
+            thumbImg.style.border = '1px solid var(--ring)';
+            thumbImg.style.cursor = 'pointer';
+            thumbImg.addEventListener('click', (e) => {
+              e.stopPropagation();
+              // Re-validate URL before opening
+              if (isTrustedSupabaseStorageUrl(thumbUrl)) {
+                window.open(thumbUrl, '_blank', 'noopener,noreferrer');
+              }
+            });
+            thumbWrapper.appendChild(thumbImg);
+            details.appendChild(thumbWrapper);
           }
 
           // Actions
@@ -7358,10 +7512,8 @@
         }
 
         async executeTestRequest(action, payload) {
-          if (!state.supabase || !state.session?.access_token) {
-            console.error('[Debug Console] Cannot execute test: not signed in');
-            return;
-          }
+          // Derive projectRef from supabase URL for reachability and logging
+          const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
           const logEntry = {
             timestamp: new Date().toISOString(),
@@ -7370,33 +7522,43 @@
             model: payload.model || 'auto',
             tier: payload.tier,
             payload: { ...payload, action },
+            client_endpoint: 'invoke: ai-image-pipeline (projectRef=' + projectRef + ')',
+            reachability: null,
             status: 'pending',
+            error_name: null,
+            error_message: null,
+            error_stack: null,
+            response: null,
+            imageUrl: null,
+            storagePath: null,
+            provider: null,
           };
 
           this.addLog(logEntry);
 
-          try {
-            const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
-              body: { ...payload, action },
-              headers: { Authorization: `Bearer ${state.session.access_token}` },
-            });
+          // Probe reachability (expect 405 for GET if function is reachable)
+          logEntry.reachability = await probeFunctionReachability(projectRef);
+          this.updateLog(this.logs.length - 1, logEntry);
+          if (this.isExpanded && this.getCurrentTab() === 'logs') {
+            this.renderContent('logs');
+          }
 
+          try {
+            const data = await callImagePipelineViaSupabase(action, payload);
             logEntry.status = 'completed';
-            
-            if (error) {
-              logEntry.error = error.message || 'Request failed';
-            } else if (data?.error) {
-              logEntry.error = data.error;
-            } else {
-              logEntry.response = data;
-              logEntry.imageUrl = data?.image_url;
-              logEntry.storagePath = data?.storage_path;
-              logEntry.provider = data?.provider || data?.meta?.provider;
-              logEntry.model = data?.meta?.model || payload.model || 'auto';
-            }
+            logEntry.response = data;
+            logEntry.imageUrl = data?.image_url;
+            logEntry.storagePath = data?.storage_path;
+            logEntry.provider = data?.provider || data?.meta?.provider;
+            logEntry.model = data?.meta?.model || payload.model || 'auto';
           } catch (err) {
+            const info = describeError(err);
             logEntry.status = 'error';
-            logEntry.error = err.message || 'Unknown error';
+            logEntry.error_name = info.name;
+            logEntry.error_message = info.message;
+            logEntry.error_stack = info.stack;
+            // Keep backward compatibility: set error field for existing UI
+            logEntry.error = info.name + ': ' + info.message;
           }
 
           this.updateLog(this.logs.length - 1, logEntry);
@@ -7476,6 +7638,10 @@
       // Expose log method for external use
       if (studioDebugConsole.isActive) {
         window.studioDebugLog = (action, payload, response, error) => {
+          // Derive projectRef from supabase URL
+          const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
+
+          const errorInfo = error ? describeError(error) : null;
           const logEntry = {
             timestamp: new Date().toISOString(),
             action,
@@ -7483,12 +7649,17 @@
             model: payload?.model || 'auto',
             tier: payload?.tier,
             payload,
+            client_endpoint: 'invoke: ai-image-pipeline (projectRef=' + projectRef + ')',
+            reachability: null, // Can be populated by caller if needed
             status: error ? 'error' : 'completed',
+            error_name: errorInfo?.name || null,
+            error_message: errorInfo?.message || null,
+            error_stack: errorInfo?.stack || null,
             response: error ? undefined : response,
             imageUrl: response?.image_url,
             storagePath: response?.storage_path,
             provider: response?.provider || response?.meta?.provider,
-            error: error?.message || error,
+            error: errorInfo ? (errorInfo.name + ': ' + errorInfo.message) : null,
           };
           studioDebugConsole.addLog(logEntry);
         };
