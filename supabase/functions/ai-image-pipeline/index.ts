@@ -26,6 +26,34 @@ const ENABLE_VERTEX_AI = Deno.env.get("ENABLE_VERTEX_AI") === "true";
 const DEBUG = Deno.env.get("DEBUG") === "true";
 
 // ============================================================================
+// CORS Configuration
+// ============================================================================
+
+/**
+ * Allowed origin for CORS requests.
+ * Requests from this origin will receive CORS headers.
+ */
+const ALLOWED_ORIGIN = "https://studioorganize.com";
+
+/**
+ * Build CORS headers for a given request origin.
+ * Returns headers that allow the site origin to make cross-origin requests.
+ *
+ * @param requestOrigin - The Origin header from the incoming request
+ * @returns Headers object with CORS headers
+ */
+function corsHeaders(_requestOrigin: string | null): Record<string, string> {
+  // Always return CORS headers with the allowed origin
+  // The requestOrigin parameter is kept for future extensibility if multiple origins need support
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-client-auth",
+    "Access-Control-Max-Age": "86400", // 24 hours
+  };
+}
+
+// ============================================================================
 // Authentication Diagnostics Helpers
 // ============================================================================
 
@@ -443,10 +471,13 @@ function encodeBase64Image(input: Uint8Array): string {
 
 const PLACEHOLDER_BYTES = decodeBase64Image(PLACEHOLDER_BASE64);
 
-function jsonResponse(status: number, body: Record<string, unknown>) {
+function jsonResponse(status: number, body: Record<string, unknown>, requestOrigin?: string | null) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders(requestOrigin ?? null),
+    },
   });
 }
 
@@ -1257,11 +1288,12 @@ async function handleUploadBase(
   client: SupabaseClient,
   userId: string,
   body: any,
+  requestOrigin?: string | null,
 ): Promise<Response> {
   const characterId = typeof body?.character_id === "string" ? body.character_id : "";
   const imageInput = typeof body?.image === "string" ? body.image : "";
   if (!characterId || !imageInput) {
-    return jsonResponse(400, { error: "character_id and image are required" });
+    return jsonResponse(400, { error: "character_id and image are required" }, requestOrigin);
   }
   const character = await ensureCharacter(client, userId, characterId);
   let payload = imageInput;
@@ -1286,10 +1318,10 @@ async function handleUploadBase(
       character_id: characterId,
       base_image_url: `${target.bucket}/${target.path}`,
       signed_url: signed,
-    });
+    }, requestOrigin);
   } catch (error) {
     console.error("Upload base image failed", error);
-    return jsonResponse(500, { error: "Failed to process base image" });
+    return jsonResponse(500, { error: "Failed to process base image" }, requestOrigin);
   }
 }
 
@@ -1297,11 +1329,12 @@ async function handleGeneratePoses(
   client: SupabaseClient,
   userId: string,
   body: any,
+  requestOrigin?: string | null,
 ): Promise<Response> {
   const characterId = typeof body?.character_id === "string" ? body.character_id : "";
   const poseInputs = Array.isArray(body?.poses) ? body.poses : [];
   if (!characterId || !poseInputs.length) {
-    return jsonResponse(400, { error: "character_id and poses[] are required" });
+    return jsonResponse(400, { error: "character_id and poses[] are required" }, requestOrigin);
   }
   const keepTop = Math.max(
     1,
@@ -1315,7 +1348,7 @@ async function handleGeneratePoses(
     .map(normalizePoseRequest)
     .filter((pose): pose is PoseRequest => Boolean(pose));
   if (!poseRequests.length) {
-    return jsonResponse(400, { error: "No valid poses provided" });
+    return jsonResponse(400, { error: "No valid poses provided" }, requestOrigin);
   }
 
   const inserts: PoseInsert[] = [];
@@ -1351,7 +1384,7 @@ async function handleGeneratePoses(
   }
 
   if (!inserts.length) {
-    return jsonResponse(500, { error: "Unable to generate poses" });
+    return jsonResponse(500, { error: "Unable to generate poses" }, requestOrigin);
   }
 
   const top = new Set(selectTopK(inserts, keepTop).map(item => item.id));
@@ -1365,7 +1398,7 @@ async function handleGeneratePoses(
     .select();
   if (error) {
     console.error("Failed to persist pose records", error);
-    return jsonResponse(500, { error: "Failed to save pose records" });
+    return jsonResponse(500, { error: "Failed to save pose records" }, requestOrigin);
   }
 
   await client
@@ -1392,13 +1425,14 @@ async function handleGeneratePoses(
     character_id: characterId,
     provider: provider.name,
     poses: payload,
-  });
+  }, requestOrigin);
 }
 
 async function handleSceneGeneration(
   client: SupabaseClient,
   userId: string,
   body: any,
+  requestOrigin?: string | null,
 ): Promise<Response> {
   const sceneId = typeof body?.scene_id === "string" ? body.scene_id : "";
   const frameIndex = typeof body?.frame_index === "number" ? Math.max(1, Math.floor(body.frame_index)) : 1;
@@ -1406,13 +1440,13 @@ async function handleSceneGeneration(
   const poseId = typeof body?.pose_id === "string" ? body.pose_id : "";
   const prompt = typeof body?.prompt === "string" ? body.prompt : "";
   if (!sceneId || !characterId || !prompt) {
-    return jsonResponse(400, { error: "scene_id, character_id, and prompt are required" });
+    return jsonResponse(400, { error: "scene_id, character_id, and prompt are required" }, requestOrigin);
   }
   const scene = await ensureScene(client, userId, sceneId);
   const character = await ensureCharacter(client, userId, characterId);
   const baseStorage = parseStoragePath(character.base_image_url);
   if (!baseStorage) {
-    return jsonResponse(400, { error: "Character base image not found" });
+    return jsonResponse(400, { error: "Character base image not found" }, requestOrigin);
   }
   const baseImage = await downloadFromStorage(client, baseStorage);
   let poseRecord: PoseInsert | null = null;
@@ -1496,7 +1530,7 @@ async function handleSceneGeneration(
   const { error } = await client.from("scene_frames").insert(insert);
   if (error) {
     console.error("Failed to persist scene frame", error);
-    return jsonResponse(500, { error: "Failed to save scene frame" });
+    return jsonResponse(500, { error: "Failed to save scene frame" }, requestOrigin);
   }
   const signed = await createSignedUrl(client, target);
   const payload: SceneGenerationResult = {
@@ -1512,13 +1546,14 @@ async function handleSceneGeneration(
     scene_id: sceneId,
     provider: provider.name,
     frame: payload,
-  });
+  }, requestOrigin);
 }
 
 async function handleSceneContinuation(
   client: SupabaseClient,
   userId: string,
   body: any,
+  requestOrigin?: string | null,
 ): Promise<Response> {
   const sceneId = typeof body?.scene_id === "string" ? body.scene_id : "";
   const frameIndex = typeof body?.frame_index === "number" ? Math.max(1, Math.floor(body.frame_index)) : 1;
@@ -1526,13 +1561,13 @@ async function handleSceneContinuation(
   const poseId = typeof body?.pose_id === "string" ? body.pose_id : "";
   const prompt = typeof body?.prompt === "string" ? body.prompt : "";
   if (!sceneId || !characterId || !prompt) {
-    return jsonResponse(400, { error: "scene_id, character_id, and prompt are required" });
+    return jsonResponse(400, { error: "scene_id, character_id, and prompt are required" }, requestOrigin);
   }
   await ensureScene(client, userId, sceneId);
   const character = await ensureCharacter(client, userId, characterId);
   const baseStorage = parseStoragePath(character.base_image_url);
   if (!baseStorage) {
-    return jsonResponse(400, { error: "Character base image not found" });
+    return jsonResponse(400, { error: "Character base image not found" }, requestOrigin);
   }
   const baseImage = await downloadFromStorage(client, baseStorage);
   let poseRecord: PoseInsert | null = null;
@@ -1631,7 +1666,7 @@ async function handleSceneContinuation(
     provider: variants.provider,
     variant_group_id: variantGroupId,
     frames: results,
-  });
+  }, requestOrigin);
 }
 
 /**
@@ -1647,6 +1682,7 @@ async function handleGenerateCharacterDraft(
   client: SupabaseClient,
   userId: string,
   body: any,
+  requestOrigin?: string | null,
 ): Promise<Response> {
   const archetype = typeof body?.archetype === "string" ? body.archetype.trim() : "";
   const tier = typeof body?.tier === "string" ? body.tier.trim() : "standard";
@@ -1655,7 +1691,7 @@ async function handleGenerateCharacterDraft(
   const detail: "cheap" | "standard" | "pro" = tier === "premium" ? "pro" : "standard";
 
   if (!archetype) {
-    return jsonResponse(400, { error: "archetype is required" });
+    return jsonResponse(400, { error: "archetype is required" }, requestOrigin);
   }
 
   // Resolve the model to use based on priority order
@@ -1669,7 +1705,7 @@ async function handleGenerateCharacterDraft(
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid model selection";
-    return jsonResponse(400, { error: message });
+    return jsonResponse(400, { error: message }, requestOrigin);
   }
 
   // Check if Imagen 3 model is selected but Vertex AI is not enabled
@@ -1677,7 +1713,7 @@ async function handleGenerateCharacterDraft(
     console.warn("[PROVIDER] Imagen 3 model requested but ENABLE_VERTEX_AI not enabled:", resolvedModel.model);
     return jsonResponse(501, {
       error: `Google Imagen 3 (Vertex AI) is disabled. Enable ENABLE_VERTEX_AI and configure service account auth to use ${resolvedModel.model}. Alternatively, select a Gemini 3 Pro Image model.`,
-    });
+    }, requestOrigin);
     // TODO: When Vertex AI integration is complete, implement:
     // - Vertex AI endpoint: https://us-central1-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/publishers/google/models/{model}:predict
     // - Authentication: Service account with OAuth2 token or workload identity
@@ -1801,11 +1837,11 @@ async function handleGenerateCharacterDraft(
         archetype,
         action: "generate-character" as const,
       },
-    });
+    }, requestOrigin);
   } catch (error) {
     console.error("Character draft generation failed", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to generate character draft";
-    return jsonResponse(500, { error: errorMessage });
+    return jsonResponse(500, { error: errorMessage }, requestOrigin);
   }
 }
 
@@ -1972,6 +2008,7 @@ async function handleRefineCharacter(
   client: SupabaseClient,
   userId: string,
   body: any,
+  requestOrigin?: string | null,
 ): Promise<Response> {
   const archetype = typeof body?.archetype === "string" ? body.archetype.trim() : "";
   const tier = typeof body?.tier === "string" ? body.tier.trim() : "standard";
@@ -1992,7 +2029,7 @@ async function handleRefineCharacter(
   };
 
   if (!archetype) {
-    return jsonResponse(400, { error: "archetype is required" });
+    return jsonResponse(400, { error: "archetype is required" }, requestOrigin);
   }
 
   // Resolve the model to use based on priority order
@@ -2006,7 +2043,7 @@ async function handleRefineCharacter(
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid model selection";
-    return jsonResponse(400, { error: message });
+    return jsonResponse(400, { error: message }, requestOrigin);
   }
 
   // Check if Imagen 3 model is selected but Vertex AI is not enabled
@@ -2014,7 +2051,7 @@ async function handleRefineCharacter(
     console.warn("[PROVIDER] Imagen 3 model requested but ENABLE_VERTEX_AI not enabled:", resolvedModel.model);
     return jsonResponse(501, {
       error: `Google Imagen 3 (Vertex AI) is disabled. Enable ENABLE_VERTEX_AI and configure service account auth to use ${resolvedModel.model}. Alternatively, select a Gemini 3 Pro Image model.`,
-    });
+    }, requestOrigin);
     // TODO: When Vertex AI integration is complete, implement:
     // - Vertex AI endpoint: https://us-central1-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/publishers/google/models/{model}:predict
     // - Authentication: Service account with OAuth2 token or workload identity
@@ -2155,17 +2192,28 @@ async function handleRefineCharacter(
         archetype,
         action: "refine-character" as const,
       },
-    });
+    }, requestOrigin);
   } catch (error) {
     console.error("Character refinement failed", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to refine character";
-    return jsonResponse(500, { error: errorMessage });
+    return jsonResponse(500, { error: errorMessage }, requestOrigin);
   }
 }
 
 serve(async req => {
+  // Extract origin for CORS headers
+  const requestOrigin = req.headers.get("Origin");
+
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(requestOrigin),
+    });
+  }
+
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, requestOrigin);
   }
 
   // ============================================================================
@@ -2193,7 +2241,7 @@ serve(async req => {
 
   if (!userToken) {
     console.warn("[AUTH] No user token found (need X-Client-Auth or Authorization: Bearer <jwt>)");
-    return jsonResponse(401, { error: "Missing access token" });
+    return jsonResponse(401, { error: "Missing access token" }, requestOrigin);
   }
 
   // Alias for backward compatibility with downstream code
@@ -2239,7 +2287,7 @@ serve(async req => {
   if (error || !user) {
     const errorMessage = error?.message || "Invalid or expired token";
     console.log("[AUTH] supabase.auth.getUser failed:", errorMessage);
-    return jsonResponse(401, { error: `Unauthorized: ${errorMessage}` });
+    return jsonResponse(401, { error: `Unauthorized: ${errorMessage}` }, requestOrigin);
   }
 
   // Only log masked user.id when DEBUG mode is enabled for privacy
@@ -2256,7 +2304,7 @@ serve(async req => {
   try {
     body = await req.json();
   } catch (_err) {
-    return jsonResponse(400, { error: "Invalid JSON payload" });
+    return jsonResponse(400, { error: "Invalid JSON payload" }, requestOrigin);
   }
   const url = new URL(req.url);
   const requestedAction = url.searchParams.get("action") || (typeof body?.action === "string" ? body.action : null);
@@ -2265,27 +2313,27 @@ serve(async req => {
     : "generate-poses";
   try {
     if (action === "generate-character-draft") {
-      return await handleGenerateCharacterDraft(supabase, user.id, body);
+      return await handleGenerateCharacterDraft(supabase, user.id, body, requestOrigin);
     }
     if (action === "refine-character") {
-      return await handleRefineCharacter(supabase, user.id, body);
+      return await handleRefineCharacter(supabase, user.id, body, requestOrigin);
     }
     if (action === "upload-base") {
-      return await handleUploadBase(supabase, user.id, body);
+      return await handleUploadBase(supabase, user.id, body, requestOrigin);
     }
     if (action === "generate-poses") {
-      return await handleGeneratePoses(supabase, user.id, body);
+      return await handleGeneratePoses(supabase, user.id, body, requestOrigin);
     }
     if (action === "generate-scene") {
-      return await handleSceneGeneration(supabase, user.id, body);
+      return await handleSceneGeneration(supabase, user.id, body, requestOrigin);
     }
     if (action === "continue-scene") {
-      return await handleSceneContinuation(supabase, user.id, body);
+      return await handleSceneContinuation(supabase, user.id, body, requestOrigin);
     }
-    return jsonResponse(400, { error: "Unknown action" });
+    return jsonResponse(400, { error: "Unknown action" }, requestOrigin);
   } catch (err) {
     console.error("AI pipeline error", err);
     const message = err instanceof Error ? err.message : "Unexpected error";
-    return jsonResponse(500, { error: message });
+    return jsonResponse(500, { error: message }, requestOrigin);
   }
 });
