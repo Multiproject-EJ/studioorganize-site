@@ -2174,16 +2174,30 @@ serve(async req => {
   const authHeader = req.headers.get("Authorization");
   const apiKeyHeader = req.headers.get("apikey") ?? req.headers.get("x-api-key");
   const clientInfoHeader = req.headers.get("x-client-info");
+  // X-Client-Auth is the preferred way for the frontend to pass the user JWT
+  // This allows the Supabase client to keep Authorization: Bearer <anon-key> for gateway access
+  const xClientAuth = req.headers.get("X-Client-Auth") ?? req.headers.get("x-client-auth");
 
   // Log header presence (no values to avoid leaking secrets)
-  console.log("[AUTH] has Authorization:", !!authHeader, "has apikey:", !!apiKeyHeader, "has x-client-info:", !!clientInfoHeader);
+  console.log("[AUTH] has Authorization:", !!authHeader, "has apikey:", !!apiKeyHeader, "has X-Client-Auth:", !!xClientAuth, "has x-client-info:", !!clientInfoHeader);
 
-  // Extract token using robust helper (supports Bearer, bearer, raw JWT)
-  const accessToken = extractBearerToken(authHeader);
-  if (!accessToken) {
-    console.log("[AUTH] Failed to extract access token from Authorization header");
+  // Extract user token: Prefer X-Client-Auth, fall back to Authorization if it's a JWT
+  let userToken = (xClientAuth ?? "").trim();
+  if (!userToken) {
+    // Fall back to Authorization header if it contains a user JWT (starts with "ey")
+    const bearerToken = extractBearerToken(authHeader);
+    if (bearerToken && bearerToken.startsWith("ey")) {
+      userToken = bearerToken;
+    }
+  }
+
+  if (!userToken) {
+    console.warn("[AUTH] No user token found (need X-Client-Auth or Authorization: Bearer <jwt>)");
     return jsonResponse(401, { error: "Missing access token" });
   }
+
+  // Alias for backward compatibility with downstream code
+  const accessToken = userToken;
 
   // Decode and log non-sensitive JWT claims for diagnostics
   const claims = safeDecodeJwt(accessToken);
