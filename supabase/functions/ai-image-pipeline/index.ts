@@ -25,6 +25,127 @@ const ENABLE_VERTEX_AI = Deno.env.get("ENABLE_VERTEX_AI") === "true";
 // Debug mode for structured logging
 const DEBUG = Deno.env.get("DEBUG") === "true";
 
+// ============================================================================
+// Authentication Diagnostics Helpers
+// ============================================================================
+
+/**
+ * Extract bearer token from Authorization header.
+ * Supports various formats:
+ * - "Bearer <token>"
+ * - "bearer <token>" (case-insensitive)
+ * - Raw token starting with "ey..." (JWT fallback)
+ * 
+ * @param headerValue - The Authorization header value
+ * @returns The extracted token or null if not found
+ */
+function extractBearerToken(headerValue: string | null): string | null {
+  if (!headerValue) return null;
+  
+  const trimmed = headerValue.trim();
+  if (!trimmed) return null;
+  
+  // Check for Bearer prefix (case-insensitive)
+  const bearerMatch = trimmed.match(/^bearer\s+(.+)$/i);
+  if (bearerMatch && bearerMatch[1]) {
+    return bearerMatch[1].trim();
+  }
+  
+  // Fallback: If header looks like a raw JWT (starts with ey), accept it directly
+  if (trimmed.startsWith("ey")) {
+    return trimmed;
+  }
+  
+  return null;
+}
+
+/**
+ * Safely decode a JWT payload without signature validation.
+ * Returns selected non-sensitive claims for diagnostic logging.
+ * 
+ * @param token - The JWT token string
+ * @returns Object with decoded claims or null if decode fails
+ */
+function safeDecodeJwt(token: string): {
+  iss?: string;
+  aud?: string | string[];
+  sub?: string;
+  exp?: number;
+  iat?: number;
+  email?: string;
+  role?: string;
+} | null {
+  try {
+    // JWT structure: header.payload.signature
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    
+    // Decode the payload (second part)
+    const payloadB64 = parts[1];
+    // Handle URL-safe base64 and add padding if needed
+    let padded = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+    // Add padding to make length a multiple of 4
+    while (padded.length % 4 !== 0) {
+      padded += "=";
+    }
+    const decoded = atob(padded);
+    const parsed = JSON.parse(decoded);
+    
+    // Extract only non-sensitive claims for logging
+    return {
+      iss: typeof parsed.iss === "string" ? parsed.iss : undefined,
+      aud: parsed.aud,
+      sub: typeof parsed.sub === "string" ? parsed.sub : undefined,
+      exp: typeof parsed.exp === "number" ? parsed.exp : undefined,
+      iat: typeof parsed.iat === "number" ? parsed.iat : undefined,
+      email: typeof parsed.email === "string" ? parsed.email : undefined,
+      role: typeof parsed.role === "string" ? parsed.role : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely mask a string identifier for logging.
+ * Shows the first few characters followed by "...".
+ * 
+ * @param value - The string to mask
+ * @param showChars - Number of characters to show (default: 8)
+ * @returns Masked string or undefined if value is falsy
+ */
+function maskIdentifier(value: string | undefined, showChars = 8): string | undefined {
+  if (!value) return undefined;
+  if (value.length <= showChars) {
+    // For short strings, show at most 2 characters for privacy
+    const safeLen = Math.min(2, value.length);
+    return `${value.substring(0, safeLen)}...`;
+  }
+  return `${value.substring(0, showChars)}...`;
+}
+
+/**
+ * Safely mask an email address for logging.
+ * Shows the first few characters of the local part followed by "...@***".
+ * 
+ * @param email - The email address to mask
+ * @returns Masked email or undefined if email is falsy
+ */
+function maskEmail(email: string | undefined): string | undefined {
+  if (!email) return undefined;
+  const atIndex = email.indexOf("@");
+  if (atIndex > 0) {
+    const localPart = email.substring(0, atIndex);
+    const maskLen = Math.min(3, localPart.length);
+    return `${localPart.substring(0, maskLen)}...@***`;
+  }
+  return "***@***";
+}
+
+// ============================================================================
+// End Authentication Diagnostics Helpers
+// ============================================================================
+
 // Model Selection: Supported providers and models
 // Priority order: request `model` > env `AI_IMAGE_MODEL` > fallback by provider + detail
 const SUPPORTED_PROVIDERS = ["google", "openai"] as const;
@@ -2046,19 +2167,77 @@ serve(async req => {
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "Method not allowed" });
   }
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
+
+  // ============================================================================
+  // Authentication Diagnostics Block
+  // ============================================================================
+  const authHeader = req.headers.get("Authorization");
+  const apiKeyHeader = req.headers.get("apikey") ?? req.headers.get("x-api-key");
+  const clientInfoHeader = req.headers.get("x-client-info");
+
+  // Log header presence (no values to avoid leaking secrets)
+  console.log("[AUTH] has Authorization:", !!authHeader, "has apikey:", !!apiKeyHeader, "has x-client-info:", !!clientInfoHeader);
+
+  // Extract token using robust helper (supports Bearer, bearer, raw JWT)
+  const accessToken = extractBearerToken(authHeader);
+  if (!accessToken) {
+    console.log("[AUTH] Failed to extract access token from Authorization header");
     return jsonResponse(401, { error: "Missing access token" });
   }
-  const accessToken = authHeader.replace("Bearer ", "").trim();
+
+  // Decode and log non-sensitive JWT claims for diagnostics
+  const claims = safeDecodeJwt(accessToken);
+  if (claims) {
+    console.log("[AUTH] JWT claims:", JSON.stringify({
+      iss: claims.iss,
+      aud: claims.aud,
+      sub: maskIdentifier(claims.sub, 8),
+      exp: claims.exp,
+      iat: claims.iat,
+      email: maskEmail(claims.email),
+      role: claims.role,
+    }));
+
+    // Compare issuer to expected Supabase auth issuer
+    const expectedIssuer = `${SUPABASE_URL}/auth/v1`;
+    if (claims.iss && claims.iss !== expectedIssuer) {
+      console.warn("[AUTH] Issuer mismatch! Got:", claims.iss, "Expected:", expectedIssuer);
+    }
+
+    // Check if token is expired
+    if (claims.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      if (claims.exp < now) {
+        console.warn("[AUTH] Token appears expired. exp:", claims.exp, "now:", now);
+      }
+    }
+  } else {
+    console.warn("[AUTH] Could not decode JWT claims - token may be malformed");
+  }
+
+  // Verify token with Supabase Auth
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser(accessToken);
+  
   if (error || !user) {
-    return jsonResponse(401, { error: "Unauthorized" });
+    const errorMessage = error?.message || "Invalid or expired token";
+    console.log("[AUTH] supabase.auth.getUser failed:", errorMessage);
+    return jsonResponse(401, { error: `Unauthorized: ${errorMessage}` });
   }
+
+  // Only log masked user.id when DEBUG mode is enabled for privacy
+  if (DEBUG) {
+    console.log("[AUTH] User authenticated successfully, user.id:", maskIdentifier(user.id, 8));
+  } else {
+    console.log("[AUTH] User authenticated successfully");
+  }
+  // ============================================================================
+  // End Authentication Diagnostics Block
+  // ============================================================================
+
   let body: any = null;
   try {
     body = await req.json();
