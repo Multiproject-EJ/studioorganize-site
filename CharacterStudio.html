@@ -6359,8 +6359,27 @@
         return { name: e.name || 'Error', message: e.message || String(err), stack: e.stack || '' };
       }
 
+      // Helper: Extract projectRef from Supabase URL
+      // Validates the URL format and ensures safe extraction
+      function extractProjectRef(supabaseUrl) {
+        if (!supabaseUrl || typeof supabaseUrl !== 'string') return 'unknown';
+        // Match only valid Supabase URLs (ends at .supabase.co or .supabase.co/)
+        const match = supabaseUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co(?:\/.*)?$/i);
+        return match ? match[1] : 'unknown';
+      }
+
+      // Helper: Validate projectRef is safe for URL construction
+      // Only allows alphanumeric characters and hyphens
+      function isValidProjectRef(projectRef) {
+        return typeof projectRef === 'string' && /^[a-z0-9-]+$/i.test(projectRef) && projectRef !== 'unknown';
+      }
+
       // Helper: Probe edge function reachability with a GET request (expect 405)
       async function probeFunctionReachability(projectRef) {
+        // Validate projectRef to prevent URL injection
+        if (!isValidProjectRef(projectRef)) {
+          return { ok: false, status: 0, statusText: 'Invalid project reference' };
+        }
         const url = 'https://' + projectRef + '.supabase.co/functions/v1/ai-image-pipeline';
         try {
           const res = await fetch(url, { method: 'GET' });
@@ -7036,10 +7055,12 @@
           }
 
           // Enhanced error display with name/message/stack
+          // Priority: error_name/error_message (structured) > error (legacy string)
           if (log.error_name || log.error_message) {
             detailRows.push({ label: 'Error Name', value: log.error_name || 'Error' });
-            detailRows.push({ label: 'Error Message', value: log.error_message || log.error || 'Unknown error' });
+            detailRows.push({ label: 'Error Message', value: log.error_message || 'Unknown error' });
           } else if (log.error) {
+            // Legacy error format (single string)
             detailRows.push({ label: 'Error', value: log.error });
           }
 
@@ -7104,8 +7125,15 @@
           }
 
           // Image thumbnail (if response includes image_url or frame.signed_url)
+          // Only display images from trusted Supabase storage domains
           const thumbUrl = log.imageUrl || log.response?.image_url || log.response?.frame?.signed_url;
-          if (thumbUrl) {
+          const isTrustedImageUrl = thumbUrl && typeof thumbUrl === 'string' && (
+            thumbUrl.startsWith('https://') && (
+              thumbUrl.includes('.supabase.co/storage/') ||
+              thumbUrl.includes('.supabase.in/storage/')
+            )
+          );
+          if (isTrustedImageUrl) {
             const thumbLabel = document.createElement('div');
             thumbLabel.className = 'studio-debug-section-title';
             thumbLabel.textContent = 'Image Preview';
@@ -7125,7 +7153,7 @@
             thumbImg.style.cursor = 'pointer';
             thumbImg.addEventListener('click', (e) => {
               e.stopPropagation();
-              window.open(thumbUrl, '_blank');
+              window.open(thumbUrl, '_blank', 'noopener,noreferrer');
             });
             thumbWrapper.appendChild(thumbImg);
             details.appendChild(thumbWrapper);
@@ -7467,8 +7495,7 @@
 
         async executeTestRequest(action, payload) {
           // Derive projectRef from supabase URL for reachability and logging
-          const supabaseUrl = state.supabase?.supabaseUrl || '';
-          const projectRef = (supabaseUrl.match(/^https:\/\/([^.]+)\.supabase\.co/i) || [])[1] || 'unknown';
+          const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
           const logEntry = {
             timestamp: new Date().toISOString(),
@@ -7594,8 +7621,7 @@
       if (studioDebugConsole.isActive) {
         window.studioDebugLog = (action, payload, response, error) => {
           // Derive projectRef from supabase URL
-          const supabaseUrl = state.supabase?.supabaseUrl || '';
-          const projectRef = (supabaseUrl.match(/^https:\/\/([^.]+)\.supabase\.co/i) || [])[1] || 'unknown';
+          const projectRef = extractProjectRef(state.supabase?.supabaseUrl);
 
           const errorInfo = error ? describeError(error) : null;
           const logEntry = {
