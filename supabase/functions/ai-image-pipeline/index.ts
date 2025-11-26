@@ -42,14 +42,11 @@ const ALLOWED_ORIGIN = "https://studioorganize.com";
  * @param requestOrigin - The Origin header from the incoming request
  * @returns Headers object with CORS headers
  */
-function corsHeaders(requestOrigin: string | null): Record<string, string> {
-  // Check if the request origin matches our allowed origin
-  // If no origin or origin doesn't match, still return headers but with the allowed origin
-  // This ensures the browser can understand the CORS policy
-  const origin = requestOrigin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : ALLOWED_ORIGIN;
-
+function corsHeaders(_requestOrigin: string | null): Record<string, string> {
+  // Always return CORS headers with the allowed origin
+  // The requestOrigin parameter is kept for future extensibility if multiple origins need support
   return {
-    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-client-auth",
     "Access-Control-Max-Age": "86400", // 24 hours
