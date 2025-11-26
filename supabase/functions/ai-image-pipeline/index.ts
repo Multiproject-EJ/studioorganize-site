@@ -431,26 +431,27 @@ const ALLOWED_ORIGINS = ["https://studioorganize.com"];
 
 /**
  * Build CORS headers based on request origin.
- * If the request origin is in the allowed list, it is echoed back.
- * Otherwise, the first allowed origin is used as a fallback.
+ * Only returns CORS headers if the origin is in the allowed list.
+ * Unauthorized origins receive an empty headers object, which means
+ * the browser will block the response due to missing CORS headers.
  *
  * @param requestOrigin - The Origin header value from the request
- * @returns Headers object containing CORS headers
+ * @returns Headers object containing CORS headers, or empty object for unauthorized origins
  */
 function corsHeaders(requestOrigin: string | null): Record<string, string> {
-  // If the request origin is in the allowed list, echo it back
-  // Otherwise, use the first allowed origin as fallback
-  const origin =
-    requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)
-      ? requestOrigin
-      : ALLOWED_ORIGINS[0];
-
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-client-auth",
-    "Access-Control-Max-Age": "86400",
-  };
+  // Only return CORS headers for allowed origins
+  // Unauthorized origins get no CORS headers, so browser blocks the response
+  if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
+    return {
+      "Access-Control-Allow-Origin": requestOrigin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-client-auth",
+      "Access-Control-Max-Age": "86400",
+    };
+  }
+  // For unauthorized or missing origins, return empty headers
+  // This causes the browser to block cross-origin access
+  return {};
 }
 // ============================================================================
 // End CORS Configuration
