@@ -6412,8 +6412,8 @@
       }
 
       // Helper: Call ai-image-pipeline via supabase.functions.invoke
-      // Sends the user JWT via X-Client-Auth header (not Authorization) so the
-      // Supabase client can keep Authorization: Bearer <anon-key> for gateway access.
+      // Sends Authorization: Bearer <user_jwt> for Supabase gateway JWT verification (verify_jwt=true)
+      // Also sends X-Client-Auth: <user_jwt> for server-side convenience (backend reads either header)
       async function callImagePipelineViaSupabase(action, payload) {
         if (!state.supabase) {
           throw new Error('Supabase client not initialized');
@@ -6429,8 +6429,9 @@
         const { data, error } = await state.supabase.functions.invoke('ai-image-pipeline', {
           body,
           headers: {
-            // Do NOT override Authorization here (keep anon-key from client)
-            // Pass the user access token via X-Client-Auth for server-side auth
+            // Authorization header required for Supabase gateway JWT verification (verify_jwt=true)
+            Authorization: `Bearer ${session.access_token}`,
+            // X-Client-Auth retained for server-side convenience (backend reads either header)
             'X-Client-Auth': session.access_token,
           },
         });
