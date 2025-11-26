@@ -2272,7 +2272,7 @@ serve(async req => {
     if (claims.exp) {
       const now = Math.floor(Date.now() / 1000);
       if (claims.exp < now) {
-        console.warn("[AUTH] Token expired. exp:", claims.exp, "now:", now, "diff:", now - claims.exp, "seconds ago");
+        console.warn("[AUTH] Token expired. exp:", claims.exp, "now:", now, "diff:", now - claims.exp);
         return jsonResponse(401, { error: "Token expired" }, requestOrigin);
       }
     }
