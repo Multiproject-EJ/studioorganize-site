@@ -2374,7 +2374,7 @@ serve(async req => {
   
   if (error || !user) {
     // Pass through the supabase.auth.getUser error message (per acceptance criteria)
-    const errorMessage = error?.message || "invalid or expired token";
+    const errorMessage = error?.message || "Invalid or expired token";
     console.log("[AUTH] supabase.auth.getUser failed:", errorMessage);
     return jsonResponse(401, { 
       error: "Unauthorized", 
