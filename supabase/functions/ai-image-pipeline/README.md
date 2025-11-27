@@ -102,9 +102,44 @@ The AI Image Pipeline supports explicit model selection for both character gener
 
 Model resolution follows this priority:
 
-1. **Request body `model`** - Explicit model specified in the request
+1. **Request body `model`** - Explicit model specified in the request (provider is inferred from model name)
 2. **Environment variable `AI_IMAGE_MODEL`** - Default model from environment
-3. **Fallback mapping** - Provider + detail/tier based mapping
+3. **Fallback mapping** - Provider + detail/tier based mapping (or available keys if `AI_IMAGE_PROVIDER=auto`)
+
+### Provider Auto-Detection
+
+When `AI_IMAGE_PROVIDER=auto`, the provider is automatically inferred from the model name:
+- **Google models**: `gemini-*`, `imagen-*` → uses Google provider
+- **OpenAI models**: `dall-e-*`, `gpt-image-*` → uses OpenAI provider
+- **No model specified**: Picks provider based on available API keys (prefers Google if `GOOGLE_API_KEY` set, then OpenAI)
+
+This enables per-request model selection without requiring environment variable changes.
+
+---
+
+## Storage Bucket Management
+
+The function uses two private storage buckets:
+- `story-refs` - Character base images, poses, and drafts
+- `story-renders` - Scene render outputs
+
+### Auto-Creation
+
+If a bucket doesn't exist, the function will automatically create it with `public=false` for secure access via signed URLs.
+
+### Error Handling
+
+If bucket creation fails (e.g., insufficient permissions), the function returns an actionable error:
+
+```json
+{
+  "error": "storage bucket missing",
+  "bucket": "story-refs",
+  "action": "create in Supabase Storage"
+}
+```
+
+Status code: **400 Bad Request**
 
 ---
 
@@ -518,18 +553,25 @@ Set these environment variables in Supabase Edge Functions:
 
 ```bash
 # AI Provider Selection
-AI_IMAGE_PROVIDER=google  # google | openai | auto
+# - google: Always use Google provider
+# - openai: Always use OpenAI provider
+# - auto: Infer provider from model name, fallback to available API keys
+AI_IMAGE_PROVIDER=auto  # google | openai | auto (default: auto)
 
 # Default Model Selection (optional - overrides fallback mapping)
-AI_IMAGE_MODEL=imagen-3.0  # See Model Selection section for supported models
+AI_IMAGE_MODEL=gemini-3-pro-image  # See Model Selection section for supported models
 
-# Google Imagen API
+# Google API Key (required for Google models)
 GOOGLE_API_KEY=your-google-api-key
-GOOGLE_IMAGE_MODEL=google-nano-banan  # Optional
-GOOGLE_IMAGE_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent
 
-# OpenAI DALL-E API
+# OpenAI API Key (required for OpenAI models)
 OPENAI_API_KEY=your-openai-api-key
+
+# Enable Imagen 3 models (Vertex AI - optional)
+ENABLE_VERTEX_AI=true  # Set to "true" to enable Imagen 3 models
+
+# Debug logging (optional)
+DEBUG=true  # Set to "true" to enable structured debug logging
 
 # Supabase (automatically provided)
 SUPABASE_URL=https://your-project.supabase.co
@@ -540,9 +582,9 @@ Configure via Supabase CLI:
 
 ```bash
 supabase functions secrets set \
-  AI_IMAGE_PROVIDER=google \
-  AI_IMAGE_MODEL=imagen-3.0-highres \
+  AI_IMAGE_PROVIDER=auto \
   GOOGLE_API_KEY=your-key \
+  OPENAI_API_KEY=your-key \
   --project-ref your-project-ref
 
 # Redeploy after setting secrets
@@ -561,6 +603,8 @@ The function uses two Supabase storage buckets:
 
 - **`story-renders`**: Scene renders and frames
   - `scene-frames/{owner_id}/{scene_id}/{frame_id}.png`
+
+**Note**: Buckets are automatically created with `public=false` if they don't exist. If automatic creation fails, you'll receive an actionable error message indicating which bucket needs to be created manually.
 
 ## Architecture Notes
 
