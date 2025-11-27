@@ -638,6 +638,22 @@ function jsonResponse(status: number, body: Record<string, unknown>, requestOrig
   });
 }
 
+/**
+ * Custom error class for storage bucket errors.
+ * Provides typed access to bucket name and actionable guidance.
+ */
+class StorageBucketError extends Error {
+  readonly bucket: string;
+  readonly action: string;
+
+  constructor(bucket: string, action: string = "create in Supabase Storage") {
+    super("storage bucket missing");
+    this.name = "StorageBucketError";
+    this.bucket = bucket;
+    this.action = action;
+  }
+}
+
 type CharacterRecord = {
   id: string;
   owner_id: string;
@@ -1283,11 +1299,8 @@ async function ensureBucket(client: SupabaseClient, bucketName: string): Promise
     }
 
     console.error(`[STORAGE] Failed to create bucket '${bucketName}': ${createError.message}`);
-    // Return actionable error per acceptance criteria
-    const error = new Error(`storage bucket missing`);
-    (error as any).bucket = bucketName;
-    (error as any).action = "create in Supabase Storage";
-    throw error;
+    // Throw actionable error per acceptance criteria using typed StorageBucketError
+    throw new StorageBucketError(bucketName);
   }
 
   console.log(`[STORAGE] Created bucket '${bucketName}' (public=false)`);
@@ -1548,13 +1561,11 @@ async function handleUploadBase(
   } catch (error) {
     console.error("Upload base image failed", error);
     // Check if this is a storage bucket error with actionable info
-    if (error instanceof Error && error.message === "storage bucket missing") {
-      const bucketName = (error as any).bucket;
-      const action = (error as any).action;
+    if (error instanceof StorageBucketError) {
       return jsonResponse(400, { 
         error: "storage bucket missing", 
-        bucket: bucketName,
-        action: action,
+        bucket: error.bucket,
+        action: error.action,
       }, requestOrigin);
     }
     return jsonResponse(500, { error: "Failed to process base image" }, requestOrigin);
@@ -2077,13 +2088,11 @@ async function handleGenerateCharacterDraft(
   } catch (error) {
     console.error("Character draft generation failed", error);
     // Check if this is a storage bucket error with actionable info
-    if (error instanceof Error && error.message === "storage bucket missing") {
-      const bucketName = (error as any).bucket;
-      const action = (error as any).action;
+    if (error instanceof StorageBucketError) {
       return jsonResponse(400, { 
         error: "storage bucket missing", 
-        bucket: bucketName,
-        action: action,
+        bucket: error.bucket,
+        action: error.action,
       }, requestOrigin);
     }
     const errorMessage = error instanceof Error ? error.message : "Failed to generate character draft";
@@ -2442,13 +2451,11 @@ async function handleRefineCharacter(
   } catch (error) {
     console.error("Character refinement failed", error);
     // Check if this is a storage bucket error with actionable info
-    if (error instanceof Error && error.message === "storage bucket missing") {
-      const bucketName = (error as any).bucket;
-      const action = (error as any).action;
+    if (error instanceof StorageBucketError) {
       return jsonResponse(400, { 
         error: "storage bucket missing", 
-        bucket: bucketName,
-        action: action,
+        bucket: error.bucket,
+        action: error.action,
       }, requestOrigin);
     }
     const errorMessage = error instanceof Error ? error.message : "Failed to refine character";
@@ -2632,13 +2639,11 @@ serve(async req => {
   } catch (err) {
     console.error("AI pipeline error", err);
     // Check if this is a storage bucket error with actionable info
-    if (err instanceof Error && err.message === "storage bucket missing") {
-      const bucketName = (err as any).bucket;
-      const action = (err as any).action;
+    if (err instanceof StorageBucketError) {
       return jsonResponse(400, { 
         error: "storage bucket missing", 
-        bucket: bucketName,
-        action: action,
+        bucket: err.bucket,
+        action: err.action,
       }, requestOrigin);
     }
     const message = err instanceof Error ? err.message : "Unexpected error";
