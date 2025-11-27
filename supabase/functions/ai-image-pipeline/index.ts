@@ -251,6 +251,39 @@ type SupportedOpenAIModel = typeof SUPPORTED_OPENAI_MODELS[number];
 type SupportedModel = SupportedGoogleModel | SupportedOpenAIModel;
 
 /**
+ * Check if a model name indicates a Google model.
+ * Matches: gemini-*, imagen-*
+ * @param model - The model name to check
+ * @returns true if the model is a Google model
+ */
+function isGoogleModel(model: string): boolean {
+  const normalized = model.toLowerCase().trim();
+  return normalized.startsWith("gemini-") || normalized.startsWith("imagen-");
+}
+
+/**
+ * Check if a model name indicates an OpenAI model.
+ * Matches: dall-e-*, gpt-image-*
+ * @param model - The model name to check
+ * @returns true if the model is an OpenAI model
+ */
+function isOpenAIModel(model: string): boolean {
+  const normalized = model.toLowerCase().trim();
+  return normalized.startsWith("dall-e-") || normalized.startsWith("gpt-image-");
+}
+
+/**
+ * Infer the provider from a model name.
+ * @param model - The model name
+ * @returns The inferred provider or null if unknown
+ */
+function inferProviderFromModel(model: string): SupportedProvider | null {
+  if (isGoogleModel(model)) return "google";
+  if (isOpenAIModel(model)) return "openai";
+  return null;
+}
+
+/**
  * Parameters for resolving the final model to use.
  */
 type ResolveModelParams = {
@@ -270,28 +303,46 @@ type ResolvedModel = {
 
 /**
  * Resolve the final model based on priority order:
- * 1. Request body `model`
+ * 1. Request body `model` - infer provider from model name if provider is "auto"
  * 2. Environment variable `AI_IMAGE_MODEL`
- * 3. Fallback mapping by provider + detail
+ * 3. Fallback mapping by provider + detail (or available keys if provider is "auto")
+ *
+ * Provider inference logic for AI_IMAGE_PROVIDER=auto:
+ * - If requestedModel starts with "gemini-" or "imagen-" → use Google
+ * - If requestedModel starts with "dall-e-" or "gpt-image-" → use OpenAI
+ * - If no model specified, use available API keys to pick provider
  *
  * @throws Error if the requested model is not supported for the provider
  */
 function resolveModel({ provider, requestedModel, envModel, detail }: ResolveModelParams): ResolvedModel {
   const normalizedProvider = provider.toLowerCase();
-  const isGoogle = normalizedProvider === "google";
-  const isOpenAI = normalizedProvider === "openai";
+  const isAutoProvider = normalizedProvider === "auto";
+  let effectiveProvider: SupportedProvider | null = null;
 
-  // Check if the provider is supported
-  if (!isGoogle && !isOpenAI) {
-    throw new Error(`Unsupported provider: ${provider}. Supported providers: ${SUPPORTED_PROVIDERS.join(", ")}`);
+  // Determine if provider is explicitly specified
+  if (normalizedProvider === "google") {
+    effectiveProvider = "google";
+  } else if (normalizedProvider === "openai") {
+    effectiveProvider = "openai";
   }
 
-  // 1. Check request body model first
+  // 1. Check request body model first - infer provider if auto
   if (requestedModel && typeof requestedModel === "string" && requestedModel.trim()) {
     const model = requestedModel.trim().toLowerCase();
+    
+    // Infer provider from model name if provider is "auto"
+    if (isAutoProvider) {
+      const inferredProvider = inferProviderFromModel(model);
+      if (inferredProvider) {
+        effectiveProvider = inferredProvider;
+        if (DEBUG) {
+          console.log(`[PROVIDER] Auto mode: inferred provider '${inferredProvider}' from model '${model}'`);
+        }
+      }
+    }
 
     // Validate model against provider's allowed list
-    if (isGoogle) {
+    if (effectiveProvider === "google") {
       if (SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
         return { model: model as SupportedGoogleModel, provider: "google" };
       }
@@ -299,12 +350,25 @@ function resolveModel({ provider, requestedModel, envModel, detail }: ResolveMod
         `Unsupported model '${model}' for Google provider. Supported: ${SUPPORTED_GOOGLE_MODELS.join(", ")}`
       );
     }
-    if (isOpenAI) {
+    if (effectiveProvider === "openai") {
       if (SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
         return { model: model as SupportedOpenAIModel, provider: "openai" };
       }
       throw new Error(
         `Unsupported model '${model}' for OpenAI provider. Supported: ${SUPPORTED_OPENAI_MODELS.join(", ")}`
+      );
+    }
+    
+    // If provider is auto and model doesn't match known patterns, try to find it in supported lists
+    if (isAutoProvider) {
+      if (SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
+        return { model: model as SupportedGoogleModel, provider: "google" };
+      }
+      if (SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
+        return { model: model as SupportedOpenAIModel, provider: "openai" };
+      }
+      throw new Error(
+        `Unknown model '${model}'. Supported Google models: ${SUPPORTED_GOOGLE_MODELS.join(", ")}. Supported OpenAI models: ${SUPPORTED_OPENAI_MODELS.join(", ")}`
       );
     }
   }
@@ -313,17 +377,60 @@ function resolveModel({ provider, requestedModel, envModel, detail }: ResolveMod
   if (envModel && typeof envModel === "string" && envModel.trim()) {
     const model = envModel.trim().toLowerCase();
 
-    if (isGoogle && SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
+    // Infer provider from env model if still in auto mode
+    if (isAutoProvider && !effectiveProvider) {
+      const inferredProvider = inferProviderFromModel(model);
+      if (inferredProvider) {
+        effectiveProvider = inferredProvider;
+        if (DEBUG) {
+          console.log(`[PROVIDER] Auto mode: inferred provider '${inferredProvider}' from env model '${model}'`);
+        }
+      }
+    }
+
+    if (effectiveProvider === "google" && SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
       return { model: model as SupportedGoogleModel, provider: "google" };
     }
-    if (isOpenAI && SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
+    if (effectiveProvider === "openai" && SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
       return { model: model as SupportedOpenAIModel, provider: "openai" };
+    }
+    
+    // If provider is auto and env model is valid, use it
+    if (isAutoProvider && !effectiveProvider) {
+      if (SUPPORTED_GOOGLE_MODELS.includes(model as SupportedGoogleModel)) {
+        return { model: model as SupportedGoogleModel, provider: "google" };
+      }
+      if (SUPPORTED_OPENAI_MODELS.includes(model as SupportedOpenAIModel)) {
+        return { model: model as SupportedOpenAIModel, provider: "openai" };
+      }
     }
     // If env model doesn't match provider, fall through to default
   }
 
-  // 3. Fallback mapping by provider + detail
-  if (isGoogle) {
+  // 3. For auto provider without model specified, choose based on available API keys
+  if (isAutoProvider && !effectiveProvider) {
+    // Prefer Google if key is available, then OpenAI
+    if (GOOGLE_API_KEY) {
+      effectiveProvider = "google";
+      if (DEBUG) {
+        console.log("[PROVIDER] Auto mode: selected Google provider based on available GOOGLE_API_KEY");
+      }
+    } else if (OPENAI_API_KEY) {
+      effectiveProvider = "openai";
+      if (DEBUG) {
+        console.log("[PROVIDER] Auto mode: selected OpenAI provider based on available OPENAI_API_KEY");
+      }
+    } else {
+      // No API keys configured - return placeholder-compatible default
+      effectiveProvider = "openai";
+      if (DEBUG) {
+        console.log("[PROVIDER] Auto mode: no API keys configured, defaulting to OpenAI (will use placeholder)");
+      }
+    }
+  }
+
+  // 4. Fallback mapping by provider + detail
+  if (effectiveProvider === "google") {
     // Map detail tier to Google model
     // Default to Gemini 3 Pro Image (available via Generative Language API)
     // Imagen 3 models are gated behind ENABLE_VERTEX_AI
@@ -336,7 +443,7 @@ function resolveModel({ provider, requestedModel, envModel, detail }: ResolveMod
     return { model: "gemini-3-pro-image", provider: "google" };
   }
 
-  // OpenAI fallback
+  // OpenAI fallback (also handles case where effectiveProvider is null)
   if (detail === "pro") {
     return { model: "dall-e-3", provider: "openai" };
   }
@@ -529,6 +636,22 @@ function jsonResponse(status: number, body: Record<string, unknown>, requestOrig
       ...corsHeaders(requestOrigin ?? null),
     },
   });
+}
+
+/**
+ * Custom error class for storage bucket errors.
+ * Provides typed access to bucket name and actionable guidance.
+ */
+class StorageBucketError extends Error {
+  readonly bucket: string;
+  readonly action: string;
+
+  constructor(bucket: string, action: string = "create in Supabase Storage") {
+    super("storage bucket missing");
+    this.name = "StorageBucketError";
+    this.bucket = bucket;
+    this.action = action;
+  }
 }
 
 type CharacterRecord = {
@@ -1131,12 +1254,78 @@ function sceneFramePath(ownerId: string, sceneId: string, frameId: string): Stor
   };
 }
 
+/**
+ * Ensure a storage bucket exists, creating it if missing.
+ * Buckets are created with public=false for private access via signed URLs.
+ *
+ * @param client - Supabase client with service role key
+ * @param bucketName - Name of the bucket to ensure exists
+ * @throws Error with actionable message if bucket cannot be created
+ */
+async function ensureBucket(client: SupabaseClient, bucketName: string): Promise<void> {
+  // List all buckets to check if the target bucket exists
+  const { data: buckets, error: listError } = await client.storage.listBuckets();
+  
+  if (listError) {
+    console.error(`[STORAGE] Failed to list buckets: ${listError.message}`);
+    throw new Error(`storage bucket check failed: ${listError.message}`);
+  }
+
+  const bucketExists = buckets?.some(b => b.name === bucketName);
+  
+  if (bucketExists) {
+    if (DEBUG) {
+      console.log(`[STORAGE] Bucket '${bucketName}' exists`);
+    }
+    return;
+  }
+
+  // Bucket doesn't exist - try to create it
+  if (DEBUG) {
+    console.log(`[STORAGE] Bucket '${bucketName}' not found, attempting to create...`);
+  }
+
+  const { error: createError } = await client.storage.createBucket(bucketName, {
+    public: false,
+  });
+
+  if (createError) {
+    // Handle race condition - bucket may have been created by another request
+    if (createError.message?.includes("already exists") || createError.message?.includes("duplicate")) {
+      if (DEBUG) {
+        console.log(`[STORAGE] Bucket '${bucketName}' was created by another process`);
+      }
+      return;
+    }
+
+    console.error(`[STORAGE] Failed to create bucket '${bucketName}': ${createError.message}`);
+    // Throw actionable error per acceptance criteria using typed StorageBucketError
+    throw new StorageBucketError(bucketName);
+  }
+
+  console.log(`[STORAGE] Created bucket '${bucketName}' (public=false)`);
+}
+
+/**
+ * Ensure both REF_BUCKET and RENDER_BUCKET exist before storage operations.
+ * This should be called before the first write operation in a request.
+ *
+ * @param client - Supabase client with service role key
+ */
+async function ensureStorageBuckets(client: SupabaseClient): Promise<void> {
+  await ensureBucket(client, REF_BUCKET);
+  await ensureBucket(client, RENDER_BUCKET);
+}
+
 async function uploadToStorage(
   client: SupabaseClient,
   target: StoragePath,
   data: Uint8Array,
   contentType: string,
 ): Promise<void> {
+  // Ensure bucket exists before uploading
+  await ensureBucket(client, target.bucket);
+  
   const { error } = await client.storage
     .from(target.bucket)
     .upload(target.path, new Blob([data], { type: contentType }), {
@@ -1371,6 +1560,14 @@ async function handleUploadBase(
     }, requestOrigin);
   } catch (error) {
     console.error("Upload base image failed", error);
+    // Check if this is a storage bucket error with actionable info
+    if (error instanceof StorageBucketError) {
+      return jsonResponse(400, { 
+        error: "storage bucket missing", 
+        bucket: error.bucket,
+        action: error.action,
+      }, requestOrigin);
+    }
     return jsonResponse(500, { error: "Failed to process base image" }, requestOrigin);
   }
 }
@@ -1890,6 +2087,14 @@ async function handleGenerateCharacterDraft(
     }, requestOrigin);
   } catch (error) {
     console.error("Character draft generation failed", error);
+    // Check if this is a storage bucket error with actionable info
+    if (error instanceof StorageBucketError) {
+      return jsonResponse(400, { 
+        error: "storage bucket missing", 
+        bucket: error.bucket,
+        action: error.action,
+      }, requestOrigin);
+    }
     const errorMessage = error instanceof Error ? error.message : "Failed to generate character draft";
     return jsonResponse(500, { error: errorMessage }, requestOrigin);
   }
@@ -2245,6 +2450,14 @@ async function handleRefineCharacter(
     }, requestOrigin);
   } catch (error) {
     console.error("Character refinement failed", error);
+    // Check if this is a storage bucket error with actionable info
+    if (error instanceof StorageBucketError) {
+      return jsonResponse(400, { 
+        error: "storage bucket missing", 
+        bucket: error.bucket,
+        action: error.action,
+      }, requestOrigin);
+    }
     const errorMessage = error instanceof Error ? error.message : "Failed to refine character";
     return jsonResponse(500, { error: errorMessage }, requestOrigin);
   }
@@ -2425,6 +2638,14 @@ serve(async req => {
     return jsonResponse(400, { error: "Unknown action" }, requestOrigin);
   } catch (err) {
     console.error("AI pipeline error", err);
+    // Check if this is a storage bucket error with actionable info
+    if (err instanceof StorageBucketError) {
+      return jsonResponse(400, { 
+        error: "storage bucket missing", 
+        bucket: err.bucket,
+        action: err.action,
+      }, requestOrigin);
+    }
     const message = err instanceof Error ? err.message : "Unexpected error";
     return jsonResponse(500, { error: message }, requestOrigin);
   }
