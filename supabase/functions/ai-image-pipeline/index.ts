@@ -48,7 +48,7 @@ function corsHeaders(_requestOrigin: string | null): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-client-auth",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-client-auth, x-supabase-authorization",
     "Access-Control-Max-Age": "86400", // 24 hours
   };
 }
@@ -409,16 +409,16 @@ function resolveModel({ provider, requestedModel, envModel, detail }: ResolveMod
 
   // 3. For auto provider without model specified, choose based on available API keys
   if (isAutoProvider && !effectiveProvider) {
-    // Prefer Google if key is available, then OpenAI
-    if (GOOGLE_API_KEY) {
-      effectiveProvider = "google";
-      if (DEBUG) {
-        console.log("[PROVIDER] Auto mode: selected Google provider based on available GOOGLE_API_KEY");
-      }
-    } else if (OPENAI_API_KEY) {
+    // Prefer OpenAI if key is available, then Google (per acceptance criteria)
+    if (OPENAI_API_KEY) {
       effectiveProvider = "openai";
       if (DEBUG) {
         console.log("[PROVIDER] Auto mode: selected OpenAI provider based on available OPENAI_API_KEY");
+      }
+    } else if (GOOGLE_API_KEY) {
+      effectiveProvider = "google";
+      if (DEBUG) {
+        console.log("[PROVIDER] Auto mode: selected Google provider based on available GOOGLE_API_KEY");
       }
     } else {
       // No API keys configured - return placeholder-compatible default
@@ -2488,12 +2488,30 @@ serve(async req => {
   // X-Client-Auth is the preferred way for the frontend to pass the user JWT
   // This allows the Supabase client to keep Authorization: Bearer <anon-key> for gateway access
   const xClientAuth = req.headers.get("X-Client-Auth") ?? req.headers.get("x-client-auth");
+  // X-Supabase-Authorization is used by supabase-js library (may have Bearer prefix)
+  const xSupabaseAuth = req.headers.get("X-Supabase-Authorization") ?? req.headers.get("x-supabase-authorization");
 
   // Log header presence (no values to avoid leaking secrets)
-  console.log("[AUTH] has Authorization:", !!authHeader, "has apikey:", !!apiKeyHeader, "has X-Client-Auth:", !!xClientAuth, "has x-client-info:", !!clientInfoHeader);
+  console.log("[AUTH] has Authorization:", !!authHeader, "has apikey:", !!apiKeyHeader, "has X-Client-Auth:", !!xClientAuth, "has X-Supabase-Authorization:", !!xSupabaseAuth, "has x-client-info:", !!clientInfoHeader);
 
-  // Extract user token: Prefer X-Client-Auth, fall back to Authorization if it's a JWT
+  // Extract user token priority order:
+  // 1. X-Client-Auth (preferred - raw JWT)
+  // 2. X-Supabase-Authorization (supabase-js - may have Bearer prefix)
+  // 3. Authorization header (fallback - only if it looks like a user JWT)
   let userToken = (xClientAuth ?? "").trim();
+  if (!userToken && xSupabaseAuth) {
+    // X-Supabase-Authorization may have Bearer prefix, strip it
+    const stripped = extractBearerToken(xSupabaseAuth);
+    if (stripped) {
+      userToken = stripped;
+    } else {
+      // No Bearer prefix, use as-is if it looks like a JWT
+      const trimmed = xSupabaseAuth.trim();
+      if (trimmed.startsWith("ey")) {
+        userToken = trimmed;
+      }
+    }
+  }
   if (!userToken) {
     // Fall back to Authorization header if it contains a user JWT (starts with "ey")
     const bearerToken = extractBearerToken(authHeader);
@@ -2503,10 +2521,10 @@ serve(async req => {
   }
 
   if (!userToken) {
-    console.warn("[AUTH] No user token found (need X-Client-Auth or Authorization: Bearer <jwt>)");
+    console.warn("[AUTH] No user token found (need X-Client-Auth, X-Supabase-Authorization, or Authorization: Bearer <jwt>)");
     return jsonResponse(401, { 
       error: "Unauthorized", 
-      reason: "missing access token - provide X-Client-Auth header or Authorization: Bearer <jwt>" 
+      reason: "missing access token - provide X-Client-Auth, X-Supabase-Authorization, or Authorization: Bearer <jwt>" 
     }, requestOrigin);
   }
 

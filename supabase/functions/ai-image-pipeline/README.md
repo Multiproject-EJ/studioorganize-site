@@ -111,7 +111,7 @@ Model resolution follows this priority:
 When `AI_IMAGE_PROVIDER=auto`, the provider is automatically inferred from the model name:
 - **Google models**: `gemini-*`, `imagen-*` → uses Google provider
 - **OpenAI models**: `dall-e-*`, `gpt-image-*` → uses OpenAI provider
-- **No model specified**: Picks provider based on available API keys (prefers Google if `GOOGLE_API_KEY` set, then OpenAI)
+- **No model specified**: Picks provider based on available API keys (prefers OpenAI if both keys set, then Google)
 
 This enables per-request model selection without requiring environment variable changes.
 
@@ -663,6 +663,43 @@ curl -X POST http://localhost:54321/functions/v1/ai-image-pipeline \
     "archetype": "hero",
     "tier": "standard"
   }'
+```
+
+## Authentication
+
+The function accepts user JWT tokens via multiple headers (in priority order):
+
+1. **`X-Client-Auth`** - Preferred. Pass raw JWT without Bearer prefix.
+2. **`X-Supabase-Authorization`** - Used by supabase-js library. May include `Bearer ` prefix (will be stripped).
+3. **`Authorization`** - Standard bearer token. Only used if it contains a user JWT (starts with `ey`).
+
+**Example request:**
+
+```bash
+curl -X POST https://your-project.supabase.co/functions/v1/ai-image-pipeline \
+  -H "apikey: YOUR_ANON_KEY" \
+  -H "X-Client-Auth: YOUR_USER_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "generate-character-draft", "archetype": "hero"}'
+```
+
+**401 Error Responses:**
+
+The function returns detailed diagnostics for authentication failures:
+
+```json
+{
+  "error": "Unauthorized",
+  "reason": "missing access token - provide X-Client-Auth, X-Supabase-Authorization, or Authorization: Bearer <jwt>"
+}
+```
+
+```json
+{
+  "error": "Unauthorized",
+  "reason": "token expired",
+  "details": { "exp": 1699000000, "now": 1699000100, "expiredSecondsAgo": 100 }
+}
 ```
 
 ## Error Handling
