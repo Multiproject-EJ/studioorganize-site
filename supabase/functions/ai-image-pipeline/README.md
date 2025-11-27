@@ -111,7 +111,7 @@ Model resolution follows this priority:
 When `AI_IMAGE_PROVIDER=auto`, the provider is automatically inferred from the model name:
 - **Google models**: `gemini-*`, `imagen-*` → uses Google provider
 - **OpenAI models**: `dall-e-*`, `gpt-image-*` → uses OpenAI provider
-- **No model specified**: Picks provider based on available API keys (prefers Google if `GOOGLE_API_KEY` set, then OpenAI)
+- **No model specified**: Picks provider based on available API keys (prefers OpenAI if both keys set, else whichever exists)
 
 This enables per-request model selection without requiring environment variable changes.
 
