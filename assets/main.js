@@ -3123,6 +3123,7 @@ function ensureWorkspaceLauncherStructure(launcher){
             </svg>
           </span>
         </span>
+        <span class="workspace-launcher__module-label">SAVE</span>
         <span class="sr-only">Save Progress</span>
       </button>
     `);
@@ -3135,6 +3136,7 @@ function ensureWorkspaceLauncherStructure(launcher){
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
         </span>
+        <span class="workspace-launcher__module-label">NEW</span>
         <span class="sr-only">New Story</span>
       </button>
     `);
@@ -3153,8 +3155,11 @@ function ensureWorkspaceLauncherStructure(launcher){
   }
   assistantToggle.innerHTML = `
     <span class="workspace-launcher__module-icon" aria-hidden="true">
-      <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
     </span>
+    <span class="workspace-launcher__module-label">ASSISTANT</span>
     <span class="sr-only">Open StudioOrganize Assistant</span>
   `;
   assistantToggle.setAttribute('aria-pressed', assistantToggle.getAttribute('aria-pressed') === 'true' ? 'true' : 'false');
@@ -3191,8 +3196,18 @@ function ensureWorkspaceLauncherStructure(launcher){
     scriptButton.type = 'button';
     scriptButton.className = 'workspace-launcher__script';
     scriptButton.setAttribute('data-workspace-script', '');
-    scriptButton.innerHTML = '<span>Story</span>';
   }
+  scriptButton.setAttribute('aria-label', 'Story');
+  scriptButton.innerHTML = `
+    <span class="workspace-launcher__script-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+      </svg>
+    </span>
+    <span class="workspace-launcher__script-label">STORY</span>
+    <span class="sr-only">Story</span>
+  `;
 
   let creatorLink = quickActionsGroup.querySelector('.workspace-launcher__creator');
   if (!(creatorLink instanceof HTMLElement)){
@@ -3200,8 +3215,17 @@ function ensureWorkspaceLauncherStructure(launcher){
     creatorLink.className = 'workspace-launcher__script workspace-launcher__creator';
     creatorLink.setAttribute('href', '/account.html');
     creatorLink.setAttribute('aria-label', 'Creator Page');
-    creatorLink.innerHTML = '<span>Creator Page</span>';
   }
+  creatorLink.innerHTML = `
+    <span class="workspace-launcher__script-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </span>
+    <span class="workspace-launcher__script-label">CREATOR</span>
+    <span class="sr-only">Creator Page</span>
+  `;
 
   let creativeHubLink = quickActionsGroup.querySelector('.workspace-launcher__module--creative-hub');
   if (!(creativeHubLink instanceof HTMLElement)){
@@ -3209,13 +3233,20 @@ function ensureWorkspaceLauncherStructure(launcher){
     creativeHubLink.className = 'workspace-launcher__module workspace-launcher__module--creative-hub';
     creativeHubLink.setAttribute('href', '/creative-hub.html');
     creativeHubLink.setAttribute('data-label', 'Creative Hub');
-    creativeHubLink.innerHTML = `
-      <span class="workspace-launcher__module-icon" aria-hidden="true">
-        <img src="${CREATIVE_HUB_ICON}" alt="" loading="lazy" />
-      </span>
-      <span class="sr-only">Creative Hub</span>
-    `;
   }
+  creativeHubLink.setAttribute('aria-label', 'Creative Hub');
+  creativeHubLink.innerHTML = `
+    <span class="workspace-launcher__module-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+    </span>
+    <span class="workspace-launcher__module-label">HUB</span>
+    <span class="sr-only">Creative Hub</span>
+  `;
 
   let videoLessonsButton = quickActionsGroup.querySelector('[data-video-lessons-open]');
   if (!(videoLessonsButton instanceof HTMLElement)){
@@ -3228,8 +3259,11 @@ function ensureWorkspaceLauncherStructure(launcher){
   videoLessonsButton.setAttribute('aria-label', 'Open video lesson library');
   videoLessonsButton.innerHTML = `
     <span class="workspace-launcher__module-icon workspace-launcher__module-icon--lessons" aria-hidden="true">
-      <span aria-hidden="true">🎬</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
     </span>
+    <span class="workspace-launcher__module-label">LESSONS</span>
     <span class="sr-only">Open video lesson library</span>
   `;
 
@@ -3244,8 +3278,13 @@ function ensureWorkspaceLauncherStructure(launcher){
   musicButton.setAttribute('aria-label', 'Open Create with Music');
   musicButton.innerHTML = `
     <span class="workspace-launcher__module-icon workspace-launcher__module-icon--music-note" aria-hidden="true">
-      <span aria-hidden="true">🎵</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
     </span>
+    <span class="workspace-launcher__module-label">MUSIC</span>
     <span class="sr-only">Open Create with Music</span>
   `;
 
@@ -3309,34 +3348,65 @@ function injectGlobalWorkspaceLauncher(){
       <div class="workspace-launcher__quick-actions">
         <p class="workspace-launcher__quick-actions-label">Quick actions</p>
         <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
-          <button type="button" class="workspace-launcher__script" data-workspace-script>
-            <span>Story</span>
+          <button type="button" class="workspace-launcher__script" data-workspace-script aria-label="Story">
+            <span class="workspace-launcher__script-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </span>
+            <span class="workspace-launcher__script-label">STORY</span>
+            <span class="sr-only">Story</span>
           </button>
           <a class="workspace-launcher__script workspace-launcher__creator" href="/account.html" aria-label="Creator Page">
-            <span>Creator Page</span>
-          </a>
-          <a class="workspace-launcher__module workspace-launcher__module--creative-hub" href="/creative-hub.html" data-label="Creative Hub">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <img src="${CREATIVE_HUB_ICON}" alt="" loading="lazy" />
+            <span class="workspace-launcher__script-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </span>
+            <span class="workspace-launcher__script-label">CREATOR</span>
+            <span class="sr-only">Creator Page</span>
+          </a>
+          <a class="workspace-launcher__module workspace-launcher__module--creative-hub" href="/creative-hub.html" data-label="Creative Hub" aria-label="Creative Hub">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </span>
+            <span class="workspace-launcher__module-label">HUB</span>
             <span class="sr-only">Creative Hub</span>
           </a>
           <button type="button" class="workspace-launcher__module workspace-launcher__module--lessons" data-video-lessons-open data-label="Video Lessons" aria-label="Open video lesson library">
             <span class="workspace-launcher__module-icon workspace-launcher__module-icon--lessons" aria-hidden="true">
-              <span aria-hidden="true">🎬</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
             </span>
+            <span class="workspace-launcher__module-label">LESSONS</span>
             <span class="sr-only">Open video lesson library</span>
           </button>
           <button type="button" class="workspace-launcher__module workspace-launcher__module--music-note" data-music-library-open data-label="Create with Music" aria-label="Open Create with Music">
             <span class="workspace-launcher__module-icon workspace-launcher__module-icon--music-note" aria-hidden="true">
-              <span aria-hidden="true">🎵</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
             </span>
+            <span class="workspace-launcher__module-label">MUSIC</span>
             <span class="sr-only">Open Create with Music</span>
           </button>
           <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
             <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <span class="workspace-launcher__assistant-glyph" aria-hidden="true"></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
             </span>
+            <span class="workspace-launcher__module-label">ASSISTANT</span>
             <span class="sr-only">Open StudioOrganize Assistant</span>
             </button>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
@@ -3365,6 +3435,7 @@ function injectGlobalWorkspaceLauncher(){
                   </svg>
                 </span>
               </span>
+              <span class="workspace-launcher__module-label">SAVE</span>
               <span class="sr-only">Save Progress</span>
             </button>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
@@ -3374,6 +3445,7 @@ function injectGlobalWorkspaceLauncher(){
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
               </span>
+              <span class="workspace-launcher__module-label">NEW</span>
               <span class="sr-only">New Story</span>
             </button>
           </div>
