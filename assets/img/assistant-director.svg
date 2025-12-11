@@ -1,0 +1,45 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="StudioOrganize AI Director avatar">
+  <defs>
+    <linearGradient id="fur" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7ac2ff"/>
+      <stop offset="100%" stop-color="#2f78c8"/>
+    </linearGradient>
+    <linearGradient id="hat" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#152c4f"/>
+      <stop offset="100%" stop-color="#2d4c7c"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1f3f"/>
+      <stop offset="100%" stop-color="#244a87"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="52" fill="#f6f9ff"/>
+  <circle cx="244" cy="256" r="170" fill="url(#fur)" stroke="#1f4578" stroke-width="10"/>
+  <circle cx="244" cy="242" r="110" fill="#6db5f2" opacity="0.9"/>
+  <path d="M156 140h188v62l-20 26H176l-20-26z" fill="url(#hat)"/>
+  <rect x="176" y="110" width="160" height="52" rx="16" fill="url(#hat)"/>
+  <text x="256" y="147" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="32" fill="#e8eefc" font-weight="700">DIRECTOR</text>
+  <path d="M180 188c8-14 26-26 64-26s56 12 64 26" fill="none" stroke="#0f2c53" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="210" cy="212" r="36" fill="#fefefe"/>
+  <circle cx="302" cy="212" r="36" fill="#fefefe"/>
+  <circle cx="224" cy="218" r="14" fill="#1a3b68"/>
+  <circle cx="288" cy="218" r="14" fill="#1a3b68"/>
+  <path d="M214 254c12 20 30 30 58 30s46-10 58-30" fill="none" stroke="#10325d" stroke-width="10" stroke-linecap="round"/>
+  <ellipse cx="246" cy="242" rx="26" ry="22" fill="#3f9ae6"/>
+  <rect x="164" y="300" width="82" height="72" rx="22" fill="#0f2c53"/>
+  <circle cx="194" cy="338" r="16" fill="#78c0ff"/>
+  <rect x="216" y="314" width="24" height="48" rx="6" fill="#9fd3ff"/>
+  <rect x="248" y="314" width="24" height="48" rx="6" fill="#9fd3ff"/>
+  <rect x="280" y="314" width="24" height="48" rx="6" fill="#9fd3ff"/>
+  <line x1="168" y1="330" x2="244" y2="330" stroke="#e8eefc" stroke-width="6" stroke-linecap="round"/>
+  <rect x="290" y="278" width="134" height="80" rx="22" fill="url(#panel)" stroke="#0d2140" stroke-width="6"/>
+  <rect x="306" y="292" width="102" height="18" rx="8" fill="#d7e4ff"/>
+  <rect x="306" y="318" width="102" height="18" rx="8" fill="#d7e4ff" opacity="0.9"/>
+  <line x1="336" y1="292" x2="336" y2="336" stroke="#0f2c53" stroke-width="4"/>
+  <line x1="366" y1="292" x2="366" y2="336" stroke="#0f2c53" stroke-width="4"/>
+  <line x1="396" y1="292" x2="396" y2="336" stroke="#0f2c53" stroke-width="4"/>
+  <circle cx="360" cy="348" r="14" fill="#79c3ff" stroke="#0f2c53" stroke-width="4"/>
+  <path d="M332 158c-16-14-58-22-88-10" fill="none" stroke="#0f2c53" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <path d="M184 126c-36 16-42 56-16 86" fill="none" stroke="#0f2c53" stroke-width="12" stroke-linecap="round" opacity="0.65"/>
+  <rect x="38" y="38" width="436" height="436" rx="48" fill="none" stroke="#0f2c53" stroke-opacity="0.24" stroke-width="10"/>
+</svg>
