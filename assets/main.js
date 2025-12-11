@@ -3269,6 +3269,23 @@ function ensureWorkspaceLauncherStructure(launcher){
     legacyActions.remove();
   }
 
+  const chatBubble = launcher.querySelector('.workspace-launcher__chat-bubble');
+  if (chatBubble instanceof HTMLElement){
+    let chatHeader = chatBubble.querySelector('.workspace-launcher__chat-header');
+    if (!(chatHeader instanceof HTMLElement)){
+      chatHeader = document.createElement('div');
+      chatHeader.className = 'workspace-launcher__chat-header';
+      chatHeader.innerHTML = `
+        <div class="workspace-launcher__chat-avatar" aria-hidden="true"></div>
+        <div class="workspace-launcher__chat-meta">
+          <p class="workspace-launcher__chat-name">StudioOrganize AI</p>
+          <p class="workspace-launcher__chat-role">Director in your corner</p>
+        </div>
+      `;
+      chatBubble.prepend(chatHeader);
+    }
+  }
+
   launcher.dataset.workspaceLauncherPrepared = 'true';
 }
 
