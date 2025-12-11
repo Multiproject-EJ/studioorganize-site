@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — StudioOrganize</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+</head>
+<body>
+<header class="nav">
+  <a class="brand brand--with-logo" href="/">
+    <span class="brand__logo" aria-hidden="true"></span>
+    <span class="sr-only">StudioOrganize</span>
+  </a>
+  <nav class="menu">
+    <a class="menu__link menu__link--plain menu__link--icon" href="/">
+      <span aria-hidden="true">🏠</span>
+      <span class="sr-only">Home</span>
+    </a>
+    <div class="dropdown">
+      <button class="dropbtn dropbtn--plain" type="button">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+    <a class="menu__link menu__link--plain" href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a>
+    <div class="menu__actions">
+      <button class="theme-toggle theme-toggle--icon" type="button" data-theme-toggle aria-pressed="false">
+        <span class="sr-only">Toggle theme</span>
+        <span class="theme-toggle__icon" aria-hidden="true" data-theme-icon>☀️</span>
+      </button>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link data-auth-intent="signin">Sign in</a>
+      <div class="dropdown" data-account-menu hidden>
+        <button class="menu__cta" type="button" data-account-button>Account</button>
+        <div class="dropdown-content">
+          <a href="/account.html">My Creator Page</a>
+          <a href="/dashboard.html">Dashboard</a>
+          <a href="/goals.html">Goals</a>
+          <a href="/product/personal.html">My Subscription</a>
+          <a href="#" data-account-logout>Log out</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="section">
+  <section class="creator-overview" aria-label="Today's studio overview">
+    <div class="creator-overview__today">
+      <span class="creator-overview__kicker">📅 TODAY</span>
+      <h2 class="creator-overview__date" data-creator-date>Thursday 11 December</h2>
+      <p class="creator-overview__time" data-creator-time>19:25</p>
+      <p class="creator-overview__subtitle">Stay synced with your studio rhythm.</p>
+    </div>
+    <div class="creator-overview__weather" aria-live="polite">
+      <div class="creator-overview__weather-header">
+        <span class="creator-overview__weather-icon" aria-hidden="true" data-weather-icon>🌤️</span>
+        <span class="creator-overview__temp"><span data-weather-temp>72</span>°F</span>
+      </div>
+      <p class="creator-overview__condition" data-weather-status>Partly cloudy with steady light.</p>
+      <p class="creator-overview__location" data-weather-location>Los Angeles Studio Lot</p>
+      <p class="creator-overview__updated">Updated <span data-weather-updated>just now</span></p>
+    </div>
+    <div class="creator-overview__streak" aria-live="polite">
+      <div class="creator-overview__streak-header">
+        <span class="creator-overview__streak-icon" aria-hidden="true">🔥</span>
+        <div>
+          <p class="creator-overview__streak-title">Streak Tracker</p>
+          <p class="creator-overview__streak-subtitle">Keep the creative flame going.</p>
+        </div>
+      </div>
+      <div class="creator-overview__streak-stats">
+        <span class="creator-overview__streak-count" data-streak-count>7</span>
+        <span class="creator-overview__streak-label">days in a row</span>
+      </div>
+      <div class="creator-overview__streak-progress" role="img" aria-label="Streak progress 7 of 10 days">
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="full"></span>
+        <span data-level="empty"></span>
+        <span data-level="empty"></span>
+        <span data-level="empty"></span>
+      </div>
+      <p class="creator-overview__streak-note">Three more sessions unlock the Momentum badge.</p>
+    </div>
+  </section>
+</main>
+
+<script src="/assets/main.js"></script>
+<script>
+  // Update date and time
+  function updateDateTime() {
+    const now = new Date();
+    const dateEl = document.querySelector('[data-creator-date]');
+    const timeEl = document.querySelector('[data-creator-time]');
+    
+    if (dateEl) {
+      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      dateEl.textContent = now.toLocaleDateString('en-US', options);
+    }
+    
+    if (timeEl) {
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      timeEl.textContent = `${hours}:${minutes}`;
+    }
+  }
+  
+  updateDateTime();
+  setInterval(updateDateTime, 60000); // Update every minute
+</script>
+</body>
+</html>
