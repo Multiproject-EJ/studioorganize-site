@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Goals — StudioOrganize</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/webp" href="/assets/img/studioorganizeFavicon.webp" />
+</head>
+<body>
+<header class="nav">
+  <a class="brand brand--with-logo" href="/">
+    <span class="brand__logo" aria-hidden="true"></span>
+    <span class="sr-only">StudioOrganize</span>
+  </a>
+  <nav class="menu">
+    <a class="menu__link menu__link--plain menu__link--icon" href="/">
+      <span aria-hidden="true">🏠</span>
+      <span class="sr-only">Home</span>
+    </a>
+    <div class="dropdown">
+      <button class="dropbtn dropbtn--plain" type="button">Use Cases</button>
+      <div class="dropdown-content">
+        <a href="/use-cases/">All Use Cases</a>
+        <a href="/use-cases/generate-ideas.html">Generate Ideas</a>
+        <a href="/use-cases/screenplay.html">Screenplay Script</a>
+        <a href="/use-cases/character-design.html">Character Design</a>
+        <a href="/use-cases/set-design.html">Set / Production Design</a>
+      </div>
+    </div>
+    <a class="menu__link menu__link--plain" href="https://finishthatstory.com" target="_blank" rel="noopener noreferrer">FinishThatStory.com</a>
+    <div class="menu__actions">
+      <button class="theme-toggle theme-toggle--icon" type="button" data-theme-toggle aria-pressed="false">
+        <span class="sr-only">Toggle theme</span>
+        <span class="theme-toggle__icon" aria-hidden="true" data-theme-icon>☀️</span>
+      </button>
+      <a class="menu__cta" href="https://studioorganize.com/supabase-test.html" data-auth-link data-auth-intent="signin">Sign in</a>
+      <div class="dropdown" data-account-menu hidden>
+        <button class="menu__cta" type="button" data-account-button>Account</button>
+        <div class="dropdown-content">
+          <a href="/account.html">My Creator Page</a>
+          <a href="/dashboard.html">Dashboard</a>
+          <a href="/goals.html">Goals</a>
+          <a href="/product/personal.html">My Subscription</a>
+          <a href="#" data-account-logout>Log out</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="section">
+  <section class="daily-goal" id="daily-goal-card" data-daily-goal aria-label="Today's featured goal" tabindex="-1">
+    <div class="daily-goal__media">
+      <img src="/assets/img/IMG_6893.webp" alt="Storyboard frames arranged in a grid" loading="lazy" />
+      <img src="/assets/img/IMG_6894.webp" alt="Creative planning notes for a film sequence" loading="lazy" />
+    </div>
+    <div class="daily-goal__content">
+      <span class="daily-goal__kicker">New today</span>
+      <h2 class="daily-goal__title">Goal: Name 10 scenes in Act 3</h2>
+      <p class="daily-goal__copy">
+        Focus on Episode 3's finale by sketching ten pivotal scene names. Capture the emotional turns so your storyboard
+        sprint hits the right beats when you return to the workspace.
+      </p>
+      <ul class="daily-goal__checklist">
+        <li><strong>Warm-up:</strong> Re-read your Act 2 cliffhanger to anchor the momentum.</li>
+        <li><strong>List scenes:</strong> Draft ten scene titles that map the escalation toward the climax.</li>
+        <li><strong>Visual cue:</strong> Clip a quick image reference for each scene inside Storyboard Pro.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="creator-goals-grid">
+    <section class="creator-goals-tile" aria-label="Story goals tracker">
+      <button type="button" class="creator-overview__goals" data-goals-trigger>
+      <div class="creator-overview__goals-header">
+        <span class="creator-overview__goals-icon" aria-hidden="true">🎯</span>
+        <div>
+          <p class="creator-overview__goals-title">Story Goals</p>
+          <p class="creator-overview__goals-subtitle">Track your script progress.</p>
+        </div>
+      </div>
+      <div class="creator-overview__goals-stats">
+        <span class="creator-overview__goals-count" data-goals-count>—</span>
+        <span class="creator-overview__goals-label">overall progress</span>
+      </div>
+      <p class="creator-overview__goals-note">Click to view detailed story metrics and milestones.</p>
+      </button>
+    </section>
+
+    <section class="creator-goals-tile" aria-label="Milestones and reminders">
+      <button type="button" class="creator-overview__goals" data-goal-planner-trigger>
+      <div class="creator-overview__goals-header">
+        <span class="creator-overview__goals-icon" aria-hidden="true">🗓️</span>
+        <div>
+          <p class="creator-overview__goals-title">Milestones &amp; Reminders</p>
+          <p class="creator-overview__goals-subtitle">Stay accountable</p>
+        </div>
+      </div>
+      <div class="creator-overview__goals-stats">
+        <span class="creator-overview__goals-count">Plan</span>
+        <span class="creator-overview__goals-label">a new milestone</span>
+      </div>
+      <p class="creator-overview__goals-note">
+        Set a focus target, pick when it is due, and choose how you would like to be nudged.
+      </p>
+      <p class="creator-overview__goals-note">Goal title · Target date · Email reminders · Add a note (optional) · Save goal</p>
+      <p class="creator-overview__goals-note">Saved goals · Track multiple milestones and update them as you progress.</p>
+      <p class="creator-overview__goals-note">You have not saved any goals yet.</p>
+      <p class="creator-overview__goals-note">
+        Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any
+        time.
+      </p>
+      </button>
+    </section>
+  </div>
+</main>
+
+<script src="/assets/main.js"></script>
+</body>
+</html>

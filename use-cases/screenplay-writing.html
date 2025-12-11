@@ -904,7 +904,9 @@
       .script-dialog__header-tools{margin-top:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
       .script-dialog__header h2{margin:0; font-size:20px;}
       .script-dialog__close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
-      .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; align-items:start; flex:1; min-height:0; overflow:auto; padding-right:4px;}
+      .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; grid-template-rows:min-content 1fr; align-items:start; flex:1; min-height:0; overflow:auto; padding-right:4px;}
+      .script-dialog__row{display:grid; gap:20px; grid-template-columns:1fr;}
+      .script-dialog__row--full{grid-column:1 / -1;}
       .script-dialog__column{display:flex; flex-direction:column; gap:12px; align-self:stretch;}
       .script-dialog__column-title{margin:0; font-size:15px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--muted);}
       .script-dialog__column-card{display:flex; flex-direction:column; gap:20px; border:1px solid var(--ring); border-radius:16px; padding:20px; background:var(--chip); transition:border-color .2s ease, box-shadow .2s ease, opacity .2s ease, filter .2s ease; flex:1; opacity:0.55; filter:saturate(0.75);}
@@ -963,6 +965,17 @@
       .script-dialog__column-footer{margin-top:auto; padding-top:20px; border-top:1px solid var(--ring); display:flex; justify-content:flex-end; gap:8px;}
       .script-dialog__hint{margin:0; font-size:12px; color:var(--muted);}
       .script-dialog__footer{display:flex; justify-content:flex-end; gap:8px; flex-shrink:0;}
+      .script-carousel{position:relative; overflow:hidden; border-radius:12px; margin-top:16px;}
+      .script-carousel__track{display:flex; gap:16px; overflow-x:auto; scroll-snap-type:x mandatory; padding:8px 4px 16px; scrollbar-width:thin; scrollbar-color:var(--acc) transparent;}
+      .script-carousel__track::-webkit-scrollbar{height:6px;}
+      .script-carousel__track::-webkit-scrollbar-track{background:transparent;}
+      .script-carousel__track::-webkit-scrollbar-thumb{background:var(--acc); border-radius:3px;}
+      .script-carousel__item{flex:0 0 220px; scroll-snap-align:start; position:relative; border-radius:10px; overflow:hidden; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease;}
+      .script-carousel__item:hover{transform:translateY(-4px); box-shadow:0 16px 32px rgba(79,123,255,0.3);}
+      .script-carousel__image{width:100%; aspect-ratio:3/2; object-fit:cover; display:block; background:var(--chip);}
+      .script-carousel__info{position:absolute; bottom:0; left:0; right:0; padding:12px; background:linear-gradient(to top, rgba(10,15,24,0.95), rgba(10,15,24,0.7), transparent); color:white; backdrop-filter:blur(8px); opacity:0; transition:opacity .3s ease;}
+      .script-carousel__item:hover .script-carousel__info{opacity:1;}
+      .script-carousel__title{margin:0; font-size:14px; font-weight:600; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.5);}
       .script-dialog__goal-trigger{align-self:flex-start;}
       .script-dialog__goal-modal{position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:30; padding:24px;}
       .script-dialog__goal-modal.open{display:flex;}
@@ -978,10 +991,10 @@
       :root[data-script-dialog-embed="true"] .script-dialog{background:transparent; display:flex !important;}
       :root[data-script-dialog-embed="true"] .script-dialog__panel{max-height:100vh; box-shadow:none;}
       @media (min-width: 720px){
-        .script-dialog__body{grid-template-columns:repeat(2,minmax(0,1fr));}
+        .script-dialog__row{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
       @media (min-width: 1080px){
-        .script-dialog__body{grid-template-columns:repeat(3,minmax(0,1fr));}
+        .script-dialog__row{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
       @media (max-width: 600px){
         .script-dialog{padding:0; align-items:flex-end;}
@@ -2299,7 +2312,64 @@
           <button type="button" class="script-dialog__close" id="scriptDialogClose" aria-label="Close script dialog">✕</button>
         </div>
         <div class="script-dialog__body">
-          <div class="script-dialog__column">
+          <!-- First row: Switch Scripts with carousel -->
+          <div class="script-dialog__row script-dialog__row--full">
+            <div class="script-dialog__column">
+              <h3 class="script-dialog__column-title">Switch scripts</h3>
+              <div class="script-dialog__column-card">
+                <section class="script-dialog__section">
+                  <div class="script-dialog__section-header">
+                    <h4>Script selection</h4>
+                    <p>Select another script to load its details.</p>
+                  </div>
+                  <label class="script-dialog__field" for="scriptSelect">
+                    <span>Choose a script</span>
+                    <select id="scriptSelect"></select>
+                  </label>
+                  <div class="script-dialog__status muted-text" id="scriptDialogStatus"></div>
+                  
+                  <!-- Script Carousel -->
+                  <div class="script-carousel">
+                    <div class="script-carousel__track" id="scriptCarousel">
+                      <div class="script-carousel__item" data-script="script1">
+                        <img class="script-carousel__image" src="https://placehold.co/440x293?text=Mega+Museum+Ep+1" alt="Script thumbnail" loading="lazy" />
+                        <div class="script-carousel__info">
+                          <h4 class="script-carousel__title">The Legacy of the Founders Stone - Mega Museum</h4>
+                        </div>
+                      </div>
+                      <div class="script-carousel__item" data-script="script2">
+                        <img class="script-carousel__image" src="https://placehold.co/440x293?text=Mega+Museum+Ep+2" alt="Script thumbnail" loading="lazy" />
+                        <div class="script-carousel__info">
+                          <h4 class="script-carousel__title">Mega Museum - Episode 2</h4>
+                        </div>
+                      </div>
+                      <div class="script-carousel__item" data-script="script3">
+                        <img class="script-carousel__image" src="https://placehold.co/440x293?text=Mega+Museum+Ep+3" alt="Script thumbnail" loading="lazy" />
+                        <div class="script-carousel__info">
+                          <h4 class="script-carousel__title">Mega Museum - Episode 3</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="script-dialog__preview" id="scriptDialogPreview">
+                    <img id="scriptPreviewImage" src="https://placehold.co/240x160?text=Script" alt="Selected script artwork" loading="lazy" />
+                    <div>
+                      <h3 id="scriptPreviewName">Select a script</h3>
+                      <p class="muted-text" id="scriptPreviewDescription"></p>
+                    </div>
+                  </div>
+                </section>
+                <div class="script-dialog__column-footer">
+                  <button type="button" class="btn btn-primary" id="scriptDialogLoad">Save &amp; Load</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Second row: Current Script and Create New Script -->
+          <div class="script-dialog__row">
+            <div class="script-dialog__column">
             <h3 class="script-dialog__column-title">Current script</h3>
             <div class="script-dialog__column-card">
               <details class="script-dialog__accordion" open>
@@ -2374,32 +2444,6 @@
             </div>
           </div>
           <div class="script-dialog__column">
-            <h3 class="script-dialog__column-title">Switch scripts</h3>
-            <div class="script-dialog__column-card">
-              <section class="script-dialog__section">
-                <div class="script-dialog__section-header">
-                  <h4>Script selection</h4>
-                  <p>Select another script to load its details.</p>
-                </div>
-                <label class="script-dialog__field" for="scriptSelect">
-                  <span>Choose a script</span>
-                  <select id="scriptSelect"></select>
-                </label>
-                <div class="script-dialog__status muted-text" id="scriptDialogStatus"></div>
-                <div class="script-dialog__preview" id="scriptDialogPreview">
-                  <img id="scriptPreviewImage" src="https://placehold.co/240x160?text=Script" alt="Selected script artwork" loading="lazy" />
-                  <div>
-                    <h3 id="scriptPreviewName">Select a script</h3>
-                    <p class="muted-text" id="scriptPreviewDescription"></p>
-                  </div>
-                </div>
-              </section>
-              <div class="script-dialog__column-footer">
-                <button type="button" class="btn btn-primary" id="scriptDialogLoad">Save &amp; Load</button>
-              </div>
-            </div>
-          </div>
-          <div class="script-dialog__column">
             <h3 class="script-dialog__column-title">Create new script</h3>
             <div class="script-dialog__column-card">
               <section class="script-dialog__section">
@@ -2421,7 +2465,7 @@
                 <button type="button" class="btn" id="scriptDialogCreate">Create</button>
               </div>
             </div>
-            </div>
+          </div>
           </div>
         </div>
         <div id="scriptDialogGoalModal" class="script-dialog__goal-modal" aria-hidden="true" hidden>
