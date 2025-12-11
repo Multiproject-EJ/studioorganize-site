@@ -904,7 +904,7 @@
       .script-dialog__header-tools{margin-top:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
       .script-dialog__header h2{margin:0; font-size:20px;}
       .script-dialog__close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
-      .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; grid-template-rows:auto auto; align-items:start; flex:1; min-height:0; overflow:auto; padding-right:4px;}
+      .script-dialog__body{display:grid; gap:20px; grid-template-columns:1fr; grid-template-rows:min-content 1fr; align-items:start; flex:1; min-height:0; overflow:auto; padding-right:4px;}
       .script-dialog__row{display:grid; gap:20px; grid-template-columns:1fr;}
       .script-dialog__row--full{grid-column:1 / -1;}
       .script-dialog__column{display:flex; flex-direction:column; gap:12px; align-self:stretch;}
@@ -991,11 +991,9 @@
       :root[data-script-dialog-embed="true"] .script-dialog{background:transparent; display:flex !important;}
       :root[data-script-dialog-embed="true"] .script-dialog__panel{max-height:100vh; box-shadow:none;}
       @media (min-width: 720px){
-        .script-dialog__body{grid-template-columns:repeat(2,minmax(0,1fr));}
         .script-dialog__row{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
       @media (min-width: 1080px){
-        .script-dialog__body{grid-template-columns:repeat(2,minmax(0,1fr));}
         .script-dialog__row{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
       @media (max-width: 600px){
