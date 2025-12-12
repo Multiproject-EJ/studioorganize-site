@@ -3529,13 +3529,12 @@ function ensureWorkspaceLauncherStructure(launcher){
 
   // Primary quick actions
   [
-    scriptButton,
+    storyButton,
     creatorLink,
     videoLessonsButton,
     musicButton,
-    authButton,
     saveButton,
-    storyButton
+    scriptButton
   ].forEach(button => {
     if (button instanceof HTMLElement){
       quickActionsGroup.appendChild(button);
@@ -3547,6 +3546,9 @@ function ensureWorkspaceLauncherStructure(launcher){
   bottomRow.className = 'workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full';
   if (notificationsButton instanceof HTMLElement){
     bottomRow.appendChild(notificationsButton);
+  }
+  if (authButton instanceof HTMLElement){
+    bottomRow.appendChild(authButton);
   }
   if (themeButton instanceof HTMLElement){
     bottomRow.appendChild(themeButton);
@@ -3598,15 +3600,26 @@ function injectGlobalWorkspaceLauncher(){
       <div class="workspace-launcher__quick-actions">
         <p class="workspace-launcher__quick-actions-label">Quick actions</p>
         <div class="workspace-launcher__quick-actions-buttons" role="group" aria-label="Workspace quick actions">
-          <button type="button" class="workspace-launcher__script" data-workspace-script aria-label="Story">
-            <span class="workspace-launcher__script-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
+          <div class="workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full workspace-launcher__quick-actions-row--assistant">
+            <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </span>
+              <span class="workspace-launcher__module-label">ASSISTANT</span>
+              <span class="sr-only">Open StudioOrganize Assistant</span>
+            </button>
+          </div>
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
             </span>
-            <span class="workspace-launcher__script-label">STORY</span>
-            <span class="sr-only">Story</span>
+            <span class="workspace-launcher__module-label">NEW</span>
+            <span class="sr-only">New Story</span>
           </button>
           <a class="workspace-launcher__script workspace-launcher__creator" href="/account.html" aria-label="Creator Page">
             <span class="workspace-launcher__script-icon" aria-hidden="true">
@@ -3638,16 +3651,6 @@ function injectGlobalWorkspaceLauncher(){
             <span class="workspace-launcher__module-label">MUSIC</span>
             <span class="sr-only">Open Create with Music</span>
           </button>
-          <button type="button" class="workspace-launcher__auth" data-auth-toggle aria-label="Sign In">
-            <span class="workspace-launcher__auth-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </span>
-            <span class="workspace-launcher__auth-label">SIGN IN</span>
-            <span class="sr-only">Sign In</span>
-          </button>
           <button type="button" class="workspace-launcher__module workspace-launcher__module--save" data-workspace-save data-label="Save Progress">
             <span class="workspace-launcher__module-icon" aria-hidden="true">
               <span class="workspace-launcher__save-dots" aria-hidden="true">
@@ -3677,26 +3680,17 @@ function injectGlobalWorkspaceLauncher(){
             <span class="workspace-launcher__module-label">SAVE</span>
             <span class="sr-only">Save Progress</span>
           </button>
-          <button type="button" class="workspace-launcher__module workspace-launcher__module--story" data-workspace-script data-label="New Story">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
+          <button type="button" class="workspace-launcher__script" data-workspace-script aria-label="Story">
+            <span class="workspace-launcher__script-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
             </span>
-            <span class="workspace-launcher__module-label">NEW</span>
-            <span class="sr-only">New Story</span>
+            <span class="workspace-launcher__script-label">STORY</span>
+            <span class="sr-only">Story</span>
           </button>
           <div class="workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full">
-            <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
-              <span class="workspace-launcher__module-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </span>
-              <span class="workspace-launcher__module-label">ASSISTANT</span>
-              <span class="sr-only">Open StudioOrganize Assistant</span>
-            </button>
             <button type="button" class="workspace-launcher__module workspace-launcher__module--notifications" data-notifications data-notifications-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="notificationsModal">
               <span class="workspace-launcher__module-icon" aria-hidden="true">
                 <span class="workspace-launcher__notifications-icon" aria-hidden="true">✉️</span>
@@ -3704,6 +3698,16 @@ function injectGlobalWorkspaceLauncher(){
               </span>
               <span class="workspace-launcher__module-label">ALERTS</span>
               <span class="sr-only" data-notifications-label>Open notifications</span>
+            </button>
+            <button type="button" class="workspace-launcher__auth" data-auth-toggle aria-label="Sign In">
+              <span class="workspace-launcher__auth-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <span class="workspace-launcher__auth-label">SIGN IN</span>
+              <span class="sr-only">Sign In</span>
             </button>
             <button type="button" class="workspace-launcher__theme" data-theme-toggle aria-label="Toggle theme">
               <span class="workspace-launcher__theme-icon" aria-hidden="true">
