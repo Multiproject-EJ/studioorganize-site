@@ -258,6 +258,77 @@
       .timeline-dock__content { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 18px; opacity: 1; transform: translateY(0); transition: transform .35s ease, opacity .25s ease; }
       .timeline-dock.floating-hidden .timeline-dock__content { opacity: 0; transform: translateY(-18px); pointer-events: none; }
       .timeline-dock.floating-hidden { flex-direction: column-reverse; padding-top: 6px; padding-bottom: 0; gap: 6px; }
+      .timeline-launcher {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 90;
+        border: 1px solid var(--ring);
+        background: linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)), var(--panel);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 12px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 12px 26px rgba(8,15,28,0.28);
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      }
+      .timeline-launcher:hover { transform: translateY(-1px); border-color: var(--acc); box-shadow: 0 16px 32px rgba(8,15,28,0.34); }
+      .timeline-launcher:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .timeline-launcher__label { font-size: 14px; letter-spacing: .2px; }
+      .timeline-popup-layer {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px;
+        z-index: 80;
+      }
+      .timeline-popup-layer--open { display: flex; }
+      .timeline-popup-layer__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15,23,42,0.58);
+        backdrop-filter: blur(8px);
+      }
+      .timeline-popup-layer__panel {
+        position: relative;
+        width: min(1200px, 96vw);
+        max-height: calc(100vh - 140px);
+        overflow: hidden auto;
+        background: var(--surface);
+        border-radius: 20px;
+        border: 1px solid var(--ring);
+        box-shadow: 0 34px 68px rgba(8,15,28,0.45);
+        padding: 16px 16px 20px;
+      }
+      .timeline-popup-layer__close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--ring);
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform .2s ease, border-color .2s ease, background .2s ease;
+        z-index: 1;
+      }
+      .timeline-popup-layer__close:hover { transform: translateY(-1px); border-color: var(--acc); background: linear-gradient(135deg, rgba(79,123,255,0.16), rgba(79,123,255,0.08)); }
+      .timeline-popup-layer__close:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .timeline-popup-layer__content { position: relative; display: grid; gap: 14px; }
+      body.timeline-popup-open { overflow: hidden; }
       .story-arc-layout { display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px; }
       .story-arc-columns { flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
       .story-arc-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; justify-content: center; min-width: 48px; }
@@ -1008,6 +1079,17 @@
         <div class="scene-carousel__dots" role="tablist" aria-label="Select scene preview" data-scene-carousel-dots></div>
       </section>
 
+      <button class="timeline-launcher" id="timelinePopupToggle" type="button" aria-haspopup="dialog" aria-controls="timelinePopupLayer" aria-expanded="false">
+        <span aria-hidden="true">📋</span>
+        <span class="timeline-launcher__label">Storyboard popup</span>
+      </button>
+
+      <div class="timeline-popup-layer" id="timelinePopupLayer" aria-hidden="true" hidden>
+        <div class="timeline-popup-layer__backdrop" data-timeline-popup-close aria-hidden="true"></div>
+        <div class="timeline-popup-layer__panel" role="dialog" aria-modal="true" aria-label="Storyboard timelines popup">
+          <button class="timeline-popup-layer__close" type="button" data-timeline-popup-close aria-label="Close storyboard popup">×</button>
+          <div class="timeline-popup-layer__content">
+
       <div id="timelineDock" class="timeline-dock pinned" aria-label="Story timeline dock">
         <button
           id="timelineDockHandle"
@@ -1240,6 +1322,9 @@
             <div class="ai-result" data-ai-result aria-live="polite"></div>
           </form>
         </aside>
+          </div>
+        </div>
+      </div>
       </div>
 
       <dialog class="api-dialog" data-api-dialog aria-labelledby="apiDialogTitle">
@@ -1860,6 +1945,7 @@
     let timelineHideTimer = null;
     let timelineHovering = false;
     let lastTimelinePinned = null;
+    let timelinePopupOpen = false;
 
     const storedTimelinePinned = storage.get(TIMELINE_STORAGE_KEYS.dockPinned);
     if (storedTimelinePinned === 'true') {
@@ -1883,6 +1969,7 @@
     setupApiDialog();
     setupCardDialog();
     setupGenerationWorkflow();
+    setupTimelinePopupLauncher();
     setupTimelineDockInteractions();
     renderTimelineDockScenes();
     renderSceneCarousel();
@@ -3177,6 +3264,58 @@
           db.close();
         }
       }
+    }
+
+    function setTimelinePopupState(open) {
+      const layer = document.getElementById('timelinePopupLayer');
+      const toggle = document.getElementById('timelinePopupToggle');
+      if (!layer || !toggle) return;
+
+      timelinePopupOpen = open;
+      if (open) {
+        layer.removeAttribute('hidden');
+      } else {
+        layer.setAttribute('hidden', '');
+      }
+      layer.setAttribute('aria-hidden', open ? 'false' : 'true');
+      layer.classList.toggle('timeline-popup-layer--open', open);
+      document.body.classList.toggle('timeline-popup-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+      if (open) {
+        showTimelineDock();
+        const initialFocus =
+          layer.querySelector('[data-timeline-popup-initial-focus]') || layer.querySelector('#timelineDockHandle');
+        if (initialFocus && typeof initialFocus.focus === 'function') {
+          initialFocus.focus({ preventScroll: true });
+        }
+      } else if (document.activeElement && layer.contains(document.activeElement)) {
+        toggle.focus({ preventScroll: true });
+      }
+    }
+
+    function setupTimelinePopupLauncher() {
+      const layer = document.getElementById('timelinePopupLayer');
+      const toggle = document.getElementById('timelinePopupToggle');
+      if (!layer || !toggle) return;
+
+      const closeButtons = layer.querySelectorAll('[data-timeline-popup-close]');
+      const closePopup = () => setTimelinePopupState(false);
+
+      toggle.addEventListener('click', () => setTimelinePopupState(!timelinePopupOpen));
+      closeButtons.forEach(btn => btn.addEventListener('click', closePopup));
+
+      layer.addEventListener('click', event => {
+        if (event.target && event.target.hasAttribute('data-timeline-popup-close')) {
+          closePopup();
+        }
+      });
+
+      layer.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closePopup();
+        }
+      });
     }
 
     function setupTimelineDockInteractions() {
