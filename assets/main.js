@@ -2715,12 +2715,76 @@ function initDropdownMenus(){
   });
 }
 
+function ensureNotificationModal(){
+  if (document.querySelector('[data-notifications-modal]')) return;
+  if (!(document.body instanceof HTMLElement)) return;
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div
+      class="notifications-modal"
+      id="notificationsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notificationsModalTitle"
+      hidden
+      data-notifications-modal
+    >
+      <div class="notifications-modal__overlay" data-notifications-overlay></div>
+      <div class="notifications-modal__dialog" role="document">
+        <header class="notifications-modal__header">
+          <div>
+            <h3 id="notificationsModalTitle">Notifications</h3>
+            <p class="muted">Review your studio alerts and nudges from the AI coach.</p>
+          </div>
+          <button type="button" class="notifications-modal__close" aria-label="Close notifications" data-notifications-close>
+            ×
+          </button>
+        </header>
+        <ul class="creator-notifications__list">
+          <li class="creator-notifications__item creator-notifications__item--alert" data-notification-item>
+            <div class="creator-notifications__icon" aria-hidden="true">⏰</div>
+            <div class="creator-notifications__content">
+              <h4>Storyboard draft deadline passed</h4>
+              <p>The "Episode 3 storyboard" milestone was due yesterday. Reschedule to keep your collaborators updated.</p>
+              <button type="button" class="creator-notifications__action">Reschedule now</button>
+            </div>
+          </li>
+          <li class="creator-notifications__item creator-notifications__item--coach" data-notification-item>
+            <div class="creator-notifications__icon" aria-hidden="true">🤖</div>
+            <div class="creator-notifications__content">
+              <h4>StudioOrganize AI Coach</h4>
+              <p>"Great consistency! Want a warm-up prompt for today's writing sprint?"</p>
+              <div class="creator-notifications__actions">
+                <button type="button" class="creator-notifications__action">Send prompt</button>
+                <button type="button" class="creator-notifications__action creator-notifications__action--ghost">Remind me later</button>
+              </div>
+            </div>
+          </li>
+          <li class="creator-notifications__item" data-notification-item>
+            <div class="creator-notifications__icon" aria-hidden="true">📌</div>
+            <div class="creator-notifications__content">
+              <h4>New reference board shared</h4>
+              <p>Alex added a "Lighting moods" board to the Set Design workspace. Add your notes before Friday.</p>
+              <button type="button" class="creator-notifications__action">Open board</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  `);
+}
+
 function initNotificationCenter(){
+  ensureNotificationModal();
+
   const container = document.querySelector('[data-notifications]');
   const modal = document.querySelector('[data-notifications-modal]');
   if (!container || !(modal instanceof HTMLElement)) return;
 
-  const toggle = container.querySelector('[data-notifications-toggle]');
+  let toggle = container.querySelector('[data-notifications-toggle]');
+  if (!(toggle instanceof HTMLElement) && container.hasAttribute('data-notifications-toggle')){
+    toggle = container;
+  }
   if (!(toggle instanceof HTMLElement)) return;
   if (toggle.dataset.notificationsBound === 'true') return;
   toggle.dataset.notificationsBound = 'true';
@@ -3288,6 +3352,26 @@ function ensureWorkspaceLauncherStructure(launcher){
     <span class="sr-only">Open Create with Music</span>
   `;
 
+  let notificationsButton = quickActionsGroup.querySelector('[data-notifications-toggle]');
+  if (!(notificationsButton instanceof HTMLElement)){
+    notificationsButton = document.createElement('button');
+    notificationsButton.type = 'button';
+    notificationsButton.className = 'workspace-launcher__module workspace-launcher__module--notifications';
+    notificationsButton.setAttribute('data-notifications', '');
+    notificationsButton.setAttribute('data-notifications-toggle', '');
+  }
+  notificationsButton.setAttribute('aria-haspopup', 'dialog');
+  notificationsButton.setAttribute('aria-expanded', 'false');
+  notificationsButton.setAttribute('aria-controls', 'notificationsModal');
+  notificationsButton.innerHTML = `
+    <span class="workspace-launcher__module-icon" aria-hidden="true">
+      <span class="workspace-launcher__notifications-icon" aria-hidden="true">✉️</span>
+      <span class="notifications-toggle__badge is-empty" data-notifications-count></span>
+    </span>
+    <span class="workspace-launcher__module-label">ALERTS</span>
+    <span class="sr-only" data-notifications-label>Open notifications</span>
+  `;
+
   // Create auth/theme combined button
   let authThemeButton = quickActionsGroup.querySelector('.workspace-launcher__auth-theme');
   if (!(authThemeButton instanceof HTMLElement)){
@@ -3319,6 +3403,7 @@ function ensureWorkspaceLauncherStructure(launcher){
     creativeHubLink,
     videoLessonsButton,
     musicButton,
+    notificationsButton,
     saveButton,
     storyButton
   ].forEach(button => {
@@ -3434,6 +3519,14 @@ function injectGlobalWorkspaceLauncher(){
             </span>
             <span class="workspace-launcher__module-label">MUSIC</span>
             <span class="sr-only">Open Create with Music</span>
+          </button>
+          <button type="button" class="workspace-launcher__module workspace-launcher__module--notifications" data-notifications data-notifications-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="notificationsModal">
+            <span class="workspace-launcher__module-icon" aria-hidden="true">
+              <span class="workspace-launcher__notifications-icon" aria-hidden="true">✉️</span>
+              <span class="notifications-toggle__badge is-empty" data-notifications-count></span>
+            </span>
+            <span class="workspace-launcher__module-label">ALERTS</span>
+            <span class="sr-only" data-notifications-label>Open notifications</span>
           </button>
           <button type="button" class="workspace-launcher__module workspace-launcher__module--assistant" data-workspace-assistant-toggle data-label="Assistant" aria-pressed="false" aria-expanded="false" aria-label="Open StudioOrganize Assistant">
             <span class="workspace-launcher__module-icon" aria-hidden="true">
