@@ -3288,13 +3288,37 @@ function ensureWorkspaceLauncherStructure(launcher){
     <span class="sr-only">Open Create with Music</span>
   `;
 
+  // Create auth/theme combined button
+  let authThemeButton = quickActionsGroup.querySelector('.workspace-launcher__auth-theme');
+  if (!(authThemeButton instanceof HTMLElement)){
+    authThemeButton = document.createElement('button');
+    authThemeButton.type = 'button';
+    authThemeButton.className = 'workspace-launcher__auth-theme';
+    authThemeButton.setAttribute('data-auth-theme-toggle', '');
+  }
+  authThemeButton.setAttribute('aria-label', 'Sign In / Theme');
+  authThemeButton.innerHTML = `
+    <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </span>
+    <span class="workspace-launcher__auth-theme-label">SIGN IN</span>
+    <span class="sr-only">Sign In / Theme</span>
+  `;
+
+  // Clear previous content
+  quickActionsGroup.innerHTML = '';
+
+  // Add buttons in rows
+  // First row with regular buttons
   [
     scriptButton,
     creatorLink,
     creativeHubLink,
     videoLessonsButton,
     musicButton,
-    assistantToggle,
     saveButton,
     storyButton
   ].forEach(button => {
@@ -3302,6 +3326,17 @@ function ensureWorkspaceLauncherStructure(launcher){
       quickActionsGroup.appendChild(button);
     }
   });
+
+  // Second row with 50% width buttons (Assistant and Auth/Theme)
+  const bottomRow = document.createElement('div');
+  bottomRow.className = 'workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full';
+  if (assistantToggle instanceof HTMLElement){
+    bottomRow.appendChild(assistantToggle);
+  }
+  if (authThemeButton instanceof HTMLElement){
+    bottomRow.appendChild(authThemeButton);
+  }
+  quickActionsGroup.appendChild(bottomRow);
 
   const legacyActions = panel.querySelector('.workspace-launcher__actions');
   if (legacyActions instanceof HTMLElement && legacyActions !== quickActions){
@@ -3793,6 +3828,78 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     }
 
     updateAssistantToggleState(launcher);
+
+    // Auth/Theme button handler
+    const authThemeButton = panel.querySelector('[data-auth-theme-toggle]');
+    if (authThemeButton instanceof HTMLElement && authThemeButton.dataset.authThemeBound !== 'true'){
+      authThemeButton.dataset.authThemeBound = 'true';
+      
+      // Helper function to check if user is signed in
+      const isUserSignedIn = () => {
+        const accountMenu = document.querySelector('[data-account-menu]');
+        return accountMenu && !accountMenu.hidden;
+      };
+      
+      // Update button based on auth state
+      const updateAuthThemeButton = () => {
+        const isSignedIn = isUserSignedIn();
+        
+        if (isSignedIn){
+          // Show theme toggle when signed in
+          const currentTheme = document.documentElement.dataset.theme || 'dark';
+          const themeIcon = currentTheme === 'dark' 
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+          authThemeButton.innerHTML = `
+            <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
+              ${themeIcon}
+            </span>
+            <span class="workspace-launcher__auth-theme-label">THEME</span>
+            <span class="sr-only">Toggle theme</span>
+          `;
+        } else {
+          // Show sign in when not signed in
+          authThemeButton.innerHTML = `
+            <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+            <span class="workspace-launcher__auth-theme-label">SIGN IN</span>
+            <span class="sr-only">Sign In</span>
+          `;
+        }
+      };
+      
+      updateAuthThemeButton();
+      
+      // Listen for auth state changes
+      document.addEventListener('studioorganize:auth-state-changed', updateAuthThemeButton);
+      
+      authThemeButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const isSignedIn = isUserSignedIn();
+        
+        if (isSignedIn){
+          // Toggle theme when signed in
+          const currentTheme = document.documentElement.dataset.theme || 'dark';
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          if (typeof window.setSiteTheme === 'function'){
+            window.setSiteTheme(newTheme);
+          }
+          updateAuthThemeButton();
+        } else {
+          // Open sign in when not signed in
+          const authLink = document.querySelector('[data-auth-link]');
+          if (authLink instanceof HTMLElement){
+            authLink.click();
+          }
+        }
+      });
+    }
 
     let hoverTimeoutId;
 
