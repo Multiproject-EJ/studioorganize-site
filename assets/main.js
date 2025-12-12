@@ -1470,11 +1470,108 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
 
 const authLinks = Array.from(document.querySelectorAll('[data-auth-link]'));
 const navAuthLink = authLinks.find(link => link.closest('.menu')) || null;
+const siteNav = document.querySelector('header.nav');
 const accountMenu = document.querySelector('[data-account-menu]');
 const accountButton = document.querySelector('[data-account-button]');
 const accountLogoutLink = document.querySelector('[data-account-logout]');
 const navHasAuthControls = Boolean(navAuthLink || accountMenu || accountLogoutLink);
 let lastKnownSession = null;
+let navHandle = null;
+let navAutoHideEnabled = false;
+let navPinned = true;
+
+const NAV_PINNED_STORAGE_KEY = 'SO_NAV_PINNED';
+
+function ensureNavHandle(){
+  if (!siteNav) return null;
+  if (navHandle && navHandle.isConnected) return navHandle;
+
+  navHandle = document.createElement('button');
+  navHandle.type = 'button';
+  navHandle.className = 'nav-visibility-handle';
+  navHandle.dataset.navHandle = 'true';
+  navHandle.setAttribute('aria-pressed', 'false');
+  navHandle.setAttribute('aria-label', 'Show header');
+  navHandle.hidden = true;
+  navHandle.innerHTML = '<span class="nav-visibility-handle__label">Header</span><span class="nav-visibility-handle__chevron" aria-hidden="true">⇅</span>';
+  navHandle.addEventListener('click', () => {
+    setNavPinned(!navPinned);
+  });
+
+  document.body.appendChild(navHandle);
+  positionNavHandle();
+  return navHandle;
+}
+
+function positionNavHandle(){
+  if (!navHandle || !siteNav) return;
+  const rect = siteNav.getBoundingClientRect();
+  const navHeight = Math.max(0, Math.round(rect.height));
+  const offset = navAutoHideEnabled && navPinned ? navHeight + 8 : 12;
+  navHandle.style.top = `${offset}px`;
+}
+
+function loadNavPinnedPreference(defaultValue = false){
+  try {
+    const stored = localStorage.getItem(NAV_PINNED_STORAGE_KEY);
+    if (stored === '1') return true;
+    if (stored === '0') return false;
+  } catch (_error){
+    /* ignore */
+  }
+  return defaultValue;
+}
+
+function saveNavPinnedPreference(value){
+  try {
+    localStorage.setItem(NAV_PINNED_STORAGE_KEY, value ? '1' : '0');
+  } catch (_error){
+    /* ignore */
+  }
+}
+
+function applyNavVisibility(){
+  if (!siteNav) return;
+  const collapsed = navAutoHideEnabled && !navPinned;
+  siteNav.classList.toggle('nav--collapsed', collapsed);
+  siteNav.classList.toggle('nav--revealed', !collapsed);
+  if (collapsed){
+    siteNav.setAttribute('aria-hidden', 'true');
+  } else {
+    siteNav.removeAttribute('aria-hidden');
+  }
+  if (navHandle){
+    navHandle.setAttribute('aria-pressed', navPinned ? 'true' : 'false');
+    navHandle.setAttribute('aria-label', navPinned ? 'Hide header' : 'Show header');
+    navHandle.classList.toggle('nav-visibility-handle--active', navPinned);
+  }
+  positionNavHandle();
+}
+
+function setNavPinned(pinned, { suppressSave = false } = {}){
+  navPinned = Boolean(pinned);
+  applyNavVisibility();
+  if (!suppressSave && navAutoHideEnabled){
+    saveNavPinnedPreference(navPinned);
+  }
+}
+
+function setNavAutoHide(enabled){
+  if (!siteNav) return;
+  navAutoHideEnabled = Boolean(enabled);
+  const handle = ensureNavHandle();
+  if (navAutoHideEnabled){
+    toggleElementVisibility(handle, true);
+    const initialPinned = loadNavPinnedPreference(false);
+    setNavPinned(initialPinned, { suppressSave: true });
+  } else {
+    toggleElementVisibility(handle, false);
+    setNavPinned(true, { suppressSave: true });
+  }
+  applyNavVisibility();
+}
+
+window.addEventListener('resize', positionNavHandle);
 
 function openAccountDropdownMenu(){
   if (!(accountMenu instanceof HTMLElement)) return false;
@@ -1989,6 +2086,7 @@ function updateAccountUI(session){
   const isSignedIn = Boolean(session);
   toggleElementVisibility(navAuthLink, !isSignedIn);
   toggleElementVisibility(accountMenu, isSignedIn);
+  setNavAutoHide(isSignedIn);
   if (accountButton){
     accountButton.textContent = 'Account';
     const email = session?.user?.email;
