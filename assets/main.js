@@ -1474,6 +1474,25 @@ const accountMenu = document.querySelector('[data-account-menu]');
 const accountButton = document.querySelector('[data-account-button]');
 const accountLogoutLink = document.querySelector('[data-account-logout]');
 const navHasAuthControls = Boolean(navAuthLink || accountMenu || accountLogoutLink);
+let lastKnownSession = null;
+
+function openAccountDropdownMenu(){
+  if (!(accountMenu instanceof HTMLElement)) return false;
+  const trigger = accountMenu.querySelector('button');
+  if (!(trigger instanceof HTMLElement)) return false;
+
+  if (!accountMenu.classList.contains('is-open')){
+    trigger.dispatchEvent(new Event('click', { bubbles: true }));
+  }
+
+  try {
+    trigger.focus({ preventScroll: true });
+  } catch (_error){
+    trigger.focus();
+  }
+
+  return true;
+}
 
 function toggleElementVisibility(element, shouldShow){
   if (!element) return;
@@ -1966,6 +1985,7 @@ function createWorkspaceVisibilityManager(){
 
 function updateAccountUI(session){
   if (!navHasAuthControls) return;
+  lastKnownSession = session ?? null;
   const isSignedIn = Boolean(session);
   toggleElementVisibility(navAuthLink, !isSignedIn);
   toggleElementVisibility(accountMenu, isSignedIn);
@@ -2264,6 +2284,11 @@ function handleAuthPortalEscape(event){
 
 function handleAuthLinkIntent(link){
   if (!(link instanceof HTMLElement)) return;
+
+  if (lastKnownSession && openAccountDropdownMenu()){
+    return;
+  }
+
   const normalizedText = (link.textContent || '').toLowerCase();
   const defaultIntent = normalizedText.includes('sign up') || normalizedText.includes('create') ? 'signup' : 'signin';
   const intent = link.dataset.authIntent || link.getAttribute('data-auth-switch') || defaultIntent;
