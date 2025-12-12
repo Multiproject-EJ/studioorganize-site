@@ -206,133 +206,314 @@
   </div>
 
 <main class="section">
-  <section class="daily-goal" id="daily-goal-card" data-daily-goal aria-label="Today's featured goal" tabindex="-1">
-    <div class="daily-goal__media">
-      <img src="/assets/img/IMG_6893.webp" alt="Storyboard frames arranged in a grid" loading="lazy" />
-      <img src="/assets/img/IMG_6894.webp" alt="Creative planning notes for a film sequence" loading="lazy" />
-    </div>
-    <div class="daily-goal__content">
-      <span class="daily-goal__kicker">New today</span>
-      <h2 class="daily-goal__title">Goal: Name 10 scenes in Act 3</h2>
-      <p class="daily-goal__copy">
-        Focus on Episode 3's finale by sketching ten pivotal scene names. Capture the emotional turns so your storyboard
-        sprint hits the right beats when you return to the workspace.
-      </p>
-      <ul class="daily-goal__checklist">
-        <li><strong>Warm-up:</strong> Re-read your Act 2 cliffhanger to anchor the momentum.</li>
-        <li><strong>List scenes:</strong> Draft ten scene titles that map the escalation toward the climax.</li>
-        <li><strong>Visual cue:</strong> Clip a quick image reference for each scene inside Storyboard Pro.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="creator-overview" aria-label="Today's studio overview">
-    <div class="creator-overview__today">
-      <span class="creator-overview__kicker">📅 Today</span>
-      <h2 class="creator-overview__date" data-creator-date>Sunday, October 19</h2>
-      <p class="creator-overview__time" data-creator-time>6:12 PM</p>
-      <p class="creator-overview__subtitle">Stay synced with your studio rhythm.</p>
-    </div>
-    <div class="creator-overview__weather" aria-live="polite">
-      <div class="creator-overview__weather-header">
-        <span class="creator-overview__weather-icon" aria-hidden="true" data-weather-icon>🌤️</span>
-        <span class="creator-overview__temp"><span data-weather-temp>72</span>°F</span>
+  <section class="panel-carousel" aria-label="Account panels" data-panel-carousel>
+    <div class="panel-carousel__nav">
+      <div class="panel-carousel__intro">
+        <p class="panel-carousel__eyebrow">Swipe through your account</p>
+        <h1 class="panel-carousel__title">Goals, studio rhythm, and creative challenges</h1>
       </div>
-      <p class="creator-overview__condition" data-weather-status>Partly cloudy with steady light.</p>
-      <p class="creator-overview__location" data-weather-location>Los Angeles Studio Lot</p>
-      <p class="creator-overview__updated">Updated <span data-weather-updated>just now</span></p>
+      <div class="panel-carousel__tabs" role="tablist" aria-label="Account panels">
+        <button class="panel-carousel__tab" id="panel-goals-tab" type="button" role="tab" aria-selected="true" aria-controls="panel-goals" data-panel-tab="0">Goals</button>
+        <button class="panel-carousel__tab" id="panel-studio-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-studio" data-panel-tab="1">Studio</button>
+        <button class="panel-carousel__tab" id="panel-challenges-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-challenges" data-panel-tab="2">Challenges</button>
+      </div>
     </div>
-    <div class="creator-overview__streak" aria-live="polite">
-      <div class="creator-overview__streak-header">
-        <span class="creator-overview__streak-icon" aria-hidden="true">🔥</span>
-        <div>
-          <p class="creator-overview__streak-title">Streak Tracker</p>
-          <p class="creator-overview__streak-subtitle">Keep the creative flame going.</p>
+
+    <div class="panel-carousel__viewport" data-panel-track>
+      <div class="panel-carousel__panel" id="panel-goals" role="tabpanel" aria-labelledby="panel-goals-tab" data-panel>
+        <div class="panel-carousel__panel-inner">
+          <section class="daily-goal" id="daily-goal-card" data-daily-goal aria-label="Today's featured goal" tabindex="-1">
+            <div class="daily-goal__media">
+              <img src="/assets/img/IMG_6893.webp" alt="Storyboard frames arranged in a grid" loading="lazy" />
+              <img src="/assets/img/IMG_6894.webp" alt="Creative planning notes for a film sequence" loading="lazy" />
+            </div>
+            <div class="daily-goal__content">
+              <span class="daily-goal__kicker">New today</span>
+              <h2 class="daily-goal__title">Goal: Name 10 scenes in Act 3</h2>
+              <p class="daily-goal__copy">
+                Focus on Episode 3's finale by sketching ten pivotal scene names. Capture the emotional turns so your storyboard
+                sprint hits the right beats when you return to the workspace.
+              </p>
+              <ul class="daily-goal__checklist">
+                <li><strong>Warm-up:</strong> Re-read your Act 2 cliffhanger to anchor the momentum.</li>
+                <li><strong>List scenes:</strong> Draft ten scene titles that map the escalation toward the climax.</li>
+                <li><strong>Visual cue:</strong> Clip a quick image reference for each scene inside Storyboard Pro.</li>
+              </ul>
+            </div>
+          </section>
+
+          <div class="creator-goals-grid">
+            <section class="creator-goals-tile" aria-label="Story goals tracker">
+              <button type="button" class="creator-overview__goals" data-goals-trigger>
+              <div class="creator-overview__goals-header">
+                <span class="creator-overview__goals-icon" aria-hidden="true">🎯</span>
+                <div>
+                  <p class="creator-overview__goals-title">Story Goals</p>
+                  <p class="creator-overview__goals-subtitle">Track your script progress.</p>
+                </div>
+              </div>
+              <div class="creator-overview__goals-stats">
+                <span class="creator-overview__goals-count" data-goals-count>—</span>
+                <span class="creator-overview__goals-label">overall progress</span>
+              </div>
+              <p class="creator-overview__goals-note">Click to view detailed story metrics and milestones.</p>
+              </button>
+            </section>
+
+            <section class="creator-goals-tile" aria-label="AI assistant plan">
+              <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
+              <div class="creator-overview__goals-header">
+                <span class="creator-overview__goals-icon" aria-hidden="true">🤖</span>
+                <div>
+                  <p class="creator-overview__goals-title">AI Assistant Plan</p>
+                  <p class="creator-overview__goals-subtitle">Configure how the AI should behave.</p>
+                </div>
+              </div>
+              <div class="creator-overview__goals-stats">
+                <span class="creator-overview__goals-count" data-ai-plan-status>—</span>
+                <span class="creator-overview__goals-label">saved plan</span>
+              </div>
+              <p class="creator-overview__goals-note">Click to customize AI behavior and coaching style.</p>
+              </button>
+            </section>
+
+            <section class="creator-goals-tile" aria-label="Milestones and reminders">
+              <button type="button" class="creator-overview__goals" data-goal-planner-trigger>
+              <div class="creator-overview__goals-header">
+                <span class="creator-overview__goals-icon" aria-hidden="true">🗓️</span>
+                <div>
+                  <p class="creator-overview__goals-title">Milestones &amp; Reminders</p>
+                  <p class="creator-overview__goals-subtitle">Stay accountable</p>
+                </div>
+              </div>
+              <div class="creator-overview__goals-stats">
+                <span class="creator-overview__goals-count">Plan</span>
+                <span class="creator-overview__goals-label">a new milestone</span>
+              </div>
+              <p class="creator-overview__goals-note">
+                Set a focus target, pick when it is due, and choose how you would like to be nudged.
+              </p>
+              <p class="creator-overview__goals-note">Goal title · Target date · Email reminders · Add a note (optional) · Save goal</p>
+              <p class="creator-overview__goals-note">Saved goals · Track multiple milestones and update them as you progress.</p>
+              <p class="creator-overview__goals-note">You have not saved any goals yet.</p>
+              <p class="creator-overview__goals-note">
+                Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any
+                time.
+              </p>
+              </button>
+            </section>
+          </div>
         </div>
       </div>
-      <div class="creator-overview__streak-stats">
-        <span class="creator-overview__streak-count" data-streak-count>7</span>
-        <span class="creator-overview__streak-label">days in a row</span>
-      </div>
-      <div class="creator-overview__streak-progress" role="img" aria-label="Streak progress 7 of 10 days">
-        <span data-level="full"></span>
-        <span data-level="full"></span>
-        <span data-level="full"></span>
-        <span data-level="full"></span>
-        <span data-level="full"></span>
-        <span data-level="full"></span>
-        <span data-level="full"></span>
-        <span data-level="empty"></span>
-        <span data-level="empty"></span>
-        <span data-level="empty"></span>
-      </div>
-      <p class="creator-overview__streak-note">Three more sessions unlock the Momentum badge.</p>
-    </div>
-  </section>
 
-  <div class="creator-goals-grid">
-    <section class="creator-goals-tile" aria-label="Story goals tracker">
-      <button type="button" class="creator-overview__goals" data-goals-trigger>
-      <div class="creator-overview__goals-header">
-        <span class="creator-overview__goals-icon" aria-hidden="true">🎯</span>
-        <div>
-          <p class="creator-overview__goals-title">Story Goals</p>
-          <p class="creator-overview__goals-subtitle">Track your script progress.</p>
+      <div class="panel-carousel__panel" id="panel-studio" role="tabpanel" aria-labelledby="panel-studio-tab" data-panel>
+        <div class="panel-carousel__panel-inner">
+          <section class="creator-overview" aria-label="Today's studio overview">
+            <div class="creator-overview__today">
+              <span class="creator-overview__kicker">📅 Today</span>
+              <h2 class="creator-overview__date" data-creator-date>Sunday, October 19</h2>
+              <p class="creator-overview__time" data-creator-time>6:12 PM</p>
+              <p class="creator-overview__subtitle">Stay synced with your studio rhythm.</p>
+            </div>
+            <div class="creator-overview__weather" aria-live="polite">
+              <div class="creator-overview__weather-header">
+                <span class="creator-overview__weather-icon" aria-hidden="true" data-weather-icon>🌤️</span>
+                <span class="creator-overview__temp"><span data-weather-temp>72</span>°F</span>
+              </div>
+              <p class="creator-overview__condition" data-weather-status>Partly cloudy with steady light.</p>
+              <p class="creator-overview__location" data-weather-location>Los Angeles Studio Lot</p>
+              <p class="creator-overview__updated">Updated <span data-weather-updated>just now</span></p>
+            </div>
+            <div class="creator-overview__streak" aria-live="polite">
+              <div class="creator-overview__streak-header">
+                <span class="creator-overview__streak-icon" aria-hidden="true">🔥</span>
+                <div>
+                  <p class="creator-overview__streak-title">Streak Tracker</p>
+                  <p class="creator-overview__streak-subtitle">Keep the creative flame going.</p>
+                </div>
+              </div>
+              <div class="creator-overview__streak-stats">
+                <span class="creator-overview__streak-count" data-streak-count>7</span>
+                <span class="creator-overview__streak-label">days in a row</span>
+              </div>
+              <div class="creator-overview__streak-progress" role="img" aria-label="Streak progress 7 of 10 days">
+                <span data-level="full"></span>
+                <span data-level="full"></span>
+                <span data-level="full"></span>
+                <span data-level="full"></span>
+                <span data-level="full"></span>
+                <span data-level="full"></span>
+                <span data-level="full"></span>
+                <span data-level="empty"></span>
+                <span data-level="empty"></span>
+                <span data-level="empty"></span>
+              </div>
+              <p class="creator-overview__streak-note">Three more sessions unlock the Momentum badge.</p>
+            </div>
+          </section>
+
+          <div class="app-menu" data-app-menu>
+            <div class="app-menu__actions">
+              <button
+                class="app-menu__toggle"
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="workspacePreferencesModal"
+                data-workspace-preferences-trigger
+              >
+                <span class="app-menu__title">Workspace Preferences</span>
+                <span class="app-menu__subtitle">Pick themes and panel visibility for every module.</span>
+              </button>
+              <button
+                class="app-menu__toggle"
+                type="button"
+                data-app-menu-toggle
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <span class="app-menu__title">Creator Apps</span>
+                <span class="app-menu__subtitle">Jump into the StudioOrganize workspace that fits your next project.</span>
+              </button>
+              <button
+                class="app-menu__toggle"
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="communityProgramsModal"
+                data-community-programs-trigger
+              >
+                <span class="app-menu__title">Community Programs</span>
+                <span class="app-menu__subtitle">Explore collaboration carts, creator challenges, and community coffees.</span>
+              </button>
+            </div>
+            <div class="app-menu__popover" role="menu" data-app-menu-panel hidden>
+              <ul class="app-menu__list">
+                <li role="none">
+                  <a class="app-menu__item" href="https://studioorganize.com/use-cases/screenplay-writing.html" role="menuitem">
+                    <span class="app-menu__item-media">
+                      <img src="/assets/img/screenplay_writer1.webp" alt="" loading="lazy" />
+                    </span>
+                    <span class="app-menu__item-text">
+                      <span class="app-menu__item-title">Screenplay Writing</span>
+                      <span class="app-menu__item-copy">Screenplay writing workspace</span>
+                    </span>
+                  </a>
+                </li>
+                <li role="none">
+                  <a class="app-menu__item" href="/CharacterStudio.html" role="menuitem">
+                    <span class="app-menu__item-media">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span class="app-menu__item-text">
+                      <span class="app-menu__item-title">Character Studio</span>
+                      <span class="app-menu__item-copy">Character Studio workspace preview</span>
+                    </span>
+                  </a>
+                </li>
+                <li role="none">
+                  <span class="app-menu__item app-menu__item--disabled" role="menuitem" aria-disabled="true" tabindex="-1">
+                    <span class="app-menu__item-media">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span class="app-menu__item-text">
+                      <span class="app-menu__item-title">Set Design</span>
+                      <span class="app-menu__item-copy">Set design workspace placeholder</span>
+                    </span>
+                  </span>
+                </li>
+                <li role="none">
+                  <div class="app-menu__item app-menu__item--submenu" role="group" aria-label="Storyboarding">
+                    <div class="app-menu__item-header">
+                      <span class="app-menu__item-media">
+                        <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                      </span>
+                      <div class="app-menu__item-text">
+                        <span class="app-menu__item-title">Storyboarding</span>
+                        <span class="app-menu__item-copy">Storyboarding workspace preview</span>
+                      </div>
+                    </div>
+                    <ul class="app-menu__sublist" role="menu">
+                      <li role="none"><a href="/use-cases/screenplay-writing.html#storyboardModeBtn" role="menuitem">Storyboard Lite</a></li>
+                      <li role="none"><a href="/StoryboardPro.html" role="menuitem">Storyboard Pro</a></li>
+                      <li role="none"><a href="/use-cases/screenplay-writing.html#timelineModeBtn" role="menuitem">Timeline Mode</a></li>
+                    </ul>
+                  </div>
+                </li>
+                <li role="none">
+                  <span class="app-menu__item app-menu__item--disabled" role="menuitem" aria-disabled="true" tabindex="-1">
+                    <span class="app-menu__item-media">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span class="app-menu__item-text">
+                      <span class="app-menu__item-title">Sound Design</span>
+                      <span class="app-menu__item-copy">Sound design workspace placeholder</span>
+                    </span>
+                  </span>
+                </li>
+                <li role="none">
+                  <span class="app-menu__item app-menu__item--disabled" role="menuitem" aria-disabled="true" tabindex="-1">
+                    <span class="app-menu__item-media">
+                      <img src="/assets/img/studioorganize_mock.png" alt="" loading="lazy" />
+                    </span>
+                    <span class="app-menu__item-text">
+                      <span class="app-menu__item-title">Editing Suite</span>
+                      <span class="app-menu__item-copy">Editing suite workspace placeholder</span>
+                    </span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="creator-overview__goals-stats">
-        <span class="creator-overview__goals-count" data-goals-count>—</span>
-        <span class="creator-overview__goals-label">overall progress</span>
-      </div>
-      <p class="creator-overview__goals-note">Click to view detailed story metrics and milestones.</p>
-      </button>
-    </section>
 
-    <section class="creator-goals-tile" aria-label="AI assistant plan">
-      <button type="button" class="creator-overview__goals" data-ai-plan-trigger>
-      <div class="creator-overview__goals-header">
-        <span class="creator-overview__goals-icon" aria-hidden="true">🤖</span>
-        <div>
-          <p class="creator-overview__goals-title">AI Assistant Plan</p>
-          <p class="creator-overview__goals-subtitle">Configure how the AI should behave.</p>
-        </div>
-      </div>
-      <div class="creator-overview__goals-stats">
-        <span class="creator-overview__goals-count" data-ai-plan-status>—</span>
-        <span class="creator-overview__goals-label">saved plan</span>
-      </div>
-      <p class="creator-overview__goals-note">Click to customize AI behavior and coaching style.</p>
-      </button>
-    </section>
+      <div class="panel-carousel__panel" id="panel-challenges" role="tabpanel" aria-labelledby="panel-challenges-tab" data-panel>
+        <div class="panel-carousel__panel-inner">
+          <section class="creator-dashboard" aria-label="Creator progress dashboard">
+            <div class="creator-dashboard__intro">
+              <h2>Keep Your Creative Momentum</h2>
+              <p class="muted">
+                Celebrate the time you have invested, see your streak, and plan the next milestone for your studio practice.
+              </p>
+            </div>
 
-    <section class="creator-goals-tile" aria-label="Milestones and reminders">
-      <button type="button" class="creator-overview__goals" data-goal-planner-trigger>
-      <div class="creator-overview__goals-header">
-        <span class="creator-overview__goals-icon" aria-hidden="true">🗓️</span>
-        <div>
-          <p class="creator-overview__goals-title">Milestones &amp; Reminders</p>
-          <p class="creator-overview__goals-subtitle">Stay accountable</p>
-        </div>
-      </div>
-      <div class="creator-overview__goals-stats">
-        <span class="creator-overview__goals-count">Plan</span>
-        <span class="creator-overview__goals-label">a new milestone</span>
-      </div>
-      <p class="creator-overview__goals-note">
-        Set a focus target, pick when it is due, and choose how you would like to be nudged.
-      </p>
-      <p class="creator-overview__goals-note">Goal title · Target date · Email reminders · Add a note (optional) · Save goal</p>
-      <p class="creator-overview__goals-note">Saved goals · Track multiple milestones and update them as you progress.</p>
-      <p class="creator-overview__goals-note">You have not saved any goals yet.</p>
-      <p class="creator-overview__goals-note">
-        Reminders will be delivered to your StudioOrganize email contact. You can manage alerts in your account settings at any
-        time.
-      </p>
-      </button>
-    </section>
-  </div>
+            <section class="creator-challenges" aria-label="Creator challenges">
+              <div class="creator-challenges__intro">
+                <h3>Challenge Badges</h3>
+                <p class="muted">Pick a badge to energize today's session and unlock new streak highlights.</p>
+              </div>
 
-  <div class="app-menu" data-app-menu>
+              <div class="creator-challenges__grid" role="list">
+                <button class="challenge-badge" type="button" role="listitem">
+                  <span class="challenge-badge__icon" aria-hidden="true">✍️</span>
+                  <span class="challenge-badge__title">Writers Set Goals</span>
+                  <span class="challenge-badge__copy">Commit to 300 focused words and log the win.</span>
+                  <span class="challenge-badge__cta">Activate challenge</span>
+                </button>
+
+                <button class="challenge-badge" type="button" role="listitem">
+                  <span class="challenge-badge__icon" aria-hidden="true">🎬</span>
+                  <span class="challenge-badge__title">Storyboard Sprint</span>
+                  <span class="challenge-badge__copy">Draft three key frames to visualize your next scene.</span>
+                  <span class="challenge-badge__cta">Activate challenge</span>
+                </button>
+
+                <button class="challenge-badge" type="button" role="listitem">
+                  <span class="challenge-badge__icon" aria-hidden="true">🎧</span>
+                  <span class="challenge-badge__title">Soundscape Remix</span>
+                  <span class="challenge-badge__copy">Layer two new audio textures into your current project.</span>
+                  <span class="challenge-badge__cta">Activate challenge</span>
+                </button>
+
+                <button class="challenge-badge" type="button" role="listitem">
+                  <span class="challenge-badge__icon" aria-hidden="true">🧩</span>
+                  <span class="challenge-badge__title">Prototype Playtest</span>
+                  <span class="challenge-badge__copy">Share a build or draft with one collaborator for feedback.</span>
+                  <span class="challenge-badge__cta">Activate challenge</span>
+                </button>
+              </div>
+            </section>
     <div class="app-menu__actions">
       <button
         class="app-menu__toggle"
@@ -2751,6 +2932,70 @@
     });
 
     closeModal();
+  })();
+</script>
+<script>
+  (function(){
+    const carousel = document.querySelector('[data-panel-carousel]');
+    const track = carousel?.querySelector('[data-panel-track]');
+    const panels = Array.from(track?.querySelectorAll('[data-panel]') || []);
+    const tabs = Array.from(carousel?.querySelectorAll('[data-panel-tab]') || []);
+
+    if (!carousel || !track || !panels.length || !tabs.length) return;
+
+    function setActivePanel(index){
+      tabs.forEach((tab, tabIndex) => {
+        const isActive = tabIndex === index;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.classList.toggle('is-active', isActive);
+        tab.tabIndex = isActive ? 0 : -1;
+      });
+
+      panels.forEach((panel, panelIndex) => {
+        const isActive = panelIndex === index;
+        panel.setAttribute('aria-hidden', String(!isActive));
+        panel.classList.toggle('is-active', isActive);
+      });
+    }
+
+    function scrollToPanel(index){
+      const target = panels[index];
+      if (!target) return;
+
+      const left = target.offsetLeft - track.offsetLeft;
+      track.scrollTo({ left, behavior: 'smooth' });
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => {
+        scrollToPanel(index);
+        setActivePanel(index);
+      });
+    });
+
+    let scrollTimeout;
+    function syncActivePanel(){
+      const scrollLeft = track.scrollLeft;
+      let closestIndex = 0;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      panels.forEach((panel, index) => {
+        const distance = Math.abs(panel.offsetLeft - track.offsetLeft - scrollLeft);
+        if (distance < closestDistance){
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+
+      setActivePanel(closestIndex);
+    }
+
+    track.addEventListener('scroll', () => {
+      window.clearTimeout(scrollTimeout);
+      scrollTimeout = window.setTimeout(syncActivePanel, 80);
+    }, { passive: true });
+
+    setActivePanel(0);
   })();
 </script>
 <script>
