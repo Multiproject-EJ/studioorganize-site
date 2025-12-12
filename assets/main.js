@@ -3288,13 +3288,37 @@ function ensureWorkspaceLauncherStructure(launcher){
     <span class="sr-only">Open Create with Music</span>
   `;
 
+  // Create auth/theme combined button
+  let authThemeButton = quickActionsGroup.querySelector('.workspace-launcher__auth-theme');
+  if (!(authThemeButton instanceof HTMLElement)){
+    authThemeButton = document.createElement('button');
+    authThemeButton.type = 'button';
+    authThemeButton.className = 'workspace-launcher__auth-theme';
+    authThemeButton.setAttribute('data-auth-theme-toggle', '');
+  }
+  authThemeButton.setAttribute('aria-label', 'Sign In / Theme');
+  authThemeButton.innerHTML = `
+    <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </span>
+    <span class="workspace-launcher__auth-theme-label">SIGN IN</span>
+    <span class="sr-only">Sign In / Theme</span>
+  `;
+
+  // Clear previous content
+  quickActionsGroup.innerHTML = '';
+
+  // Add buttons in rows
+  // First row with regular buttons
   [
     scriptButton,
     creatorLink,
     creativeHubLink,
     videoLessonsButton,
     musicButton,
-    assistantToggle,
     saveButton,
     storyButton
   ].forEach(button => {
@@ -3302,6 +3326,17 @@ function ensureWorkspaceLauncherStructure(launcher){
       quickActionsGroup.appendChild(button);
     }
   });
+
+  // Second row with 50% width buttons (Assistant and Auth/Theme)
+  const bottomRow = document.createElement('div');
+  bottomRow.className = 'workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full';
+  if (assistantToggle instanceof HTMLElement){
+    bottomRow.appendChild(assistantToggle);
+  }
+  if (authThemeButton instanceof HTMLElement){
+    bottomRow.appendChild(authThemeButton);
+  }
+  quickActionsGroup.appendChild(bottomRow);
 
   const legacyActions = panel.querySelector('.workspace-launcher__actions');
   if (legacyActions instanceof HTMLElement && legacyActions !== quickActions){
@@ -3793,6 +3828,75 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     }
 
     updateAssistantToggleState(launcher);
+
+    // Auth/Theme button handler
+    const authThemeButton = panel.querySelector('[data-auth-theme-toggle]');
+    if (authThemeButton instanceof HTMLElement && authThemeButton.dataset.authThemeBound !== 'true'){
+      authThemeButton.dataset.authThemeBound = 'true';
+      
+      // Update button based on auth state
+      const updateAuthThemeButton = () => {
+        const authLink = document.querySelector('[data-auth-link]');
+        const accountMenu = document.querySelector('[data-account-menu]');
+        const isSignedIn = accountMenu && !accountMenu.hidden;
+        
+        if (isSignedIn){
+          // Show theme toggle when signed in
+          const currentTheme = document.documentElement.dataset.theme || 'dark';
+          authThemeButton.innerHTML = `
+            <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
+              <span data-theme-icon>${currentTheme === 'dark' ? '🌙' : '☀️'}</span>
+            </span>
+            <span class="workspace-launcher__auth-theme-label">THEME</span>
+            <span class="sr-only">Toggle theme</span>
+          `;
+        } else {
+          // Show sign in when not signed in
+          authThemeButton.innerHTML = `
+            <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+            <span class="workspace-launcher__auth-theme-label">SIGN IN</span>
+            <span class="sr-only">Sign In</span>
+          `;
+        }
+      };
+      
+      updateAuthThemeButton();
+      
+      // Listen for auth state changes
+      document.addEventListener('studioorganize:auth-state-changed', updateAuthThemeButton);
+      
+      authThemeButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const accountMenu = document.querySelector('[data-account-menu]');
+        const isSignedIn = accountMenu && !accountMenu.hidden;
+        
+        if (isSignedIn){
+          // Toggle theme when signed in
+          const currentTheme = document.documentElement.dataset.theme || 'dark';
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          if (typeof window.setSiteTheme === 'function'){
+            window.setSiteTheme(newTheme);
+          }
+          updateAuthThemeButton();
+        } else {
+          // Open sign in when not signed in
+          const authLink = document.querySelector('[data-auth-link]');
+          if (authLink instanceof HTMLElement){
+            authLink.click();
+          } else {
+            // Fallback to direct URL
+            window.location.href = '/supabase-test.html';
+          }
+        }
+      });
+    }
 
     let hoverTimeoutId;
 
