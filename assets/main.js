@@ -3291,27 +3291,6 @@ function ensureWorkspaceLauncherStructure(launcher){
     <span class="sr-only">Creator Page</span>
   `;
 
-  let creativeHubLink = quickActionsGroup.querySelector('.workspace-launcher__module--creative-hub');
-  if (!(creativeHubLink instanceof HTMLElement)){
-    creativeHubLink = document.createElement('a');
-    creativeHubLink.className = 'workspace-launcher__module workspace-launcher__module--creative-hub';
-    creativeHubLink.setAttribute('href', '/creative-hub.html');
-    creativeHubLink.setAttribute('data-label', 'Creative Hub');
-  }
-  creativeHubLink.setAttribute('aria-label', 'Creative Hub');
-  creativeHubLink.innerHTML = `
-    <span class="workspace-launcher__module-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="7" height="7"></rect>
-        <rect x="14" y="3" width="7" height="7"></rect>
-        <rect x="14" y="14" width="7" height="7"></rect>
-        <rect x="3" y="14" width="7" height="7"></rect>
-      </svg>
-    </span>
-    <span class="workspace-launcher__module-label">HUB</span>
-    <span class="sr-only">Creative Hub</span>
-  `;
-
   let videoLessonsButton = quickActionsGroup.querySelector('[data-video-lessons-open]');
   if (!(videoLessonsButton instanceof HTMLElement)){
     videoLessonsButton = document.createElement('button');
@@ -3421,10 +3400,8 @@ function ensureWorkspaceLauncherStructure(launcher){
   [
     scriptButton,
     creatorLink,
-    creativeHubLink,
     videoLessonsButton,
     musicButton,
-    notificationsButton,
     authButton,
     saveButton,
     storyButton
@@ -3439,6 +3416,9 @@ function ensureWorkspaceLauncherStructure(launcher){
   bottomRow.className = 'workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full';
   if (assistantToggle instanceof HTMLElement){
     bottomRow.appendChild(assistantToggle);
+  }
+  if (notificationsButton instanceof HTMLElement){
+    bottomRow.appendChild(notificationsButton);
   }
   if (themeButton instanceof HTMLElement){
     bottomRow.appendChild(themeButton);
@@ -3510,18 +3490,6 @@ function injectGlobalWorkspaceLauncher(){
             <span class="workspace-launcher__script-label">CREATOR</span>
             <span class="sr-only">Creator Page</span>
           </a>
-          <a class="workspace-launcher__module workspace-launcher__module--creative-hub" href="/creative-hub.html" data-label="Creative Hub" aria-label="Creative Hub">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-              </svg>
-            </span>
-            <span class="workspace-launcher__module-label">HUB</span>
-            <span class="sr-only">Creative Hub</span>
-          </a>
           <button type="button" class="workspace-launcher__module workspace-launcher__module--lessons" data-video-lessons-open data-label="Video Lessons" aria-label="Open video lesson library">
             <span class="workspace-launcher__module-icon workspace-launcher__module-icon--lessons" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3541,14 +3509,6 @@ function injectGlobalWorkspaceLauncher(){
             </span>
             <span class="workspace-launcher__module-label">MUSIC</span>
             <span class="sr-only">Open Create with Music</span>
-          </button>
-          <button type="button" class="workspace-launcher__module workspace-launcher__module--notifications" data-notifications data-notifications-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="notificationsModal">
-            <span class="workspace-launcher__module-icon" aria-hidden="true">
-              <span class="workspace-launcher__notifications-icon" aria-hidden="true">✉️</span>
-              <span class="notifications-toggle__badge is-empty" data-notifications-count></span>
-            </span>
-            <span class="workspace-launcher__module-label">ALERTS</span>
-            <span class="sr-only" data-notifications-label>Open notifications</span>
           </button>
           <button type="button" class="workspace-launcher__auth" data-auth-toggle aria-label="Sign In">
             <span class="workspace-launcher__auth-icon" aria-hidden="true">
@@ -3608,6 +3568,14 @@ function injectGlobalWorkspaceLauncher(){
               </span>
               <span class="workspace-launcher__module-label">ASSISTANT</span>
               <span class="sr-only">Open StudioOrganize Assistant</span>
+            </button>
+            <button type="button" class="workspace-launcher__module workspace-launcher__module--notifications" data-notifications data-notifications-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="notificationsModal">
+              <span class="workspace-launcher__module-icon" aria-hidden="true">
+                <span class="workspace-launcher__notifications-icon" aria-hidden="true">✉️</span>
+                <span class="notifications-toggle__badge is-empty" data-notifications-count></span>
+              </span>
+              <span class="workspace-launcher__module-label">ALERTS</span>
+              <span class="sr-only" data-notifications-label>Open notifications</span>
             </button>
             <button type="button" class="workspace-launcher__theme" data-theme-toggle aria-label="Toggle theme">
               <span class="workspace-launcher__theme-icon" aria-hidden="true">
@@ -4240,6 +4208,35 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
       medium: 'balanced mid-length arc',
       long: 'full-length epic arc'
     };
+
+    const existingDirectorStrip = chat?.querySelector('.workspace-launcher__assistant-strip');
+    if (!(existingDirectorStrip instanceof HTMLElement)){
+      const directorStrip = document.createElement('a');
+      directorStrip.className = 'workspace-launcher__assistant-strip';
+      directorStrip.href = '/creative-hub.html';
+      directorStrip.setAttribute('data-label', 'Creative Hub');
+      directorStrip.setAttribute('aria-label', 'Open StudioOrganize Director Hub');
+      directorStrip.innerHTML = `
+        <span class="workspace-launcher__assistant-strip-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </span>
+        <div>
+          <strong>StudioOrganize Director</strong>
+          <span>Jump into the Hub for your orchestration tools.</span>
+        </div>
+      `;
+
+      if (chatForm instanceof HTMLElement){
+        chatForm.insertAdjacentElement('afterend', directorStrip);
+      } else if (chat instanceof HTMLElement){
+        chat.appendChild(directorStrip);
+      }
+    }
 
     const appendChatMessage = (role, message) => {
       if (!(chatThread instanceof HTMLElement)) return;
