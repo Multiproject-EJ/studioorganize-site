@@ -1415,7 +1415,7 @@ html.is-mobile-app.is-mobile-menu-open .mobile-menu-overlay{opacity:1;pointer-ev
 .panel-carousel__tab[aria-selected="true"]{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:var(--cta-text);border-color:transparent;box-shadow:0 12px 28px rgba(37,99,235,.35)}
 .panel-carousel__tab:hover{transform:translateY(-1px);border-color:rgba(125,211,252,.5)}
 .panel-carousel__viewport{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scroll-behavior:smooth}
-.panel-carousel__panel{min-width:100%;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:18px;box-shadow:0 24px 48px rgba(0,0,0,.14)}
+.panel-carousel__panel{min-width:100%;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.1),0 28px 70px rgba(0,0,0,.08)}
 .panel-carousel__panel-inner{display:flex;flex-direction:column;gap:18px}
 .panel-carousel__panel:focus-visible{outline:3px solid var(--brand);outline-offset:4px}
 .panel-carousel__viewport::-webkit-scrollbar{height:10px}
