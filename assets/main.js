@@ -3834,18 +3834,25 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
     if (authThemeButton instanceof HTMLElement && authThemeButton.dataset.authThemeBound !== 'true'){
       authThemeButton.dataset.authThemeBound = 'true';
       
+      // Helper function to check if user is signed in
+      const isUserSignedIn = () => {
+        const accountMenu = document.querySelector('[data-account-menu]');
+        return accountMenu && !accountMenu.hidden;
+      };
+      
       // Update button based on auth state
       const updateAuthThemeButton = () => {
-        const authLink = document.querySelector('[data-auth-link]');
-        const accountMenu = document.querySelector('[data-account-menu]');
-        const isSignedIn = accountMenu && !accountMenu.hidden;
+        const isSignedIn = isUserSignedIn();
         
         if (isSignedIn){
           // Show theme toggle when signed in
           const currentTheme = document.documentElement.dataset.theme || 'dark';
+          const themeIcon = currentTheme === 'dark' 
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
           authThemeButton.innerHTML = `
             <span class="workspace-launcher__auth-theme-icon" aria-hidden="true">
-              <span data-theme-icon>${currentTheme === 'dark' ? '🌙' : '☀️'}</span>
+              ${themeIcon}
             </span>
             <span class="workspace-launcher__auth-theme-label">THEME</span>
             <span class="sr-only">Toggle theme</span>
@@ -3874,8 +3881,7 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
         event.preventDefault();
         event.stopPropagation();
         
-        const accountMenu = document.querySelector('[data-account-menu]');
-        const isSignedIn = accountMenu && !accountMenu.hidden;
+        const isSignedIn = isUserSignedIn();
         
         if (isSignedIn){
           // Toggle theme when signed in
@@ -3890,9 +3896,6 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
           const authLink = document.querySelector('[data-auth-link]');
           if (authLink instanceof HTMLElement){
             authLink.click();
-          } else {
-            // Fallback to direct URL
-            window.location.href = '/supabase-test.html';
           }
         }
       });
