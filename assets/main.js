@@ -3420,8 +3420,15 @@ function ensureWorkspaceLauncherStructure(launcher){
   // Clear previous content
   quickActionsGroup.innerHTML = '';
 
-  // Add buttons in rows
-  // First row with regular buttons
+  // Dedicated top row for the assistant
+  const assistantRow = document.createElement('div');
+  assistantRow.className = 'workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full workspace-launcher__quick-actions-row--assistant';
+  if (assistantToggle instanceof HTMLElement){
+    assistantRow.appendChild(assistantToggle);
+  }
+  quickActionsGroup.appendChild(assistantRow);
+
+  // Primary quick actions
   [
     scriptButton,
     creatorLink,
@@ -3436,12 +3443,9 @@ function ensureWorkspaceLauncherStructure(launcher){
     }
   });
 
-  // Second row with 50% width buttons (Assistant and Theme)
+  // Utility row beneath the primary actions
   const bottomRow = document.createElement('div');
   bottomRow.className = 'workspace-launcher__quick-actions-row workspace-launcher__quick-actions-row--full';
-  if (assistantToggle instanceof HTMLElement){
-    bottomRow.appendChild(assistantToggle);
-  }
   if (notificationsButton instanceof HTMLElement){
     bottomRow.appendChild(notificationsButton);
   }
