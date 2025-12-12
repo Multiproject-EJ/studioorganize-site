@@ -258,6 +258,15 @@
       .timeline-dock__content { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 18px; opacity: 1; transform: translateY(0); transition: transform .35s ease, opacity .25s ease; }
       .timeline-dock.floating-hidden .timeline-dock__content { opacity: 0; transform: translateY(-18px); pointer-events: none; }
       .timeline-dock.floating-hidden { flex-direction: column-reverse; padding-top: 6px; padding-bottom: 0; gap: 6px; }
+      .floating-launchers {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
       .timeline-launcher {
         position: fixed;
         bottom: 20px;
@@ -276,6 +285,11 @@
         box-shadow: 0 12px 26px rgba(8,15,28,0.28);
         transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
       }
+      .floating-launchers .timeline-launcher {
+        position: relative;
+        bottom: auto;
+        right: auto;
+      }
       .timeline-launcher:hover { transform: translateY(-1px); border-color: var(--acc); box-shadow: 0 16px 32px rgba(8,15,28,0.34); }
       .timeline-launcher:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
       .timeline-launcher__label { font-size: 14px; letter-spacing: .2px; }
@@ -288,11 +302,27 @@
         padding: 32px 20px;
         z-index: 80;
       }
+      .scene-popup-layer {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px;
+        z-index: 78;
+      }
       .timeline-popup-layer--open { display: flex; }
+      .scene-popup-layer--open { display: flex; }
       .timeline-popup-layer__backdrop {
         position: absolute;
         inset: 0;
         background: rgba(15,23,42,0.58);
+        backdrop-filter: blur(8px);
+      }
+      .scene-popup-layer__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15,23,42,0.48);
         backdrop-filter: blur(8px);
       }
       .timeline-popup-layer__panel {
@@ -304,6 +334,17 @@
         border-radius: 20px;
         border: 1px solid var(--ring);
         box-shadow: 0 34px 68px rgba(8,15,28,0.45);
+        padding: 16px 16px 20px;
+      }
+      .scene-popup-layer__panel {
+        position: relative;
+        width: min(1200px, 96vw);
+        max-height: calc(100vh - 140px);
+        overflow: hidden auto;
+        background: var(--hud);
+        border-radius: 20px;
+        border: 1px solid var(--ring);
+        box-shadow: 0 32px 64px rgba(8,15,28,0.42);
         padding: 16px 16px 20px;
       }
       .timeline-popup-layer__close {
@@ -325,10 +366,34 @@
         transition: transform .2s ease, border-color .2s ease, background .2s ease;
         z-index: 1;
       }
+      .scene-popup-layer__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--ring);
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 18px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform .2s ease, border-color .2s ease, background .2s ease;
+        z-index: 1;
+      }
       .timeline-popup-layer__close:hover { transform: translateY(-1px); border-color: var(--acc); background: linear-gradient(135deg, rgba(79,123,255,0.16), rgba(79,123,255,0.08)); }
       .timeline-popup-layer__close:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+      .scene-popup-layer__close:hover { transform: translateY(-1px); border-color: var(--acc); background: linear-gradient(135deg, rgba(79,123,255,0.16), rgba(79,123,255,0.08)); }
+      .scene-popup-layer__close:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
       .timeline-popup-layer__content { position: relative; display: grid; gap: 14px; }
+      .scene-popup-layer__content { position: relative; display: grid; gap: 14px; padding: 20px 18px 24px; }
       body.timeline-popup-open { overflow: hidden; }
+      body.scene-popup-open { overflow: hidden; }
+      .scene-popup-inset { display: grid; gap: 16px; }
+      .timeline-launcher--ghost { background: linear-gradient(135deg, rgba(148,163,184,0.12), rgba(148,163,184,0.04)), var(--panel); }
       .story-arc-layout { display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px; }
       .story-arc-columns { flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
       .story-arc-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; justify-content: center; min-width: 48px; }
@@ -1079,10 +1144,16 @@
         <div class="scene-carousel__dots" role="tablist" aria-label="Select scene preview" data-scene-carousel-dots></div>
       </section>
 
-      <button class="timeline-launcher" id="timelinePopupToggle" type="button" aria-haspopup="dialog" aria-controls="timelinePopupLayer" aria-expanded="false">
-        <span aria-hidden="true">📋</span>
-        <span class="timeline-launcher__label">Storyboard popup</span>
-      </button>
+      <div class="floating-launchers">
+        <button class="timeline-launcher" id="timelinePopupToggle" type="button" aria-haspopup="dialog" aria-controls="timelinePopupLayer" aria-expanded="false">
+          <span aria-hidden="true">📋</span>
+          <span class="timeline-launcher__label">Storyboard popup</span>
+        </button>
+        <button class="timeline-launcher timeline-launcher--ghost" id="scenePopupToggle" type="button" aria-haspopup="dialog" aria-controls="scenePopupLayer" aria-expanded="false">
+          <span aria-hidden="true">🎞️</span>
+          <span class="timeline-launcher__label">Scene preview popup</span>
+        </button>
+      </div>
 
       <div class="timeline-popup-layer" id="timelinePopupLayer" aria-hidden="true" hidden>
         <div class="timeline-popup-layer__backdrop" data-timeline-popup-close aria-hidden="true"></div>
@@ -1325,6 +1396,31 @@
           </div>
         </div>
       </div>
+      </div>
+
+      <div class="scene-popup-layer" id="scenePopupLayer" aria-hidden="true" hidden>
+        <div class="scene-popup-layer__backdrop" data-scene-popup-close aria-hidden="true"></div>
+        <div class="scene-popup-layer__panel" role="dialog" aria-modal="true" aria-label="Scene carousel popup">
+          <button class="scene-popup-layer__close" type="button" data-scene-popup-close aria-label="Close scene popup">×</button>
+          <div class="scene-popup-layer__content">
+            <div class="scene-popup-inset">
+              <section class="scene-carousel-wrapper" aria-label="Scene previews" data-scene-carousel-container>
+                <div class="scene-carousel">
+                  <button class="scene-carousel__nav scene-carousel__nav--prev" type="button" aria-label="Previous scene" data-scene-carousel-prev data-scene-popup-initial-focus>
+                    <span class="scene-carousel__nav-icon" aria-hidden="true">‹</span>
+                  </button>
+                  <div class="scene-carousel__viewport" data-scene-carousel-viewport tabindex="0" role="group" aria-label="Storyboard scene preview">
+                    <ul class="scene-carousel__track" data-scene-carousel-track></ul>
+                  </div>
+                  <button class="scene-carousel__nav scene-carousel__nav--next" type="button" aria-label="Next scene" data-scene-carousel-next>
+                    <span class="scene-carousel__nav-icon" aria-hidden="true">›</span>
+                  </button>
+                </div>
+                <div class="scene-carousel__dots" role="tablist" aria-label="Select scene preview" data-scene-carousel-dots></div>
+              </section>
+            </div>
+          </div>
+        </div>
       </div>
 
       <dialog class="api-dialog" data-api-dialog aria-labelledby="apiDialogTitle">
@@ -1782,12 +1878,18 @@
     const apiDialog = document.querySelector('[data-api-dialog]');
     const apiForm = document.querySelector('[data-api-form]');
     const apiCloseButtons = document.querySelectorAll('[data-api-close]');
-    const sceneCarouselContainer = document.querySelector('[data-scene-carousel-container]');
-    const sceneCarouselTrack = document.querySelector('[data-scene-carousel-track]');
-    const sceneCarouselDots = document.querySelector('[data-scene-carousel-dots]');
-    const sceneCarouselPrev = document.querySelector('[data-scene-carousel-prev]');
-    const sceneCarouselNext = document.querySelector('[data-scene-carousel-next]');
-    const sceneCarouselViewport = document.querySelector('[data-scene-carousel-viewport]');
+    const sceneCarousels = Array.from(document.querySelectorAll('[data-scene-carousel-container]')).map(container => ({
+      container,
+      track: container.querySelector('[data-scene-carousel-track]'),
+      dots: container.querySelector('[data-scene-carousel-dots]'),
+      prev: container.querySelector('[data-scene-carousel-prev]'),
+      next: container.querySelector('[data-scene-carousel-next]'),
+      viewport: container.querySelector('[data-scene-carousel-viewport]'),
+      order: [],
+      slides: [],
+      dotsList: [],
+      dragState: null,
+    }));
     const cardDialog = document.querySelector('[data-card-dialog]');
     const cardDialogElements = cardDialog
       ? {
@@ -1946,6 +2048,7 @@
     let timelineHovering = false;
     let lastTimelinePinned = null;
     let timelinePopupOpen = false;
+    let scenePopupOpen = false;
 
     const storedTimelinePinned = storage.get(TIMELINE_STORAGE_KEYS.dockPinned);
     if (storedTimelinePinned === 'true') {
@@ -1958,11 +2061,7 @@
     let sceneData = [];
     let sceneCards = [];
     let sceneRows = [];
-    let sceneCarouselOrder = [];
-    let sceneCarouselSlides = [];
-    let sceneCarouselDotsList = [];
     let activeSceneId = null;
-    let sceneCarouselDragState = null;
     let storyArcDenseMode = false;
 
     initialiseAiProviderSelect();
@@ -1970,9 +2069,11 @@
     setupCardDialog();
     setupGenerationWorkflow();
     setupTimelinePopupLauncher();
+    setupScenePopupLauncher();
     setupTimelineDockInteractions();
     renderTimelineDockScenes();
-    renderSceneCarousel();
+    setupSceneCarouselEvents();
+    renderSceneCarousels();
 
     const WRITER_DB_NAME = 'sw_db_v1';
     const WRITER_DB_STORE = 'projects';
@@ -2535,21 +2636,25 @@
       return row;
     }
 
-    function clearSceneCarouselDragStyles() {
-      if (!sceneCarouselTrack) return;
-      sceneCarouselTrack.style.removeProperty('--scene-carousel-drag-offset');
-      sceneCarouselTrack.style.removeProperty('--scene-carousel-drag-transition');
+    function clearSceneCarouselDragStyles(targetCarousel = null) {
+      const targets = targetCarousel ? [targetCarousel] : sceneCarousels;
+      targets.forEach(carousel => {
+        if (!carousel || !carousel.track) return;
+        carousel.track.style.removeProperty('--scene-carousel-drag-offset');
+        carousel.track.style.removeProperty('--scene-carousel-drag-transition');
+      });
     }
 
-    function renderSceneCarousel() {
-      if (!sceneCarouselTrack) return;
-      sceneCarouselTrack.innerHTML = '';
-      sceneCarouselOrder = [];
-      sceneCarouselSlides = [];
-      sceneCarouselDotsList = [];
-      if (sceneCarouselDots) sceneCarouselDots.innerHTML = '';
-      clearSceneCarouselDragStyles();
-      if (sceneCarouselViewport) sceneCarouselViewport.classList.remove('is-dragging');
+    function renderSceneCarousel(carousel) {
+      if (!carousel || !carousel.track) return;
+      carousel.track.innerHTML = '';
+      carousel.order = [];
+      carousel.slides = [];
+      carousel.dotsList = [];
+      carousel.dragState = null;
+      if (carousel.dots) carousel.dots.innerHTML = '';
+      clearSceneCarouselDragStyles(carousel);
+      if (carousel.viewport) carousel.viewport.classList.remove('is-dragging');
 
       const scenes = Array.isArray(sceneData) ? sceneData : [];
       if (!scenes.length) {
@@ -2559,10 +2664,10 @@
         empty.className = 'scene-carousel__empty';
         empty.textContent = 'Add scenes to view storyboard previews.';
         slide.appendChild(empty);
-        sceneCarouselTrack.appendChild(slide);
-        clearSceneCarouselDragStyles();
-        if (sceneCarouselPrev) sceneCarouselPrev.disabled = true;
-        if (sceneCarouselNext) sceneCarouselNext.disabled = true;
+        carousel.track.appendChild(slide);
+        clearSceneCarouselDragStyles(carousel);
+        if (carousel.prev) carousel.prev.disabled = true;
+        if (carousel.next) carousel.next.disabled = true;
         return;
       }
 
@@ -2572,10 +2677,10 @@
       scenes.forEach(scene => {
         const slide = createSceneCarouselSlide(scene);
         fragment.appendChild(slide);
-        sceneCarouselOrder.push(scene.id);
-        sceneCarouselSlides.push(slide);
+        carousel.order.push(scene.id);
+        carousel.slides.push(slide);
 
-        if (sceneCarouselDots) {
+        if (carousel.dots) {
           const dot = document.createElement('button');
           dot.type = 'button';
           dot.className = 'scene-carousel__dot';
@@ -2586,13 +2691,17 @@
           dot.tabIndex = -1;
           dot.addEventListener('click', () => activateScene(scene.id, { scroll: false }));
           dotsFragment.appendChild(dot);
-          sceneCarouselDotsList.push(dot);
+          carousel.dotsList.push(dot);
         }
       });
 
-      sceneCarouselTrack.appendChild(fragment);
-      if (sceneCarouselDots) sceneCarouselDots.appendChild(dotsFragment);
+      carousel.track.appendChild(fragment);
+      if (carousel.dots) carousel.dots.appendChild(dotsFragment);
       syncSceneCarouselActiveState();
+    }
+
+    function renderSceneCarousels() {
+      sceneCarousels.forEach(renderSceneCarousel);
     }
 
     function createSceneCarouselSlide(scene) {
@@ -2845,13 +2954,6 @@
     }
 
     function syncSceneCarouselActiveState() {
-      if (!sceneCarouselTrack) return;
-      const hasScenes = sceneCarouselOrder.length > 0;
-      let index = hasScenes ? sceneCarouselOrder.indexOf(activeSceneId) : -1;
-      if (index < 0 && hasScenes) {
-        index = 0;
-      }
-
       const offsetClassMap = [
         { offset: -1, className: 'scene-carousel__slide--previous' },
         { offset: 1, className: 'scene-carousel__slide--next' },
@@ -2865,34 +2967,43 @@
         { offset: 5, className: 'scene-carousel__slide--next-5' },
       ];
 
-      sceneCarouselSlides.forEach((slide, slideIndex) => {
-        const isActive = index >= 0 && slideIndex === index;
-        const offset = index >= 0 ? slideIndex - index : 0;
-        slide.classList.toggle('scene-carousel__slide--active', isActive);
-        offsetClassMap.forEach(({ offset: classOffset, className }) => {
-          slide.classList.toggle(className, index >= 0 && offset === classOffset);
+      sceneCarousels.forEach(carousel => {
+        if (!carousel || !carousel.track) return;
+        const hasScenes = carousel.order.length > 0;
+        let index = hasScenes ? carousel.order.indexOf(activeSceneId) : -1;
+        if (index < 0 && hasScenes) {
+          index = 0;
+        }
+
+        carousel.slides.forEach((slide, slideIndex) => {
+          const isActive = index >= 0 && slideIndex === index;
+          const offset = index >= 0 ? slideIndex - index : 0;
+          slide.classList.toggle('scene-carousel__slide--active', isActive);
+          offsetClassMap.forEach(({ offset: classOffset, className }) => {
+            slide.classList.toggle(className, index >= 0 && offset === classOffset);
+          });
+          slide.classList.toggle('scene-carousel__slide--offscreen', index >= 0 && Math.abs(offset) > 5);
+          if (index >= 0) {
+            slide.style.zIndex = String(20 - Math.abs(offset));
+          } else {
+            slide.style.zIndex = '';
+          }
         });
-        slide.classList.toggle('scene-carousel__slide--offscreen', index >= 0 && Math.abs(offset) > 5);
-        if (index >= 0) {
-          slide.style.zIndex = String(20 - Math.abs(offset));
-        } else {
-          slide.style.zIndex = '';
+
+        carousel.dotsList.forEach((dot, dotIndex) => {
+          const isActive = dotIndex === index && index >= 0;
+          dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          dot.tabIndex = isActive ? 0 : -1;
+        });
+
+        const atStart = index <= 0;
+        const atEnd = !hasScenes || index >= carousel.order.length - 1;
+        if (carousel.prev) carousel.prev.disabled = atStart;
+        if (carousel.next) carousel.next.disabled = atEnd;
+        if (!carousel.dragState) {
+          clearSceneCarouselDragStyles(carousel);
         }
       });
-
-      sceneCarouselDotsList.forEach((dot, dotIndex) => {
-        const isActive = dotIndex === index && index >= 0;
-        dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        dot.tabIndex = isActive ? 0 : -1;
-      });
-
-      const atStart = index <= 0;
-      const atEnd = !hasScenes || index >= sceneCarouselOrder.length - 1;
-      if (sceneCarouselPrev) sceneCarouselPrev.disabled = atStart;
-      if (sceneCarouselNext) sceneCarouselNext.disabled = atEnd;
-      if (!sceneCarouselDragState) {
-        clearSceneCarouselDragStyles();
-      }
     }
 
     function renderScenes() {
@@ -2918,7 +3029,7 @@
           })
         );
         activeSceneId = null;
-        renderSceneCarousel();
+        renderSceneCarousels();
         renderTimelineDockScenes();
         updateStoryArcActiveState();
         syncCardDialogSceneData();
@@ -2944,7 +3055,7 @@
         timelineGrid.appendChild(createTimelineScene(scene));
       });
       sceneRows = Array.from(timelineGrid.querySelectorAll('[data-scene-row]'));
-      renderSceneCarousel();
+      renderSceneCarousels();
       renderTimelineDockScenes();
 
       if (!sceneDataMap.has(activeSceneId)) {
@@ -3193,7 +3304,7 @@
       if (sceneId === activeSceneId) {
         syncCardDialogSceneData();
       }
-      renderSceneCarousel();
+      renderSceneCarousels();
     });
 
     function updateStoryArcActiveState() {
@@ -3294,6 +3405,33 @@
       }
     }
 
+    function setScenePopupState(open) {
+      const layer = document.getElementById('scenePopupLayer');
+      const toggle = document.getElementById('scenePopupToggle');
+      if (!layer || !toggle) return;
+
+      scenePopupOpen = open;
+      if (open) {
+        layer.removeAttribute('hidden');
+      } else {
+        layer.setAttribute('hidden', '');
+      }
+      layer.setAttribute('aria-hidden', open ? 'false' : 'true');
+      layer.classList.toggle('scene-popup-layer--open', open);
+      document.body.classList.toggle('scene-popup-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+      if (open) {
+        const initialFocus =
+          layer.querySelector('[data-scene-popup-initial-focus]') || layer.querySelector('[data-scene-carousel-viewport]');
+        if (initialFocus && typeof initialFocus.focus === 'function') {
+          initialFocus.focus({ preventScroll: true });
+        }
+      } else if (document.activeElement && layer.contains(document.activeElement)) {
+        toggle.focus({ preventScroll: true });
+      }
+    }
+
     function setupTimelinePopupLauncher() {
       const layer = document.getElementById('timelinePopupLayer');
       const toggle = document.getElementById('timelinePopupToggle');
@@ -3307,6 +3445,30 @@
 
       layer.addEventListener('click', event => {
         if (event.target && event.target.hasAttribute('data-timeline-popup-close')) {
+          closePopup();
+        }
+      });
+
+      layer.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closePopup();
+        }
+      });
+    }
+
+    function setupScenePopupLauncher() {
+      const layer = document.getElementById('scenePopupLayer');
+      const toggle = document.getElementById('scenePopupToggle');
+      if (!layer || !toggle) return;
+
+      const closeButtons = layer.querySelectorAll('[data-scene-popup-close]');
+      const closePopup = () => setScenePopupState(false);
+
+      toggle.addEventListener('click', () => setScenePopupState(!scenePopupOpen));
+      closeButtons.forEach(btn => btn.addEventListener('click', closePopup));
+
+      layer.addEventListener('click', event => {
+        if (event.target && event.target.hasAttribute('data-scene-popup-close')) {
           closePopup();
         }
       });
@@ -3467,30 +3629,31 @@
       });
     });
 
-    function activateAdjacentScene(offset) {
-      if (!sceneCarouselOrder.length) return;
-      let index = sceneCarouselOrder.indexOf(activeSceneId);
+    function activateAdjacentScene(offset, carousel = null) {
+      const source = carousel && carousel.order.length ? carousel : sceneCarousels.find(item => item.order.length);
+      if (!source || !source.order.length) return;
+      let index = source.order.indexOf(activeSceneId);
       if (index < 0) index = 0;
       let nextIndex = index + offset;
-      nextIndex = Math.max(0, Math.min(sceneCarouselOrder.length - 1, nextIndex));
-      const targetId = sceneCarouselOrder[nextIndex];
+      nextIndex = Math.max(0, Math.min(source.order.length - 1, nextIndex));
+      const targetId = source.order[nextIndex];
       if (targetId && targetId !== activeSceneId) {
         activateScene(targetId, { scroll: false });
       }
     }
 
-    function getSceneCarouselSwipeThreshold() {
-      if (!sceneCarouselViewport) return SCENE_CAROUSEL_SWIPE_THRESHOLD;
-      const width = sceneCarouselViewport.clientWidth || 0;
+    function getSceneCarouselSwipeThreshold(carousel) {
+      if (!carousel || !carousel.viewport) return SCENE_CAROUSEL_SWIPE_THRESHOLD;
+      const width = carousel.viewport.clientWidth || 0;
       if (!width) return SCENE_CAROUSEL_SWIPE_THRESHOLD;
       return Math.max(SCENE_CAROUSEL_SWIPE_THRESHOLD, Math.min(320, width * 0.2));
     }
 
-    function handleSceneCarouselPointerDown(event) {
-      if (!sceneCarouselViewport || !sceneCarouselTrack) return;
-      if (sceneCarouselDragState) return;
+    function handleSceneCarouselPointerDown(carousel, event) {
+      if (!carousel || !carousel.viewport || !carousel.track) return;
+      if (carousel.dragState) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
-      sceneCarouselDragState = {
+      carousel.dragState = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startTime: typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -3498,115 +3661,119 @@
           : Date.now(),
         isDragging: false,
       };
-      if (typeof sceneCarouselViewport.setPointerCapture === 'function') {
+      if (typeof carousel.viewport.setPointerCapture === 'function') {
         try {
-          sceneCarouselViewport.setPointerCapture(event.pointerId);
+          carousel.viewport.setPointerCapture(event.pointerId);
         } catch (err) {
           // ignore capture errors
         }
       }
-      sceneCarouselViewport.classList.remove('is-dragging');
-      sceneCarouselTrack.style.setProperty('--scene-carousel-drag-transition', '0s');
-      sceneCarouselTrack.style.setProperty('--scene-carousel-drag-offset', '0px');
+      carousel.viewport.classList.remove('is-dragging');
+      carousel.track.style.setProperty('--scene-carousel-drag-transition', '0s');
+      carousel.track.style.setProperty('--scene-carousel-drag-offset', '0px');
     }
 
-    function handleSceneCarouselPointerMove(event) {
-      if (!sceneCarouselDragState || event.pointerId !== sceneCarouselDragState.pointerId) return;
-      if (!sceneCarouselViewport || !sceneCarouselTrack) return;
-      const delta = event.clientX - sceneCarouselDragState.startX;
-      if (!sceneCarouselDragState.isDragging && Math.abs(delta) > 8) {
-        sceneCarouselDragState.isDragging = true;
-        sceneCarouselViewport.classList.add('is-dragging');
+    function handleSceneCarouselPointerMove(carousel, event) {
+      if (!carousel || !carousel.dragState || event.pointerId !== carousel.dragState.pointerId) return;
+      if (!carousel.viewport || !carousel.track) return;
+      const delta = event.clientX - carousel.dragState.startX;
+      if (!carousel.dragState.isDragging && Math.abs(delta) > 8) {
+        carousel.dragState.isDragging = true;
+        carousel.viewport.classList.add('is-dragging');
       }
-      if (sceneCarouselDragState.isDragging) {
+      if (carousel.dragState.isDragging) {
         event.preventDefault();
-        sceneCarouselTrack.style.setProperty('--scene-carousel-drag-offset', `${delta}px`);
+        carousel.track.style.setProperty('--scene-carousel-drag-offset', `${delta}px`);
       }
     }
 
-    function finishSceneCarouselPointerInteraction(event, cancelled = false) {
-      if (!sceneCarouselDragState || event.pointerId !== sceneCarouselDragState.pointerId) return;
-      const state = sceneCarouselDragState;
-      sceneCarouselDragState = null;
-      if (sceneCarouselViewport) {
-        sceneCarouselViewport.classList.remove('is-dragging');
-        if (typeof sceneCarouselViewport.releasePointerCapture === 'function') {
+    function finishSceneCarouselPointerInteraction(carousel, event, cancelled = false) {
+      if (!carousel || !carousel.dragState || event.pointerId !== carousel.dragState.pointerId) return;
+      const state = carousel.dragState;
+      carousel.dragState = null;
+      if (carousel.viewport) {
+        carousel.viewport.classList.remove('is-dragging');
+        if (typeof carousel.viewport.releasePointerCapture === 'function') {
           try {
-            sceneCarouselViewport.releasePointerCapture(event.pointerId);
+            carousel.viewport.releasePointerCapture(event.pointerId);
           } catch (err) {
             // ignore release errors
           }
         }
       }
-      clearSceneCarouselDragStyles();
+      clearSceneCarouselDragStyles(carousel);
       if (cancelled) return;
 
       const delta = event.clientX - state.startX;
       const elapsed = (typeof performance !== 'undefined' && typeof performance.now === 'function'
         ? performance.now()
         : Date.now()) - state.startTime;
-      const threshold = getSceneCarouselSwipeThreshold();
+      const threshold = getSceneCarouselSwipeThreshold(carousel);
       const quickSwipe = elapsed < 250 && Math.abs(delta) > 24;
       if (Math.abs(delta) > threshold || quickSwipe) {
-        activateAdjacentScene(delta < 0 ? 1 : -1);
+        activateAdjacentScene(delta < 0 ? 1 : -1, carousel);
       }
     }
 
-    if (sceneCarouselPrev) {
-      sceneCarouselPrev.addEventListener('click', () => activateAdjacentScene(-1));
-    }
-
-    if (sceneCarouselNext) {
-      sceneCarouselNext.addEventListener('click', () => activateAdjacentScene(1));
-    }
-
-    if (sceneCarouselViewport) {
-      sceneCarouselViewport.addEventListener('pointerdown', handleSceneCarouselPointerDown);
-      sceneCarouselViewport.addEventListener('pointermove', handleSceneCarouselPointerMove);
-      sceneCarouselViewport.addEventListener('pointerup', event => finishSceneCarouselPointerInteraction(event, false));
-      sceneCarouselViewport.addEventListener('pointercancel', event => finishSceneCarouselPointerInteraction(event, true));
-      sceneCarouselViewport.addEventListener('pointerleave', event => finishSceneCarouselPointerInteraction(event, true));
-      sceneCarouselViewport.addEventListener('keydown', event => {
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          activateAdjacentScene(-1);
-        } else if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          activateAdjacentScene(1);
-        } else if (event.key === 'Home') {
-          event.preventDefault();
-          const target = sceneCarouselOrder[0];
-          if (target) activateScene(target, { scroll: false });
-        } else if (event.key === 'End') {
-          event.preventDefault();
-          const target = sceneCarouselOrder[sceneCarouselOrder.length - 1];
-          if (target) activateScene(target, { scroll: false });
+    function setupSceneCarouselEvents() {
+      sceneCarousels.forEach(carousel => {
+        if (carousel.prev) {
+          carousel.prev.addEventListener('click', () => activateAdjacentScene(-1, carousel));
         }
-      });
-    }
 
-    if (sceneCarouselDots) {
-      sceneCarouselDots.addEventListener('keydown', event => {
-        if (!sceneCarouselDotsList.length) return;
-        const activeIndex = sceneCarouselDotsList.findIndex(dot => dot.getAttribute('aria-selected') === 'true');
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          const nextIndex = Math.max(0, activeIndex <= 0 ? 0 : activeIndex - 1);
-          const target = sceneCarouselOrder[nextIndex];
-          if (target) activateScene(target, { scroll: false });
-        } else if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          const nextIndex = Math.min(sceneCarouselDotsList.length - 1, activeIndex < 0 ? 0 : activeIndex + 1);
-          const target = sceneCarouselOrder[nextIndex];
-          if (target) activateScene(target, { scroll: false });
-        } else if (event.key === 'Home') {
-          event.preventDefault();
-          const target = sceneCarouselOrder[0];
-          if (target) activateScene(target, { scroll: false });
-        } else if (event.key === 'End') {
-          event.preventDefault();
-          const target = sceneCarouselOrder[sceneCarouselOrder.length - 1];
-          if (target) activateScene(target, { scroll: false });
+        if (carousel.next) {
+          carousel.next.addEventListener('click', () => activateAdjacentScene(1, carousel));
+        }
+
+        if (carousel.viewport) {
+          carousel.viewport.addEventListener('pointerdown', event => handleSceneCarouselPointerDown(carousel, event));
+          carousel.viewport.addEventListener('pointermove', event => handleSceneCarouselPointerMove(carousel, event));
+          carousel.viewport.addEventListener('pointerup', event => finishSceneCarouselPointerInteraction(carousel, event, false));
+          carousel.viewport.addEventListener('pointercancel', event => finishSceneCarouselPointerInteraction(carousel, event, true));
+          carousel.viewport.addEventListener('pointerleave', event => finishSceneCarouselPointerInteraction(carousel, event, true));
+          carousel.viewport.addEventListener('keydown', event => {
+            if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              activateAdjacentScene(-1, carousel);
+            } else if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              activateAdjacentScene(1, carousel);
+            } else if (event.key === 'Home') {
+              event.preventDefault();
+              const target = carousel.order[0];
+              if (target) activateScene(target, { scroll: false });
+            } else if (event.key === 'End') {
+              event.preventDefault();
+              const target = carousel.order[carousel.order.length - 1];
+              if (target) activateScene(target, { scroll: false });
+            }
+          });
+        }
+
+        if (carousel.dots) {
+          carousel.dots.addEventListener('keydown', event => {
+            if (!carousel.dotsList.length) return;
+            const activeIndex = carousel.dotsList.findIndex(dot => dot.getAttribute('aria-selected') === 'true');
+            if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              const nextIndex = Math.max(0, activeIndex <= 0 ? 0 : activeIndex - 1);
+              const target = carousel.order[nextIndex];
+              if (target) activateScene(target, { scroll: false });
+            } else if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              const nextIndex = Math.min(carousel.dotsList.length - 1, activeIndex < 0 ? 0 : activeIndex + 1);
+              const target = carousel.order[nextIndex];
+              if (target) activateScene(target, { scroll: false });
+            } else if (event.key === 'Home') {
+              event.preventDefault();
+              const target = carousel.order[0];
+              if (target) activateScene(target, { scroll: false });
+            } else if (event.key === 'End') {
+              event.preventDefault();
+              const target = carousel.order[carousel.order.length - 1];
+              if (target) activateScene(target, { scroll: false });
+            }
+          });
         }
       });
     }
@@ -3682,7 +3849,7 @@
         }
       }
       renderTimelineDockScenes();
-      renderSceneCarousel();
+      renderSceneCarousels();
       syncCardDialogSceneData();
     }
 
