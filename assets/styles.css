@@ -2127,6 +2127,20 @@ html.music-overlay-open body{overflow:hidden}
 .music-track--soon .music-track__play{display:none}
 .music-track--soon .music-track__thumbnail{background:linear-gradient(135deg,#312e81,#1e1b4b)}
 .music-track[hidden]{display:none!important}
+.investor-game{max-width:1080px;margin:36px auto;padding:0 16px}
+.investor-game__card{display:flex;align-items:center;gap:24px;background:var(--panel);border:1px solid var(--ring);border-radius:24px;padding:20px 24px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.investor-game__logo{width:168px;max-width:40%;border-radius:18px;box-shadow:0 14px 30px rgba(0,0,0,.35);background:#0d1018;padding:12px}
+.investor-game__copy{display:flex;flex-direction:column;gap:10px}
+.investor-game__eyebrow{margin:0;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.investor-game__title{margin:0;font-size:26px;line-height:1.3}
+.investor-game__subtitle{margin:0;color:var(--muted);font-size:15px;line-height:1.6}
+.investor-game__cta{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;padding:12px 16px;background:var(--accent);color:#0c0f17;font-weight:700;border-radius:12px;text-decoration:none;box-shadow:0 14px 30px rgba(0,0,0,.35);transition:transform .18s ease,box-shadow .18s ease}
+.investor-game__cta:focus-visible,.investor-game__cta:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.4)}
+.investor-game__cta:active{transform:translateY(0);box-shadow:0 12px 24px rgba(0,0,0,.3)}
+@media (max-width:720px){
+  .investor-game__card{flex-direction:column;align-items:flex-start}
+  .investor-game__logo{width:100%;max-width:260px}
+}
 @media (max-width:1024px){
   .music-overlay{padding:16px}
   .music-overlay__body{flex-direction:column}
