@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Market Tycoon Investor Game</title>
+  <desc id="desc">Gold crown and bar chart logo for the Investor Game.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f9e7b6" />
+      <stop offset="50%" stop-color="#d9b160" />
+      <stop offset="100%" stop-color="#b27b2b" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0b0f18" flood-opacity="0.65" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="28" fill="#0d1018" />
+  <g filter="url(#glow)" transform="translate(96 64)">
+    <polygon points="160 0 191 48 128 48" fill="url(#gold)" />
+    <polygon points="128 48 191 48 160 96" fill="url(#gold)" />
+    <rect x="136" y="36" width="48" height="18" rx="4" fill="#0d1018" />
+    <polygon points="96 64 224 64 200 116 120 116" fill="url(#gold)" />
+    <rect x="64" y="140" width="40" height="140" rx="10" fill="url(#gold)" />
+    <rect x="122" y="116" width="40" height="164" rx="10" fill="url(#gold)" />
+    <rect x="180" y="168" width="40" height="112" rx="10" fill="url(#gold)" />
+  </g>
+  <text x="50%" y="360" fill="url(#gold)" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-size="52" font-weight="700" text-anchor="middle">Market Tycoon</text>
+  <text x="50%" y="410" fill="url(#gold)" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-size="28" font-weight="600" letter-spacing="2" text-anchor="middle">INVESTOR GAME</text>
+</svg>
