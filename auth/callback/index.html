@@ -58,9 +58,9 @@
 
   <div class="card card--lg" style="margin-top:24px">
     <h2>Next steps</h2>
-    <p data-callback-next>You can close this tab and head back to the StudioOrganize Creative Hub.</p>
+    <p data-callback-next>You can close this tab and head back to your StudioOrganize account.</p>
     <div class="cta-row" style="margin-top:12px">
-      <a class="btn btn-primary" data-open-workspace href="/creative-hub.html" rel="noopener">Open Creative Hub →</a>
+      <a class="btn btn-primary" data-open-workspace href="https://studioorganize.com/account.html" rel="noopener">Go to your account →</a>
       <a class="btn btn-ghost" href="https://studioorganize.com/supabase-test.html">Go to the login page</a>
       <a class="btn btn-ghost" href="mailto:support@studioorganize.com?subject=StudioOrganize%20Account%20Help">Contact support</a>
     </div>
@@ -82,7 +82,7 @@
   <script type="module" src="/assets/main.js"></script>
 <script>
   (function(){
-    const creativeHubUrl = '/creative-hub.html';
+    const accountUrl = 'https://studioorganize.com/account.html';
     const titleEl = document.querySelector('[data-callback-title]');
     const messageEl = document.querySelector('[data-callback-message]');
     const nextEl = document.querySelector('[data-callback-next]');
@@ -102,7 +102,7 @@
     const error = params.get('error') || params.get('error_description');
 
     hubLinks.forEach(link => {
-      link.setAttribute('href', creativeHubUrl);
+      link.setAttribute('href', accountUrl);
     });
 
     if (error){
@@ -119,24 +119,24 @@
     switch (type){
       case 'signup':
         titleEl.textContent = 'Email confirmed — welcome aboard!';
-        messageEl.textContent = 'Your StudioOrganize account is active. You can head over to the Creative Hub to start building scenes.';
-        nextEl.textContent = 'Open the Creative Hub to continue. This tab is safe to close once it finishes loading.';
+        messageEl.textContent = 'Your StudioOrganize account is active. Head to your account page to start building scenes.';
+        nextEl.textContent = 'Open your account page to continue. This tab is safe to close once it finishes loading.';
         break;
       case 'magiclink':
       case 'recovery':
         titleEl.textContent = 'You\'re ready to jump back in';
-        messageEl.textContent = 'Your login link worked. We\'ll take you back to the StudioOrganize Creative Hub.';
+        messageEl.textContent = 'Your login link worked. We\'ll take you back to your StudioOrganize account page.';
         nextEl.textContent = 'If the page doesn\'t open automatically, use the button above to continue.';
         break;
       case 'invite':
         titleEl.textContent = 'Invitation accepted';
-        messageEl.textContent = 'Your account is connected to StudioOrganize. Head to the Creative Hub to get started.';
+        messageEl.textContent = 'Your account is connected to StudioOrganize. Head to your account page to get started.';
         nextEl.textContent = 'Need anything else? Reach us at support@studioorganize.com.';
         break;
       default:
         titleEl.textContent = 'All set!';
-        messageEl.textContent = 'Authentication finished successfully. We\'ll forward you to the StudioOrganize Creative Hub.';
-        nextEl.textContent = 'If nothing happens within a few seconds, use the Creative Hub button above to continue.';
+        messageEl.textContent = 'Authentication finished successfully. We\'ll forward you to your StudioOrganize account page.';
+        nextEl.textContent = 'If nothing happens within a few seconds, use the account button above to continue.';
     }
 
     if (hash){
@@ -149,7 +149,7 @@
     }
 
     setTimeout(() => {
-      window.location.href = creativeHubUrl;
+      window.location.href = accountUrl;
     }, 4000);
   })();
 </script>
