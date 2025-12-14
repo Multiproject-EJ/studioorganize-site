@@ -237,6 +237,14 @@ function ensureScriptDialogOverlayController(){
   const messageOrigin = resolvedOrigin && resolvedOrigin !== 'null' ? resolvedOrigin : '*';
   let frameReady = false;
   let pendingOpen = false;
+  let readyFallbackTimer = null;
+
+  const clearReadyFallback = () => {
+    if (readyFallbackTimer){
+      clearTimeout(readyFallbackTimer);
+      readyFallbackTimer = null;
+    }
+  };
 
   const postToFrame = action => {
     if (!frameReady || !(iframe?.contentWindow)) {
@@ -280,6 +288,13 @@ function ensureScriptDialogOverlayController(){
       });
       document.documentElement.classList.add('script-dialog-overlay-open');
       window.addEventListener('keydown', handleKeydown);
+      clearReadyFallback();
+      readyFallbackTimer = window.setTimeout(() => {
+        if (!frameReady){
+          console.warn('[ScriptDialog] Frame not ready in time, redirecting to screenplay-writing page in case of embed blockers');
+          window.location.href = '/use-cases/screenplay-writing.html';
+        }
+      }, 6500);
       if (frameReady){
         postToFrame('open');
       } else {
@@ -299,6 +314,7 @@ function ensureScriptDialogOverlayController(){
       overlay.setAttribute('aria-hidden', 'true');
       overlay.hidden = true;
       pendingOpen = false;
+      clearReadyFallback();
       document.documentElement.classList.remove('script-dialog-overlay-open');
       window.removeEventListener('keydown', handleKeydown);
       if (notifyChild){
@@ -308,6 +324,7 @@ function ensureScriptDialogOverlayController(){
     notifyReady(){
       console.log('[ScriptDialog] Frame notified ready');
       frameReady = true;
+      clearReadyFallback();
       if (pendingOpen){
         console.log('[ScriptDialog] Pending open detected, posting open message now');
         postToFrame('open');
