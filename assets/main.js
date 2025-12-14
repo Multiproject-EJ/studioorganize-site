@@ -3583,6 +3583,7 @@ function ensureWorkspaceLauncherStructure(launcher){
 function injectGlobalWorkspaceLauncher(){
   if (document.querySelector('[data-workspace-launcher]')) return;
   if (!(document.body instanceof HTMLElement)) return;
+  if (document.body.matches('[data-disable-global-workspace-launcher]')) return;
 
   const modulesMarkup = WORKSPACE_LAUNCHER_MODULES.map(renderWorkspaceModuleLink).join('');
   const template = document.createElement('div');
