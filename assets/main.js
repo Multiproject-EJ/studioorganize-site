@@ -237,6 +237,14 @@ function ensureScriptDialogOverlayController(){
   const messageOrigin = resolvedOrigin && resolvedOrigin !== 'null' ? resolvedOrigin : '*';
   let frameReady = false;
   let pendingOpen = false;
+  let readyFallbackTimer = null;
+
+  const clearReadyFallback = () => {
+    if (readyFallbackTimer){
+      clearTimeout(readyFallbackTimer);
+      readyFallbackTimer = null;
+    }
+  };
 
   const postToFrame = action => {
     if (!frameReady || !(iframe?.contentWindow)) {
@@ -280,6 +288,13 @@ function ensureScriptDialogOverlayController(){
       });
       document.documentElement.classList.add('script-dialog-overlay-open');
       window.addEventListener('keydown', handleKeydown);
+      clearReadyFallback();
+      readyFallbackTimer = window.setTimeout(() => {
+        if (!frameReady){
+          console.warn('[ScriptDialog] Frame not ready in time, redirecting to screenplay-writing page in case of embed blockers');
+          window.location.href = '/use-cases/screenplay-writing.html';
+        }
+      }, 6500);
       if (frameReady){
         postToFrame('open');
       } else {
@@ -299,6 +314,7 @@ function ensureScriptDialogOverlayController(){
       overlay.setAttribute('aria-hidden', 'true');
       overlay.hidden = true;
       pendingOpen = false;
+      clearReadyFallback();
       document.documentElement.classList.remove('script-dialog-overlay-open');
       window.removeEventListener('keydown', handleKeydown);
       if (notifyChild){
@@ -308,6 +324,7 @@ function ensureScriptDialogOverlayController(){
     notifyReady(){
       console.log('[ScriptDialog] Frame notified ready');
       frameReady = true;
+      clearReadyFallback();
       if (pendingOpen){
         console.log('[ScriptDialog] Pending open detected, posting open message now');
         postToFrame('open');
@@ -4193,50 +4210,54 @@ function initWorkspaceLauncher({ fromObserver = false } = {}){
       event.stopPropagation();
     });
 
-    const scriptButton = panel.querySelector('[data-workspace-script]');
-    if (scriptButton instanceof HTMLElement && scriptButton.dataset.workspaceScriptBound !== 'true'){
-      scriptButton.dataset.workspaceScriptBound = 'true';
-      scriptButton.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
+    const scriptButtons = panel.querySelectorAll('[data-workspace-script]');
+    if (scriptButtons.length){
+      scriptButtons.forEach(button => {
+        if (!(button instanceof HTMLElement)) return;
+        if (button.dataset.workspaceScriptBound === 'true') return;
+        button.dataset.workspaceScriptBound = 'true';
+        button.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopPropagation();
 
-        console.log('[Workspace] STORY button clicked');
-        closeAll();
+          console.log('[Workspace] STORY button clicked');
+          closeAll();
 
-        const dialog = document.getElementById('scriptDialog');
-        const overlayOpen = document.documentElement.classList.contains('script-dialog-overlay-open');
-        const hasInlineDialog = dialog instanceof HTMLElement;
-        const inlineOpen = hasInlineDialog && dialog.classList.contains('open');
+          const dialog = document.getElementById('scriptDialog');
+          const overlayOpen = document.documentElement.classList.contains('script-dialog-overlay-open');
+          const hasInlineDialog = dialog instanceof HTMLElement;
+          const inlineOpen = hasInlineDialog && dialog.classList.contains('open');
 
-        console.log('[Workspace] Script dialog state:', {
-          hasOpenFunction: typeof window.openScriptDialog === 'function',
-          hasInlineDialog,
-          inlineOpen,
-          overlayOpen
-        });
+          console.log('[Workspace] Script dialog state:', {
+            hasOpenFunction: typeof window.openScriptDialog === 'function',
+            hasInlineDialog,
+            inlineOpen,
+            overlayOpen
+          });
 
-        if (typeof window.openScriptDialog === 'function'){
-          if (hasInlineDialog){
-            console.log('[Workspace] Using inline dialog');
-            if (inlineOpen && typeof window.closeScriptDialog === 'function'){
-              console.log('[Workspace] Closing inline dialog');
-              window.closeScriptDialog();
+          if (typeof window.openScriptDialog === 'function'){
+            if (hasInlineDialog){
+              console.log('[Workspace] Using inline dialog');
+              if (inlineOpen && typeof window.closeScriptDialog === 'function'){
+                console.log('[Workspace] Closing inline dialog');
+                window.closeScriptDialog();
+                return;
+              }
+              console.log('[Workspace] Opening inline dialog');
+              window.openScriptDialog();
               return;
             }
-            console.log('[Workspace] Opening inline dialog');
-            window.openScriptDialog();
-            return;
-          }
-          if (!overlayOpen){
-            console.log('[Workspace] Opening overlay dialog');
-            window.openScriptDialog();
+            if (!overlayOpen){
+              console.log('[Workspace] Opening overlay dialog');
+              window.openScriptDialog();
+            } else {
+              console.log('[Workspace] Overlay already open');
+            }
           } else {
-            console.log('[Workspace] Overlay already open');
+            console.log('[Workspace] No openScriptDialog function, redirecting to screenplay-writing.html');
+            window.location.href = '/use-cases/screenplay-writing.html';
           }
-        } else {
-          console.log('[Workspace] No openScriptDialog function, redirecting to screenplay-writing.html');
-          window.location.href = '/use-cases/screenplay-writing.html';
-        }
+        });
       });
     }
 
