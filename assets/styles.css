@@ -400,11 +400,12 @@ html.construction-overlay-dismissed .construction-overlay{display:none;}
 .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(10px);z-index:10}
 .nav--collapsed{position:fixed;top:-160px;left:0;right:0;transform:translateY(-100%);opacity:0;pointer-events:none;transition:transform .35s ease,opacity .25s ease}
 .nav--revealed{transition:transform .35s ease,opacity .25s ease}
-.nav-visibility-handle{position:fixed;left:50%;top:12px;z-index:220;min-width:98px;height:12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:0 10px 26px rgba(8,15,28,.2);transform:translateX(-50%);transition:color .15s ease,border-color .15s ease,background .15s ease,box-shadow .2s ease,transform .2s ease}
+.nav-visibility-handle{position:fixed;left:50%;top:12px;z-index:220;min-width:98px;height:12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:0 10px 26px rgba(8,15,28,.2);transform:translateX(-50%);opacity:1;pointer-events:auto;transition:color .15s ease,border-color .15s ease,background .15s ease,box-shadow .2s ease,transform .2s ease,opacity .25s ease}
 .nav-visibility-handle:hover{color:var(--text);border-color:var(--acc);background:var(--chip);transform:translate(-50%,-1px)}
 .nav-visibility-handle:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
 .nav-visibility-handle__chevron{font-size:1rem;line-height:1}
 .nav-visibility-handle--active{color:var(--text);border-color:var(--acc);background:var(--chip);box-shadow:0 14px 30px rgba(8,15,28,.28)}
+.nav-visibility-handle--faded{opacity:0;pointer-events:none}
 .brand{font-weight:800;letter-spacing:.2px}
 .brand--with-logo{display:inline-flex;align-items:center;gap:0;line-height:0}
 .brand__logo{display:block;inline-size:clamp(140px,20vw,220px);block-size:32px;background-image:var(--brand-logo-image);background-repeat:no-repeat;background-size:contain;background-position:left center}
@@ -2154,4 +2155,3 @@ html.music-overlay-open body{overflow:hidden}
   .music-overlay__panel{max-height:calc(100vh - 16px)}
   .music-overlay__close{top:14px;right:14px}
 }
-
