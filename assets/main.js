@@ -1492,10 +1492,13 @@ const accountMenu = document.querySelector('[data-account-menu]');
 const accountButton = document.querySelector('[data-account-button]');
 const accountLogoutLink = document.querySelector('[data-account-logout]');
 const navHasAuthControls = Boolean(navAuthLink || accountMenu || accountLogoutLink);
+const NAV_HANDLE_FADE_DELAY_MS = 2000;
+const NAV_HANDLE_REVEAL_ZONE_PX = 64;
 let lastKnownSession = null;
 let navHandle = null;
 let navAutoHideEnabled = false;
 let navPinned = true;
+let navHandleFadeTimeout = null;
 
 const NAV_PINNED_STORAGE_KEY = 'SO_NAV_PINNED';
 
@@ -1514,10 +1517,49 @@ function ensureNavHandle(){
   navHandle.addEventListener('click', () => {
     setNavPinned(!navPinned);
   });
+  navHandle.addEventListener('mouseenter', () => {
+    setNavHandleFaded(false);
+    clearNavHandleFadeTimeout();
+  });
+  navHandle.addEventListener('mouseleave', () => {
+    scheduleNavHandleFade();
+  });
 
   document.body.appendChild(navHandle);
   positionNavHandle();
   return navHandle;
+}
+
+function setNavHandleFaded(faded){
+  if (!navHandle) return;
+  navHandle.classList.toggle('nav-visibility-handle--faded', Boolean(faded));
+}
+
+function clearNavHandleFadeTimeout(){
+  if (navHandleFadeTimeout){
+    clearTimeout(navHandleFadeTimeout);
+    navHandleFadeTimeout = null;
+  }
+}
+
+function scheduleNavHandleFade(){
+  if (!navAutoHideEnabled || navPinned){
+    clearNavHandleFadeTimeout();
+    setNavHandleFaded(false);
+    return;
+  }
+  clearNavHandleFadeTimeout();
+  navHandleFadeTimeout = window.setTimeout(() => {
+    setNavHandleFaded(true);
+  }, NAV_HANDLE_FADE_DELAY_MS);
+}
+
+function handleNavHandleRevealHover(event){
+  if (!navAutoHideEnabled || navPinned || !navHandle || navHandle.hidden) return;
+  if (event.clientY <= NAV_HANDLE_REVEAL_ZONE_PX){
+    setNavHandleFaded(false);
+    scheduleNavHandleFade();
+  }
 }
 
 function positionNavHandle(){
@@ -1561,6 +1603,17 @@ function applyNavVisibility(){
     navHandle.setAttribute('aria-pressed', navPinned ? 'true' : 'false');
     navHandle.setAttribute('aria-label', navPinned ? 'Hide header' : 'Show header');
     navHandle.classList.toggle('nav-visibility-handle--active', navPinned);
+    if (navAutoHideEnabled){
+      if (navPinned){
+        clearNavHandleFadeTimeout();
+        setNavHandleFaded(false);
+      } else {
+        scheduleNavHandleFade();
+      }
+    } else {
+      clearNavHandleFadeTimeout();
+      setNavHandleFaded(false);
+    }
   }
   positionNavHandle();
 }
@@ -1582,6 +1635,8 @@ function setNavAutoHide(enabled){
     const initialPinned = loadNavPinnedPreference(false);
     setNavPinned(initialPinned, { suppressSave: true });
   } else {
+    clearNavHandleFadeTimeout();
+    setNavHandleFaded(false);
     toggleElementVisibility(handle, false);
     setNavPinned(true, { suppressSave: true });
   }
@@ -1589,6 +1644,7 @@ function setNavAutoHide(enabled){
 }
 
 window.addEventListener('resize', positionNavHandle);
+window.addEventListener('pointermove', handleNavHandleRevealHover);
 
 function openAccountDropdownMenu(){
   if (!(accountMenu instanceof HTMLElement)) return false;
