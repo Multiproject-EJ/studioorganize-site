@@ -347,6 +347,7 @@
       .scene-card-drag-handle:active{cursor:grabbing; background:linear-gradient(135deg, rgba(79,123,255,0.2), rgba(79,123,255,0.08)); color:var(--ink); border-color:var(--acc)}
       .scene-card-drag-handle[aria-disabled="true"]{opacity:0.5; cursor:not-allowed}
       .scene-card-drag-handle[aria-disabled="true"]:hover{color:var(--muted); border-color:var(--ring); background:var(--chip)}
+      .scene-card-drag-handle svg{width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
       .scene-card-tag{display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.3px; padding:4px 8px; border-radius:999px; border:1px solid var(--ring); background:var(--chip); color:var(--ink); font-weight:600}
       .scene-card-tag--empty{font-weight:500; color:var(--muted); border-style:dashed; background:transparent}
       .scene-card.dragging{opacity:0.55}
@@ -386,6 +387,22 @@
       .scene-card[data-popover-open="true"]{z-index:30}
       .scene-card-chip[data-empty="true"]{background:transparent; border-style:dashed; color:var(--muted); cursor:default}
       .scene-card-chip[data-empty="true"]:hover{border-style:dashed}
+      body.scene-rename-dialog-open{overflow:hidden;}
+      .scene-rename-dialog{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1400; padding:16px;}
+      .scene-rename-dialog.open{display:flex;}
+      .scene-rename-dialog__backdrop{position:absolute; inset:0; background:rgba(11,15,20,0.55);}
+      .scene-rename-dialog__panel{position:relative; width:min(420px, 100%); background:var(--card); border:1px solid var(--ring); border-radius:16px; box-shadow:0 20px 48px rgba(0,0,0,0.45); padding:18px; display:flex; flex-direction:column; gap:14px; color:var(--ink);}
+      .scene-rename-dialog__header{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+      .scene-rename-dialog__header h3{margin:0; font-size:16px;}
+      .scene-rename-dialog__description{margin:0; font-size:12px; color:var(--muted);}
+      .scene-rename-dialog__close{background:none; border:1px solid var(--ring); border-radius:50%; width:32px; height:32px; display:grid; place-items:center; cursor:pointer; color:var(--ink);}
+      .scene-rename-dialog__body{display:flex; flex-direction:column; gap:10px;}
+      .scene-rename-dialog__field{display:flex; flex-direction:column; gap:6px;}
+      .scene-rename-dialog__field span{font-size:12px; letter-spacing:.35px; text-transform:uppercase; color:var(--muted);}
+      .scene-rename-dialog__field input{border-radius:10px; border:1px solid var(--ring); background:var(--chip); padding:10px; color:var(--ink); font-size:14px;}
+      .scene-rename-dialog__field input:focus-visible{outline:2px solid var(--acc); outline-offset:2px; border-color:var(--acc);}
+      .scene-rename-dialog__footer{display:flex; justify-content:flex-end; gap:8px;}
+      .scene-rename-dialog__footer .btn{padding:8px 12px;}
       .scenes.drag-over-end{position:relative}
       .scenes.drag-over-end::after{
         content:'';
@@ -1954,6 +1971,29 @@
         </div>
       </div>
 
+      <div id="sceneRenameDialog" class="scene-rename-dialog" aria-hidden="true">
+        <div class="scene-rename-dialog__backdrop" data-scene-rename-dismiss></div>
+        <div class="scene-rename-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="sceneRenameTitle" aria-describedby="sceneRenameDescription">
+          <div class="scene-rename-dialog__header">
+            <div>
+              <h3 id="sceneRenameTitle">Rename scene</h3>
+              <p class="scene-rename-dialog__description" id="sceneRenameDescription">Update your scene heading without leaving the writer.</p>
+            </div>
+            <button type="button" class="scene-rename-dialog__close" aria-label="Close rename dialog" data-scene-rename-dismiss>✕</button>
+          </div>
+          <div class="scene-rename-dialog__body">
+            <label class="scene-rename-dialog__field" for="sceneRenameInput">
+              <span>Scene name</span>
+              <input id="sceneRenameInput" type="text" maxlength="140" autocomplete="off" />
+            </label>
+          </div>
+          <div class="scene-rename-dialog__footer">
+            <button type="button" class="btn non-essential" data-scene-rename-dismiss>Cancel</button>
+            <button type="button" class="btn" id="sceneRenameSave">Save</button>
+          </div>
+        </div>
+      </div>
+
       <div class="layout scene-panel-collapsed" id="screenplayLayout">
         <div class="scene-panel-slot" id="scenePanelSlot">
           <div class="panel panel--scenes" id="scenePanel" data-open="false" data-pinned="false">
@@ -3134,6 +3174,8 @@
     let sceneInlineRenameDraft = '';
     let scenePopoverClickTimer = null;
     let pendingSceneRenameFocusId = null;
+    let sceneRenameDialogId = null;
+    let sceneRenameDialogDraft = '';
     const characterStudioState = {
       open: false,
       activeId: null
@@ -5010,6 +5052,7 @@
 
     function render(){
       ensureProjectShape();
+      setupSceneRenameDialog();
       applyMainViewModeFromProject();
       pruneStoryboardAIState();
       updateStoryboardModeUI();
@@ -5039,6 +5082,14 @@
       }
 
       const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      if (sceneRenameDialogId){
+        const renameTarget = scenes.find(scene => scene.id === sceneRenameDialogId) || null;
+        if (!renameTarget){
+          closeSceneRenameDialog();
+        } else {
+          updateSceneRenameDialogContext(renameTarget);
+        }
+      }
       renderStoryArcSceneTracks(scenes);
 
       // scenes list
@@ -5082,6 +5133,7 @@
           event.stopPropagation();
           if (sceneDragSceneId) return;
           if (sceneInlineRenameId === s.id) return;
+          if (isSceneCardInteractiveTarget(event.target)) return;
           let shouldRender = false;
           if (scenePopoverOpenId){
             scenePopoverOpenId = null;
@@ -5092,6 +5144,7 @@
             shouldRender = true;
           }
           if (shouldRender) render();
+          openSceneRenameDialog(s.id);
         });
         div.addEventListener('keydown', event => {
           if (event.target !== div) return;
@@ -5114,6 +5167,7 @@
               shouldRender = true;
             }
             if (shouldRender) render();
+            openSceneRenameDialog(s.id);
           }
         });
         const colorTitle = colorMeta.tooltip || colorMeta.description || 'Scene color';
@@ -5148,7 +5202,11 @@
             </div>
             <div class="scene-card-meta-end">
               <span class="scene-card-number">${escapeHtml(sceneNumberLabel)}</span>
-              <button type="button" class="scene-card-drag-handle" data-scene-drag-handle aria-label="Reorder ${escapeHtml(sceneNumberLabel)}" draggable="${!isEditing ? 'true' : 'false'}"><span aria-hidden="true">⠿</span></button>
+              <button type="button" class="scene-card-drag-handle" data-scene-drag-handle aria-label="Reorder ${escapeHtml(sceneNumberLabel)}" draggable="${!isEditing ? 'true' : 'false'}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M12 3l3 3h-2v4h4V8l3 3-3 3v-2h-4v4h2l-3 3-3-3h2v-4H7v2L4 11l3-3v2h4V6H9l3-3z"></path>
+                </svg>
+              </button>
             </div>
           </div>`;
         const editRoot = div.querySelector('[data-scene-edit-root]');
@@ -8297,6 +8355,121 @@
         clearTimeout(scenePopoverClickTimer);
         scenePopoverClickTimer = null;
       }
+    }
+
+    function isSceneCardInteractiveTarget(target){
+      if (!(target instanceof Element)) return false;
+      return Boolean(
+        target.closest('button') ||
+        target.closest('input') ||
+        target.closest('select') ||
+        target.closest('textarea') ||
+        target.closest('[data-scene-drag-handle]') ||
+        target.closest('[data-scene-tags-trigger]') ||
+        target.closest('.scene-card-popover')
+      );
+    }
+
+    function updateSceneRenameDialogContext(scene){
+      const description = document.getElementById('sceneRenameDescription');
+      if (!description) return;
+      if (!scene){
+        description.textContent = 'Update your scene heading without leaving the writer.';
+        return;
+      }
+      const scenes = Array.isArray(project?.scenes) ? project.scenes : [];
+      const index = scenes.findIndex(item => item.id === scene.id);
+      const label = index >= 0 ? `Scene ${index + 1}` : 'Scene';
+      const heading = typeof scene.slug === 'string' && scene.slug.trim() ? scene.slug.trim() : 'Untitled scene';
+      description.textContent = `${label} — ${heading}`;
+    }
+
+    function closeSceneRenameDialog(){
+      const dialog = document.getElementById('sceneRenameDialog');
+      if (!dialog) return;
+      dialog.classList.remove('open');
+      dialog.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('scene-rename-dialog-open');
+      sceneRenameDialogId = null;
+      sceneRenameDialogDraft = '';
+      updateSceneRenameDialogContext(null);
+    }
+
+    function submitSceneRenameDialog(){
+      const input = document.getElementById('sceneRenameInput');
+      const nextValue = input ? input.value : '';
+      const scene = Array.isArray(project?.scenes) ? project.scenes.find(s => s.id === sceneRenameDialogId) : null;
+      const shouldUpdate = scene && typeof nextValue === 'string' && nextValue !== scene.slug;
+      closeSceneRenameDialog();
+      if (shouldUpdate){
+        scene.slug = nextValue;
+        bumpVersion();
+        updateSceneHash(scene);
+        render();
+        scheduleSave();
+        scheduleBackup();
+      }
+    }
+
+    function openSceneRenameDialog(sceneId){
+      const dialog = document.getElementById('sceneRenameDialog');
+      const input = document.getElementById('sceneRenameInput');
+      if (!dialog || !input || !Array.isArray(project?.scenes)) return;
+      const scene = project.scenes.find(s => s.id === sceneId);
+      if (!scene) return;
+      sceneRenameDialogId = sceneId;
+      sceneRenameDialogDraft = typeof scene.slug === 'string' ? scene.slug : '';
+      input.value = sceneRenameDialogDraft;
+      updateSceneRenameDialogContext(scene);
+      dialog.classList.add('open');
+      dialog.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('scene-rename-dialog-open');
+      requestAnimationFrame(()=>{
+        input.focus({ preventScroll: true });
+        input.select();
+      });
+    }
+
+    function setupSceneRenameDialog(){
+      const dialog = document.getElementById('sceneRenameDialog');
+      if (!dialog || dialog.dataset.bound) return;
+      dialog.dataset.bound = 'true';
+      const input = document.getElementById('sceneRenameInput');
+      const saveBtn = document.getElementById('sceneRenameSave');
+      dialog.querySelectorAll('[data-scene-rename-dismiss]').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.preventDefault();
+          closeSceneRenameDialog();
+        });
+      });
+      dialog.addEventListener('click', event => {
+        if (event.target === dialog) closeSceneRenameDialog();
+      });
+      if (saveBtn){
+        saveBtn.addEventListener('click', event => {
+          event.preventDefault();
+          submitSceneRenameDialog();
+        });
+      }
+      if (input){
+        input.addEventListener('input', event => {
+          sceneRenameDialogDraft = event.target.value;
+        });
+        input.addEventListener('keydown', event => {
+          if (event.key === 'Enter'){
+            event.preventDefault();
+            submitSceneRenameDialog();
+          } else if (event.key === 'Escape'){
+            event.preventDefault();
+            closeSceneRenameDialog();
+          }
+        });
+      }
+      window.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && sceneRenameDialogId){
+          closeSceneRenameDialog();
+        }
+      });
     }
     function insertSceneAt(index, scene){
       project.scenes = Array.isArray(project.scenes) ? project.scenes : [];
